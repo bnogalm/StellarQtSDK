@@ -1,0 +1,196 @@
+#ifndef XDRHELPER_H
+#define XDRHELPER_H
+#include <QtGlobal>
+#include <QVector>
+#include <QDataStream>
+#include <QDebug>
+
+namespace xdr{
+/**
+ *  Template helper class to define xdr optional fields, it's designed to set filled to 1 on asignations
+ *  It also has an alternative way to fill the value, using filler() so you don't need to make copies.
+ */
+template<class T>
+struct alignas(4) Optional
+{
+
+    Optional<T>():filled(0)
+    {
+    }
+
+    Optional<T>(T v):filled(1)
+    {
+        value = v;
+    }
+    void clear()
+    {
+        filled=0;
+    }
+    operator T()
+    {
+        if(filled)
+            return value;
+        else
+            return T();
+    }
+    /**
+     * @brief filler sets filled to true and returns a reference to value, so you can fill it. Usefull if value is a struct with more fields
+     * @return value reference
+     */
+    T& filler()
+    {
+        filled=1;
+        return value;
+    }
+
+    qint32 filled;
+    T value;
+};
+
+template<class T>
+QDataStream &operator<<(QDataStream &out, const  Optional<T> &obj) {
+    out << obj.filled;
+    if(obj.filled)
+        out << obj.value;
+   return out;
+}
+
+template<class T>
+QDataStream &operator>>(QDataStream &in,  Optional<T> &obj) {
+    in >> obj.filled;
+    if(obj.filled)
+        in >> obj.value;
+   return in;
+}
+
+struct alignas(4) Reserved {
+    qint32 reserved;
+    Reserved():reserved(0){}
+};
+
+QDataStream &operator<<(QDataStream &out, const  Reserved &obj);
+
+QDataStream &operator>>(QDataStream &in,  Reserved &obj);
+
+
+QDataStream &operator<<(QDataStream &out, const  char c);
+
+QDataStream &operator>>(QDataStream &in,  char& c);
+
+template <class T, int max=std::numeric_limits<int>::max()>
+struct Array{
+    QVector<T> value;
+    static int maxSize(){
+        return max;
+    }
+
+    void append(const T& v){
+        if(value.length()<max-1)
+            value.append(v);
+    }
+    void clear()
+    {
+        value.clear();
+    }
+
+    /**
+     * @brief set sets array to value from C style array, data will be copied
+     * @param v pointer to c style array
+     * @param amount n elements to copy, it will be trimmed to max size defined, if defined
+     */
+    void set(T* v, int amount)
+    {
+        int allowed = qMin(amount + value.length(),max);
+        value.resize(allowed);
+        memcpy(value.data(),v,allowed);
+    }
+    //returns continuos data
+    QByteArray binary()
+    {
+        QByteArray ba;
+        QDataStream stream(&ba,QIODevice::WriteOnly);
+        for(int i=0;i<value.size();i++){
+            stream << (T)value[i];
+        }
+        return ba;
+    }
+};
+
+template <class T, int max=std::numeric_limits<int>::max()>
+inline QDataStream &operator<<(QDataStream &out, const  Array<T,max> &obj) {
+    int pos = out.device()->pos();
+    out << (qint32)obj.value.length();
+    for(int i=0;i<obj.value.length();i++)
+        out << (T)obj.value[i];
+    int diff = out.device()->pos() - pos;
+    int missingBytes = 4-(diff&3);
+    if(missingBytes<4){
+        static const qint32 zero=0;
+        out.writeRawData((char*)&zero,missingBytes);
+    }
+
+   return out;
+}
+
+template <class T, int max=std::numeric_limits<int>::max()>
+inline QDataStream &operator>>(QDataStream &in,  Array<T,max> &obj) {
+    //we take care of reading the max
+    qint32 n;
+    int pos =in.device()->pos();
+    in>> n;
+    while(n>=0 && !in.atEnd()){
+        n--;
+        T v;
+        in >> v;
+        obj.value.append(v);
+    }
+    int diff = in.device()->pos() - pos;
+    int missingBytes = 4-(diff&3);
+    qint32 zero=0;
+    in.readRawData((char*)&zero,missingBytes);
+    if(zero!=0)
+        throw std::runtime_error("padding must be zero");
+   return in;
+}
+
+
+//use only for fixed array of chars, as it will not take care of byteorder
+#define XDR_SERIALIZER(Type) \
+inline typename std::enable_if<std::is_standard_layout<Type>::value,QDataStream&>::type \
+operator<<(QDataStream &out, const Type &t)\
+{\
+    out.writeRawData((const char*)&t,sizeof(Type));\
+    return out;\
+}\
+inline typename std::enable_if<std::is_standard_layout<Type>::value,QDataStream&>::type \
+operator>>(QDataStream &in, Type &t)\
+{\
+    in.readRawData((char*)&t,sizeof(Type));\
+    return in;\
+}
+
+
+
+
+}
+
+
+template<typename Type>
+inline typename std::enable_if<std::is_enum<Type>::value,QDataStream&>::type
+    operator<<(QDataStream &out, const Type& t)
+{
+    out << static_cast<typename std::underlying_type<Type>::type>(t);
+    return out;
+}
+template<typename Type>
+inline typename std::enable_if<std::is_enum<Type>::value,QDataStream&>::type
+    operator>>(QDataStream &in, Type &t)
+{
+    typename std::underlying_type<Type>::type underlying;
+    in >> underlying;
+    t= (Type)underlying;//we could do it directly
+    return in;
+}
+
+
+#endif // XDRHELPER_H

@@ -1,0 +1,125 @@
+#include "transactionresponse.h"
+#include "../keypair.h"
+#include "../memo.h"
+TransactionResponse::TransactionResponse(QNetworkReply *reply)
+    :Response(reply)
+    ,m_sourceAccountKeypair(nullptr)
+    ,m_sourceAccountSequence(0)
+    ,m_feePaid(0)
+    ,m_operationCount(0)
+    ,m_memo(nullptr)
+{
+}
+
+TransactionResponse::~TransactionResponse()
+{
+    if(m_sourceAccountKeypair)
+        delete m_sourceAccountKeypair;
+    if(m_memo)
+        delete m_memo;
+}
+
+QString TransactionResponse::getHash() const{
+    return m_hash;
+}
+
+qint64 TransactionResponse::getLedger() const{
+    return m_ledger;
+}
+
+QString TransactionResponse::getCreatedAt() const{
+    return m_createdAt;
+}
+
+KeyPair *TransactionResponse::getSourceAccount() {
+    if(!m_sourceAccountKeypair)
+    {
+        m_sourceAccountKeypair= KeyPair::fromAccountId(m_sourceAccount);
+    }
+    return m_sourceAccountKeypair;
+}
+
+QString TransactionResponse::getPagingToken() const{
+    return m_pagingToken;
+}
+
+qint64 TransactionResponse::getSourceAccountSequence() const{
+    return m_sourceAccountSequence;
+}
+
+qint64 TransactionResponse::getFeePaid() const{
+    return m_feePaid;
+}
+
+int TransactionResponse::getOperationCount() const{
+    return m_operationCount;
+}
+
+QString TransactionResponse::getEnvelopeXdr() const{
+    return m_envelopeXdr;
+}
+
+QString TransactionResponse::getResultXdr() const{
+    return m_resultXdr;
+}
+
+QString TransactionResponse::getResultMetaXdr() const{
+    return m_resultMetaXdr;
+}
+
+Memo *TransactionResponse::getMemo() {
+    if(!m_memo)
+    {
+        m_memo = Memo::parse(m_memoType,m_memoData);
+    }
+    return m_memo;
+}
+
+TransactionResponseAttach::Links &TransactionResponse::getLinks() {
+    return m_links;
+}
+
+QString TransactionResponse::sourceAccount() const
+{
+    return m_sourceAccount;
+}
+
+QString TransactionResponse::memoType() const
+{
+    return m_memoType;
+}
+
+QByteArray TransactionResponse::memo() const
+{
+    return m_memoData;
+}
+
+void TransactionResponse::setSourceAccount(QString sourceAccount)
+{
+    if(m_sourceAccountKeypair)
+    {
+        delete m_sourceAccountKeypair;
+        m_sourceAccountKeypair = nullptr;
+    }
+    m_sourceAccount = sourceAccount;
+}
+
+void TransactionResponse::setMemoType(QString memoType)
+{
+    if(m_memo)
+    {
+        delete m_memo;
+        m_memo=nullptr;
+    }
+    m_memoType = memoType;
+}
+
+void TransactionResponse::setMemo(QByteArray memoData)
+{
+    if(m_memo)
+    {
+        delete m_memo;
+        m_memo=nullptr;
+    }
+    m_memoData = memoData;
+}
