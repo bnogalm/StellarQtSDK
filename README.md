@@ -1,6 +1,8 @@
 # StellarQtSDK
 Stellar Java SDK ported to Qt/C++. Interface to deal with Horizon API
 
+To include the SDK, just add it in your .pro file
+include($$PWD/StellarQtSDK/StellarQtSDK.pri)
 
 
 Create an account address:
