@@ -15,7 +15,14 @@ Memo *Memo::parse(QString type, QString memo)
         return Memo::none();
     } else {
         if (type=="text") {
-            return Memo::text(memo);
+            // Because of the way "encoding/json" works on structs in Go, if transaction
+            // has an empty `memo_text` value, the `memo` field won't be present in a JSON
+            // representation of a transaction. That's why we need to handle a special case
+            // here.
+            if(!memo.isNull())
+                return Memo::text(memo);
+            else
+                return Memo::text("");//null!=empty
         } else if (type=="id") {
             return Memo::id(memo.toLongLong());
         } else if (type=="hash") {
@@ -34,7 +41,14 @@ Memo *Memo::parse(QString type, QByteArray memo)
         return Memo::none();
     } else {
         if (type=="text") {
-            return Memo::text(QString::fromUtf8(memo));
+            // Because of the way "encoding/json" works on structs in Go, if transaction
+            // has an empty `memo_text` value, the `memo` field won't be present in a JSON
+            // representation of a transaction. That's why we need to handle a special case
+            // here.
+            if(!memo.isNull())
+                return Memo::text(QString::fromUtf8(memo));
+            else
+                return Memo::text("");//null!=empty
         } else if (type=="id") {
             return Memo::id(QString::fromUtf8(memo).toLongLong());
         } else if (type=="hash") {
