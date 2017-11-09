@@ -6,13 +6,13 @@ CONFIG += c++11 testcase
 DEFINES += STELLAR_ALLOW_UNSECURE_RANDOM
 DEFINES += STELLAR_SKIP_LIVE_TESTS
 
-TARGET = StellarQore
+TARGET = StellarQtSDKTest
 CONFIG += console
 CONFIG -= app_bundle
 
 TEMPLATE = app
 
-include(StellarQore.pri)
+include(StellarQtSDK.pri)
 
 
 
