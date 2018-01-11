@@ -239,6 +239,24 @@ private slots:
                );
      }
 
+     void testAllowTrustOperationAssetCodeBuffer() {
+       // GC5SIC4E3V56VOHJ3OZAX5SJDTWY52JYI2AFK6PUGSXFVRJQYQXXZBZF
+       KeyPair* source = KeyPair::fromSecretSeed(QString("SC4CGETADVYTCR5HEAVZRB3DZQY5Y4J7RFNJTRA6ESMHIPEZUSTE2QDK"));
+       // GDW6AUTBXTOC7FIKUO5BOO3OGLK4SF7ZPOBLMQHMZDI45J2Z6VXRB5NR
+       KeyPair* trustor = KeyPair::fromSecretSeed(QString("SDHZGHURAYXKU2KMVHPOXI6JG2Q4BSQUQCEOY72O3QQTCLR2T455PMII"));
+
+       QString assetCode = "USDABC";
+       bool authorize = true;
+
+       AllowTrustOperation* operation = AllowTrustOperation::create(trustor, assetCode, authorize)
+           ->setSourceAccount(source);
+
+       auto xdr = operation->toXdr();
+       AllowTrustOperation* parsedOperation = (AllowTrustOperation*) Operation::fromXdr(xdr);
+
+       QCOMPARE(assetCode, parsedOperation->getAssetCode());
+     }
+
      void testSetOptionsOperation(){
        // GC5SIC4E3V56VOHJ3OZAX5SJDTWY52JYI2AFK6PUGSXFVRJQYQXXZBZF
        KeyPair* source = KeyPair::fromSecretSeed(QString("SC4CGETADVYTCR5HEAVZRB3DZQY5Y4J7RFNJTRA6ESMHIPEZUSTE2QDK"));

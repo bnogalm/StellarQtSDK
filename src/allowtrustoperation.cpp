@@ -48,9 +48,9 @@ KeyPair *AllowTrustOperation::getTrustor() {
 QString AllowTrustOperation::getAssetCode() {
     switch (m_op.asset.type) {
     case stellar::AssetType::ASSET_TYPE_CREDIT_ALPHANUM4:
-        return QString::fromUtf8((char*)m_op.asset.alphaNum4.assetCode,4);
+        return Util::removeTailChars(QString::fromUtf8((char*)m_op.asset.alphaNum4.assetCode,4),'\0');
     case stellar::AssetType::ASSET_TYPE_CREDIT_ALPHANUM12:
-        return QString::fromUtf8((char*)m_op.asset.alphaNum12.assetCode,12);
+        return Util::removeTailChars(QString::fromUtf8((char*)m_op.asset.alphaNum12.assetCode,12),'\0');
     default:
         throw std::runtime_error("Unknown asset code");
     }
