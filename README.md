@@ -8,17 +8,21 @@ include($$PWD/StellarQtSDK/StellarQtSDK.pri)
 Create an account address:
 Randoms in some platforms are not true randoms, so i suggest to mix some "random" numbers with human noise (sensors, mouse movements, etc...)
 
-            KeyPair* accountAddress= KeyPair::random(userGenerated32randomBytes);
+```c++
+KeyPair* accountAddress= KeyPair::random(userGenerated32randomBytes);
+```
             
 If you trust std::random_device, define DEFINES += STELLAR_ALLOW_UNSECURE_RANDOM so you can use KeyPair::random();
             
 Choose network to use and build a server object
 
-            Network::useTestNetwork();//select the network to use
-            Server * server = new Server("https://horizon-testnet.stellar.org");//choose a horizon host
+```c++
+Network::useTestNetwork();//select the network to use
+Server * server = new Server("https://horizon-testnet.stellar.org");//choose a horizon host
+```
             
 Request account data:
-
+```c++
         AccountResponse * response = server->accounts().account(accountAddress);
 
         connect(response,&AccountResponse::ready,[response](){
@@ -27,8 +31,10 @@ Request account data:
             }
             //response contains account data
         });
-Make a transaction:
+```
 
+Make a transaction:
+```c++
     //First you should refresh the account data to get the last secuence number.
     AccountResponse * selfAccountResponse= server->accounts().account(accountAddress);
 
@@ -58,10 +64,11 @@ Make a transaction:
             }
         });
     });
-    
+```
     
 Stream transactions: We request to horizon to stream the next transaction from the last we know. This way when there is a new one, horizon will send to us the new transaction we update the cursor and refresh the request again.
 
+```c++
         auto builder =  server->payments().forAccount(accountAddress).order(RequestBuilder::Order::ASC).limit(1)
                 .stream();
 
@@ -75,3 +82,4 @@ Stream transactions: We request to horizon to stream the next transaction from t
             //restart all this function to wait for the next transaction.
         });
         connect(response,&OperationResponse::error,this,/*restart all this function*/);
+```
