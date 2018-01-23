@@ -55,7 +55,9 @@ HEADERS += \
     test/assettest.h \
     test/accountflagtest.h \
     test/responses/assetdeserializertest.h \
-    test/responses/transactiondeserializertest.h
+    test/responses/transactiondeserializertest.h \
+    test/requests/assetsrequestbuildertest.h \
+    test/responses/assetspagedeserializertest.h
 
 SOURCES += \
     test/main.cpp

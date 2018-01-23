@@ -3,6 +3,7 @@
 #include <QUrl>
 #include <QNetworkAccessManager>
 #include "requests/accountsrequestbuilder.h"
+#include "requests/assetsrequestbuilder.h"
 #include "requests/paymentsrequestbuilder.h"
 #include "requests/transactionsrequestbuilder.h"
 #include "requests/tradesrequestbuilder.h"
@@ -54,6 +55,12 @@ public:
          * Returns {@link AccountsRequestBuilder} instance.
          */
     AccountsRequestBuilder accounts();
+
+    /**
+     * Returns {@link AssetsRequestBuilder} instance.
+     */
+    AssetsRequestBuilder assets();
+
 
     /**
          * Returns {@link EffectsRequestBuilder} instance.

@@ -28,6 +28,15 @@ Asset *Asset::createNonNativeAsset(QString code, const KeyPair &issuer)
     }
 }
 
+Asset *Asset::create(QString type, QString code, QString issuer) {
+    if (type == "native") {
+        return new AssetTypeNative();
+    }
+    else{
+        return Asset::createNonNativeAsset(code, KeyPair::fromAccountId(issuer));
+    }
+}
+
 Asset *Asset::fromXdr(stellar::Asset &xdr) {
     switch (xdr.type) {
     case stellar::AssetType::ASSET_TYPE_NATIVE:

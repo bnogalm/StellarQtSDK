@@ -35,6 +35,10 @@ AccountsRequestBuilder Server::accounts() {
     return AccountsRequestBuilder(this);
 }
 
+AssetsRequestBuilder Server::assets() {
+    return AssetsRequestBuilder(this);
+}
+
 EffectsRequestBuilder Server::effects() {
     return EffectsRequestBuilder(this);
 }
