@@ -7,6 +7,7 @@
 #include "requests/paymentsrequestbuilder.h"
 #include "requests/transactionsrequestbuilder.h"
 #include "requests/tradesrequestbuilder.h"
+#include "requests/tradeaggregationsrequestbuilder.h"
 #include "requests/pathsrequestbuilder.h"
 #include "requests/orderbookrequestbuilder.h"
 #include "requests/offersrequestbuilder.h"
@@ -90,6 +91,12 @@ public:
          * Returns {@link TradesRequestBuilder} instance.
          */
     TradesRequestBuilder trades();
+
+    /**
+    * Returns {@link TradeAggregationsRequestBuilder} instance.
+    */
+    TradeAggregationsRequestBuilder tradeAggregations(Asset* baseAsset, Asset* counterAsset, qint64 startTime, qint64 endTime, qint64 resolution);
+
 
     /**
          * Returns {@link PathsRequestBuilder} instance.
