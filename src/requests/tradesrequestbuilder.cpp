@@ -3,28 +3,33 @@
 #include "../assettypecreditalphanum.h"
 #include "../keypair.h"
 #include "../server.h"
-TradesRequestBuilder::TradesRequestBuilder(Server *server):RequestBuilder(server, "order_book/trades")
+TradesRequestBuilder::TradesRequestBuilder(Server *server):RequestBuilder(server, "trades")
 {
 
 }
 
-TradesRequestBuilder &TradesRequestBuilder::buyingAsset(Asset *asset) {
+TradesRequestBuilder &TradesRequestBuilder::baseAsset(Asset *asset) {
     checkNotNull(asset, "asset cannot be null");
-    addParameter("buying_asset_type",asset->getType());
+    addParameter("base_asset_type",asset->getType());
     if (AssetTypeCreditAlphaNum *creditAlphaNumAsset = dynamic_cast<AssetTypeCreditAlphaNum*>(asset)) {
-        addParameter("buying_asset_code", creditAlphaNumAsset->getCode());
-        addParameter("buying_asset_issuer", creditAlphaNumAsset->getIssuer().getAccountId());
+        addParameter("base_asset_code", creditAlphaNumAsset->getCode());
+        addParameter("base_asset_issuer", creditAlphaNumAsset->getIssuer().getAccountId());
     }
     return *this;
 }
 
-TradesRequestBuilder &TradesRequestBuilder::sellingAsset(Asset *asset) {
+TradesRequestBuilder &TradesRequestBuilder::counterAsset(Asset *asset) {
     checkNotNull(asset, "asset cannot be null");
-    addParameter("selling_asset_type",asset->getType());
+    addParameter("counter_asset_type",asset->getType());
     if (AssetTypeCreditAlphaNum *creditAlphaNumAsset = dynamic_cast<AssetTypeCreditAlphaNum*>(asset)) {
-        addParameter("selling_asset_code", creditAlphaNumAsset->getCode());
-        addParameter("selling_asset_issuer", creditAlphaNumAsset->getIssuer().getAccountId());
+        addParameter("counter_asset_code", creditAlphaNumAsset->getCode());
+        addParameter("counter_asset_issuer", creditAlphaNumAsset->getIssuer().getAccountId());
     }
+    return *this;
+}
+
+TradesRequestBuilder &TradesRequestBuilder::offerId(QString offerId) {
+    addParameter("offer_id", offerId);
     return *this;
 }
 

@@ -12,22 +12,16 @@ namespace TradeResponseAttach
  */
 class Links {
     Q_GADGET
-    Q_PROPERTY(Link self MEMBER m_self)
-    Q_PROPERTY(Link seller MEMBER m_seller)
-    Q_PROPERTY(Link buyer MEMBER m_buyer)
-    Link m_self;
-    Link m_seller;
-    Link m_buyer;
+    Q_PROPERTY(Link base MEMBER m_base)
+    Q_PROPERTY(Link counter MEMBER m_counter)
+    Q_PROPERTY(Link operation MEMBER m_operation)
+    Link m_base;
+    Link m_counter;
+    Link m_operation;
 public:
-    Link& getSelf() {
-        return m_self;
-    }
-    Link& getSeller() {
-        return m_seller;
-    }
-    Link& getBuyer() {
-        return m_buyer;
-    }
+    Link& getBase();
+    Link& getCounter();
+    Link& getOperation();
     bool operator !=(Links& links)
     {
         Q_UNUSED(links)
@@ -36,9 +30,10 @@ public:
 };
 }
 class KeyPair;
+class Asset;
 /**
  * Represents trades response.
- * @see <a href="https://www.stellar.org/developers/horizon/reference/endpoints/trades-for-orderbook.html" target="_blank">Trades for Orderbook documentation</a>
+ * @see <a href="https://www.stellar.org/developers/horizon/reference/endpoints/trades.html" target="_blank">Trades documentation</a>
  * @see org.stellar.sdk.requests.TradesRequestBuilder
  * @see org.stellar.sdk.Server#trades()
  */
@@ -48,42 +43,53 @@ class TradeResponse : public Response
     Q_OBJECT
     Q_PROPERTY(QString id MEMBER m_id)
     Q_PROPERTY(QString paging_token MEMBER m_pagingToken)
-    Q_PROPERTY(QString created_at MEMBER m_createdAt)
-    Q_PROPERTY(QString seller READ seller WRITE setSeller)
+    Q_PROPERTY(QString ledger_close_time MEMBER m_ledgerCloseTime)
+    Q_PROPERTY(QString offer_id MEMBER m_offerId)
+    Q_PROPERTY(bool base_is_seller MEMBER m_baseIsSeller)
 
-    Q_PROPERTY(QString sold_amount MEMBER m_soldAmount)
-    Q_PROPERTY(QString sold_asset_type MEMBER m_soldAssetType)
-    Q_PROPERTY(QString sold_asset_code MEMBER m_soldAssetCode)
-    Q_PROPERTY(QString sold_asset_issuer MEMBER m_soldAssetIssuer)
 
-    Q_PROPERTY(QString buyer READ buyer WRITE setBuyer)
+    Q_PROPERTY(QString base_account READ baseAccount WRITE setBaseAccount)
 
-    Q_PROPERTY(QString bought_amount MEMBER m_boughtAmount)
-    Q_PROPERTY(QString bought_asset_type MEMBER m_boughtAssetType)
-    Q_PROPERTY(QString bought_asset_code MEMBER m_boughtAssetCode)
-    Q_PROPERTY(QString bought_asset_issuer MEMBER m_boughtAssetIssuer)
+    Q_PROPERTY(QString base_amount MEMBER m_baseAmount)
+    Q_PROPERTY(QString base_asset_type MEMBER m_baseAssetType WRITE setBaseAssetType)
+    Q_PROPERTY(QString base_asset_code MEMBER m_baseAssetCode WRITE setBaseAssetCode)
+    Q_PROPERTY(QString base_asset_issuer MEMBER m_baseAssetIssuer WRITE setBaseAssetIssuer)
+
+    Q_PROPERTY(QString counter_account READ counterAccount WRITE setCounterAccount)
+
+    Q_PROPERTY(QString counter_amount MEMBER m_counterAmount)
+    Q_PROPERTY(QString counter_asset_type MEMBER m_counterAssetType WRITE setCounterAssetType)
+    Q_PROPERTY(QString counter_asset_code MEMBER m_counterAssetCode WRITE setCounterAssetCode)
+    Q_PROPERTY(QString counter_asset_issuer MEMBER m_counterAssetIssuer WRITE setCounterAssetIssuer)
 
     Q_PROPERTY(TradeResponseAttach::Links _links MEMBER m_links)
 
     QString m_id;
     QString m_pagingToken;
-    QString m_createdAt;
-    QString m_seller;
-    KeyPair *m_sellerKeypair;
+    QString m_ledgerCloseTime;
+    QString m_offerId;
+    bool m_baseIsSeller;
 
-    QString m_soldAmount;
-    QString m_soldAssetType;
-    QString m_soldAssetCode;
-    QString m_soldAssetIssuer;
 
-    QString m_buyer;
-    KeyPair *m_buyerKeypair;
 
-    QString m_boughtAmount;
-    QString m_boughtAssetType;
-    QString m_boughtAssetCode;
-    QString m_boughtAssetIssuer;
+    QString m_baseAccount;
+    KeyPair *m_baseAccountKeypair;
+
+    QString m_baseAmount;
+    QString m_baseAssetType;
+    QString m_baseAssetCode;
+    QString m_baseAssetIssuer;
+
+    QString m_counterAccount;
+    KeyPair *m_counterAccountKeypair;
+
+    QString m_counterAmount;
+    QString m_counterAssetType;
+    QString m_counterAssetCode;
+    QString m_counterAssetIssuer;
     TradeResponseAttach::Links m_links;
+    Asset *m_baseAsset;
+    Asset *m_counterAsset;
 
 public:
     Q_INVOKABLE explicit TradeResponse(QNetworkReply *reply=nullptr);
@@ -93,35 +99,47 @@ public:
 
     QString getPagingToken() const;
 
-    QString getCreatedAt() const;
+    bool isBaseSeller() const;
 
-    KeyPair& getSeller();
+    KeyPair& getBaseAccount();
 
-    QString getSoldAmount() const;
+    QString getBaseAmount() const;
 
-    QString getSoldAssetType() const;
+    QString getBaseAssetType() const;
 
-    QString getSoldAssetCode() const;
+    QString getBaseAssetCode() const;
 
-    QString getSoldAssetIssuer() const;
+    QString getBaseAssetIssuer() const;
 
-    KeyPair& getBuyer();
+    KeyPair& getCounterAccount();
 
-    QString getBoughtAmount() const;
+    QString getCounterAmount() const;
 
-    QString getBoughtAssetType() const;
+    QString getCounterAssetType() const;
 
-    QString getBoughtAssetCode() const;
+    QString getCounterAssetCode() const;
 
-    QString getBoughtAssetIssuer() const;
+    QString getCounterAssetIssuer() const;
 
     TradeResponseAttach::Links& getLinks();
     QString seller() const;
     QString buyer() const;
 
+    QString baseAccount() const;
+
+    QString counterAccount() const;
+
+    Asset* getBaseAsset();
+    Asset* getCounterAsset();
 public slots:
-    void setSeller(QString seller);
-    void setBuyer(QString buyer);
+    void setBaseAccount(QString base_account);
+    void setCounterAccount(QString counter_account);
+    void setBaseAssetType(QString base_asset_type);
+    void setBaseAssetCode(QString base_asset_code);
+    void setBaseAssetIssuer(QString base_asset_issuer);
+    void setCounterAssetType(QString counter_asset_type);
+    void setCounterAssetCode(QString counter_asset_code);
+    void setCounterAssetIssuer(QString counter_asset_issuer);
 };
 
 #endif // TRADERESPONSE_H

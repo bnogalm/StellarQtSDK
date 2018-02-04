@@ -13,9 +13,10 @@ public:
     TradesRequestBuilder(Server* server);
 
 
-    TradesRequestBuilder& buyingAsset(Asset* asset);
+    TradesRequestBuilder& baseAsset(Asset* asset);
 
-    TradesRequestBuilder& sellingAsset(Asset* asset);
+    TradesRequestBuilder& counterAsset(Asset* asset);
+    TradesRequestBuilder& offerId(QString offerId);
     /**
      * Requests specific <code>uri</code> and returns {@link TradeResponse}.
      * This method is helpful for getting the links.

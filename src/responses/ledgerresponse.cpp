@@ -50,6 +50,16 @@ QString LedgerResponse::getBaseReserve() const{
     return m_baseReserve;
 }
 
+QString LedgerResponse::getBaseFeeInStroops() const
+{
+    return m_baseFeeInStroops;
+}
+
+QString LedgerResponse::getBaseReserveInStroops() const
+{
+    return m_baseReserveInStroops;
+}
+
 qint32 LedgerResponse::getMaxTxSetSize() const{
     return m_maxTxSetSize;
 }
