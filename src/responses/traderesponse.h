@@ -43,9 +43,9 @@ class TradeResponse : public Response
     Q_OBJECT
     Q_PROPERTY(QString id MEMBER m_id)
     Q_PROPERTY(QString paging_token MEMBER m_pagingToken)
-    Q_PROPERTY(QString ledger_close_time MEMBER m_ledgerCloseTime)
-    Q_PROPERTY(QString offer_id MEMBER m_offerId)
-    Q_PROPERTY(bool base_is_seller MEMBER m_baseIsSeller)
+    Q_PROPERTY(QString ledger_close_time MEMBER m_ledgerCloseTime READ getLedgerCloseTime)
+    Q_PROPERTY(QString offer_id MEMBER m_offerId READ getOfferId)
+    Q_PROPERTY(bool base_is_seller MEMBER m_baseIsSeller READ isBaseSeller)
 
 
     Q_PROPERTY(QString base_account READ baseAccount WRITE setBaseAccount)
@@ -98,6 +98,10 @@ public:
     QString getId() const;
 
     QString getPagingToken() const;
+
+    QString getLedgerCloseTime() const;
+
+    QString getOfferId() const;
 
     bool isBaseSeller() const;
 

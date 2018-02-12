@@ -30,6 +30,16 @@ QString TradeResponse::getPagingToken() const{
     return m_pagingToken;
 }
 
+QString TradeResponse::getLedgerCloseTime() const
+{
+    return m_ledgerCloseTime;
+}
+
+QString TradeResponse::getOfferId() const
+{
+    return m_offerId;
+}
+
 bool TradeResponse::isBaseSeller() const
 {
     return m_baseIsSeller;
