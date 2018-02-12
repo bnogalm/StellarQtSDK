@@ -66,12 +66,16 @@ class OperationResponse : public Response
     Q_PROPERTY(qint64 id MEMBER m_id)
     Q_PROPERTY(QString source_account READ sourceAccount WRITE setSourceAccount)
     Q_PROPERTY(QString paging_token MEMBER m_pagingToken)
+    Q_PROPERTY(QString created_at MEMBER m_createdAt)
+    Q_PROPERTY(QString transaction_hash MEMBER m_transactionHash)
     Q_PROPERTY(QString type MEMBER m_type)
     Q_PROPERTY(OperationResponseAttach::Links _links MEMBER m_links)
     qint64 m_id;
     QString m_sourceAccount;
     KeyPair *m_sourceAccountKeypair;
     QString m_pagingToken;
+    QString m_createdAt;
+    QString m_transactionHash;
     QString m_type;
     OperationResponseAttach::Links m_links;
 
@@ -79,12 +83,16 @@ class OperationResponse : public Response
 public:
     explicit OperationResponse(QNetworkReply* reply=nullptr);
     virtual ~OperationResponse();
-      qint64 getId();
+      qint64 getId() const;
 
       KeyPair& getSourceAccount();
 
-      QString getPagingToken();
-
+      QString getPagingToken() const;
+      QString getCreatedAt() const;
+      /**
+      * Returns transaction hash of transaction this operation belongs to.
+      */
+      QString getTransactionHash() const;
       /**
        * <p>Returns operation type. Possible types:</p>
        * <ul>
@@ -101,7 +109,7 @@ public:
        *   <li>manage_data</li>
        * </ul>
        */
-      QString getType();
+      QString getType() const;
 
       OperationResponseAttach::Links& getLinks();
 
@@ -113,16 +121,3 @@ Q_DECLARE_METATYPE(OperationResponseAttach::Links)
 Q_DECLARE_METATYPE(OperationResponse*)
 #endif // OPERATIONRESPONSE_H
 
-
-///**
-// * Abstract class for operation responses.
-// * @see <a href="https://www.stellar.org/developers/horizon/reference/resources/operation.html" target="_blank">Operation documentation</a>
-// * @see org.stellar.sdk.requests.OperationsRequestBuilder
-// * @see org.stellar.sdk.Server#operations()
-// */
-//public abstract class OperationResponse extends Response {
-
-
-
-
-//}

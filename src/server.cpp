@@ -35,6 +35,10 @@ AccountsRequestBuilder Server::accounts() {
     return AccountsRequestBuilder(this);
 }
 
+AssetsRequestBuilder Server::assets() {
+    return AssetsRequestBuilder(this);
+}
+
 EffectsRequestBuilder Server::effects() {
     return EffectsRequestBuilder(this);
 }
@@ -58,6 +62,10 @@ OrderBookRequestBuilder Server::orderBook() {
 
 TradesRequestBuilder Server::trades() {
     return TradesRequestBuilder(this);
+}
+
+TradeAggregationsRequestBuilder Server::tradeAggregations(Asset *baseAsset, Asset *counterAsset, qint64 startTime, qint64 endTime, qint64 resolution) {
+    return TradeAggregationsRequestBuilder(this, baseAsset, counterAsset, startTime, endTime, resolution);
 }
 
 PathsRequestBuilder Server::paths() {

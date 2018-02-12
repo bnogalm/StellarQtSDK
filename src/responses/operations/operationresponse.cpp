@@ -15,7 +15,8 @@ OperationResponse::~OperationResponse()
         delete m_sourceAccountKeypair;
 }
 
-qint64 OperationResponse::getId() {
+qint64 OperationResponse::getId() const
+{
     return m_id;
 }
 
@@ -26,15 +27,28 @@ KeyPair &OperationResponse::getSourceAccount() {
     return *m_sourceAccountKeypair;
 }
 
-QString OperationResponse::getPagingToken() {
+QString OperationResponse::getPagingToken() const
+{
     return m_pagingToken;
 }
 
-QString OperationResponse::getType() {
+QString OperationResponse::getCreatedAt() const
+{
+    return m_createdAt;
+}
+
+QString OperationResponse::getTransactionHash() const
+{
+    return m_transactionHash;
+}
+
+QString OperationResponse::getType() const
+{
     return m_type;
 }
 
-OperationResponseAttach::Links &OperationResponse::getLinks() {
+OperationResponseAttach::Links &OperationResponse::getLinks()
+{
     return m_links;
 }
 

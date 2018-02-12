@@ -17,7 +17,7 @@ public:
      */
     static Asset* createNonNativeAsset(QString code, KeyPair* issuer);
     static Asset* createNonNativeAsset(QString code, const KeyPair& issuer);//makes a copy of issuer
-
+    static Asset* create(QString type, QString code, QString issuer);
     /**
      * Generates Asset object from a given XDR object
      * @param xdr XDR object

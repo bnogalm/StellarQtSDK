@@ -113,7 +113,11 @@ SOURCES += \
     $$PWD/src/responses/effects/trustlinecreatedeffectresponse.cpp \
     $$PWD/src/responses/effects/trustlineremovedeffectresponse.cpp \
     $$PWD/src/responses/effects/trustlineupdatedeffectresponse.cpp \
-    $$PWD/src/responses/effectspage.cpp
+    $$PWD/src/responses/effectspage.cpp \
+    $$PWD/src/requests/assetsrequestbuilder.cpp \
+    $$PWD/src/responses/assetresponse.cpp \
+    $$PWD/src/requests/tradeaggregationsrequestbuilder.cpp \
+    $$PWD/src/responses/tradeaggregationresponse.cpp
 
 # The following define makes your compiler emit warnings if you use
 # any feature of Qt which as been marked deprecated (the exact warnings
@@ -233,7 +237,11 @@ HEADERS += \
     $$PWD/src/responses/effects/trustlinecreatedeffectresponse.h \
     $$PWD/src/responses/effects/trustlineremovedeffectresponse.h \
     $$PWD/src/responses/effects/trustlineupdatedeffectresponse.h \
-    $$PWD/src/responses/effectspage.h
+    $$PWD/src/responses/effectspage.h \
+    $$PWD/src/requests/assetsrequestbuilder.h \
+    $$PWD/src/responses/assetresponse.h \
+    $$PWD/src/requests/tradeaggregationsrequestbuilder.h \
+    $$PWD/src/responses/tradeaggregationresponse.h
 
 #to maintain it easier, until we dont support more than read FEDERATION_SERVER address, we dont use CPPTOML
 #CPPTOML is not compiling in android caused by some problems in android NDK

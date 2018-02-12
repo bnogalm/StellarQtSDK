@@ -17,6 +17,9 @@ bool Link::getTemplated() const
 
 QUrl Link::getUri() {
     // TODO templated
-    return QUrl(m_href);
+    QUrl uri(m_href);
+    if(!uri.isValid())
+        throw std::runtime_error("invalid uri");
+    return uri;
 }
 

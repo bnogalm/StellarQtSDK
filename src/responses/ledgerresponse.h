@@ -61,6 +61,8 @@ class LedgerResponse : public Response
     Q_PROPERTY(QString fee_pool MEMBER m_feePool)
     Q_PROPERTY(qint64 base_fee MEMBER m_baseFee)
     Q_PROPERTY(QString base_reserve MEMBER m_baseReserve)
+    Q_PROPERTY(QString base_fee_in_stroops MEMBER m_baseFeeInStroops)
+    Q_PROPERTY(QString base_reserve_in_stroops MEMBER m_baseReserveInStroops)
     Q_PROPERTY(qint32 max_tx_set_size MEMBER m_maxTxSetSize)
     Q_PROPERTY(LedgerResponseAttach::Links _links MEMBER m_links)
 
@@ -75,6 +77,8 @@ class LedgerResponse : public Response
     QString m_feePool;
     qint64 m_baseFee;
     QString m_baseReserve;
+    QString m_baseFeeInStroops;
+    QString m_baseReserveInStroops;
     qint32 m_maxTxSetSize;
     LedgerResponseAttach::Links m_links;
 
@@ -91,6 +95,8 @@ public:
     QString getFeePool() const;
     qint64 getBaseFee() const;
     QString getBaseReserve() const;
+    QString getBaseFeeInStroops() const;
+    QString getBaseReserveInStroops() const;
     qint32 getMaxTxSetSize() const;
     LedgerResponseAttach::Links& getLinks();
 };

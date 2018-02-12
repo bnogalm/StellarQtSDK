@@ -1,17 +1,25 @@
 #include "traderesponse.h"
 #include "../keypair.h"
+#include "../asset.h"
 TradeResponse::TradeResponse(QNetworkReply *reply)
-    :Response(reply),m_sellerKeypair(nullptr),m_buyerKeypair(nullptr)
+    :Response(reply)
+    ,m_baseIsSeller(false)
+    ,m_baseAccountKeypair(nullptr),m_counterAccountKeypair(nullptr)
+    ,m_baseAsset(nullptr),m_counterAsset(nullptr)
 {
 
 }
 
 TradeResponse::~TradeResponse()
 {
-    if(m_sellerKeypair)
-        delete m_sellerKeypair;
-    if(m_buyerKeypair)
-        delete m_buyerKeypair;
+    if(m_baseAccountKeypair)
+        delete m_baseAccountKeypair;
+    if(m_counterAccountKeypair)
+        delete m_counterAccountKeypair;
+    if(m_baseAsset)
+        delete m_baseAsset;
+    if(m_counterAsset)
+        delete m_counterAsset;
 }
 
 QString TradeResponse::getId() const{
@@ -22,88 +30,189 @@ QString TradeResponse::getPagingToken() const{
     return m_pagingToken;
 }
 
-QString TradeResponse::getCreatedAt() const{
-    return m_createdAt;
+QString TradeResponse::getLedgerCloseTime() const
+{
+    return m_ledgerCloseTime;
 }
 
-KeyPair &TradeResponse::getSeller() {
-    if(!m_sellerKeypair)
+QString TradeResponse::getOfferId() const
+{
+    return m_offerId;
+}
+
+bool TradeResponse::isBaseSeller() const
+{
+    return m_baseIsSeller;
+}
+
+KeyPair &TradeResponse::getBaseAccount() {
+    if(!m_baseAccountKeypair)
     {
-        m_sellerKeypair = KeyPair::fromAccountId(m_seller);
+        m_baseAccountKeypair = KeyPair::fromAccountId(m_baseAccount);
     }
-    return *m_sellerKeypair;
+    return *m_baseAccountKeypair;
 }
 
-QString TradeResponse::getSoldAmount() const{
-    return m_soldAmount;
+QString TradeResponse::getBaseAmount() const{
+    return m_baseAmount;
 }
 
-QString TradeResponse::getSoldAssetType() const{
-    return m_soldAssetType;
+QString TradeResponse::getBaseAssetType() const{
+    return m_baseAssetType;
 }
 
-QString TradeResponse::getSoldAssetCode() const{
-    return m_soldAssetCode;
+QString TradeResponse::getBaseAssetCode() const{
+    return m_baseAssetCode;
 }
 
-QString TradeResponse::getSoldAssetIssuer() const{
-    return m_soldAssetIssuer;
+QString TradeResponse::getBaseAssetIssuer() const{
+    return m_baseAssetIssuer;
 }
 
-KeyPair &TradeResponse::getBuyer() {
-    if(!m_buyerKeypair)
+KeyPair &TradeResponse::getCounterAccount() {
+    if(!m_counterAccountKeypair)
     {
-        m_buyerKeypair = KeyPair::fromAccountId(m_buyer);
+        m_counterAccountKeypair = KeyPair::fromAccountId(m_counterAccount);
     }
-    return *m_buyerKeypair;
+    return *m_counterAccountKeypair;
 }
 
-QString TradeResponse::getBoughtAmount() const{
-    return m_boughtAmount;
+QString TradeResponse::getCounterAmount() const{
+    return m_counterAmount;
 }
 
-QString TradeResponse::getBoughtAssetType() const{
-    return m_boughtAssetType;
+QString TradeResponse::getCounterAssetType() const{
+    return m_counterAssetType;
 }
 
-QString TradeResponse::getBoughtAssetCode() const{
-    return m_boughtAssetCode;
+QString TradeResponse::getCounterAssetCode() const{
+    return m_counterAssetCode;
 }
 
-QString TradeResponse::getBoughtAssetIssuer() const{
-    return m_boughtAssetIssuer;
+QString TradeResponse::getCounterAssetIssuer() const{
+    return m_counterAssetIssuer;
 }
 
 TradeResponseAttach::Links &TradeResponse::getLinks(){
     return m_links;
 }
 
-QString TradeResponse::seller() const
+QString TradeResponse::baseAccount() const
 {
-    return m_seller;
+    return m_baseAccount;
 }
 
-QString TradeResponse::buyer() const
+QString TradeResponse::counterAccount() const
 {
-    return m_buyer;
+    return m_counterAccount;
 }
 
-void TradeResponse::setSeller(QString seller)
+Asset *TradeResponse::getBaseAsset()
 {
-    if(m_sellerKeypair && m_seller!=seller)
+    if(!m_baseAsset)
     {
-        delete m_sellerKeypair;
-        m_sellerKeypair=nullptr;
+        m_baseAsset = Asset::create(m_baseAssetType,m_baseAssetCode,m_baseAssetIssuer);
     }
-    m_seller = seller;
+    return m_baseAsset;
 }
 
-void TradeResponse::setBuyer(QString buyer)
+Asset *TradeResponse::getCounterAsset()
 {
-    if(m_buyerKeypair && m_buyer!=buyer)
+    if(!m_counterAsset)
     {
-        delete m_buyerKeypair;
-        m_buyerKeypair=nullptr;
+        m_counterAsset = Asset::create(m_counterAssetType,m_counterAssetCode, m_counterAssetIssuer);
     }
-    m_buyer = buyer;
+    return m_counterAsset;
+}
+
+void TradeResponse::setBaseAccount(QString base_account)
+{
+    if(this->m_baseAccountKeypair)
+    {
+        delete m_baseAccountKeypair;
+        m_baseAccountKeypair=nullptr;
+    }
+    m_baseAccount = base_account;
+}
+
+void TradeResponse::setCounterAccount(QString counter_account)
+{
+    if(this->m_counterAccountKeypair)
+    {
+        delete m_counterAccountKeypair;
+        m_counterAccountKeypair=nullptr;
+    }
+    m_counterAccount = counter_account;
+}
+
+void TradeResponse::setBaseAssetType(QString base_asset_type)
+{
+    if(this->m_baseAsset)
+    {
+        delete m_baseAsset;
+        m_baseAsset=nullptr;
+    }
+    m_baseAssetType = base_asset_type;
+}
+
+void TradeResponse::setBaseAssetCode(QString base_asset_code)
+{
+    if(this->m_baseAsset)
+    {
+        delete m_baseAsset;
+        m_baseAsset=nullptr;
+    }
+    m_baseAssetCode = base_asset_code;
+}
+
+void TradeResponse::setBaseAssetIssuer(QString base_asset_issuer)
+{
+    if(this->m_baseAsset)
+    {
+        delete m_baseAsset;
+        m_baseAsset=nullptr;
+    }
+    m_baseAssetIssuer = base_asset_issuer;
+}
+
+void TradeResponse::setCounterAssetType(QString counter_asset_type)
+{
+    if(m_counterAsset)
+    {
+        delete m_counterAsset;
+        m_counterAsset = nullptr;
+    }
+    m_counterAssetType = counter_asset_type;
+}
+
+void TradeResponse::setCounterAssetCode(QString counter_asset_code)
+{
+    if(m_counterAsset)
+    {
+        delete m_counterAsset;
+        m_counterAsset = nullptr;
+    }
+    m_counterAssetCode = counter_asset_code;
+}
+
+void TradeResponse::setCounterAssetIssuer(QString counter_asset_issuer)
+{
+    if(m_counterAsset)
+    {
+        delete m_counterAsset;
+        m_counterAsset = nullptr;
+    }
+    m_counterAssetIssuer = counter_asset_issuer;
+}
+
+Link &TradeResponseAttach::Links::getBase() {
+    return m_base;
+}
+
+Link &TradeResponseAttach::Links::getCounter() {
+    return m_counter;
+}
+
+Link &TradeResponseAttach::Links::getOperation() {
+    return m_operation;
 }

@@ -37,6 +37,8 @@ private slots:
             QCOMPARE(createAccountOperation->getPagingToken(), QString("3717508943056897"));
             QCOMPARE(createAccountOperation->getAccount().getAccountId(), QString("GDFH4NIYMIIAKRVEJJZOIGWKXGQUF3XHJG6ZM6CEA64AMTVDN44LHOQE"));
             QCOMPARE(createAccountOperation->getFunder().getAccountId(), QString("GBS43BF24ENNS3KPACUZVKK2VYPOZVBQO2CISGZ777RYGOPYC2FT6S3K"));
+            QCOMPARE(createAccountOperation->getCreatedAt(), QString("2018-01-22T21:30:53Z"));
+            QCOMPARE(createAccountOperation->getTransactionHash(), QString("dd9d10c80a344f4464df3ecaa63705a5ef4a0533ff2f2099d5ef371ab5e1c046"));
 
             PaymentOperationResponse* paymentOperation = (PaymentOperationResponse*) operationsPage.at(4);
             QCOMPARE(paymentOperation->getAmount(), QString("10.123"));
@@ -83,6 +85,8 @@ private:
             "        \"source_account\": \"GBS43BF24ENNS3KPACUZVKK2VYPOZVBQO2CISGZ777RYGOPYC2FT6S3K\",\n"
             "        \"type\": \"create_account\",\n"
             "        \"type_i\": 0,\n"
+            "        \"created_at\": \"2018-01-22T21:30:53Z\",\n"
+            "        \"transaction_hash\": \"dd9d10c80a344f4464df3ecaa63705a5ef4a0533ff2f2099d5ef371ab5e1c046\","
             "        \"starting_balance\": \"10000.0\",\n"
             "        \"funder\": \"GBS43BF24ENNS3KPACUZVKK2VYPOZVBQO2CISGZ777RYGOPYC2FT6S3K\",\n"
             "        \"account\": \"GDFH4NIYMIIAKRVEJJZOIGWKXGQUF3XHJG6ZM6CEA64AMTVDN44LHOQE\"\n"
