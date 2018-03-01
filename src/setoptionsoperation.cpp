@@ -1,6 +1,6 @@
 #include "setoptionsoperation.h"
 #include "signer.h"
-
+#include <QUrl>
 
 SetOptionsOperation::SetOptionsOperation(KeyPair *inflationDestination, Integer clearFlags
                                          , Integer setFlags, Integer masterKeyWeight, Integer lowThreshold
@@ -8,13 +8,13 @@ SetOptionsOperation::SetOptionsOperation(KeyPair *inflationDestination, Integer 
                                          , stellar::SignerKey signer, quint32 signerWeight)
     :m_inflationDestination(0)
 {
-    if (homeDomain.toUtf8().length() > 32) {
+    QByteArray homeDomainACE = QUrl::toAce(homeDomain);
+    if (homeDomainACE.length() > 32) {
         throw std::runtime_error("Home domain must be <= 32 characters");
     }
     else{
         stellar::string32& hd = m_op.homeDomain.filler();
-        QByteArray utf8 = homeDomain.toUtf8();
-        hd.set(utf8.data(),utf8.size());
+        hd.set(homeDomainACE.data(),homeDomainACE.size());
     }
     if(inflationDestination)
         m_op.inflationDest =  inflationDestination->getXdrPublicKey();
@@ -79,7 +79,7 @@ Integer SetOptionsOperation::getHighThreshold() {
 
 QString SetOptionsOperation::getHomeDomain() {
     if(m_op.homeDomain.filled)
-        return QString::fromUtf8(m_op.homeDomain.value.value.data(),m_op.homeDomain.value.value.size());
+        return QUrl::fromAce(QByteArray::fromRawData(m_op.homeDomain.value.value.data(),m_op.homeDomain.value.value.size()));
     return QString();
 }
 
