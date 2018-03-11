@@ -2,6 +2,13 @@
 
 LedgerResponse::LedgerResponse(QNetworkReply *reply)
     :Response(reply)
+    ,m_sequence(0)
+    ,m_transactionCount(0)
+    ,m_operationCount(0)
+    ,m_baseFee(0)
+    ,m_baseFeeInStroops(0)
+    ,m_baseReserveInStroops(0)
+    ,m_maxTxSetSize(0)
 {
 
 }
@@ -52,10 +59,20 @@ QString LedgerResponse::getBaseReserve() const{
 
 QString LedgerResponse::getBaseFeeInStroops() const
 {
-    return m_baseFeeInStroops;
+    return QString::number(m_baseFeeInStroops);
 }
 
 QString LedgerResponse::getBaseReserveInStroops() const
+{
+    return QString::number(m_baseReserveInStroops);
+}
+
+qint64 LedgerResponse::baseFeeInStroops() const
+{
+    return m_baseFeeInStroops;
+}
+
+qint64 LedgerResponse::baseReserveInStroops() const
 {
     return m_baseReserveInStroops;
 }

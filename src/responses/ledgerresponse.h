@@ -61,8 +61,9 @@ class LedgerResponse : public Response
     Q_PROPERTY(QString fee_pool MEMBER m_feePool)
     Q_PROPERTY(qint64 base_fee MEMBER m_baseFee)
     Q_PROPERTY(QString base_reserve MEMBER m_baseReserve)
-    Q_PROPERTY(QString base_fee_in_stroops MEMBER m_baseFeeInStroops)
-    Q_PROPERTY(QString base_reserve_in_stroops MEMBER m_baseReserveInStroops)
+    //java SDK uses String, but json contains a number, not a string, that can cause problems, we return
+    Q_PROPERTY(qint64 base_fee_in_stroops MEMBER m_baseFeeInStroops)
+    Q_PROPERTY(qint64 base_reserve_in_stroops MEMBER m_baseReserveInStroops)
     Q_PROPERTY(qint32 max_tx_set_size MEMBER m_maxTxSetSize)
     Q_PROPERTY(LedgerResponseAttach::Links _links MEMBER m_links)
 
@@ -77,8 +78,8 @@ class LedgerResponse : public Response
     QString m_feePool;
     qint64 m_baseFee;
     QString m_baseReserve;
-    QString m_baseFeeInStroops;
-    QString m_baseReserveInStroops;
+    qint64 m_baseFeeInStroops;
+    qint64 m_baseReserveInStroops;
     qint32 m_maxTxSetSize;
     LedgerResponseAttach::Links m_links;
 
@@ -97,6 +98,8 @@ public:
     QString getBaseReserve() const;
     QString getBaseFeeInStroops() const;
     QString getBaseReserveInStroops() const;
+    qint64 baseFeeInStroops() const;
+    qint64 baseReserveInStroops() const;
     qint32 getMaxTxSetSize() const;
     LedgerResponseAttach::Links& getLinks();
 };
