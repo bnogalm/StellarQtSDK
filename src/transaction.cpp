@@ -1,5 +1,5 @@
 #include "transaction.h"
-
+#include "account.h"
 
 Transaction::Transaction(KeyPair *sourceAccount, quint64 sequenceNumber, QVector<Operation *> operations, Memo *memo) {
     m_sourceAccount = checkNotNull(sourceAccount, "sourceAccount cannot be null");
@@ -114,6 +114,21 @@ stellar::Transaction Transaction::toXdr() {
     return transaction;
 }
 
+Transaction *Transaction::fromXdr(stellar::Transaction &xdr)
+{
+    KeyPair *sourceAccount = KeyPair::fromXdrPublicKey(xdr.sourceAccount);
+
+    Account* account = new Account(sourceAccount,xdr.seqNum);
+    Transaction::Builder *builder = new Transaction::Builder(account);
+    builder->addMemo(Memo::fromXdr(xdr.memo));
+    for(auto op : xdr.operations.value)
+    {
+        Operation* opObject = Operation::fromXdr(op);
+        builder->addOperation(opObject);
+    }
+    return builder->build();
+}
+
 stellar::TransactionEnvelope Transaction::toEnvelopeXdr() {
     if (m_signatures.size() == 0) {
         throw std::runtime_error("Transaction must be signed by at least one signer. Use transaction.sign().");
@@ -125,6 +140,15 @@ stellar::TransactionEnvelope Transaction::toEnvelopeXdr() {
         xdr.signatures.append(signature);
     }
     return xdr;
+}
+
+Transaction *Transaction::fromXdrEnvelope(stellar::TransactionEnvelope &xdr)
+{
+    Transaction * transaction = Transaction::fromXdr(xdr.tx);
+    for(stellar::DecoratedSignature& signature : xdr.signatures.value){
+        transaction->m_signatures.append(signature);
+    }
+    return transaction;
 }
 
 QString Transaction::toEnvelopeXdrBase64() {

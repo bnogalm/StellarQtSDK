@@ -73,9 +73,20 @@ public:
      stellar::Transaction toXdr();
 
      /**
+      * Returns new Transaction object from Transaction XDR object.
+      * @param xdr XDR object
+      */
+     static Transaction* fromXdr(stellar::Transaction& xdr);
+     /**
       * Generates TransactionEnvelope XDR object. Transaction need to have at least one signature.
       */
      stellar::TransactionEnvelope toEnvelopeXdr();
+
+     /**
+      * Returns new Transaction object from Transaction XDR object.
+      * @param xdr XDR object
+      */
+     static Transaction* fromXdrEnvelope(stellar::TransactionEnvelope& xdr);
 
      /**
       * Returns base64-encoded TransactionEnvelope XDR object. Transaction need to have at least one signature.

@@ -128,6 +128,10 @@ QString Balance::getAssetCode() {
     return m_assetCode;
 }
 
+QString Balance::assetIssuer() {
+    return m_assetIssuer;
+}
+
 KeyPair &Balance::getAssetIssuer() {
     if(!m_assetIssuerKeypair)
         m_assetIssuerKeypair = KeyPair::fromAccountId(m_assetIssuer);

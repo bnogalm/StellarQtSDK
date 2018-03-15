@@ -71,6 +71,7 @@ public:
     Asset* getAsset();
     QString getAssetType();
     QString getAssetCode();
+    QString assetIssuer();
     KeyPair& getAssetIssuer();
     QString getBalance();
     QString getLimit();
