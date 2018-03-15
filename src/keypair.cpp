@@ -204,6 +204,8 @@ bool KeyPair::verify(QByteArray data, QByteArray signature) {
 }
 
 bool KeyPair::equals(KeyPair *obj) {
+    if((obj->m_privateKey && !this->m_privateKey) || (!obj->m_privateKey &&this->m_privateKey))
+        return false;
     return ((memcmp(obj->m_privateKey,this->m_privateKey,KeyPair::keyLength)==0)
             && (memcmp(obj->m_publicKey,this->m_publicKey,KeyPair::keyLength)==0));
 }

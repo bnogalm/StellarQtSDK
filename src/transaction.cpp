@@ -144,7 +144,9 @@ stellar::TransactionEnvelope Transaction::toEnvelopeXdr() {
 
 Transaction *Transaction::fromXdrEnvelope(stellar::TransactionEnvelope &xdr)
 {
+    xdr.tx.seqNum--;//this is a signed envelope
     Transaction * transaction = Transaction::fromXdr(xdr.tx);
+    xdr.tx.seqNum++;
     for(stellar::DecoratedSignature& signature : xdr.signatures.value){
         transaction->m_signatures.append(signature);
     }
@@ -195,13 +197,16 @@ Transaction::Builder &Transaction::Builder::addMemo(Memo *memo) {
 }
 
 Transaction *Transaction::Builder::build() {
-    Transaction *transaction = new Transaction(m_sourceAccount->getKeypair(), m_sourceAccount->getIncrementedSequenceNumber(), m_operations, m_memo);
-    // Increment sequence number when there were no exceptions when creating a transaction
-    m_sourceAccount->incrementSequenceNumber();
-    //it lose ownership of the assigned data, we reset it.
+    //so objects dont get destroyed on exception, we use a pointer copy
+    auto account = m_sourceAccount;
+    auto memo = m_memo;
     m_sourceAccount=0;
-    m_operations.clear();
     m_memo=0;
+    Transaction *transaction = new Transaction(account->getKeypair(), account->getIncrementedSequenceNumber(), m_operations, memo);
+    // Increment sequence number when there were no exceptions when creating a transaction
+    account->incrementSequenceNumber();
+    //it lose ownership of the assigned data, we reset it.
+    m_operations.clear();
     return transaction;
 }
 

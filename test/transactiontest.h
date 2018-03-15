@@ -165,9 +165,30 @@ private slots:
       }
   }
 
+    void testDeserializeXdr() {
+      // GBPMKIRA2OQW2XZZQUCQILI5TMVZ6JNRKM423BSAISDM7ZFWQ6KWEBC4
 
+        KeyPair *source = KeyPair::fromSecretSeed(QString("SCH27VUZZ6UAKB67BDNF6FA42YMBMQCBKXWGMFD5TZ6S5ZZCZFLRXKHS"));
+        KeyPair *destination = KeyPair::fromAccountId(QString("GDW6AUTBXTOC7FIKUO5BOO3OGLK4SF7ZPOBLMQHMZDI45J2Z6VXRB5NR"));
+        Account *account = new Account(source, 2908908335136768);
+        Transaction *transaction = Transaction::Builder(account)
+                .addOperation(new CreateAccountOperation(destination, "2000"))
+                .addMemo(Memo::text("Hello world!"))
+                .build();
+
+        transaction->sign(source);
+        stellar::TransactionEnvelope envelope= transaction->toEnvelopeXdr();
+
+        Transaction *deserialized = Transaction::fromXdrEnvelope(envelope);
+        QVERIFY(deserialized->getFee()==transaction->getFee());
+        QVERIFY(deserialized->getSequenceNumber()==transaction->getSequenceNumber());
+        QVERIFY(dynamic_cast<MemoText*>(deserialized->getMemo())->getText() == dynamic_cast<MemoText*>(transaction->getMemo())->getText());
+        QVERIFY(deserialized->getSourceAccount()->getPublicKey()== transaction->getSourceAccount()->getPublicKey());
+        QVERIFY(memcmp((char*)deserialized->getSignatures().first().hint.signatureHint, (char*)transaction->getSignatures().first().hint.signatureHint,4)==0);
+        QVERIFY(memcmp((char*)deserialized->getSignatures().first().signature.value.data(),(char*)transaction->getSignatures().first().signature.value.data(),64)==0);
+    }
 };
-#ifndef STELLAR_SKIP_LIVE_TESTS
+
 ADD_TEST(TransactionTest)
-#endif
+
 #endif // TRANSACTIONTEST_H
