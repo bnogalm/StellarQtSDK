@@ -8,7 +8,33 @@ Memo::Memo()
 Memo::~Memo(){
 
 }
-
+Memo *Memo::fromXdr(stellar::Memo memo)
+{
+    switch(memo.type)
+    {
+    case stellar::MemoType::MEMO_NONE:
+        return Memo::none();
+    case stellar::MemoType::MEMO_TEXT:
+    {
+        QString text = QString::fromUtf8(memo.text.value.data(),memo.text.value.size());
+        return Memo::text(text);
+    }
+    case stellar::MemoType::MEMO_ID:
+    {
+        return Memo::id(memo.id);
+    }
+    case stellar::MemoType::MEMO_HASH:
+    {
+        QByteArray data = QByteArray::fromRawData(memo.text.value.data(),memo.text.value.size());
+        return Memo::hash(data);
+    }
+    case stellar::MemoType::MEMO_RETURN:
+    {
+        QByteArray data = QByteArray::fromRawData(memo.text.value.data(),memo.text.value.size());
+        return Memo::returnHash(data);
+    }
+    };
+}
 Memo *Memo::parse(QString type, QString memo)
 {
     if (type == "none") {

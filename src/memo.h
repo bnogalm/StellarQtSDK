@@ -42,6 +42,8 @@ public:
      * @return
      */
     static Memo* parse(QString type, QByteArray memo);
+
+    static Memo* fromXdr(stellar::Memo memo);
     /**
       * Creates new MemoNone instance.
       */
