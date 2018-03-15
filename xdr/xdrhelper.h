@@ -138,7 +138,7 @@ inline QDataStream &operator>>(QDataStream &in,  Array<T,max> &obj) {
     qint32 n;
     int pos =in.device()->pos();
     in>> n;
-    while(n>=0 && !in.atEnd()){
+    while(n>0 && !in.atEnd()){
         n--;
         T v;
         in >> v;
@@ -146,10 +146,12 @@ inline QDataStream &operator>>(QDataStream &in,  Array<T,max> &obj) {
     }
     int diff = in.device()->pos() - pos;
     int missingBytes = 4-(diff&3);
-    qint32 zero=0;
-    in.readRawData((char*)&zero,missingBytes);
-    if(zero!=0)
-        throw std::runtime_error("padding must be zero");
+    if(missingBytes<4){
+        qint32 zero=0;
+        in.readRawData((char*)&zero,missingBytes);
+        if(zero!=0)
+            throw std::runtime_error("padding must be zero");
+    }
    return in;
 }
 
