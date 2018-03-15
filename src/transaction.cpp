@@ -117,16 +117,12 @@ stellar::Transaction Transaction::toXdr() {
 Transaction *Transaction::fromXdr(stellar::Transaction &xdr)
 {
     KeyPair *sourceAccount = KeyPair::fromXdrPublicKey(xdr.sourceAccount);
-
-    Account* account = new Account(sourceAccount,xdr.seqNum);
-    Transaction::Builder *builder = new Transaction::Builder(account);
-    builder->addMemo(Memo::fromXdr(xdr.memo));
+    QVector<Operation*> ops;
     for(auto op : xdr.operations.value)
     {
-        Operation* opObject = Operation::fromXdr(op);
-        builder->addOperation(opObject);
+        ops.append(Operation::fromXdr(op));
     }
-    return builder->build();
+    return new Transaction(sourceAccount,xdr.seqNum,ops,Memo::fromXdr(xdr.memo));
 }
 
 stellar::TransactionEnvelope Transaction::toEnvelopeXdr() {
@@ -144,9 +140,7 @@ stellar::TransactionEnvelope Transaction::toEnvelopeXdr() {
 
 Transaction *Transaction::fromXdrEnvelope(stellar::TransactionEnvelope &xdr)
 {
-    xdr.tx.seqNum--;//this is a signed envelope
     Transaction * transaction = Transaction::fromXdr(xdr.tx);
-    xdr.tx.seqNum++;
     for(stellar::DecoratedSignature& signature : xdr.signatures.value){
         transaction->m_signatures.append(signature);
     }
