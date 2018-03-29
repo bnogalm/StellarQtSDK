@@ -34,6 +34,7 @@ Memo *Memo::fromXdr(stellar::Memo memo)
         return Memo::returnHash(data);
     }
     };
+    return nullptr;
 }
 Memo *Memo::parse(QString type, QString memo)
 {
