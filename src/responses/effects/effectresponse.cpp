@@ -29,8 +29,17 @@ QString EffectResponse::getType() {
     return m_type;
 }
 
+QString EffectResponse::getCreatedAt()
+{
+    return m_createdAt;
+}
+
 QString EffectResponse::getPagingToken() {
     return m_pagingToken;
+}
+
+EffectResponseAttach::Links &EffectResponse::getLinks() {
+    return m_links;
 }
 
 QString EffectResponse::account() const
