@@ -22,7 +22,7 @@ private slots:
     {
 
     }
-    void testOrderBook() {
+    void testTrades() {
         Server* server = new Server("https://horizon-testnet.stellar.org");
         QUrl uri = server->trades()
                 .baseAsset(Asset::createNonNativeAsset("EUR", KeyPair::fromAccountId("GAUPA4HERNBDPVO4IUA3MJXBCRRK5W54EVXTDK6IIUTGDQRB6D5W242W")))
@@ -42,6 +42,24 @@ private slots:
                      "cursor=13537736921089&"
                      "limit=200&"
                      "order=asc"));
+
+    }
+
+
+
+    void testTradesForAccount() {
+        Server* server = new Server("https://horizon-testnet.stellar.org");
+        QUrl uri = server->trades()
+                .forAccount(KeyPair::fromAccountId("GDRRHSJMHXDTQBT4JTCILNGF5AS54FEMTXL7KOLMF6TFTHRK6SSUSUZZ"))
+                .cursor("13537736921089")
+                .limit(200)
+                .order(RequestBuilder::Order::ASC)
+                .buildUri();
+
+        QCOMPARE( uri.toString(),QString("https://horizon-testnet.stellar.org/accounts/GDRRHSJMHXDTQBT4JTCILNGF5AS54FEMTXL7KOLMF6TFTHRK6SSUSUZZ/trades?"
+                                         "cursor=13537736921089&"
+                                         "limit=200&"
+                                         "order=asc"));
 
     }
 

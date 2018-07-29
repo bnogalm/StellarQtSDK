@@ -2,6 +2,7 @@
 #define SERVER_H
 #include <QUrl>
 #include <QNetworkAccessManager>
+#include "requests/rootrequestbuilder.h"
 #include "requests/accountsrequestbuilder.h"
 #include "requests/assetsrequestbuilder.h"
 #include "requests/paymentsrequestbuilder.h"
@@ -51,6 +52,10 @@ public:
     ~Server();
 
     QUrl serverURI();
+    /**
+         * Returns {@link RootRequestBuilder} instance.
+         */
+    RootRequestBuilder root();
 
     /**
          * Returns {@link AccountsRequestBuilder} instance.

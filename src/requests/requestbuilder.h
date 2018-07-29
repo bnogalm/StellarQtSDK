@@ -27,6 +27,7 @@ public:
       ,DESC//("desc");
    };
     RequestBuilder(Server *server, QString defaultSegment = QString());
+    virtual ~RequestBuilder();
     Server * server();
     bool streamMode();
 

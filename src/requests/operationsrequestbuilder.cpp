@@ -34,6 +34,12 @@ OperationsRequestBuilder &OperationsRequestBuilder::forTransaction(QString trans
     return *this;
 }
 
+OperationsRequestBuilder &OperationsRequestBuilder::stream()
+{
+    setStreamMode();
+    return *this;
+}
+
 OperationPage *OperationsRequestBuilder::execute(QUrl uri){
     this->setRequestUri(uri);
     return server()->get<OperationPage >(this);

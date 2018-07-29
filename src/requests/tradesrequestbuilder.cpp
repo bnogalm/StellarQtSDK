@@ -33,6 +33,12 @@ TradesRequestBuilder &TradesRequestBuilder::offerId(QString offerId) {
     return *this;
 }
 
+TradesRequestBuilder &TradesRequestBuilder::forAccount(KeyPair* account) {
+    checkNotNull(account, "account cannot be null");
+    setSegments(QStringList() <<"accounts"<< account->getAccountId()<< "trades");
+    return *this;
+}
+
 Page<TradeResponse>* TradesRequestBuilder::execute(QUrl uri)
 {
     this->setRequestUri(uri);//we overwrite the uri

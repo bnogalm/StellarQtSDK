@@ -26,6 +26,12 @@ OrderBookRequestBuilder &OrderBookRequestBuilder::sellingAsset(Asset *asset) {
     return *this;
 }
 
+OrderBookRequestBuilder &OrderBookRequestBuilder::stream()
+{
+    setStreamMode();
+    return *this;
+}
+
 OrderBookResponse *OrderBookRequestBuilder::execute(QUrl uri){
     this->setRequestUri(uri);
     return server()->get<OrderBookResponse>(this);

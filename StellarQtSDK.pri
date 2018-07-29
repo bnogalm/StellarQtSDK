@@ -121,7 +121,9 @@ SOURCES += \
     $$PWD/src/responses/effects/accountinflationdestinationupdatedeffectresponse.cpp \
     $$PWD/src/responses/effects/datacreatedeffectresponse.cpp \
     $$PWD/src/responses/effects/dataremovedeffectresponse.cpp \
-    $$PWD/src/responses/effects/dataupdatedeffectresponse.cpp
+    $$PWD/src/responses/effects/dataupdatedeffectresponse.cpp \
+    $$PWD/src/responses/rootresponse.cpp \
+    $$PWD/src/requests/rootrequestbuilder.cpp
 
 # The following define makes your compiler emit warnings if you use
 # any feature of Qt which as been marked deprecated (the exact warnings
@@ -249,7 +251,9 @@ HEADERS += \
     $$PWD/src/responses/effects/accountinflationdestinationupdatedeffectresponse.h \
     $$PWD/src/responses/effects/datacreatedeffectresponse.h \
     $$PWD/src/responses/effects/dataremovedeffectresponse.h \
-    $$PWD/src/responses/effects/dataupdatedeffectresponse.h
+    $$PWD/src/responses/effects/dataupdatedeffectresponse.h \
+    $$PWD/src/responses/rootresponse.h \
+    $$PWD/src/requests/rootrequestbuilder.h
 
 #to maintain it easier, until we dont support more than read FEDERATION_SERVER address, we dont use CPPTOML
 #CPPTOML is not compiling in android caused by some problems in android NDK

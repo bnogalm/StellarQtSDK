@@ -12,6 +12,7 @@ class OperationsRequestBuilder : public RequestBuilder
 {
 public:
     OperationsRequestBuilder(Server* server);
+
     /**
        * Requests specific <code>uri</code> and returns {@link OperationResponse}.
        * This method is helpful for getting the links.
@@ -47,7 +48,13 @@ public:
        * @param transactionId Transaction ID for which to get operations
        */
     OperationsRequestBuilder& forTransaction(QString transactionId);
-
+    /**
+          * Allows to stream SSE events from horizon.
+          * Certain endpoints in Horizon can be called in streaming mode using Server-Sent Events.
+          * This mode will keep the connection to horizon open and horizon will continue to return
+          * responses as ledgers close.
+          */
+    OperationsRequestBuilder &stream();
     /**
        * Requests specific <code>uri</code> and returns {@link Page} of {@link OperationResponse}.
        * This method is helpful for getting the next set of results.

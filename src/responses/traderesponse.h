@@ -4,6 +4,7 @@
 #include <QObject>
 #include "response.h"
 #include "link.h"
+#include "price.h"
 
 namespace TradeResponseAttach
 {
@@ -62,6 +63,8 @@ class TradeResponse : public Response
     Q_PROPERTY(QString counter_asset_code MEMBER m_counterAssetCode WRITE setCounterAssetCode)
     Q_PROPERTY(QString counter_asset_issuer MEMBER m_counterAssetIssuer WRITE setCounterAssetIssuer)
 
+    Q_PROPERTY(Price price MEMBER m_price)
+
     Q_PROPERTY(TradeResponseAttach::Links _links MEMBER m_links)
 
     QString m_id;
@@ -87,6 +90,7 @@ class TradeResponse : public Response
     QString m_counterAssetType;
     QString m_counterAssetCode;
     QString m_counterAssetIssuer;
+    Price m_price;
     TradeResponseAttach::Links m_links;
     Asset *m_baseAsset;
     Asset *m_counterAsset;
@@ -125,6 +129,7 @@ public:
 
     QString getCounterAssetIssuer() const;
 
+    Price getPrice() const;
     TradeResponseAttach::Links& getLinks();
     QString seller() const;
     QString buyer() const;
