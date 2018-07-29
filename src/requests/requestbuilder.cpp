@@ -12,6 +12,11 @@ RequestBuilder::RequestBuilder(Server *server, QString defaultSegment):m_streamM
     m_segmentsAdded = false; // Allow overwriting segments
 }
 
+RequestBuilder::~RequestBuilder()
+{
+
+}
+
 Server *RequestBuilder::server(){
     return m_server;
 }
@@ -78,8 +83,10 @@ QUrl RequestBuilder::buildUri() {
 
     QStringList urlParts;
     urlParts.append(base);
-    urlParts.append(m_segments);
-
+    if(m_segments.isEmpty())
+        urlParts.append(QString());//so / is added, just to end up with / at the end
+    else
+        urlParts.append(m_segments);
     QString path = urlParts.join("/");
     if(!query.isEmpty()){
         path.append("?");

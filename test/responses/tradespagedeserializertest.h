@@ -29,9 +29,9 @@ private slots:
     void testDeserialize() {
         Page<TradeResponse> tradesPage;
         tradesPage.loadFromJson(json);
-        QCOMPARE(tradesPage.getLinks().getNext().getHref(), QString("https://horizon.stellar.org/trades?order=asc&limit=10&cursor=3748308153536513-0"));
-        QCOMPARE(tradesPage.getLinks().getPrev().getHref(), QString("https://horizon.stellar.org/trades?order=desc&limit=10&cursor=3697472920621057-0"));
-        QCOMPARE(tradesPage.getLinks().getSelf().getHref(), QString("https://horizon.stellar.org/trades?order=asc&limit=10&cursor="));
+        QCOMPARE(tradesPage.getLinks().getNext().getHref(), QString("https://horizon.stellar.org/trades?cursor=3748308153536513-0&limit=10&order=asc"));
+        QCOMPARE(tradesPage.getLinks().getPrev().getHref(), QString("https://horizon.stellar.org/trades?cursor=3697472920621057-0&limit=10&order=desc"));
+        QCOMPARE(tradesPage.getLinks().getSelf().getHref(), QString("https://horizon.stellar.org/trades?cursor=&limit=10&order=asc"));
 
         QCOMPARE(tradesPage.get(0).getId(), QString("3697472920621057-0"));
         QCOMPARE(tradesPage.get(0).getPagingToken(), QString("3697472920621057-0"));
@@ -40,19 +40,22 @@ private slots:
         QCOMPARE(tradesPage.get(0).isBaseSeller(),true);
         QVERIFY(tradesPage.get(0).getBaseAsset()->equals(new AssetTypeNative()));
         QVERIFY(tradesPage.get(0).getCounterAsset()->equals( Asset::createNonNativeAsset("JPY", KeyPair::fromAccountId(QString("GBVAOIACNSB7OVUXJYC5UE2D4YK2F7A24T7EE5YOMN4CE6GCHUTOUQXM")))));
+
+        QCOMPARE(tradesPage.get(0).getPrice().getNumerator(), 267);
+        QCOMPARE(tradesPage.get(0).getPrice().getDenominator(), 1000);
         QCOMPARE(tradesPage.get(1).getBaseAccount().getAccountId(), QString("GAVH5JM5OKXGMQDS7YPRJ4MQCPXJUGH26LYQPQJ4SOMOJ4SXY472ZM7G"));
     }
 private:
       const QByteArray json = "{\n"
               "  \"_links\": {\n"
               "    \"self\": {\n"
-              "      \"href\": \"https://horizon.stellar.org/trades?order=asc\\u0026limit=10\\u0026cursor=\"\n"
+              "      \"href\": \"https://horizon.stellar.org/trades?cursor=\\u0026limit=10\\u0026order=asc\"\n"
               "    },\n"
               "    \"next\": {\n"
-              "      \"href\": \"https://horizon.stellar.org/trades?order=asc\\u0026limit=10\\u0026cursor=3748308153536513-0\"\n"
+              "      \"href\": \"https://horizon.stellar.org/trades?cursor=3748308153536513-0\\u0026limit=10\\u0026order=asc\"\n"
               "    },\n"
               "    \"prev\": {\n"
-              "      \"href\": \"https://horizon.stellar.org/trades?order=desc\\u0026limit=10\\u0026cursor=3697472920621057-0\"\n"
+              "      \"href\": \"https://horizon.stellar.org/trades?cursor=3697472920621057-0\\u0026limit=10\\u0026order=desc\"\n"
               "    }\n"
               "  },\n"
               "  \"_embedded\": {\n"
@@ -84,7 +87,11 @@ private:
               "        \"counter_asset_type\": \"credit_alphanum4\",\n"
               "        \"counter_asset_code\": \"JPY\",\n"
               "        \"counter_asset_issuer\": \"GBVAOIACNSB7OVUXJYC5UE2D4YK2F7A24T7EE5YOMN4CE6GCHUTOUQXM\",\n"
-              "        \"base_is_seller\": true\n"
+              "        \"base_is_seller\": true,\n"
+              "        \"price\": {\n"
+              "          \"n\": 267,\n"
+              "          \"d\": 1000\n"
+              "        }\n"
               "      },\n"
               "      {\n"
               "        \"_links\": {\n"
@@ -113,7 +120,11 @@ private:
               "        \"counter_asset_type\": \"credit_alphanum4\",\n"
               "        \"counter_asset_code\": \"JPY\",\n"
               "        \"counter_asset_issuer\": \"GBVAOIACNSB7OVUXJYC5UE2D4YK2F7A24T7EE5YOMN4CE6GCHUTOUQXM\",\n"
-              "        \"base_is_seller\": true\n"
+              "        \"base_is_seller\": true,\n"
+              "        \"price\": {\n"
+              "          \"n\": 67,\n"
+              "          \"d\": 250\n"
+              "        }\n"
               "      },\n"
               "      {\n"
               "        \"_links\": {\n"
@@ -142,7 +153,11 @@ private:
               "        \"counter_asset_type\": \"credit_alphanum4\",\n"
               "        \"counter_asset_code\": \"JPY\",\n"
               "        \"counter_asset_issuer\": \"GBVAOIACNSB7OVUXJYC5UE2D4YK2F7A24T7EE5YOMN4CE6GCHUTOUQXM\",\n"
-              "        \"base_is_seller\": true\n"
+              "        \"base_is_seller\": true,\n"
+              "        \"price\": {\n"
+              "          \"n\": 67,\n"
+              "          \"d\": 250\n"
+              "        }\n"
               "      },\n"
               "      {\n"
               "        \"_links\": {\n"
@@ -200,7 +215,11 @@ private:
               "        \"counter_asset_type\": \"credit_alphanum4\",\n"
               "        \"counter_asset_code\": \"JPY\",\n"
               "        \"counter_asset_issuer\": \"GBVAOIACNSB7OVUXJYC5UE2D4YK2F7A24T7EE5YOMN4CE6GCHUTOUQXM\",\n"
-              "        \"base_is_seller\": true\n"
+              "        \"base_is_seller\": true,\n"
+              "        \"price\": {\n"
+              "          \"n\": 5000,\n"
+              "          \"d\": 20833\n"
+              "        }\n"
               "      },\n"
               "      {\n"
               "        \"_links\": {\n"
@@ -229,7 +248,11 @@ private:
               "        \"counter_asset_type\": \"credit_alphanum4\",\n"
               "        \"counter_asset_code\": \"JPY\",\n"
               "        \"counter_asset_issuer\": \"GBVAOIACNSB7OVUXJYC5UE2D4YK2F7A24T7EE5YOMN4CE6GCHUTOUQXM\",\n"
-              "        \"base_is_seller\": true\n"
+              "        \"base_is_seller\": true,\n"
+              "        \"price\": {\n"
+              "          \"n\": 49,\n"
+              "          \"d\": 200\n"
+              "        }\n"
               "      },\n"
               "      {\n"
               "        \"_links\": {\n"
@@ -258,7 +281,11 @@ private:
               "        \"counter_asset_type\": \"credit_alphanum4\",\n"
               "        \"counter_asset_code\": \"JPY\",\n"
               "        \"counter_asset_issuer\": \"GBVAOIACNSB7OVUXJYC5UE2D4YK2F7A24T7EE5YOMN4CE6GCHUTOUQXM\",\n"
-              "        \"base_is_seller\": true\n"
+              "        \"base_is_seller\": true,\n"
+              "        \"price\": {\n"
+              "          \"n\": 1,\n"
+              "          \"d\": 4\n"
+              "        }\n"
               "      },\n"
               "      {\n"
               "        \"_links\": {\n"
@@ -287,7 +314,11 @@ private:
               "        \"counter_asset_type\": \"credit_alphanum4\",\n"
               "        \"counter_asset_code\": \"JPY\",\n"
               "        \"counter_asset_issuer\": \"GBVAOIACNSB7OVUXJYC5UE2D4YK2F7A24T7EE5YOMN4CE6GCHUTOUQXM\",\n"
-              "        \"base_is_seller\": false\n"
+              "        \"base_is_seller\": false,\n"
+              "        \"price\": {\n"
+              "          \"n\": 1,\n"
+              "          \"d\": 5\n"
+              "        }\n"
               "      },\n"
               "      {\n"
               "        \"_links\": {\n"
@@ -316,7 +347,11 @@ private:
               "        \"counter_asset_type\": \"credit_alphanum4\",\n"
               "        \"counter_asset_code\": \"JPY\",\n"
               "        \"counter_asset_issuer\": \"GBVAOIACNSB7OVUXJYC5UE2D4YK2F7A24T7EE5YOMN4CE6GCHUTOUQXM\",\n"
-              "        \"base_is_seller\": true\n"
+              "        \"base_is_seller\": true,\n"
+              "        \"price\": {\n"
+              "          \"n\": 3,\n"
+              "          \"d\": 10\n"
+              "        }\n"
               "      },\n"
               "      {\n"
               "        \"_links\": {\n"
@@ -345,7 +380,11 @@ private:
               "        \"counter_asset_type\": \"credit_alphanum4\",\n"
               "        \"counter_asset_code\": \"JPY\",\n"
               "        \"counter_asset_issuer\": \"GBVAOIACNSB7OVUXJYC5UE2D4YK2F7A24T7EE5YOMN4CE6GCHUTOUQXM\",\n"
-              "        \"base_is_seller\": true\n"
+              "        \"base_is_seller\": true,\n"
+              "        \"price\": {\n"
+              "          \"n\": 3,\n"
+              "          \"d\": 10\n"
+              "        }\n"
               "      }\n"
               "    ]\n"
               "  }\n"

@@ -25,12 +25,12 @@ Memo *Memo::fromXdr(stellar::Memo memo)
     }
     case stellar::MemoType::MEMO_HASH:
     {
-        QByteArray data = QByteArray::fromRawData(memo.text.value.data(),memo.text.value.size());
+        QByteArray data = QByteArray::fromRawData((const char*)memo.hash,sizeof(memo.hash));
         return Memo::hash(data);
     }
     case stellar::MemoType::MEMO_RETURN:
     {
-        QByteArray data = QByteArray::fromRawData(memo.text.value.data(),memo.text.value.size());
+        QByteArray data = QByteArray::fromRawData((const char*)memo.retHash,sizeof(memo.retHash));
         return Memo::returnHash(data);
     }
     };

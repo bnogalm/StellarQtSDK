@@ -31,6 +31,11 @@ QUrl Server::serverURI()
     return this->m_serverURI;
 }
 
+RootRequestBuilder Server::root()
+{
+    return RootRequestBuilder(this);
+}
+
 AccountsRequestBuilder Server::accounts() {
     return AccountsRequestBuilder(this);
 }

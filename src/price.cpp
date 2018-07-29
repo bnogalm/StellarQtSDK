@@ -49,6 +49,11 @@ Price::Price(QString price){
     m_d = denominator;
 }
 
+Price::Price():m_n(0),m_d(0)
+{
+
+}
+
 
 
 //just to keep similar API

@@ -7,8 +7,12 @@
  */
 class Price
 {
+    Q_GADGET
     qint32 m_n;
     qint32 m_d;
+
+    Q_PROPERTY(qint32 n MEMBER m_n)
+    Q_PROPERTY(qint32 d MEMBER m_d)
 public:
 
     /**
@@ -21,6 +25,8 @@ public:
     Price(stellar::Price& price);
 
     Price(QString price);
+
+    Price();
 
     /**
     * Returns numerator.
@@ -51,6 +57,13 @@ public:
     stellar::Price toXdr();
 
     bool equals(Price* price);
-};
 
+    bool operator !=(Price& price)
+    {
+        return (price.m_d!=this->m_d)
+                || (price.m_n !=this->m_n)
+                || (price.toString()!=this->toString());
+    }
+};
+Q_DECLARE_METATYPE(Price)
 #endif // PRICE_H

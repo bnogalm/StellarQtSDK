@@ -93,6 +93,10 @@ QString TradeResponse::getCounterAssetIssuer() const{
     return m_counterAssetIssuer;
 }
 
+Price TradeResponse::getPrice() const{
+    return m_price;
+}
+
 TradeResponseAttach::Links &TradeResponse::getLinks(){
     return m_links;
 }
