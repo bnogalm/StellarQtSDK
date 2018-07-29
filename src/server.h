@@ -121,7 +121,7 @@ public:
          * You will have to delete the response returned by transactionResponse signal
          * @throws IOException
          */
-    void submitTransaction(Transaction* transaction);
+    SubmitTransactionResponse* submitTransaction(Transaction* transaction);
 
     //        /**
     //         * To support mocking a client
@@ -132,10 +132,10 @@ public:
     //    }
 private slots:
     void processSubmitTransactionResponse();
-
+    void processTransactionError();
 signals:
     void transactionResponse(SubmitTransactionResponse * response);
-    void transactionError();
+    void transactionError(SubmitTransactionResponse * response);
 };
 
 

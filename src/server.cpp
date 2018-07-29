@@ -80,7 +80,7 @@ TransactionsRequestBuilder Server::transactions() {
     return TransactionsRequestBuilder(this);
 }
 
-void Server::submitTransaction(Transaction *transaction) {
+SubmitTransactionResponse *Server::submitTransaction(Transaction *transaction) {
     QUrl transactionsURI(serverURI().toString().append("/transactions"));
     if(!transactionsURI.isValid())
     {
@@ -100,12 +100,20 @@ void Server::submitTransaction(Transaction *transaction) {
     auto response = new SubmitTransactionResponse(reply,transaction);
 
     connect(response, &SubmitTransactionResponse::ready, this, &Server::processSubmitTransactionResponse);
-    connect(response, &SubmitTransactionResponse::error, this, &Server::transactionError);
+    connect(response, &SubmitTransactionResponse::error, this, &Server::processTransactionError);
+    return response;
 }
 
 void Server::processSubmitTransactionResponse()
 {
     if(SubmitTransactionResponse * response = dynamic_cast<SubmitTransactionResponse*>(sender())){
         emit transactionResponse(response);//you have to delete the response
+    }
+}
+
+void Server::processTransactionError()
+{
+    if(SubmitTransactionResponse * response = dynamic_cast<SubmitTransactionResponse*>(sender())){
+        emit transactionError(response);//you have to delete the response
     }
 }

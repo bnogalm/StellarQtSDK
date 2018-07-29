@@ -63,7 +63,7 @@ bool Response::isStreamingResponse()
 
 Response::~Response(){
     if(m_reply){
-        delete m_reply;//delete the reply makes the server to clean up the hash
+        delete m_reply;
     }
 }
 
