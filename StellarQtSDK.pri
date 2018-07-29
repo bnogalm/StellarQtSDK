@@ -117,7 +117,11 @@ SOURCES += \
     $$PWD/src/requests/assetsrequestbuilder.cpp \
     $$PWD/src/responses/assetresponse.cpp \
     $$PWD/src/requests/tradeaggregationsrequestbuilder.cpp \
-    $$PWD/src/responses/tradeaggregationresponse.cpp
+    $$PWD/src/responses/tradeaggregationresponse.cpp \
+    $$PWD/src/responses/effects/accountinflationdestinationupdatedeffectresponse.cpp \
+    $$PWD/src/responses/effects/datacreatedeffectresponse.cpp \
+    $$PWD/src/responses/effects/dataremovedeffectresponse.cpp \
+    $$PWD/src/responses/effects/dataupdatedeffectresponse.cpp
 
 # The following define makes your compiler emit warnings if you use
 # any feature of Qt which as been marked deprecated (the exact warnings
@@ -241,7 +245,11 @@ HEADERS += \
     $$PWD/src/requests/assetsrequestbuilder.h \
     $$PWD/src/responses/assetresponse.h \
     $$PWD/src/requests/tradeaggregationsrequestbuilder.h \
-    $$PWD/src/responses/tradeaggregationresponse.h
+    $$PWD/src/responses/tradeaggregationresponse.h \
+    $$PWD/src/responses/effects/accountinflationdestinationupdatedeffectresponse.h \
+    $$PWD/src/responses/effects/datacreatedeffectresponse.h \
+    $$PWD/src/responses/effects/dataremovedeffectresponse.h \
+    $$PWD/src/responses/effects/dataupdatedeffectresponse.h
 
 #to maintain it easier, until we dont support more than read FEDERATION_SERVER address, we dont use CPPTOML
 #CPPTOML is not compiling in android caused by some problems in android NDK

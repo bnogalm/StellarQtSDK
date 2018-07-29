@@ -49,6 +49,7 @@ class EffectResponse : public Response
     Q_PROPERTY(QString id MEMBER m_id)
     Q_PROPERTY(QString account READ account WRITE setAccount)
     Q_PROPERTY(QString type MEMBER m_type)
+    Q_PROPERTY(QString created_at MEMBER m_createdAt)
     Q_PROPERTY(QString paging_token MEMBER m_pagingToken)
     Q_PROPERTY(EffectResponseAttach::Links _links MEMBER m_links)
 
@@ -56,6 +57,7 @@ class EffectResponse : public Response
     QString m_account;
     KeyPair *m_accountKeypair;
     QString m_type;
+    QString m_createdAt;
     QString m_pagingToken;
     EffectResponseAttach::Links m_links;
 public:
@@ -76,6 +78,7 @@ public:
      *   <li>account_thresholds_updated</li>
      *   <li>account_home_domain_updated</li>
      *   <li>account_flags_updated</li>
+     *   <li>account_inflation_destination_updated</li>
      *   <li>signer_created</li>
      *   <li>signer_removed</li>
      *   <li>signer_updated</li>
@@ -88,15 +91,18 @@ public:
      *   <li>offer_removed</li>
      *   <li>offer_updated</li>
      *   <li>trade</li>
+     *   <li>data_created</li>
+     *   <li>data_removed</li>
+     *   <li>data_updated</li>
      * </ul>
      */
     QString getType();
 
+    QString getCreatedAt();
+
     QString getPagingToken();
 
-    EffectResponseAttach::Links& getLinks() {
-      return m_links;
-    }
+    EffectResponseAttach::Links& getLinks();
 
     QString account() const;
 public slots:

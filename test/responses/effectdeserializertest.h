@@ -13,6 +13,7 @@
 #include "../../src/responses/effects/accounthomedomainupdatedeffectresponse.h"
 #include "../../src/responses/effects/accountremovedeffectresponse.h"
 #include "../../src/responses/effects/accountthresholdsupdatedeffectresponse.h"
+#include "../../src/responses/effects/accountinflationdestinationupdatedeffectresponse.h"
 #include "../../src/responses/effects/offercreatedeffectresponse.h"
 #include "../../src/responses/effects/offerremovedeffectresponse.h"
 #include "../../src/responses/effects/offerupdatedeffectresponse.h"
@@ -27,6 +28,9 @@
 #include "../../src/responses/effects/trustlinedeauthorizedeffectresponse.h"
 #include "../../src/responses/effects/trustlineremovedeffectresponse.h"
 #include "../../src/responses/effects/trustlineupdatedeffectresponse.h"
+#include "../../src/responses/effects/datacreatedeffectresponse.h"
+#include "../../src/responses/effects/dataremovedeffectresponse.h"
+#include "../../src/responses/effects/dataupdatedeffectresponse.h"
 #include "../../src/responses/effects/tradeeffectresponse.h"
 #include "../../src/asset.h"
 #include "../../src/assettypenative.h"
@@ -288,6 +292,32 @@ private slots:
       QCOMPARE(effect.getLinks().getPrecedes().getHref(), QString("http://horizon-testnet.stellar.org/effects?order=asc&cursor=18970870550529-1"));
     }
 
+    void testDeserializeAccountInflationDestinationUpdatedEffect() {
+        QByteArray json = "{\n"
+                    "        \"_links\": {\n"
+                    "          \"operation\": {\n"
+                    "            \"href\": \"https://horizon-testnet.stellar.org/operations/40181321724596225\"\n"
+                    "          },\n"
+                    "          \"succeeds\": {\n"
+                    "            \"href\": \"https://horizon-testnet.stellar.org/effects?order=desc&cursor=40181321724596225-1\"\n"
+                    "          },\n"
+                    "          \"precedes\": {\n"
+                    "            \"href\": \"https://horizon-testnet.stellar.org/effects?order=asc&cursor=40181321724596225-1\"\n"
+                    "          }\n"
+                    "        },\n"
+                    "        \"id\": \"0040181321724596225-0000000001\",\n"
+                    "        \"paging_token\": \"40181321724596225-1\",\n"
+                    "        \"account\": \"GDPFGP4IPE5DXG6XRXC4ZBUI43PAGRQ5VVNJ3LJTBXDBZ4ITO6HBHNSF\",\n"
+                    "        \"type\": \"account_inflation_destination_updated\",\n"
+                    "        \"type_i\": 7,\n"
+                    "        \"created_at\": \"2018-06-06T10:20:50Z\"\n"
+                    "      }";
+        AccountInflationDestinationUpdatedEffectResponse effect;
+        effect.loadFromJson(json);
+
+        QCOMPARE(effect.getAccount().getAccountId(), QString("GDPFGP4IPE5DXG6XRXC4ZBUI43PAGRQ5VVNJ3LJTBXDBZ4ITO6HBHNSF"));
+        QCOMPARE(effect.getCreatedAt(), QString("2018-06-06T10:20:50Z"));
+    }
 
     void testDeserializeSignerCreatedEffect() {
       QByteArray json = "{\n"
@@ -625,6 +655,89 @@ private slots:
       QCOMPARE(effect.getLinks().getPrecedes().getHref(), QString("http://horizon-testnet.stellar.org/effects?order=asc&cursor=33788507721730-2"));
   }
 
+
+      void testDeserializeDataCreatedEffect() {
+        QByteArray json = "{\n"
+                "        \"_links\": {\n"
+                "          \"operation\": {\n"
+                "            \"href\": \"https://horizon-testnet.stellar.org/operations/40181480638386177\"\n"
+                "          },\n"
+                "          \"succeeds\": {\n"
+                "            \"href\": \"https://horizon-testnet.stellar.org/effects?order=desc&cursor=40181480638386177-1\"\n"
+                "          },\n"
+                "          \"precedes\": {\n"
+                "            \"href\": \"https://horizon-testnet.stellar.org/effects?order=asc&cursor=40181480638386177-1\"\n"
+                "          }\n"
+                "        },\n"
+                "        \"id\": \"0040181480638386177-0000000001\",\n"
+                "        \"paging_token\": \"40181480638386177-1\",\n"
+                "        \"account\": \"GDPFGP4IPE5DXG6XRXC4ZBUI43PAGRQ5VVNJ3LJTBXDBZ4ITO6HBHNSF\",\n"
+                "        \"type\": \"data_created\",\n"
+                "        \"type_i\": 40,\n"
+                "        \"created_at\": \"2018-06-06T10:23:57Z\"\n"
+                "      }";
+
+        DataCreatedEffectResponse effect;
+        effect.loadFromJson(json);
+        QCOMPARE(effect.getAccount().getAccountId(), QString("GDPFGP4IPE5DXG6XRXC4ZBUI43PAGRQ5VVNJ3LJTBXDBZ4ITO6HBHNSF"));
+        QCOMPARE(effect.getCreatedAt(), QString("2018-06-06T10:23:57Z"));
+      }
+
+      void testDeserializeDataRemovedEffect() {
+        QByteArray json = "{\n"
+                "        \"_links\": {\n"
+                "          \"operation\": {\n"
+                "            \"href\": \"https://horizon-testnet.stellar.org/operations/40181480638386177\"\n"
+                "          },\n"
+                "          \"succeeds\": {\n"
+                "            \"href\": \"https://horizon-testnet.stellar.org/effects?order=desc&cursor=40181480638386177-1\"\n"
+                "          },\n"
+                "          \"precedes\": {\n"
+                "            \"href\": \"https://horizon-testnet.stellar.org/effects?order=asc&cursor=40181480638386177-1\"\n"
+                "          }\n"
+                "        },\n"
+                "        \"id\": \"0040181480638386177-0000000001\",\n"
+                "        \"paging_token\": \"40181480638386177-1\",\n"
+                "        \"account\": \"GDPFGP4IPE5DXG6XRXC4ZBUI43PAGRQ5VVNJ3LJTBXDBZ4ITO6HBHNSF\",\n"
+                "        \"type\": \"data_removed\",\n"
+                "        \"type_i\": 41,\n"
+                "        \"created_at\": \"2018-06-06T10:23:57Z\"\n"
+                "      }";
+
+        DataRemovedEffectResponse effect;
+        effect.loadFromJson(json);
+
+        QCOMPARE(effect.getAccount().getAccountId(), QString("GDPFGP4IPE5DXG6XRXC4ZBUI43PAGRQ5VVNJ3LJTBXDBZ4ITO6HBHNSF"));
+        QCOMPARE(effect.getCreatedAt(), QString("2018-06-06T10:23:57Z"));
+      }
+
+      void testDeserializeDataUpdatedEffect() {
+        QByteArray json = "{\n"
+                "        \"_links\": {\n"
+                "          \"operation\": {\n"
+                "            \"href\": \"https://horizon-testnet.stellar.org/operations/40181480638386177\"\n"
+                "          },\n"
+                "          \"succeeds\": {\n"
+                "            \"href\": \"https://horizon-testnet.stellar.org/effects?order=desc&cursor=40181480638386177-1\"\n"
+                "          },\n"
+                "          \"precedes\": {\n"
+                "            \"href\": \"https://horizon-testnet.stellar.org/effects?order=asc&cursor=40181480638386177-1\"\n"
+                "          }\n"
+                "        },\n"
+                "        \"id\": \"0040181480638386177-0000000001\",\n"
+                "        \"paging_token\": \"40181480638386177-1\",\n"
+                "        \"account\": \"GDPFGP4IPE5DXG6XRXC4ZBUI43PAGRQ5VVNJ3LJTBXDBZ4ITO6HBHNSF\",\n"
+                "        \"type\": \"data_updated\",\n"
+                "        \"type_i\": 42,\n"
+                "        \"created_at\": \"2018-06-06T10:23:57Z\"\n"
+                "      }";
+
+        DataUpdatedEffectResponse effect;
+        effect.loadFromJson(json);
+
+        QCOMPARE(effect.getAccount().getAccountId(), QString("GDPFGP4IPE5DXG6XRXC4ZBUI43PAGRQ5VVNJ3LJTBXDBZ4ITO6HBHNSF"));
+        QCOMPARE(effect.getCreatedAt(), QString("2018-06-06T10:23:57Z"));
+    }
 
 };
 

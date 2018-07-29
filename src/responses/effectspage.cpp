@@ -24,6 +24,11 @@
 #include "../../src/responses/effects/trustlineremovedeffectresponse.h"
 #include "../../src/responses/effects/trustlineupdatedeffectresponse.h"
 #include "../../src/responses/effects/tradeeffectresponse.h"
+#include "../../src/responses/effects/accountinflationdestinationupdatedeffectresponse.h"
+#include "../../src/responses/effects/datacreatedeffectresponse.h"
+#include "../../src/responses/effects/dataremovedeffectresponse.h"
+#include "../../src/responses/effects/dataupdatedeffectresponse.h"
+
 EffectsPage::EffectsPage(QNetworkReply *reply)
     :Page<EffectResponse>(reply)
 {
@@ -53,6 +58,8 @@ void EffectsPage::processRecords(const QJsonArray &records)
           effect= new AccountHomeDomainUpdatedEffectResponse();break;
         case 6:
           effect= new AccountFlagsUpdatedEffectResponse();break;
+        case 7:
+          effect= new AccountInflationDestinationUpdatedEffectResponse();break;
         // Signer effects
         case 10:
           effect= new SignerCreatedEffectResponse();break;
@@ -80,6 +87,13 @@ void EffectsPage::processRecords(const QJsonArray &records)
           effect= new OfferUpdatedEffectResponse();break;
         case 33:
           effect= new TradeEffectResponse();break;
+        // Data effects
+        case 40:
+          effect= new DataCreatedEffectResponse();break;
+        case 41:
+          effect= new DataRemovedEffectResponse();break;
+        case 42:
+          effect= new DataUpdatedEffectResponse();break;
         default:
             throw std::runtime_error("Invalid operation type");
         }
