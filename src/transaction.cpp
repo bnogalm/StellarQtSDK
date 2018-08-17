@@ -1,7 +1,7 @@
 #include "transaction.h"
 #include "account.h"
 
-Transaction::Transaction(KeyPair *sourceAccount, quint64 sequenceNumber, QVector<Operation *> operations, Memo *memo) {
+Transaction::Transaction(KeyPair *sourceAccount, qint64 sequenceNumber, QVector<Operation *> operations, Memo *memo) {
     m_sourceAccount = checkNotNull(sourceAccount, "sourceAccount cannot be null");
     m_sequenceNumber=sequenceNumber;//we cant check this, all the values are valid
 
@@ -80,7 +80,7 @@ KeyPair *Transaction::getSourceAccount() {
     return m_sourceAccount;
 }
 
-quint64 Transaction::getSequenceNumber() {
+qint64 Transaction::getSequenceNumber() {
     return m_sequenceNumber;
 }
 

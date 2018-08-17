@@ -10,8 +10,9 @@
 #include "managedataoperation.h"
 #include "setoptionsoperation.h"
 #include "manageofferoperation.h"
+#include "bumpsequenceoperation.h"
 
-Operation::Operation() : m_sourceAccount(0)
+Operation::Operation() : m_sourceAccount(nullptr)
 {
 }
 
@@ -103,6 +104,9 @@ Operation *Operation::fromXdr(stellar::Operation &xdr) {
         break;
     case stellar::OperationType::MANAGE_DATA:
         operation = ManageDataOperation::build(xdr.operationManageData);
+        break;
+    case stellar::OperationType::BUMP_SEQUENCE:
+        operation = BumpSequenceOperation::build(xdr.operationBumpSequence);
         break;
     default:
         throw std::runtime_error("Unknown operation body");

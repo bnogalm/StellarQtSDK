@@ -20,14 +20,14 @@ class Transaction : public QObject
     const int BASE_FEE = 100;
     int m_fee;
     KeyPair* m_sourceAccount;
-    quint64 m_sequenceNumber;
+    qint64 m_sequenceNumber;
     QVector<Operation*> m_operations;
     Memo *m_memo;
     QVector<stellar::DecoratedSignature> m_signatures;
 
     friend class Builder;
 
-    Transaction(KeyPair* sourceAccount, quint64 sequenceNumber, QVector<Operation*> operations, Memo* memo);
+    Transaction(KeyPair* sourceAccount, qint64 sequenceNumber, QVector<Operation*> operations, Memo* memo);
 
 
 public:
@@ -56,7 +56,7 @@ public:
 
      KeyPair* getSourceAccount();
 
-     quint64 getSequenceNumber();
+     qint64 getSequenceNumber();
 
      QVector<stellar::DecoratedSignature> getSignatures();
 

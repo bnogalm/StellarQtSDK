@@ -33,6 +33,8 @@ stellar::Operation::Operation(const stellar::Operation &op){
     case OperationType::MANAGE_DATA:
         new (&operationManageData) ManageDataOp();
         operationManageData = op.operationManageData; break;
+    case OperationType::BUMP_SEQUENCE:
+        operationBumpSequence = op.operationBumpSequence; break;
     default: break;
     }
 }
@@ -97,6 +99,8 @@ const stellar::Operation &stellar::Operation::operator =(const stellar::Operatio
     case OperationType::MANAGE_DATA:
         new (&operationManageData) ManageDataOp();
         operationManageData = op.operationManageData; break;
+    case OperationType::BUMP_SEQUENCE:
+        operationBumpSequence = op.operationBumpSequence; break;
     default: break;
     }
     return *this;

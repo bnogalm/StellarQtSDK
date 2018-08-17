@@ -10,7 +10,7 @@
 class Account : public TransactionBuilderAccount
 {
     KeyPair *m_keyPair;
-    quint64 m_sequenceNumber;
+    qint64 m_sequenceNumber;
 public:
 
     /**
@@ -18,13 +18,13 @@ public:
      * @param keypair KeyPair associated with this Account
      * @param sequenceNumber Current sequence number of the account (can be obtained using java-stellar-sdk or horizon server)
      */
-    Account(KeyPair* keypair, quint64 sequenceNumber);
+    Account(KeyPair* keypair, qint64 sequenceNumber);
 
 
     KeyPair* getKeypair();
 
-    quint64 getSequenceNumber();
-    quint64 getIncrementedSequenceNumber();
+    qint64 getSequenceNumber();
+    qint64 getIncrementedSequenceNumber();
 
     /**
      * Increments sequence number in this object by one.

@@ -15,7 +15,7 @@ namespace stellar
     XDR_SERIALIZER(Thresholds)
     typedef Array<char,32> string32; //<32> //max
     typedef Array<char,64> string64; //<64>
-    typedef quint64 SequenceNumber;
+    typedef qint64 SequenceNumber;
 
     typedef Array<quint8,64> DataValue; //<64>
 
@@ -25,6 +25,7 @@ namespace stellar
         ASSET_TYPE_CREDIT_ALPHANUM4 = 1,
         ASSET_TYPE_CREDIT_ALPHANUM12 = 2
     };
+
 
 
     typedef qint8 AssetCode4[4];
@@ -90,6 +91,22 @@ namespace stellar
        return in;
     }
 
+
+    struct alignas(4) Liabilities
+    {
+        qint64 buying;
+        qint64 selling;
+    };
+    inline QDataStream &operator<<(QDataStream &out, const  Liabilities &obj) {
+        out << obj.buying<< obj.selling;
+       return out;
+    }
+
+    inline QDataStream &operator>>(QDataStream &in,  Liabilities &obj) {
+        in >> obj.buying>>obj.selling;
+       return in;
+    }
+
     // the 'Thresholds' type is packed uint8_t values
     // defined by these indexes
     enum class ThresholdIndexes : qint32
@@ -139,6 +156,8 @@ namespace stellar
         // Once set, causes all AUTH_* flags to be read-only
         AUTH_IMMUTABLE_FLAG = 0x4
     };
+    //mask for all valid flags
+    const qint32 MASK_ACCOUNT_FLAGS = 0x7;
 
     /* AccountEntry
         Main entry representing a user in Stellar. All transactions are
@@ -165,25 +184,48 @@ namespace stellar
         Array<Signer,20> signers; //max : <20>; // possible signers for this account
         // reserved for future use
         Reserved ext;
+        struct V1{
+            Liabilities liabilities;
+            Reserved ext;
+        };
+        union{
+            V1 v1;
+        };
 
     };
 
     inline QDataStream &operator<<(QDataStream &out, const  AccountEntry &obj) {
         out << obj.accountID<< obj.balance << obj.seqNum << obj.numSubEntries << obj.inflationDest << obj.flags << obj.homeDomain << obj.thresholds << obj.signers << obj.ext;
+
+        switch(obj.ext.reserved){
+        case 1:
+            out << obj.v1.liabilities << obj.v1.ext ; break;
+        default: break;
+        }
+
+
        return out;
     }
 
     inline QDataStream &operator>>(QDataStream &in,  AccountEntry &obj) {
        in >> obj.accountID>> obj.balance >> obj.seqNum >> obj.numSubEntries >> obj.inflationDest >> obj.flags >> obj.homeDomain >> obj.thresholds >> obj.signers >> obj.ext;
+
+       switch(obj.ext.reserved){
+       case 1:
+           in >> obj.v1.liabilities >> obj.v1.ext ; break;
+       default: break;
+       }
+
        return in;
     }
 
-    enum TrustLineFlags
+    enum class TrustLineFlags : qint32
     {
         // issuer has authorized account to perform transactions with its credit
         AUTHORIZED_FLAG = 1
     };
-
+    //mask for all trustline flags
+    const qint32 MASK_TRUSTLINE_FLAGS = 1;
 
     struct TrustLineEntry
     {
@@ -197,14 +239,31 @@ namespace stellar
 
         // reserved for future use
         Reserved ext;
+        struct V1{
+            Liabilities liabilities;
+            Reserved ext;
+        };
+        union{
+            V1 v1;
+        };
     };
     inline QDataStream &operator<<(QDataStream &out, const  TrustLineEntry &obj) {
         out << obj.accountID << obj.asset << obj.balance << obj.limit << obj.flags << obj.ext;
+        switch(obj.ext.reserved){
+        case 1:
+            out << obj.v1.liabilities << obj.v1.ext ; break;
+        default: break;
+        }
        return out;
     }
 
     inline QDataStream &operator>>(QDataStream &in,  TrustLineEntry &obj) {
        in >> obj.accountID >> obj.asset >> obj.balance >> obj.limit >> obj.flags >> obj.ext;
+       switch(obj.ext.reserved){
+       case 1:
+           in >> obj.v1.liabilities >> obj.v1.ext ; break;
+       default: break;
+       }
        return in;
     }
 
@@ -215,6 +274,8 @@ namespace stellar
         // issuer has authorized account to perform transactions with its credit
         PASSIVE_FLAG = 1
     };
+    //mask for offerentry flags
+    const qint32 MASK_OFFERENTRY_FLAGS = 1;
 
 
     /* OfferEntry

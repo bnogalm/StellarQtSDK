@@ -28,6 +28,7 @@
 #include "src/network.h"
 #include "src/transaction.h"
 #include "src/manageofferoperation.h"
+#include "src/bumpsequenceoperation.h"
 
 
 
@@ -532,6 +533,16 @@ private slots:
                   ,QString("AAAAAQAAAAC7JAuE3XvquOnbsgv2SRztjuk4RoBVefQ0rlrFMMQvfAAAAAoAAAAEdGVzdAAAAAA="));
      }
 
+     void testBumpSequence() {
+       // GC5SIC4E3V56VOHJ3OZAX5SJDTWY52JYI2AFK6PUGSXFVRJQYQXXZBZF
+       KeyPair* source = KeyPair::fromSecretSeed(QString("SC4CGETADVYTCR5HEAVZRB3DZQY5Y4J7RFNJTRA6ESMHIPEZUSTE2QDK"));
+       BumpSequenceOperation* operation = BumpSequenceOperation::create(156L)
+               ->setSourceAccount(source);
+        auto xdr = operation->toXdr();
+        BumpSequenceOperation* parsedOperation = (BumpSequenceOperation*) Operation::fromXdr(xdr);
+        QCOMPARE(parsedOperation->getBumpTo(),156L);
+        QCOMPARE(operation->toXdrBase64(),QString("AAAAAQAAAAC7JAuE3XvquOnbsgv2SRztjuk4RoBVefQ0rlrFMMQvfAAAAAsAAAAAAAAAnA=="));
+     }
 
      void testToXdrAmount() {
        QVERIFY(0L== Operation::toXdrAmount("0"));
