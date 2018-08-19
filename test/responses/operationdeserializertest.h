@@ -478,10 +478,10 @@ private slots:
                 "  \"from\": \"GCXKG6RN4ONIEPCMNFB732A436Z5PNDSRLGWK7GBLCMQLIFO4S7EYWVU\",\n"
                 "  \"id\": 25769807873,\n"
                 "  \"paging_token\": \"25769807873\",\n"
-                "  \"send_asset_code\": \"USD\",\n"
-                "  \"send_asset_issuer\": \"GC23QF2HUE52AMXUFUH3AYJAXXGXXV2VHXYYR6EYXETPKDXZSAW67XO4\",\n"
-                "  \"send_asset_type\": \"credit_alphanum4\",\n"
-                "  \"source_amount\": \"100.0\",\n"
+                "  \"source_asset_code\": \"USD\",\n"
+                "  \"source_asset_issuer\": \"GC23QF2HUE52AMXUFUH3AYJAXXGXXV2VHXYYR6EYXETPKDXZSAW67XO4\",\n"
+                "  \"source_asset_type\": \"credit_alphanum4\",\n"
+                "  \"source_max\": \"100.0\",\n"
                 "  \"to\": \"GA5WBPYA5Y4WAEHXWR2UKO2UO4BUGHUQ74EUPKON2QHV4WRHOIRNKKH2\",\n"
                 "  \"type_i\": 2,\n"
                 "  \"type\": \"path_payment\"\n"
@@ -492,9 +492,55 @@ private slots:
         QCOMPARE(operation.getFrom().getAccountId(), QString("GCXKG6RN4ONIEPCMNFB732A436Z5PNDSRLGWK7GBLCMQLIFO4S7EYWVU"));
         QCOMPARE(operation.getTo().getAccountId(), QString("GA5WBPYA5Y4WAEHXWR2UKO2UO4BUGHUQ74EUPKON2QHV4WRHOIRNKKH2"));
         QCOMPARE(operation.getAmount(), QString("10.0"));
-        QCOMPARE(operation.getSourceAmount(), QString("100.0"));
+        QCOMPARE(operation.getSourceMax(), QString("100.0"));
         QVERIFY(operation.getAsset()->equals(Asset::createNonNativeAsset("EUR", KeyPair::fromAccountId(QString("GCQPYGH4K57XBDENKKX55KDTWOTK5WDWRQOH2LHEDX3EKVIQRLMESGBG")))));
-        QVERIFY(operation.getSendAsset()->equals(Asset::createNonNativeAsset("USD", KeyPair::fromAccountId(QString("GC23QF2HUE52AMXUFUH3AYJAXXGXXV2VHXYYR6EYXETPKDXZSAW67XO4")))));
+        QVERIFY(operation.getSourceAsset()->equals(Asset::createNonNativeAsset("USD", KeyPair::fromAccountId(QString("GC23QF2HUE52AMXUFUH3AYJAXXGXXV2VHXYYR6EYXETPKDXZSAW67XO4")))));
+    }
+    void testDeserializePathPaymentOperationSourceAssetNative()
+    {
+        QByteArray json = "{\n"
+                          "  \"_links\": {\n"
+                          "    \"self\": {\n"
+                          "      \"href\": \"https://horizon.stellar.org/operations/75252830662840321\"\n"
+                          "    },\n"
+                          "    \"transaction\": {\n"
+                          "      \"href\": \"https://horizon.stellar.org/transactions/fb2f5655c70a459220ac09eb3d6870422b58dcf5c5ffb5e5b21817b4d248826e\"\n"
+                          "    },\n"
+                          "    \"effects\": {\n"
+                          "      \"href\": \"https://horizon.stellar.org/operations/75252830662840321/effects\"\n"
+                          "    },\n"
+                          "    \"succeeds\": {\n"
+                          "      \"href\": \"https://horizon.stellar.org/effects?order=desc\\u0026cursor=75252830662840321\"\n"
+                          "    },\n"
+                          "    \"precedes\": {\n"
+                          "      \"href\": \"https://horizon.stellar.org/effects?order=asc\\u0026cursor=75252830662840321\"\n"
+                          "    }\n"
+                          "  },\n"
+                          "  \"id\": \"75252830662840321\",\n"
+                          "  \"paging_token\": \"75252830662840321\",\n"
+                          "  \"source_account\": \"GC45JH537XZD4DY4WTV5PCUJL4KPOIE4WMGX5OP5KSPS2OLGRUOVVIGD\",\n"
+                          "  \"type\": \"path_payment\",\n"
+                          "  \"type_i\": 2,\n"
+                          "  \"created_at\": \"2018-04-24T12:58:12Z\",\n"
+                          "  \"transaction_hash\": \"fb2f5655c70a459220ac09eb3d6870422b58dcf5c5ffb5e5b21817b4d248826e\",\n"
+                          "  \"asset_type\": \"credit_alphanum4\",\n"
+                          "  \"asset_code\": \"XRP\",\n"
+                          "  \"asset_issuer\": \"GBVOL67TMUQBGL4TZYNMY3ZQ5WGQYFPFD5VJRWXR72VA33VFNL225PL5\",\n"
+                          "  \"from\": \"GC45JH537XZD4DY4WTV5PCUJL4KPOIE4WMGX5OP5KSPS2OLGRUOVVIGD\",\n"
+                          "  \"to\": \"GC45JH537XZD4DY4WTV5PCUJL4KPOIE4WMGX5OP5KSPS2OLGRUOVVIGD\",\n"
+                          "  \"amount\": \"2.5000000\",\n"
+                          "  \"path\": [],\n"
+                          "  \"source_max\": \"1.1779523\",\n"
+                          "  \"source_asset_type\": \"native\"\n"
+                          "}";
+        PathPaymentOperationResponse operation;
+        operation.loadFromJson(json);
+        QCOMPARE(operation.getFrom().getAccountId(), QString("GC45JH537XZD4DY4WTV5PCUJL4KPOIE4WMGX5OP5KSPS2OLGRUOVVIGD"));
+        QCOMPARE(operation.getTo().getAccountId(), QString("GC45JH537XZD4DY4WTV5PCUJL4KPOIE4WMGX5OP5KSPS2OLGRUOVVIGD"));
+        QCOMPARE(operation.getAmount(), QString("2.5000000"));
+        QCOMPARE(operation.getSourceMax(), QString("1.1779523"));
+        QVERIFY(operation.getSourceAsset()->equals(new AssetTypeNative()));
+        QVERIFY(operation.getAsset()->equals(Asset::createNonNativeAsset("XRP", KeyPair::fromAccountId(QString("GBVOL67TMUQBGL4TZYNMY3ZQ5WGQYFPFD5VJRWXR72VA33VFNL225PL5")))));
     }
     void testDeserializeCreatePassiveOfferOperation() {
         QByteArray json = "{\n"
