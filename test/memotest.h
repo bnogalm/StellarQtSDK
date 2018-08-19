@@ -17,17 +17,19 @@ private slots:
     void testMemoNone() {
         MemoNone* memo = Memo::none();
         QCOMPARE( stellar::MemoType::MEMO_NONE, memo->toXdr().type);
-
-        MemoNone * memoReconverted = dynamic_cast<MemoNone*>(Memo::fromXdr(memo->toXdr()));
+        stellar::Memo m=Memo::fromXdr(memo->toXdr();
+        MemoNone * memoReconverted = dynamic_cast<MemoNone*>(Memo::fromXdr(m));
         QCOMPARE(stellar::MemoType::MEMO_NONE, memoReconverted->toXdr().type);
     }
     void testMemoTextSuccess() {
         MemoText* memo = Memo::text("test");
         QCOMPARE(stellar::MemoType::MEMO_TEXT, memo->toXdr().type);
         QCOMPARE(QString("test"), memo->getText());
-
-
-        MemoText * memoReconverted = dynamic_cast<MemoText*>(Memo::fromXdr(memo->toXdr()));
+        MemoText * memoReconverted=nullptr;
+        {
+            stellar::Memo m=Memo::fromXdr(memo->toXdr();
+            memoReconverted = dynamic_cast<MemoText*>(Memo::fromXdr(m));
+        }
         QCOMPARE(stellar::MemoType::MEMO_TEXT, memoReconverted->toXdr().type);
         QCOMPARE(QString("test"), memoReconverted->getText());
     }
@@ -54,13 +56,13 @@ private slots:
     }
     void testMemoId() {
         MemoId* memo = Memo::id(9223372036854775807L);
-        QCOMPARE(9223372036854775807L, memo->getId());
+        QCOMPARE(9223372036854775807UL, memo->getId());
         QCOMPARE(stellar::MemoType::MEMO_ID, memo->toXdr().type);
-        QCOMPARE(9223372036854775807L, (qint64)(memo->toXdr().id));
+        QCOMPARE(9223372036854775807UL, (qint64)(memo->toXdr().id));
 
         MemoId * memoReconverted = dynamic_cast<MemoId*>(Memo::fromXdr(memo->toXdr()));
         QCOMPARE(stellar::MemoType::MEMO_ID, memoReconverted->toXdr().type);
-        QCOMPARE(9223372036854775807L, memoReconverted->toXdr().id);
+        QCOMPARE(9223372036854775807UL, memoReconverted->toXdr().id);
     }
     void testMemoHashSuccess() {
         MemoHash* memo = Memo::hash(QString("4142434445464748494a4b4c"));

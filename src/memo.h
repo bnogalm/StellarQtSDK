@@ -43,7 +43,7 @@ public:
      */
     static Memo* parse(QString type, QByteArray memo);
 
-    static Memo* fromXdr(stellar::Memo memo);
+    static Memo* fromXdr(stellar::Memo &memo);
     /**
       * Creates new MemoNone instance.
       */
@@ -88,6 +88,9 @@ public:
     static MemoReturnHash* returnHash(QString hexString);
     virtual stellar::Memo toXdr() = 0;
 
+    bool equals(Memo* memo) const;
+    bool operator==(const Memo &memo) const;
+
 };
 
 
@@ -96,17 +99,7 @@ protected:
     QByteArray m_bytes;
 
 public:
-    MemoHashAbstract(QByteArray bytes) {
-        if (bytes.length() < 32) {
-            this->m_bytes = Util::paddedByteArray(bytes, 32);
-        } else if (bytes.length() > 32) {
-             throw std::runtime_error("MEMO_HASH can contain 32 bytes at max.");
-        }
-        else{
-
-            this->m_bytes = bytes;
-        }
-    }
+    MemoHashAbstract(QByteArray bytes);
 
     MemoHashAbstract(QString hexString): MemoHashAbstract(QByteArray::fromHex(hexString.toLatin1())){// throws DecoderException {
     }
@@ -115,9 +108,7 @@ public:
     /**
    * Returns 32 bytes long array contained in this memo.
    */
-    QByteArray getBytes() {
-        return m_bytes;
-    }
+    QByteArray getBytes() const;
 
     /**
    * <p>Returns hex representation of bytes contained in this memo.</p>
@@ -129,9 +120,7 @@ public:
    *   memo.getTrimmedHexValue(); // 4142434445
    * </code>
    */
-    QString getHexValue() {
-        return QString(m_bytes.toHex());
-    }
+    QString getHexValue() const;
 
     /**
    * <p>Returns hex representation of bytes contained in this memo until null byte (0x00) is found.</p>
@@ -158,23 +147,14 @@ class MemoHash : public MemoHashAbstract {
     MemoHash(CheckHex hex): MemoHashAbstract(hex.value){
     }
 public:
-    MemoHash(QByteArray bytes):MemoHashAbstract(bytes) {
+    MemoHash(QByteArray bytes);
 
-    }
-
-    MemoHash(QString hexString):MemoHash(CheckHex(hexString)) {
-    }
+    MemoHash(QString hexString);
 
 
     virtual ~MemoHash();
 
-    stellar::Memo toXdr() {
-        using namespace stellar;
-        stellar::Memo memo;
-        memo.type = MemoType::MEMO_HASH;
-        memcpy(memo.hash,this->m_bytes.constData(),sizeof(memo.hash));
-        return memo;
-    }
+    stellar::Memo toXdr();
 };
 
 
@@ -182,30 +162,16 @@ public:
  * Represents MEMO_ID.
  */
 class MemoId : public Memo {
-  private:
+private:
     qint64 m_id;
 
-  public:
-    MemoId(qint64 id) {
-    if (id < 0) {
-        //throw new IllegalArgumentException("id must be a positive number");
-    }
-    this->m_id = id;
-  }
+public:
+    MemoId(qint64 id);
     virtual ~MemoId();
 
-  qint64 getId() {
-    return m_id;
-  }
+    qint64 getId() const;
 
-  stellar::Memo toXdr()
-  {
-      using namespace stellar;
-      stellar::Memo memo;
-      memo.type = MemoType::MEMO_ID;
-      memo.id=m_id;
-      return memo;
-  }
+    stellar::Memo toXdr();
 
 };
 
@@ -223,11 +189,9 @@ public:
  */
 class MemoReturnHash : public MemoHashAbstract {
 public:
-  MemoReturnHash(QByteArray bytes):MemoHashAbstract(bytes) {
-  }
+  MemoReturnHash(QByteArray bytes);
 
-  MemoReturnHash(QString hexString):MemoHashAbstract(hexString){// throws DecoderException {
-  }
+  MemoReturnHash(QString hexString);
   virtual ~MemoReturnHash();
 
   stellar::Memo toXdr();
@@ -238,24 +202,15 @@ public:
  * Represents MEMO_TEXT.
  */
 class MemoText : public Memo {
-  private:
+private:
     QString m_text;
 
-  public:
+public:
     MemoText(QString text);
     virtual ~MemoText();
-  QString getText() {
-    return m_text;
-  }
+    QString getText() const;
 
-  stellar::Memo toXdr() {
-      using namespace stellar;
-      stellar::Memo memo;
-      memo.type = MemoType::MEMO_TEXT;
-      QByteArray ba  = m_text.toUtf8();
-      memo.text.set(ba.data(),ba.length());
-    return memo;
-  }
+    stellar::Memo toXdr();
 };
 
 inline Memo * checkNotNull(Memo *t, const char *error)

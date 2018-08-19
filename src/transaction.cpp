@@ -1,7 +1,7 @@
 #include "transaction.h"
 #include "account.h"
 
-Transaction::Transaction(KeyPair *sourceAccount, qint64 sequenceNumber, QVector<Operation *> operations, Memo *memo) {
+Transaction::Transaction(KeyPair *sourceAccount, qint64 sequenceNumber, QVector<Operation *> operations, Memo *memo, TimeBounds *timeBounds) {
     m_sourceAccount = checkNotNull(sourceAccount, "sourceAccount cannot be null");
     m_sequenceNumber=sequenceNumber;//we cant check this, all the values are valid
 
@@ -10,6 +10,7 @@ Transaction::Transaction(KeyPair *sourceAccount, qint64 sequenceNumber, QVector<
     m_operations = operations;
     m_fee = operations.length() * BASE_FEE;
     m_memo =(memo) ? memo : Memo::none();
+    m_timeBounds = timeBounds;
 }
 
 Transaction::~Transaction(){
@@ -17,6 +18,8 @@ Transaction::~Transaction(){
         delete m_sourceAccount;
     if(m_memo)
         delete m_memo;
+    if(m_timeBounds)
+        delete m_timeBounds;
     for(Operation * o : m_operations){
         delete o;
     }
@@ -88,8 +91,18 @@ QVector<stellar::DecoratedSignature> Transaction::getSignatures() {
     return m_signatures;
 }
 
-Memo *Transaction::getMemo() {
+Memo *Transaction::getMemo() const
+{
     return m_memo;
+}
+
+TimeBounds *Transaction::getTimeBounds() const
+{
+    return m_timeBounds;
+}
+
+QVector<Operation *> Transaction::getOperations() const{
+    return m_operations;
 }
 
 int Transaction::getFee() {
@@ -101,6 +114,12 @@ stellar::Transaction Transaction::toXdr() {
     stellar::Transaction transaction;
 
     transaction.memo = m_memo->toXdr();
+    if(m_timeBounds)
+    {
+        stellar::TimeBounds& tm = transaction.timeBounds.filler();
+        tm.minTime=m_timeBounds->getMinTime();
+        tm.maxTime=m_timeBounds->getMaxTime();
+    }
     // fee
     transaction.fee = m_fee;
     // sequenceNumber
@@ -122,7 +141,7 @@ Transaction *Transaction::fromXdr(stellar::Transaction &xdr)
     {
         ops.append(Operation::fromXdr(op));
     }
-    return new Transaction(sourceAccount,xdr.seqNum,ops,Memo::fromXdr(xdr.memo));
+    return new Transaction(sourceAccount,xdr.seqNum,ops,Memo::fromXdr(xdr.memo), xdr.timeBounds.filled ? TimeBounds::fromXdr(xdr.timeBounds.value) : nullptr);
 }
 
 stellar::TransactionEnvelope Transaction::toEnvelopeXdr() {
@@ -158,7 +177,8 @@ QString Transaction::toEnvelopeXdrBase64() {
 
 Transaction::Builder::Builder(TransactionBuilderAccount *sourceAccount) {
     m_sourceAccount = checkNotNull(sourceAccount, "sourceAccount cannot be null");
-    m_memo=0;
+    m_memo=nullptr;
+    m_timeBounds=nullptr;
 }
 
 Transaction::Builder::~Builder()
@@ -167,6 +187,8 @@ Transaction::Builder::~Builder()
         delete m_sourceAccount;
     if(m_memo)
         delete m_memo;
+    if(m_timeBounds)
+        delete m_timeBounds;
     for(Operation * o : m_operations){
         delete o;
     }
@@ -190,13 +212,24 @@ Transaction::Builder &Transaction::Builder::addMemo(Memo *memo) {
     return *this;
 }
 
+Transaction::Builder &Transaction::Builder::addTimeBounds(TimeBounds *timeBounds) {
+    if (this->m_timeBounds) {
+        throw std::runtime_error("TimeBounds has been already added.");
+    }
+    checkNotNull((intptr_t)timeBounds, "timeBounds cannot be null");
+    m_timeBounds = timeBounds;
+    return *this;
+}
+
 Transaction *Transaction::Builder::build() {
     //so objects dont get destroyed on exception, we use a pointer copy
     auto account = m_sourceAccount;
     auto memo = m_memo;
-    m_sourceAccount=0;
-    m_memo=0;
-    Transaction *transaction = new Transaction(account->getKeypair(), account->getIncrementedSequenceNumber(), m_operations, memo);
+    auto timebounds = m_timeBounds;
+    m_sourceAccount=nullptr;
+    m_memo=nullptr;
+    m_timeBounds=nullptr;
+    Transaction *transaction = new Transaction(account->getKeypair(), account->getIncrementedSequenceNumber(), m_operations, memo, timebounds);
     // Increment sequence number when there were no exceptions when creating a transaction
     account->incrementSequenceNumber();
     //it lose ownership of the assigned data, we reset it.
