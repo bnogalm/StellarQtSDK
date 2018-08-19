@@ -45,7 +45,7 @@ private slots:
 
     void testBuildTransaction()
     {
-        quint64 sequenceNumber=5026524780560386;
+        qint64 sequenceNumber=5026524780560386;
         KeyPair *source = KeyPair::fromSecretSeed(QString("SDPK5IBB57JY5SMMBUBOFSAHNNCETCZWLTKKDPWBDYXBX3B4ZAFOQYD5"));
         KeyPair *destination = KeyPair::fromSecretSeed(QByteArray::fromHex("268486538a268486538f268486538a268486538f268486538a268486538feedd"));
 
@@ -85,7 +85,7 @@ private slots:
      }
      void testBuildWrongTransaction()
      {
-         quint64 sequenceNumber=1;
+         qint64 sequenceNumber=1;
          KeyPair *source = KeyPair::fromSecretSeed(QString("SDPK5IBB57JY5SMMBUBOFSAHNNCETCZWLTKKDPWBDYXBX3B4ZAFOQYD5"));
          KeyPair *destination = KeyPair::fromSecretSeed(QByteArray::fromHex("268486538a268486538f268486538a268486538f268486538a268486538feedd"));
 

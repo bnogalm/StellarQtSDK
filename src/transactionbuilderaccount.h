@@ -21,12 +21,12 @@ public:
     /**
      * Returns current sequence number ot this Account.
      */
-    virtual quint64 getSequenceNumber() = 0;
+    virtual qint64 getSequenceNumber() = 0;
 
     /**
      * Returns sequence number incremented by one, but does not increment internal counter.
      */
-    virtual quint64 getIncrementedSequenceNumber() = 0;
+    virtual qint64 getIncrementedSequenceNumber() = 0;
 
     /**
      * Increments sequence number in this object by one.

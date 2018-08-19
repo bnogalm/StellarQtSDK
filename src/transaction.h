@@ -8,6 +8,7 @@
 #include "network.h"
 #include <exception>
 #include "transactionbuilderaccount.h"
+#include "timebounds.h"
 #include <QObject>
 /**
  * Represents <a href="https://www.stellar.org/developers/learn/concepts/transactions.html" target="_blank">Transaction</a> in Stellar network.
@@ -20,14 +21,15 @@ class Transaction : public QObject
     const int BASE_FEE = 100;
     int m_fee;
     KeyPair* m_sourceAccount;
-    quint64 m_sequenceNumber;
+    qint64 m_sequenceNumber;
     QVector<Operation*> m_operations;
     Memo *m_memo;
+    TimeBounds *m_timeBounds;
     QVector<stellar::DecoratedSignature> m_signatures;
 
     friend class Builder;
 
-    Transaction(KeyPair* sourceAccount, quint64 sequenceNumber, QVector<Operation*> operations, Memo* memo);
+    Transaction(KeyPair* sourceAccount, qint64 sequenceNumber, QVector<Operation*> operations, Memo* memo, TimeBounds *timeBounds);
 
 
 public:
@@ -56,11 +58,21 @@ public:
 
      KeyPair* getSourceAccount();
 
-     quint64 getSequenceNumber();
+     qint64 getSequenceNumber();
 
      QVector<stellar::DecoratedSignature> getSignatures();
 
-     Memo* getMemo();
+     Memo* getMemo() const;
+
+     /**
+      * @return TimeBounds, or null (representing no time restrictions)
+      */
+     TimeBounds* getTimeBounds() const;
+
+     /**
+      * Returns operations in this transaction.
+      */
+     QVector<Operation*> getOperations() const;
 
      /**
       * Returns fee paid for transaction in stroops (1 stroop = 0.0000001 XLM).
@@ -99,6 +111,7 @@ public:
      class Builder {
          TransactionBuilderAccount *m_sourceAccount;
          Memo *m_memo;
+         TimeBounds *m_timeBounds;
          QVector<Operation*> m_operations;
      public:
          /**
@@ -128,6 +141,13 @@ public:
         */
          Builder& addMemo(Memo* memo);
 
+         /**
+          * Adds a <a href="https://www.stellar.org/developers/learn/concepts/transactions.html" target="_blank">time-bounds</a> to this transaction.
+          * @param timeBounds
+          * @return Builder object so you can chain methods.
+          * @see TimeBounds
+          */
+         Builder& addTimeBounds(TimeBounds* timeBounds);
          /**
         * Builds a transaction. It will increment sequence number of the source account.
         * You take ownership of the object so delete it when you don't need anymore.

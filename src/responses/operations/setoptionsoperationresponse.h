@@ -52,7 +52,9 @@ public:
     quint32 getHighThreshold() const;
     KeyPair* getInflationDestination();
     QString getHomeDomain() const;
-    KeyPair* getSigner();
+    //deprecated, use getSignerKey
+    Q_DECL_DEPRECATED KeyPair* getSigner();
+    QString getSignerKey() const;
     quint32 getSignerWeight() const;
     quint32 getMasterKeyWeight() const;
     QStringList getClearFlags() const;

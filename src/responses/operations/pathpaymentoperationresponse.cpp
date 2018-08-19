@@ -4,7 +4,7 @@
 #include "../../assettypenative.h"
 PathPaymentOperationResponse::PathPaymentOperationResponse(QNetworkReply *reply)
     :OperationResponse(reply)
-    ,m_fromKeypair(0),m_toKeypair(0),m_asset(0),m_sendAsset(0)
+    ,m_fromKeypair(0),m_toKeypair(0),m_asset(0),m_sourceAsset(0)
 {
 
 }
@@ -17,16 +17,16 @@ PathPaymentOperationResponse::~PathPaymentOperationResponse()
         delete m_toKeypair;
     if(m_asset)
         delete m_asset;
-    if(m_sendAsset)
-        delete m_sendAsset;
+    if(m_sourceAsset)
+        delete m_sourceAsset;
 }
 
-QString PathPaymentOperationResponse::getAmount() {
+QString PathPaymentOperationResponse::getAmount() const {
     return m_amount;
 }
 
-QString PathPaymentOperationResponse::getSourceAmount() {
-    return m_sourceAmount;
+QString PathPaymentOperationResponse::getSourceMax() const{
+    return m_sourceMax;
 }
 
 KeyPair &PathPaymentOperationResponse::getFrom() {
@@ -53,16 +53,16 @@ Asset* PathPaymentOperationResponse::getAsset() {
     return m_asset;
 }
 
-Asset* PathPaymentOperationResponse::getSendAsset() {
-    if(m_sendAsset)
-        return m_sendAsset;
-    if (m_sendAssetType =="native") {
-        m_sendAsset= new AssetTypeNative();
+Asset* PathPaymentOperationResponse::getSourceAsset() {
+    if(m_sourceAsset)
+        return m_sourceAsset;
+    if (m_sourceAssetType =="native") {
+        m_sourceAsset= new AssetTypeNative();
     } else {
-        KeyPair* issuer = KeyPair::fromAccountId(m_sendAssetIssuer);
-        m_sendAsset =Asset::createNonNativeAsset(m_sendAssetCode, issuer);
+        KeyPair* issuer = KeyPair::fromAccountId(m_sourceAssetIssuer);
+        m_sourceAsset =Asset::createNonNativeAsset(m_sourceAssetCode, issuer);
     }
-    return m_sendAsset;
+    return m_sourceAsset;
 }
 
 QString PathPaymentOperationResponse::from() const
@@ -90,19 +90,19 @@ QString PathPaymentOperationResponse::assetIssuer() const
     return m_assetIssuer;
 }
 
-QString PathPaymentOperationResponse::sendAssetType() const
+QString PathPaymentOperationResponse::sourceAssetType() const
 {
-    return m_sendAssetType;
+    return m_sourceAssetType;
 }
 
-QString PathPaymentOperationResponse::sendAssetCode() const
+QString PathPaymentOperationResponse::sourceAssetCode() const
 {
-    return m_sendAssetCode;
+    return m_sourceAssetCode;
 }
 
-QString PathPaymentOperationResponse::sendAssetIssuer() const
+QString PathPaymentOperationResponse::sourceAssetIssuer() const
 {
-    return m_sendAssetIssuer;
+    return m_sourceAssetIssuer;
 }
 
 void PathPaymentOperationResponse::setFrom(QString from)
@@ -127,7 +127,7 @@ void PathPaymentOperationResponse::setAssetType(QString assetType)
 {
     if(m_asset){
         delete m_asset;
-        m_asset=0;
+        m_asset=nullptr;
     }
     m_assetType = assetType;
 }
@@ -136,7 +136,7 @@ void PathPaymentOperationResponse::setAssetCode(QString assetCode)
 {
     if(m_asset){
         delete m_asset;
-        m_asset=0;
+        m_asset=nullptr;
     }
     m_assetCode = assetCode;
 }
@@ -145,34 +145,34 @@ void PathPaymentOperationResponse::setAssetIssuer(QString assetIssuer)
 {
     if(m_asset){
         delete m_asset;
-        m_asset=0;
+        m_asset=nullptr;
     }
     m_assetIssuer = assetIssuer;
 }
 
-void PathPaymentOperationResponse::setSendAssetType(QString sendAssetType)
+void PathPaymentOperationResponse::setSourceAssetType(QString sourceAssetType)
 {
-    if(m_sendAsset){
-        delete m_sendAsset;
-        m_sendAsset=0;
+    if(m_sourceAsset){
+        delete m_sourceAsset;
+        m_sourceAsset=nullptr;
     }
-    m_sendAssetType = sendAssetType;
+    m_sourceAssetType = sourceAssetType;
 }
 
-void PathPaymentOperationResponse::setSendAssetCode(QString sendAssetCode)
+void PathPaymentOperationResponse::setSourceAssetCode(QString sourceAssetCode)
 {
-    if(m_sendAsset){
-        delete m_sendAsset;
-        m_sendAsset=0;
+    if(m_sourceAsset){
+        delete m_sourceAsset;
+        m_sourceAsset=nullptr;
     }
-    m_sendAssetCode = sendAssetCode;
+    m_sourceAssetCode = sourceAssetCode;
 }
 
-void PathPaymentOperationResponse::setSendAssetIssuer(QString sendAssetIssuer)
+void PathPaymentOperationResponse::setSourceAssetIssuer(QString sourceAssetIssuer)
 {
-    if(m_sendAsset){
-        delete m_sendAsset;
-        m_sendAsset=0;
+    if(m_sourceAsset){
+        delete m_sourceAsset;
+        m_sourceAsset=nullptr;
     }
-    m_sendAssetIssuer = sendAssetIssuer;
+    m_sourceAssetIssuer = sourceAssetIssuer;
 }

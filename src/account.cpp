@@ -2,7 +2,7 @@
 #include "util.h"
 
 
-Account::Account(KeyPair *keypair, quint64 sequenceNumber) {
+Account::Account(KeyPair *keypair, qint64 sequenceNumber) {
     m_keyPair = checkNotNull(keypair, "keypair cannot be null");
     m_sequenceNumber = sequenceNumber;
 }
@@ -11,11 +11,11 @@ KeyPair *Account::getKeypair() {
     return m_keyPair;
 }
 
-quint64 Account::getSequenceNumber() {
+qint64 Account::getSequenceNumber() {
     return m_sequenceNumber;
 }
 
-quint64 Account::getIncrementedSequenceNumber() {
+qint64 Account::getIncrementedSequenceNumber() {
     return m_sequenceNumber + 1;
 }
 

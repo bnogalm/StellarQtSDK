@@ -28,7 +28,7 @@ namespace stellar
     enum class SignerKeyType : qint32
     {
         SIGNER_KEY_TYPE_ED25519 = CryptoKeyType::KEY_TYPE_ED25519,
-        SIGNER_KEY_TYPE_PRE_AUTH_TX = CryptoKeyType::KEY_TYPE_PRE_AUTH_TX,
+        SIGNER_KEY_TYPE_PRE_AUTH_TX = CryptoKeyType::KEY_TYPE_PRE_AUTH_TX,  // SHA-256 Hash of TransactionSignaturePayload structure
         SIGNER_KEY_TYPE_HASH_X = CryptoKeyType::KEY_TYPE_HASH_X
     };
 

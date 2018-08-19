@@ -34,7 +34,8 @@ namespace stellar
         ALLOW_TRUST = 7,
         ACCOUNT_MERGE = 8,
         INFLATION = 9,
-        MANAGE_DATA = 10
+        MANAGE_DATA = 10,
+        BUMP_SEQUENCE = 11
     };
 
     /* CreateAccount
@@ -305,9 +306,23 @@ namespace stellar
        return in;
     }
 
+    struct BumpSequenceOp
+    {
+        SequenceNumber bumpTo;
+    };
+
+    inline QDataStream &operator<<(QDataStream &out, const  BumpSequenceOp &obj) {
+        out << obj.bumpTo;
+       return out;
+    }
+
+    inline QDataStream &operator>>(QDataStream &in,  BumpSequenceOp &obj) {
+       in >> obj.bumpTo;
+       return in;
+    }
+
+
     /* An operation is the lowest unit of work that a transaction does */
-
-
     struct Operation
     {
         // sourceAccount is the account used to run the operation
@@ -324,6 +339,7 @@ namespace stellar
         AllowTrustOp operationAllowTrust;
         AccountID operationAccountMerge;
         AccountID operationInflation;
+        BumpSequenceOp operationBumpSequence;
         //non trivials, you MUST call contructor explicity to use them
         PathPaymentOp operationPathPayment;
         SetOptionsOp operationSetOptions;
@@ -367,6 +383,8 @@ namespace stellar
             out << obj.operationInflation; break;
         case OperationType::MANAGE_DATA:
             out << obj.operationManageData; break;
+        case OperationType::BUMP_SEQUENCE:
+            out << obj.operationBumpSequence; break;
         default: break;
         }
 
@@ -401,6 +419,8 @@ namespace stellar
         case OperationType::MANAGE_DATA:
             new (&obj.operationManageData) ManageDataOp();
             in >> obj.operationManageData; break;
+        case OperationType::BUMP_SEQUENCE:
+            in >> obj.operationBumpSequence; break;
         default: break;
         }
        return in;
@@ -870,7 +890,9 @@ namespace stellar
         ACCOUNT_MERGE_MALFORMED = -1,      // can't merge onto itself
         ACCOUNT_MERGE_NO_ACCOUNT = -2,     // destination does not exist
         ACCOUNT_MERGE_IMMUTABLE_SET = -3,  // source account has AUTH_IMMUTABLE set
-        ACCOUNT_MERGE_HAS_SUB_ENTRIES = -4 // account has trust lines/offers
+        ACCOUNT_MERGE_HAS_SUB_ENTRIES = -4, // account has trust lines/offers
+        ACCOUNT_MERGE_SEQNUM_TOO_FAR = -5, // sequence number is over max allowed
+        ACCOUNT_MERGE_DEST_FULL = -6 // can't add source balance to destination balance
     };
     XDR_SERIALIZER(AccountMergeResultCode)
 
@@ -965,6 +987,23 @@ namespace stellar
     };
     XDR_SERIALIZER(ManageDataResult)
 
+
+    enum class BumpSequenceResultCode : qint32
+    {
+        // codes considered as "success" for the operation
+        BUMP_SEQUENCE_SUCCESS = 0,
+        // codes considerer as "failure" for the operation
+        BUMP_SEQUENCE_BAD_SEQ = -1  //  'bumpTo' is not within bounds
+    };
+    XDR_SERIALIZER(BumpSequenceResultCode)
+
+    struct alignas(4) BumpSequenceResult
+    {
+         BumpSequenceResultCode code;
+    };
+    XDR_SERIALIZER(BumpSequenceResult)
+
+
     /* High level Operation Result */
 
     enum class OperationResultCode : qint32
@@ -988,6 +1027,7 @@ namespace stellar
         AllowTrustResult allowTrustResult;
         AccountMergeResult accountMergeResult;
         ManageDataResult manageDataResult;
+        BumpSequenceResult bumpSequenceResult;
         };
         //non trivial
         PaymentResult paymentResult;
@@ -1026,6 +1066,8 @@ namespace stellar
                 out << obj.inflationResult; break;
             case OperationType::MANAGE_DATA:
                 out << obj.manageDataResult; break;
+            case OperationType::BUMP_SEQUENCE:
+                out << obj.bumpSequenceResult; break;
             default:
                 break;
             }
@@ -1066,6 +1108,8 @@ namespace stellar
                 in >> obj.inflationResult; break;
             case OperationType::MANAGE_DATA:
                 in >> obj.manageDataResult; break;
+            case OperationType::BUMP_SEQUENCE:
+                in >> obj.bumpSequenceResult; break;
             default:
                 break;
             }
