@@ -41,6 +41,11 @@ KeyPair *SetOptionsOperationResponse::getSigner() {
     return m_signerKeypair;
 }
 
+QString SetOptionsOperationResponse::getSignerKey() const
+{
+    return m_signerKey;
+}
+
 quint32 SetOptionsOperationResponse::getSignerWeight() const{
     return m_signerWeight;
 }

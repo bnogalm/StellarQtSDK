@@ -328,6 +328,7 @@ private slots:
         operation.loadFromJson(json);
 
         QCOMPARE(operation.getSigner()->getAccountId(), QString("GD3ZYXVC7C3ECD5I4E5NGPBFJJSULJ6HJI2FBHGKYFV34DSIWB4YEKJZ"));
+        QCOMPARE(operation.getSignerKey(), QString("GD3ZYXVC7C3ECD5I4E5NGPBFJJSULJ6HJI2FBHGKYFV34DSIWB4YEKJZ"));
         QCOMPARE(operation.getSignerWeight(), (quint32)1);
         QCOMPARE(operation.getHomeDomain(), QString("stellar.org"));
         QCOMPARE(operation.getInflationDestination()->getAccountId(), QString("GBYWSY4NPLLPTP22QYANGTT7PEHND64P4D4B6LFEUHGUZRVYJK2H4TBE"));
@@ -337,6 +338,45 @@ private slots:
         QCOMPARE(operation.getMasterKeyWeight(), (quint32)4);
         QCOMPARE(operation.getSetFlags()[0], QString("auth_required_flag"));
         QCOMPARE(operation.getClearFlags()[0], QString("auth_revocable_flag"));
+    }
+    void testDeserializeSetOptionsOperationWithNonEd25519Key() {
+        QByteArray json = "{\n"
+                          "        \"_links\": {\n"
+                          "          \"self\": {\n"
+                          "            \"href\": \"https://horizon-testnet.stellar.org/operations/44921793093312513\"\n"
+                          "          },\n"
+                          "          \"transaction\": {\n"
+                          "            \"href\": \"https://horizon-testnet.stellar.org/transactions/d991075183f7740e1aa43700b824f2f404082632f1db9d8a54db00574f83393b\"\n"
+                          "          },\n"
+                          "          \"effects\": {\n"
+                          "            \"href\": \"https://horizon-testnet.stellar.org/operations/44921793093312513/effects\"\n"
+                          "          },\n"
+                          "          \"succeeds\": {\n"
+                          "            \"href\": \"https://horizon-testnet.stellar.org/effects?order=desc\\u0026cursor=44921793093312513\"\n"
+                          "          },\n"
+                          "          \"precedes\": {\n"
+                          "            \"href\": \"https://horizon-testnet.stellar.org/effects?order=asc\\u0026cursor=44921793093312513\"\n"
+                          "          }\n"
+                          "        },\n"
+                          "        \"id\": \"44921793093312513\",\n"
+                          "        \"paging_token\": \"44921793093312513\",\n"
+                          "        \"source_account\": \"GCWYUHCMWC2AATGAXXYZX7T45QZLTRCYNJDD3PC73NEMUXBOCO5F6T6Z\",\n"
+                          "        \"type\": \"set_options\",\n"
+                          "        \"type_i\": 5,\n"
+                          "        \"created_at\": \"2018-08-09T15:36:24Z\",\n"
+                          "        \"transaction_hash\": \"d991075183f7740e1aa43700b824f2f404082632f1db9d8a54db00574f83393b\",\n"
+                          "        \"signer_key\": \"TBGFYVCU76LJ7GZOCGR4X7DG2NV42JPG5CKRL42LA5FZOFI3U2WU7ZAL\",\n"
+                          "        \"signer_weight\": 1\n"
+                          "      }";
+        SetOptionsOperationResponse operation;
+        operation.loadFromJson(json);
+        try {
+            operation.getSigner();
+            QFAIL("not known key type signer");
+        } catch (FormatException e) {
+            //QCOMPARE(QString::fromLatin1(e.what()),QString("Version byte is invalid"));
+        }
+        QCOMPARE(operation.getSignerKey(), QString("TBGFYVCU76LJ7GZOCGR4X7DG2NV42JPG5CKRL42LA5FZOFI3U2WU7ZAL"));
     }
     void testDeserializeAccountMergeOperation() {
         QByteArray json = "{\n"

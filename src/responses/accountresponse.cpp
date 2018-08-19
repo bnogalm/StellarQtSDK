@@ -166,11 +166,21 @@ Signer::Signer():m_weight(0)
 
 }
 
-QString Signer::getAccountId() {
+QString Signer::getAccountId() const{
     return m_accountId;
 }
 
-int Signer::getWeight() {
+QString Signer::getKey() const
+{
+    return m_accountId;
+}
+
+QString Signer::getType() const
+{
+    return m_type;
+}
+
+int Signer::getWeight() const{
     return m_weight;
 }
 
