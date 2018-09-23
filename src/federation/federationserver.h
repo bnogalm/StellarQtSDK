@@ -23,7 +23,7 @@ class FederationServer : public QObject
     QString m_domain;
     static QNetworkAccessManager* s_httpClient;
     static QHash<QString,FederationServer*>* s_cachedFederationServers;
-    QNetworkReply * buildReply(QString address);
+    QNetworkReply * buildReply(const QString &address);
     static QNetworkAccessManager &httpClient();
 
 
@@ -69,7 +69,7 @@ public:
      * @param address Stellar address, like <code>bob*stellar.org</code>
      * @return FederationResponse
      */
-    FederationResponse* resolveAddress(QString address);
+    FederationResponse* resolveAddress(const QString& address);
 
     /**
      * Returns a federation server URI.

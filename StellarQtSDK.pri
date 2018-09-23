@@ -1,4 +1,7 @@
 
+
+DEFINES += STELLAR_QT_REPLY_TIMEOUT=10000
+
 QT *= core network
 CONFIG *= c++11
 

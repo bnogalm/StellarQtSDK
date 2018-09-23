@@ -49,6 +49,8 @@ class Response : public QObject
     QString m_detail;
 
     QByteArray m_pendingData;
+    int m_timeoutTimerID;//timeout request
+    int m_reconnectTimerID;//used for streamed request
 protected:
     QNetworkReply * m_reply;
     int m_rateLimitLimit;
@@ -58,9 +60,9 @@ protected:
     void fillObject(const QMetaObject *mo, void *obj, const QJsonObject &jsonObj, bool qobject = false);
 
     virtual void reset();
-    bool isStreamingResponse();
+    bool isStreamingResponse() const;
 public:
-    explicit Response(QNetworkReply* reply=0);
+    explicit Response(QNetworkReply* reply=nullptr);
 
     virtual ~Response();
     void loadFromReply(QNetworkReply *reply);
@@ -70,6 +72,7 @@ signals:
     void error();
 private:
     bool preprocessResponse(QNetworkReply *response);
+    void restartTimeoutTimer();
 private slots:
     void processResponse();    
     void processPartialResponse();
@@ -97,6 +100,10 @@ public:
      * @see <a href="https://www.stellar.org/developers/horizon/learn/rate-limiting.html" target="_blank">Rate Limiting</a>
      */
     int getRateLimitReset();
+
+    // QObject interface
+protected:
+    void timerEvent(QTimerEvent *event);
 };
 Q_DECLARE_METATYPE(Response*)
 #endif // RESPONSE_H
