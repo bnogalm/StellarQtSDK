@@ -185,7 +185,7 @@ void Response::timerEvent(QTimerEvent *event)
         this->killTimer(m_timeoutTimerID);
         if(this->m_reply->isRunning())
         {
-            this->m_reply->abort();
+            this->m_reply->close();
         }
         m_timeoutTimerID= 0;
     }

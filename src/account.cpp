@@ -7,6 +7,12 @@ Account::Account(KeyPair *keypair, qint64 sequenceNumber) {
     m_sequenceNumber = sequenceNumber;
 }
 
+Account::~Account()
+{
+    if(m_keyPair)
+        delete m_keyPair;
+}
+
 KeyPair *Account::getKeypair() {
     return m_keyPair;
 }

@@ -19,7 +19,7 @@ public:
      * @param sequenceNumber Current sequence number of the account (can be obtained using java-stellar-sdk or horizon server)
      */
     Account(KeyPair* keypair, qint64 sequenceNumber);
-
+    ~Account();
 
     KeyPair* getKeypair();
 
