@@ -113,6 +113,40 @@ private slots:
         QCOMPARE(stellar::MemoType::MEMO_RETURN, memoReconverted->toXdr().type);
         QCOMPARE(QString("4142434445464748494a4b4c"), memoReconverted->getTrimmedHexValue());
     }
+    void testMemoSerializeDeserialize() {
+        MemoNone* memoObjectNone = Memo::none();
+        MemoText* memoObjectText = Memo::text("test");
+        MemoId* memoObjectId = Memo::id(9223372036854775807L);
+        MemoHash* memoObjectHash = Memo::hash(QString("4142434445464748494a4b4c"));
+        MemoReturnHash* memoObjectReturnHash = Memo::returnHash(QString("4142434445464748494a4b4c"));
+
+        QByteArray dataSerialized;
+        QDataStream streamSerialize(&dataSerialized,QIODevice::WriteOnly);
+        streamSerialize <<memoObjectNone->toXdr() <<memoObjectText->toXdr() << memoObjectId->toXdr() <<memoObjectHash->toXdr()<< memoObjectReturnHash->toXdr();
+
+        QDataStream streamDeserialize(dataSerialized);
+        stellar::Memo memoNone;
+        stellar::Memo memoText;
+        stellar::Memo memoId;
+        stellar::Memo memoHash;
+        stellar::Memo memoReturnHash;
+
+        streamDeserialize >>memoNone >>memoText >>memoId >>memoHash >> memoReturnHash;
+
+        QVERIFY(dynamic_cast<MemoNone*>(Memo::fromXdr(memoNone)));
+
+        QVERIFY(dynamic_cast<MemoText*>(Memo::fromXdr(memoText)));
+        QCOMPARE(memoObjectText->getText(), dynamic_cast<MemoText*>(Memo::fromXdr(memoText))->getText());
+
+        QVERIFY(dynamic_cast<MemoId*>(Memo::fromXdr(memoId)));
+        QCOMPARE(memoObjectId->getId(), dynamic_cast<MemoId*>(Memo::fromXdr(memoId))->getId());
+
+        QVERIFY(dynamic_cast<MemoHash*>(Memo::fromXdr(memoHash)));
+        QCOMPARE(memoObjectHash->getTrimmedHexValue(), dynamic_cast<MemoHash*>(Memo::fromXdr(memoHash))->getTrimmedHexValue());
+
+        QVERIFY(dynamic_cast<MemoReturnHash*>(Memo::fromXdr(memoReturnHash)));
+        QCOMPARE(memoObjectReturnHash->getTrimmedHexValue(), dynamic_cast<MemoReturnHash*>(Memo::fromXdr(memoReturnHash))->getTrimmedHexValue());
+    }
 };
 
 ADD_TEST(MemoTest)

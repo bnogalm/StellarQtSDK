@@ -25,12 +25,12 @@ Memo *Memo::fromXdr(stellar::Memo memo)
     }
     case stellar::MemoType::MEMO_HASH:
     {
-        QByteArray data = QByteArray::fromRawData((const char*)memo.hash,sizeof(memo.hash));
+        QByteArray data((const char*)memo.hash,sizeof(memo.hash));
         return Memo::hash(data);
     }
     case stellar::MemoType::MEMO_RETURN:
     {
-        QByteArray data = QByteArray::fromRawData((const char*)memo.retHash,sizeof(memo.retHash));
+        QByteArray data((const char*)memo.retHash,sizeof(memo.retHash));
         return Memo::returnHash(data);
     }
     };
@@ -134,7 +134,7 @@ MemoNone::~MemoNone(){
 MemoReturnHash::MemoReturnHash(QByteArray bytes):MemoHashAbstract(bytes) {
 }
 
-MemoReturnHash::MemoReturnHash(QString hexString):MemoHashAbstract(hexString){// throws DecoderException {
+MemoReturnHash::MemoReturnHash(QString hexString):MemoHashAbstract(CheckHex(hexString)){// throws DecoderException {
 }
 
 MemoReturnHash::~MemoReturnHash(){
@@ -214,8 +214,7 @@ QString MemoHashAbstract::getTrimmedHexValue() {
 
 }
 
-MemoHash::MemoHash(CheckHex hex): MemoHashAbstract(hex.value){
-}
+
 
 MemoHash::MemoHash(QByteArray bytes):MemoHashAbstract(bytes) {
 

@@ -82,9 +82,11 @@ public:
 class CheckHex{
 
 public:
-    QString value;
+    QByteArray value;
     CheckHex(QString v);
+    operator QByteArray();
 };
+
 
 
 /**

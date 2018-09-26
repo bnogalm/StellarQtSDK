@@ -142,7 +142,7 @@ public:
  * Represents MEMO_HASH.
  */
 class MemoHash : public MemoHashAbstract {
-    MemoHash(CheckHex hex);
+
 public:
     MemoHash(QByteArray bytes);
 
