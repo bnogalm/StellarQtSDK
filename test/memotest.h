@@ -62,6 +62,11 @@ private slots:
         QCOMPARE(stellar::MemoType::MEMO_ID, memoReconverted->toXdr().type);
         QCOMPARE(9223372036854775807L, memoReconverted->toXdr().id);
     }
+    void testParseMemoId() {
+        QString longId = "10048071741004807174";
+        MemoId *memoId = dynamic_cast<MemoId*>(Memo::parse("id",longId));
+        QCOMPARE(QString::number(memoId->getId()),longId);
+    }
     void testMemoHashSuccess() {
         MemoHash* memo = Memo::hash(QString("4142434445464748494a4b4c"));
         QCOMPARE(stellar::MemoType::MEMO_HASH, memo->toXdr().type);
