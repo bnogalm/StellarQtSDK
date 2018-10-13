@@ -204,14 +204,14 @@ bool Response::preprocessResponse(QNetworkReply *response)
 
         QString err = QString("too many request exception %1").arg(retryAfter);
         //throw std::runtime_error(err.toStdString());
-        qDebug() << err;
+        //qDebug() << err;
         emit error();
         return false;
     }
     // Other errors
     if (errorCode >= 300) {
         //throw std::runtime_error(response->errorString().toStdString());
-        qDebug() << response->errorString();
+        //qDebug() << response->errorString();
         emit error();
         return false;
     }

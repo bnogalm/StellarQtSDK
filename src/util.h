@@ -105,4 +105,19 @@ struct Integer: public stellar::Optional<quint32>
 };
 bool operator==(const Integer &a, const Integer &b);
 
+#ifdef _MSC_VER
+template <int A, int B>
+struct get_power_for_msvc
+{
+    static const int value = A * get_power_for_msvc<A, B - 1>::value;
+};
+template <int A>
+struct get_power_for_msvc<A, 0>
+{
+    static const int value = 1;
+};
+#endif
+
+
+
 #endif // UTIL_H
