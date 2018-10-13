@@ -96,7 +96,7 @@ public:
 
 struct Integer: public stellar::Optional<quint32>
 {
-    Integer(){}
+    Integer();
     Integer(quint32 v);
     Integer(stellar::Optional<quint32> optional);
     operator quint32();

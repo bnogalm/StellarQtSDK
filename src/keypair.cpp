@@ -22,7 +22,7 @@ KeyPair* checkNotNull(KeyPair* keypair, const char *error)
     return keypair;
 }
 
-KeyPair::KeyPair():m_publicKey(0),m_privateKey(0)
+KeyPair::KeyPair():m_publicKey(nullptr),m_privateKey(nullptr)
 {
 
 }
@@ -51,13 +51,13 @@ KeyPair::KeyPair(quint8 *publicKey, quint8 *privateKey)
         memcpy(m_privateKey,privateKey,keyLength*2);
     }
     else{
-        m_privateKey=0;
+        m_privateKey=nullptr;
     }
 }
 
 bool KeyPair::canSign() {
 
-    return m_privateKey != 0;
+    return m_privateKey != nullptr;
 }
 
 KeyPair *KeyPair::fromSecretSeed(QString seed) {
@@ -197,8 +197,9 @@ stellar::DecoratedSignature KeyPair::signDecorated(QByteArray data) {
 }
 
 bool KeyPair::verify(QByteArray data, QByteArray signature) {
-    int res = ed25519_verify((uchar*)signature.data(),(uchar*)data.data(),data.length(),this->m_publicKey);
-    return res;
+    if(signature.size()>=64)
+        return ed25519_verify((uchar*)signature.data(),(uchar*)data.data(),data.length(),this->m_publicKey);
+    return false;
 }
 
 bool KeyPair::equals(KeyPair *obj) {

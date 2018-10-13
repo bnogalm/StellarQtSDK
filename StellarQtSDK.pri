@@ -2,6 +2,8 @@
 
 DEFINES += STELLAR_QT_REPLY_TIMEOUT=10000
 
+DEFINES *= ED25519_NO_SEED
+
 QT *= core network
 CONFIG *= c++11
 
@@ -39,6 +41,7 @@ SOURCES += \
     $$PWD/src/memo.cpp \
     $$PWD/xdr/xdrhelper.cpp \
     $$PWD/external/ed25519/src/add_scalar.c \
+    $$PWD/external/ed25519/src/ed25519_keypair.c \
     $$PWD/external/ed25519/src/fe.c \
     $$PWD/external/ed25519/src/ge.c \
     $$PWD/external/ed25519/src/key_exchange.c \
@@ -46,7 +49,6 @@ SOURCES += \
     $$PWD/external/ed25519/src/seed.c \
     $$PWD/external/ed25519/src/sha512.c \
     $$PWD/external/ed25519/src/sign.c \
-    $$PWD/external/ed25519/src/_keypair.c \
     $$PWD/external/ed25519/src/verify.c \
     $$PWD/external/cyoencode/src/CyoDecode.cpp \
     $$PWD/external/cyoencode/src/CyoEncode.cpp \

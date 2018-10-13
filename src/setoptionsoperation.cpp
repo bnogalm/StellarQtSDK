@@ -6,7 +6,7 @@ SetOptionsOperation::SetOptionsOperation(KeyPair *inflationDestination, Integer 
                                          , Integer setFlags, Integer masterKeyWeight, Integer lowThreshold
                                          , Integer mediumThreshold, Integer highThreshold, QString homeDomain
                                          , stellar::SignerKey signer, quint32 signerWeight)
-    :m_inflationDestination(0)
+    :m_inflationDestination(nullptr)
 {
     QByteArray homeDomainACE = QUrl::toAce(homeDomain);
     if (homeDomainACE.length() > 32) {
@@ -30,12 +30,12 @@ SetOptionsOperation::SetOptionsOperation(KeyPair *inflationDestination, Integer 
     s.weight=signerWeight& 0xFF;
 }
 
-SetOptionsOperation::SetOptionsOperation(stellar::SetOptionsOp &op):m_inflationDestination(0),m_op(op)
+SetOptionsOperation::SetOptionsOperation(stellar::SetOptionsOp &op):m_inflationDestination(nullptr),m_op(op)
 {
 
 }
 
-SetOptionsOperation::SetOptionsOperation():m_inflationDestination(0)
+SetOptionsOperation::SetOptionsOperation():m_inflationDestination(nullptr)
 {
 
 }
@@ -86,7 +86,7 @@ QString SetOptionsOperation::getHomeDomain() {
 stellar::SignerKey *SetOptionsOperation::getSigner() {
     if(m_op.signer.filled)
         return &m_op.signer.value.key;
-    return 0;
+    return nullptr;
 }
 
 Integer SetOptionsOperation::getSignerWeight() {

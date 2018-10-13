@@ -75,6 +75,8 @@ CheckHex::operator QByteArray()
     return value;
 }
 
+Integer::Integer(){}
+
 Integer::Integer(quint32 v):Optional<quint32>(v){}
 
 Integer::Integer(stellar::Optional<quint32> optional){
@@ -94,7 +96,9 @@ bool Integer::operator==(const Integer &other){
 
 Integer::operator quint32()
 {
-    return value;
+    if(filled)
+        return value;
+    return 0;
 }
 
 bool operator==(const Integer &a, const Integer &b){
