@@ -67,8 +67,15 @@ CheckHex::CheckHex(QString v)
     {
         throw std::runtime_error("invalid hex string");
     }
-    value = v;
+    value = QByteArray::fromHex(v.toLatin1());
 }
+
+CheckHex::operator QByteArray()
+{
+    return value;
+}
+
+Integer::Integer(){}
 
 Integer::Integer(quint32 v):Optional<quint32>(v){}
 
@@ -89,7 +96,9 @@ bool Integer::operator==(const Integer &other){
 
 Integer::operator quint32()
 {
-    return value;
+    if(filled)
+        return value;
+    return 0;
 }
 
 bool operator==(const Integer &a, const Integer &b){

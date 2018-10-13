@@ -6,6 +6,7 @@
 #include <QDebug>
 #include <cstring>
 #include <QDateTime>
+#include <QRandomGenerator>
 
 void memset_s(char * data,int value, int size)
 {
@@ -21,7 +22,7 @@ KeyPair* checkNotNull(KeyPair* keypair, const char *error)
     return keypair;
 }
 
-KeyPair::KeyPair():m_publicKey(0),m_privateKey(0)
+KeyPair::KeyPair():m_publicKey(nullptr),m_privateKey(nullptr)
 {
 
 }
@@ -50,13 +51,13 @@ KeyPair::KeyPair(quint8 *publicKey, quint8 *privateKey)
         memcpy(m_privateKey,privateKey,keyLength*2);
     }
     else{
-        m_privateKey=0;
+        m_privateKey=nullptr;
     }
 }
 
 bool KeyPair::canSign() {
 
-    return m_privateKey != 0;
+    return m_privateKey != nullptr;
 }
 
 KeyPair *KeyPair::fromSecretSeed(QString seed) {
@@ -94,19 +95,14 @@ KeyPair *KeyPair::fromPublicKey(QByteArray publicKey) {
     return new KeyPair((quint8*)publicKey.data());
 }
 
-std::random_device randomDevice;//random device is not really random in some devices...
 
 KeyPair *KeyPair::random() {
-#ifndef STELLAR_ALLOW_UNSECURE_RANDOM
-    throw std::runtime_error("Don't use KeyPair::random(); it uses std::random_device. it is not guaranteed to generate real random numbers.");
-#endif
     QByteArray seed;
-    seed.reserve(keyLength);
+    seed.resize(keyLength);
     //you MUST mix random generated keypair with some other source of random as random_device is not random in many platforms
     //and even if they are randoms you shouldnt trust anybody... so mix them, if they are random, they will stay random.
-    for(int i=0;i<keyLength;i++){
-        seed.append(randomDevice());
-    }
+    QRandomGenerator randomDevice = QRandomGenerator::securelySeeded();
+    randomDevice.fillRange((quint32*)seed.data(),keyLength/sizeof(quint32));
     return fromSecretSeed(seed);
 }
 
@@ -115,9 +111,11 @@ KeyPair *KeyPair::random(QByteArray rand)
     if(rand.size()!=32)
         throw std::runtime_error("rand should be 32 random bytes");
     QByteArray seed;
-    seed.reserve(keyLength);
+    seed.resize(keyLength);
+    QRandomGenerator randomDevice = QRandomGenerator::securelySeeded();
+    randomDevice.fillRange((quint32*)seed.data(),keyLength/sizeof(quint32));
     for(int i=0;i<keyLength;i++){
-        seed[i] = rand[i] ^ randomDevice();
+        seed[i] = rand[i] ^ seed[i];
     }
     return fromSecretSeed(seed);
 }
@@ -199,8 +197,9 @@ stellar::DecoratedSignature KeyPair::signDecorated(QByteArray data) {
 }
 
 bool KeyPair::verify(QByteArray data, QByteArray signature) {
-    int res = ed25519_verify((uchar*)signature.data(),(uchar*)data.data(),data.length(),this->m_publicKey);
-    return res;
+    if(signature.size()>=64)
+        return ed25519_verify((uchar*)signature.data(),(uchar*)data.data(),data.length(),this->m_publicKey);
+    return false;
 }
 
 bool KeyPair::equals(KeyPair *obj) {

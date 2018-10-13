@@ -4,11 +4,14 @@
 #include <QMetaProperty>
 #include <QNetworkRequest>
 #include <QTimer>
+#include <QTimerEvent>
 #define RECONNECT_DELAY 250
 
 Response::Response(QNetworkReply *reply)    
     :m_status(0)
-    ,m_reply(0)
+    ,m_timeoutTimerID(0)
+    ,m_reconnectTimerID(0)
+    ,m_reply(nullptr)
     ,m_rateLimitLimit(0)
     ,m_rateLimitRemaining(0)
     ,m_rateLimitReset(0)
@@ -18,16 +21,23 @@ Response::Response(QNetworkReply *reply)
 void Response::clearReply(QObject* obj)
 {
     if(this->m_reply==obj ){
-        this->m_reply=0;
+        this->m_reply=nullptr;
     }
 }
-
+void Response::restartTimeoutTimer()
+{
+    if(m_timeoutTimerID)
+    {
+        this->killTimer(m_timeoutTimerID);
+    }
+    m_timeoutTimerID= this->startTimer(STELLAR_QT_REPLY_TIMEOUT);
+}
 void Response::loadFromReply(QNetworkReply * reply)
 {
     if(reply!=m_reply){
         if(m_reply){
             m_reply->deleteLater();
-            m_reply=0;
+            m_reply=nullptr;
             this->reset();//we set properties to zero
         }
 
@@ -37,9 +47,11 @@ void Response::loadFromReply(QNetworkReply * reply)
             if(this->isStreamingResponse()){
                 connect(reply, &QNetworkReply::readyRead, this,&Response::processPartialResponse);
                 connect(reply, &QNetworkReply::finished, this,&Response::reconnectStream);
+                restartTimeoutTimer();
             }
             else{
                 connect(reply, &QNetworkReply::finished, this,&Response::processResponse);
+                restartTimeoutTimer();
             }
         }
     }
@@ -56,7 +68,7 @@ void Response::reset()
     }
 }
 
-bool Response::isStreamingResponse()
+bool Response::isStreamingResponse() const
 {
     return m_reply && (this->m_reply->request().rawHeader("Accept")=="text/event-stream");
 }
@@ -135,7 +147,10 @@ void Response::loadFromJson(QByteArray data)
 
 void Response::reconnectStream()
 {
-    QTimer::singleShot(RECONNECT_DELAY,this,&Response::reconnectStreamDelayed);
+    if(!m_reconnectTimerID)
+    {
+        m_reconnectTimerID= this->startTimer(RECONNECT_DELAY);
+    }
 }
 void Response::reconnectStreamDelayed()
 {
@@ -156,6 +171,26 @@ int Response::getRateLimitRemaining() {
 int Response::getRateLimitReset() {
     return m_rateLimitReset;
 }
+
+void Response::timerEvent(QTimerEvent *event)
+{
+    if(event->timerId()==m_reconnectTimerID)
+    {
+        this->reconnectStreamDelayed();
+        this->killTimer(m_reconnectTimerID);
+        m_reconnectTimerID=0;
+    }
+    else if(event->timerId()==m_timeoutTimerID)
+    {
+        this->killTimer(m_timeoutTimerID);
+        if(this->m_reply->isRunning())
+        {
+            this->m_reply->close();
+        }
+        m_timeoutTimerID= 0;
+    }
+
+}
 bool Response::preprocessResponse(QNetworkReply *response)
 {
     QNetworkReply::NetworkError errorCode= response->error();
@@ -169,14 +204,14 @@ bool Response::preprocessResponse(QNetworkReply *response)
 
         QString err = QString("too many request exception %1").arg(retryAfter);
         //throw std::runtime_error(err.toStdString());
-        qDebug() << err;
+        //qDebug() << err;
         emit error();
         return false;
     }
     // Other errors
     if (errorCode >= 300) {
         //throw std::runtime_error(response->errorString().toStdString());
-        qDebug() << response->errorString();
+        //qDebug() << response->errorString();
         emit error();
         return false;
     }
@@ -185,6 +220,7 @@ bool Response::preprocessResponse(QNetworkReply *response)
 
 void Response::processPartialResponse()
 {
+    this->restartTimeoutTimer();
     QNetworkReply* response = (QNetworkReply*)sender();
     if(!preprocessResponse(response)){
         return;
@@ -214,8 +250,9 @@ void Response::processPartialResponse()
                     searchIndex=0;
                 }
             }
-            catch(std::runtime_error err)
+            catch(std::runtime_error& err)
             {
+                Q_UNUSED(err)
                 //alreadyProcessed+=pendingData.indexOf("\n")+1;
                 //searchIndex= 0;
                 searchIndex++;//what happends if there is a \n\n inside a memo? we should keep searching without discarting data.
@@ -234,7 +271,9 @@ void Response::processResponse()
     QNetworkReply* response = (QNetworkReply*)sender();
 
 
-    QByteArray entity = response->readAll();
+    QByteArray entity;
+    if(response->isOpen())
+        entity= response->readAll();
     //qDebug() << "QUERY : " <<  response->request().url();
     //qDebug() << "RESPONSE : "<< QString::fromLatin1(entity);
 
@@ -252,8 +291,9 @@ void Response::processResponse()
     try{
         this->loadFromJson(entity);
     }
-    catch(std::runtime_error err)
+    catch(std::runtime_error& err)
     {
+        Q_UNUSED(err)
         return;
     }
 

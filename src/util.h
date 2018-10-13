@@ -82,9 +82,11 @@ public:
 class CheckHex{
 
 public:
-    QString value;
+    QByteArray value;
     CheckHex(QString v);
+    operator QByteArray();
 };
+
 
 
 /**
@@ -94,7 +96,7 @@ public:
 
 struct Integer: public stellar::Optional<quint32>
 {
-    Integer(){}
+    Integer();
     Integer(quint32 v);
     Integer(stellar::Optional<quint32> optional);
     operator quint32();
@@ -102,5 +104,20 @@ struct Integer: public stellar::Optional<quint32>
     bool operator==(const Integer &other);
 };
 bool operator==(const Integer &a, const Integer &b);
+
+#ifdef _MSC_VER
+template <int A, int B>
+struct get_power_for_msvc
+{
+    static const int value = A * get_power_for_msvc<A, B - 1>::value;
+};
+template <int A>
+struct get_power_for_msvc<A, 0>
+{
+    static const int value = 1;
+};
+#endif
+
+
 
 #endif // UTIL_H

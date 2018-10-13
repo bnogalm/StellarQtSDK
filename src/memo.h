@@ -61,6 +61,8 @@ public:
       */
     static MemoId* id(qint64 id);
 
+    static MemoId* id(quint64 id);
+
     /**
       * Creates new {@link MemoHash} instance from byte array.
       * @param bytes
@@ -101,13 +103,14 @@ protected:
 public:
     MemoHashAbstract(QByteArray bytes);
 
-    MemoHashAbstract(QString hexString): MemoHashAbstract(QByteArray::fromHex(hexString.toLatin1())){// throws DecoderException {
-    }
+    MemoHashAbstract(QString hexString);
+
     virtual ~MemoHashAbstract();
 
     /**
    * Returns 32 bytes long array contained in this memo.
    */
+
     QByteArray getBytes() const;
 
     /**
@@ -120,6 +123,7 @@ public:
    *   memo.getTrimmedHexValue(); // 4142434445
    * </code>
    */
+
     QString getHexValue() const;
 
     /**
@@ -144,8 +148,8 @@ public:
  * Represents MEMO_HASH.
  */
 class MemoHash : public MemoHashAbstract {
-    MemoHash(CheckHex hex): MemoHashAbstract(hex.value){
-    }
+
+
 public:
     MemoHash(QByteArray bytes);
 
@@ -163,13 +167,15 @@ public:
  */
 class MemoId : public Memo {
 private:
-    qint64 m_id;
+
+    quint64 m_id;
 
 public:
     MemoId(qint64 id);
+    MemoId(quint64 id);
     virtual ~MemoId();
 
-    qint64 getId() const;
+    quint64 getId() const;
 
     stellar::Memo toXdr();
 
@@ -189,12 +195,13 @@ public:
  */
 class MemoReturnHash : public MemoHashAbstract {
 public:
-  MemoReturnHash(QByteArray bytes);
 
-  MemoReturnHash(QString hexString);
-  virtual ~MemoReturnHash();
+    MemoReturnHash(QByteArray bytes);
 
-  stellar::Memo toXdr();
+    MemoReturnHash(QString hexString);
+    virtual ~MemoReturnHash();
+
+    stellar::Memo toXdr();
 };
 
 
@@ -208,6 +215,7 @@ private:
 public:
     MemoText(QString text);
     virtual ~MemoText();
+
     QString getText() const;
 
     stellar::Memo toXdr();

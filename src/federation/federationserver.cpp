@@ -7,14 +7,14 @@
 
 #include <QCoreApplication>
 
-QNetworkAccessManager* FederationServer::s_httpClient = 0;
-QHash<QString,FederationServer*>* FederationServer::s_cachedFederationServers = 0;
+QNetworkAccessManager* FederationServer::s_httpClient = nullptr;
+QHash<QString,FederationServer*>* FederationServer::s_cachedFederationServers = nullptr;
 FederationServer::FederationServer()
 {
 
 }
 
-QNetworkReply *FederationServer::buildReply(QString address)
+QNetworkReply *FederationServer::buildReply(const QString& address)
 {
     QStringList tokens = address.split("*");
     if (tokens.size() != 2) {
@@ -108,10 +108,10 @@ bool FederationServer::valid() const
     return this->m_serverUri.isValid();
 }
 
-FederationResponse *FederationServer::resolveAddress(QString address) {
+FederationResponse *FederationServer::resolveAddress(const QString &address) {
     if(!this->valid()){
         //delay request
-        auto response = new FederationResponse(0);
+        auto response = new FederationResponse(nullptr);
 
         connect(this,&FederationServer::ready,[this,address,response](){
             auto reply = buildReply(address);
@@ -193,11 +193,11 @@ void FederationServer::initialize()
 #else
     //workaround until i find a working alternative in android.. or android decide to fix their sdk problems once
     QList<QByteArray> lines = data.split('\n');
-    for(QByteArray line : lines){
+    for(const QByteArray& line : lines){
 
         if(line.contains("FEDERATION_SERVER=")){
             QString textLine = QString::fromLatin1(line);
-            textLine.trimmed();
+            textLine=textLine.trimmed();
             textLine.replace("FEDERATION_SERVER=","");
             int from = textLine.indexOf('"')+1;
             int to = textLine.lastIndexOf('"');

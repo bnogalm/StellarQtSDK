@@ -321,7 +321,7 @@ private slots:
        auto xdr = operation->toXdr();
        SetOptionsOperation* parsedOperation = (SetOptionsOperation*) SetOptionsOperation::fromXdr(xdr);
 
-       QVERIFY(parsedOperation->getInflationDestination()==0);
+       QVERIFY(parsedOperation->getInflationDestination()==nullptr);
        QVERIFY(parsedOperation->getClearFlags().isNull());
        QVERIFY(parsedOperation->getSetFlags().isNull());
        QVERIFY(parsedOperation->getMasterKeyWeight().isNull());
@@ -350,15 +350,18 @@ private slots:
                ->setSourceAccount(source);
 
        auto xdr = operation->toXdr();
+
        SetOptionsOperation* parsedOperation = (SetOptionsOperation*) SetOptionsOperation::fromXdr(xdr);
 
        QVERIFY(!parsedOperation->getInflationDestination());
-       QVERIFY(parsedOperation->getClearFlags());
-       QVERIFY(parsedOperation->getSetFlags());
-       QVERIFY(parsedOperation->getMasterKeyWeight());
-       QVERIFY(parsedOperation->getLowThreshold());
-       QVERIFY(parsedOperation->getMediumThreshold());
-       QVERIFY(parsedOperation->getHighThreshold());
+
+       QVERIFY(parsedOperation->getClearFlags().isNull());
+
+       QVERIFY(parsedOperation->getSetFlags().isNull());
+       QVERIFY(parsedOperation->getMasterKeyWeight().isNull());
+       QVERIFY(parsedOperation->getLowThreshold().isNull());
+       QVERIFY(parsedOperation->getMediumThreshold().isNull());
+       QVERIFY(parsedOperation->getHighThreshold().isNull());
        QVERIFY(parsedOperation->getHomeDomain().isNull());
        QVERIFY(memcmp(hash.data(), parsedOperation->getSigner()->hashX,hash.size())==0);
        QCOMPARE(10, (int)parsedOperation->getSignerWeight());

@@ -25,12 +25,12 @@ Memo *Memo::fromXdr(stellar::Memo& memo)
     }
     case stellar::MemoType::MEMO_HASH:
     {
-        QByteArray data = QByteArray::fromRawData((const char*)memo.hash,sizeof(memo.hash));
+        QByteArray data((const char*)memo.hash,sizeof(memo.hash));
         return Memo::hash(data);
     }
     case stellar::MemoType::MEMO_RETURN:
     {
-        QByteArray data = QByteArray::fromRawData((const char*)memo.retHash,sizeof(memo.retHash));
+        QByteArray data((const char*)memo.retHash,sizeof(memo.retHash));
         return Memo::returnHash(data);
     }
     };
@@ -51,7 +51,7 @@ Memo *Memo::parse(QString type, QString memo)
             else
                 return Memo::text("");//null!=empty
         } else if (type=="id") {
-            return Memo::id(memo.toLongLong());
+            return Memo::id(memo.toULongLong());
         } else if (type=="hash") {
             return Memo::hash(memo);
         } else if (type=="return") {
@@ -97,6 +97,10 @@ MemoText* Memo::text(QString text) {
 }
 
 MemoId* Memo::id(qint64 id) {
+    return new MemoId(id);
+}
+
+MemoId* Memo::id(quint64 id) {
     return new MemoId(id);
 }
 
@@ -159,7 +163,8 @@ MemoNone::~MemoNone(){
 MemoReturnHash::MemoReturnHash(QByteArray bytes):MemoHashAbstract(bytes) {
 }
 
-MemoReturnHash::MemoReturnHash(QString hexString):MemoHashAbstract(hexString){// throws DecoderException {
+
+MemoReturnHash::MemoReturnHash(QString hexString):MemoHashAbstract(CheckHex(hexString)){// throws DecoderException {
 }
 
 MemoReturnHash::~MemoReturnHash(){
@@ -187,6 +192,7 @@ MemoText::~MemoText(){
 
 }
 
+
 QString MemoText::getText() const{
     return m_text;
 }
@@ -207,20 +213,24 @@ MemoHashAbstract::MemoHashAbstract(QByteArray bytes) {
         throw std::runtime_error("MEMO_HASH can contain 32 bytes at max.");
     }
     else{
-
         this->m_bytes = bytes;
     }
+}
+
+
+MemoHashAbstract::MemoHashAbstract(QString hexString): MemoHashAbstract(QByteArray::fromHex(hexString.toLatin1())){
 }
 
 MemoHashAbstract::~MemoHashAbstract(){
 
 }
 
-QByteArray MemoHashAbstract::getBytes() const{
+
+QByteArray MemoHashAbstract::getBytes() const {
     return m_bytes;
 }
 
-QString MemoHashAbstract::getHexValue() const{
+QString MemoHashAbstract::getHexValue() const {
     return QString(m_bytes.toHex());
 }
 
@@ -257,8 +267,12 @@ stellar::Memo MemoHash::toXdr() {
 
 MemoId::MemoId(qint64 id) {
     if (id < 0) {
-        //throw new IllegalArgumentException("id must be a positive number");
+        throw std::runtime_error("id must be a positive number");
     }
+    this->m_id = static_cast<quint64>(id);
+}
+
+MemoId::MemoId(quint64 id) {
     this->m_id = id;
 }
 
@@ -266,7 +280,8 @@ MemoId::~MemoId(){
 
 }
 
-qint64 MemoId::getId() const{
+
+quint64 MemoId::getId() const {
     return m_id;
 }
 

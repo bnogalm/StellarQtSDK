@@ -32,7 +32,7 @@ public:
      * @param publicKey
      * @param privateKey
      */
-    KeyPair(quint8* publicKey,quint8* privateKey=0);
+    KeyPair(quint8* publicKey,quint8* privateKey=nullptr);
     /**
       * Returns true if this Keypair is capable of signing
       */
