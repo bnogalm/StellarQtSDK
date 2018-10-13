@@ -64,11 +64,15 @@ class AccountDeserializerTest: public QObject
             "  \"signers\": [\n"
             "    {\n"
             "      \"public_key\": \"GAAZI4TCR3TY5OJHCTJC2A4QSY6CJWJH5IAJTGKIN2ER7LBNVKOCCWN7\",\n"
-            "      \"weight\": 0\n"
+            "      \"key\": \"GAAZI4TCR3TY5OJHCTJC2A4QSY6CJWJH5IAJTGKIN2ER7LBNVKOCCWN7\",\n"
+            "      \"weight\": 0,\n"
+            "      \"type\": \"ed25519_public_key\"\n"
             "    },\n"
             "    {\n"
             "      \"public_key\": \"GCR2KBCIU6KQXSQY5F5GZYC4WLNHCHCKW4NEGXNEZRYWLTNZIRJJY7D2\",\n"
-            "      \"weight\": 1\n"
+            "      \"key\": \"GCR2KBCIU6KQXSQY5F5GZYC4WLNHCHCKW4NEGXNEZRYWLTNZIRJJY7D2\",\n"
+            "      \"weight\": 1,\n"
+            "      \"type\": \"ed25519_public_key\"\n"
             "    }\n"
             "  ]\n"
             "}";
@@ -111,9 +115,11 @@ private slots:
       QCOMPARE(account.getBalances()[1].getBalance(), QString("20.0000300"));
       QCOMPARE(account.getBalances()[1].getLimit(), QString());
 
-      QCOMPARE(account.getSigners()[0].getAccountId(), QString("GAAZI4TCR3TY5OJHCTJC2A4QSY6CJWJH5IAJTGKIN2ER7LBNVKOCCWN7"));
+      QCOMPARE(account.getSigners()[0].getType(), QString("ed25519_public_key"));
+      QCOMPARE(account.getSigners()[0].getKey(), QString("GAAZI4TCR3TY5OJHCTJC2A4QSY6CJWJH5IAJTGKIN2ER7LBNVKOCCWN7"));
       QCOMPARE(account.getSigners()[0].getWeight(), 0);
-      QCOMPARE(account.getSigners()[1].getAccountId(), QString("GCR2KBCIU6KQXSQY5F5GZYC4WLNHCHCKW4NEGXNEZRYWLTNZIRJJY7D2"));
+      QCOMPARE(account.getSigners()[1].getType(), QString("ed25519_public_key"));
+      QCOMPARE(account.getSigners()[1].getKey(), QString("GCR2KBCIU6KQXSQY5F5GZYC4WLNHCHCKW4NEGXNEZRYWLTNZIRJJY7D2"));
       QCOMPARE(account.getSigners()[1].getWeight(), 1);
 
       QCOMPARE(account.getLinks().getEffects().getHref(),QString( "/accounts/GAAZI4TCR3TY5OJHCTJC2A4QSY6CJWJH5IAJTGKIN2ER7LBNVKOCCWN7/effects{?cursor,limit,order}"));

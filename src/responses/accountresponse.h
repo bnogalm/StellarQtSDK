@@ -86,16 +86,23 @@ public:
 class Signer {
     Q_GADGET
     Q_PROPERTY(QString public_key MEMBER m_accountId )
+    Q_PROPERTY(QString key MEMBER m_accountId )
+    Q_PROPERTY(QString type MEMBER m_type )
     Q_PROPERTY(int weight MEMBER m_weight)
 
     QString m_accountId;
+    QString m_type;
     int m_weight;
 
 public:
     Signer();
 
-    QString getAccountId();
-    int getWeight();
+    //use getKey() instead
+    Q_DECL_DEPRECATED QString getAccountId() const;
+    QString getKey() const;
+    QString getType() const;
+
+    int getWeight() const;
 
     bool operator !=(Signer& s);
     bool operator ==(Signer& s);

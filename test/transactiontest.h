@@ -34,7 +34,7 @@ private slots:
         KeyPair *source = KeyPair::fromSecretSeed(QString("SCH27VUZZ6UAKB67BDNF6FA42YMBMQCBKXWGMFD5TZ6S5ZZCZFLRXKHS"));
         KeyPair *destination = KeyPair::fromAccountId(QString("GDW6AUTBXTOC7FIKUO5BOO3OGLK4SF7ZPOBLMQHMZDI45J2Z6VXRB5NR"));
 
-        quint64 sequenceNumber = 2908908335136768;
+        qint64 sequenceNumber = 2908908335136768;
         Account* account = new Account(source, sequenceNumber);
         Transaction* transaction = Transaction::Builder(account)
                 .addOperation(new CreateAccountOperation(destination, "2000"))
@@ -69,6 +69,71 @@ private slots:
         QVERIFY(expected== transaction->toEnvelopeXdrBase64());
     }
 
+    void testBuilderTimeBounds()
+    {
+      // GBPMKIRA2OQW2XZZQUCQILI5TMVZ6JNRKM423BSAISDM7ZFWQ6KWEBC4
+      KeyPair* source = KeyPair::fromSecretSeed(QString("SCH27VUZZ6UAKB67BDNF6FA42YMBMQCBKXWGMFD5TZ6S5ZZCZFLRXKHS"));
+      KeyPair* destination = KeyPair::fromAccountId(QString("GDW6AUTBXTOC7FIKUO5BOO3OGLK4SF7ZPOBLMQHMZDI45J2Z6VXRB5NR"));
+
+      Account* account = new Account(source, 2908908335136768L);
+      Transaction* transaction = Transaction::Builder(account)
+              .addOperation(CreateAccountOperation::create(destination, "2000"))
+              .addTimeBounds(new TimeBounds(42, 1337))
+              .addMemo(Memo::hash(QString("abcdef")))
+              .build();
+
+      transaction->sign(source);
+
+      // Convert transaction to binary XDR and back again to make sure timebounds are correctly de/serialized.
+      QByteArray data;
+      QDataStream streamWrite(&data,QIODevice::WriteOnly);
+      streamWrite << transaction->toXdr();
+      QDataStream streamRead(&data,QIODevice::ReadOnly);
+      stellar::Transaction decodedTransaction;
+      streamRead >> decodedTransaction;
+
+
+
+      QCOMPARE(decodedTransaction.timeBounds.value.minTime, 42UL);
+      QCOMPARE(decodedTransaction.timeBounds.value.maxTime, 1337UL);
+      auto xdrEnvelope = transaction->toEnvelopeXdr();
+      Transaction* transaction2 = Transaction::fromXdrEnvelope(xdrEnvelope);
+      qDebug() << "HASH "<<dynamic_cast<MemoHash*>(transaction->getMemo())->getHexValue();
+      qDebug() << "HASH "<<dynamic_cast<MemoHash*>(transaction2->getMemo())->getHexValue();
+      QCOMPARE(transaction->getSourceAccount()->getAccountId(), transaction2->getSourceAccount()->getAccountId());
+      QCOMPARE(transaction->getSequenceNumber(), transaction2->getSequenceNumber());
+      QVERIFY(transaction->getMemo()->equals(transaction2->getMemo()));
+      QVERIFY(transaction->getTimeBounds()->equals(transaction2->getTimeBounds()));
+      QCOMPARE(transaction->getFee(), transaction2->getFee());
+      QCOMPARE(
+              ((CreateAccountOperation*)transaction->getOperations()[0])->getStartingBalance(),
+              ((CreateAccountOperation*)transaction2->getOperations()[0])->getStartingBalance()
+      );
+  }
+
+    void testBuilderTimeBoundsNoMaxTime()
+    {
+      // GBPMKIRA2OQW2XZZQUCQILI5TMVZ6JNRKM423BSAISDM7ZFWQ6KWEBC4
+      KeyPair* source = KeyPair::fromSecretSeed(QString("SCH27VUZZ6UAKB67BDNF6FA42YMBMQCBKXWGMFD5TZ6S5ZZCZFLRXKHS"));
+      KeyPair* destination = KeyPair::fromAccountId(QString("GDW6AUTBXTOC7FIKUO5BOO3OGLK4SF7ZPOBLMQHMZDI45J2Z6VXRB5NR"));
+      Account* account = new Account(source, 2908908335136768L);
+      Transaction* transaction = Transaction::Builder(account)
+              .addOperation(CreateAccountOperation::create(destination, "2000"))
+              .addTimeBounds(new TimeBounds(42, 0))
+              .addMemo(Memo::hash(QString("abcdef")))
+              .build();
+      transaction->sign(source);
+      // Convert transaction to binary XDR and back again to make sure timebounds are correctly de/serialized.
+
+      QByteArray data;
+      QDataStream streamWrite(&data,QIODevice::WriteOnly);
+      streamWrite << transaction->toXdr();
+      QDataStream streamRead(&data,QIODevice::ReadOnly);
+      stellar::Transaction decodedTransaction;
+      streamRead >> decodedTransaction;
+      QCOMPARE(decodedTransaction.timeBounds.value.minTime, 42UL);
+      QCOMPARE(decodedTransaction.timeBounds.value.maxTime, 0UL);
+    }
 
     void testBuilderSuccessPublic() {
         Network::usePublicNetwork();

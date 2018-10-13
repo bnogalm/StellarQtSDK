@@ -43,7 +43,7 @@ public:
      */
     static Memo* parse(QString type, QByteArray memo);
 
-    static Memo* fromXdr(stellar::Memo memo);
+    static Memo* fromXdr(stellar::Memo &memo);
     /**
       * Creates new MemoNone instance.
       */
@@ -90,6 +90,9 @@ public:
     static MemoReturnHash* returnHash(QString hexString);
     virtual stellar::Memo toXdr() = 0;
 
+    bool equals(Memo* memo) const;
+    bool operator==(const Memo &memo) const;
+
 };
 
 
@@ -101,11 +104,13 @@ public:
     MemoHashAbstract(QByteArray bytes);
 
     MemoHashAbstract(QString hexString);
+
     virtual ~MemoHashAbstract();
 
     /**
    * Returns 32 bytes long array contained in this memo.
    */
+
     QByteArray getBytes();
 
     /**
@@ -118,6 +123,7 @@ public:
    *   memo.getTrimmedHexValue(); // 4142434445
    * </code>
    */
+
     QString getHexValue();
 
     /**
@@ -143,6 +149,7 @@ public:
  */
 class MemoHash : public MemoHashAbstract {
 
+
 public:
     MemoHash(QByteArray bytes);
 
@@ -160,6 +167,7 @@ public:
  */
 class MemoId : public Memo {
 private:
+
     quint64 m_id;
 
 public:
@@ -187,6 +195,7 @@ public:
  */
 class MemoReturnHash : public MemoHashAbstract {
 public:
+
     MemoReturnHash(QByteArray bytes);
 
     MemoReturnHash(QString hexString);
@@ -206,6 +215,7 @@ private:
 public:
     MemoText(QString text);
     virtual ~MemoText();
+
     QString getText();
 
     stellar::Memo toXdr();
