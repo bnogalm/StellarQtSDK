@@ -193,7 +193,7 @@ MemoText::~MemoText(){
 }
 
 
-QString MemoText::getText() {
+QString MemoText::getText() const{
     return m_text;
 }
 
@@ -226,11 +226,11 @@ MemoHashAbstract::~MemoHashAbstract(){
 }
 
 
-QByteArray MemoHashAbstract::getBytes() {
+QByteArray MemoHashAbstract::getBytes() const {
     return m_bytes;
 }
 
-QString MemoHashAbstract::getHexValue() {
+QString MemoHashAbstract::getHexValue() const {
     return QString(m_bytes.toHex());
 }
 
@@ -281,7 +281,7 @@ MemoId::~MemoId(){
 }
 
 
-quint64 MemoId::getId() {
+quint64 MemoId::getId() const {
     return m_id;
 }
 

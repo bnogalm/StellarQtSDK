@@ -111,7 +111,7 @@ public:
    * Returns 32 bytes long array contained in this memo.
    */
 
-    QByteArray getBytes();
+    QByteArray getBytes() const;
 
     /**
    * <p>Returns hex representation of bytes contained in this memo.</p>
@@ -124,7 +124,7 @@ public:
    * </code>
    */
 
-    QString getHexValue();
+    QString getHexValue() const;
 
     /**
    * <p>Returns hex representation of bytes contained in this memo until null byte (0x00) is found.</p>
@@ -175,7 +175,7 @@ public:
     MemoId(quint64 id);
     virtual ~MemoId();
 
-    quint64 getId();
+    quint64 getId() const;
 
     stellar::Memo toXdr();
 
@@ -216,7 +216,7 @@ public:
     MemoText(QString text);
     virtual ~MemoText();
 
-    QString getText();
+    QString getText() const;
 
     stellar::Memo toXdr();
 };

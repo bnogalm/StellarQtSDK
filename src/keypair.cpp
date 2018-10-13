@@ -98,7 +98,7 @@ KeyPair *KeyPair::fromPublicKey(QByteArray publicKey) {
 
 KeyPair *KeyPair::random() {
     QByteArray seed;
-    seed.reserve(keyLength);
+    seed.resize(keyLength);
     //you MUST mix random generated keypair with some other source of random as random_device is not random in many platforms
     //and even if they are randoms you shouldnt trust anybody... so mix them, if they are random, they will stay random.
     QRandomGenerator randomDevice = QRandomGenerator::securelySeeded();
@@ -111,7 +111,7 @@ KeyPair *KeyPair::random(QByteArray rand)
     if(rand.size()!=32)
         throw std::runtime_error("rand should be 32 random bytes");
     QByteArray seed;
-    seed.reserve(keyLength);
+    seed.resize(keyLength);
     QRandomGenerator randomDevice = QRandomGenerator::securelySeeded();
     randomDevice.fillRange((quint32*)seed.data(),keyLength/sizeof(quint32));
     for(int i=0;i<keyLength;i++){
