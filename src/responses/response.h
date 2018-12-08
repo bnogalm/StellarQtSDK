@@ -4,7 +4,7 @@
 #include <QNetworkReply>
 #include <QMetaProperty>
 #include <QVariantMap>
-
+namespace ResponseConverters{
 template<class T>
 inline QList<T> convert(QVariantList source)
 {
@@ -25,6 +25,7 @@ inline QList<T> convert(QVariantList source)
 
     }
     return res;
+}
 }
 
 

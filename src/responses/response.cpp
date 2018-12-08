@@ -98,7 +98,9 @@ void Response::fillObject(const QMetaObject* mo, void* obj,const QJsonObject& js
         //we check we have that property
         if(v.isValid())
         {
-            if(const QMetaObject* pmo = QMetaType::metaObjectForType(v.userType()))
+            const QMetaObject* pmo = QMetaType::metaObjectForType(v.userType());
+            //if is a gadget/qobject and there is not a custom conversion function registered
+            if(pmo && !QMetaType::hasRegisteredConverterFunction(qMetaTypeId<QVariantMap>(), v.userType()))
             {
                 QJsonObject pobjJson = jsonObj.value(key).toObject();
                 fillObject(pmo,v.data(),pobjJson);

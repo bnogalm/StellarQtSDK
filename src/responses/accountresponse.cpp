@@ -6,14 +6,16 @@ static void registerTypes()
 {
     qRegisterMetaType<AccountResponseAttach::Balance>();
     qRegisterMetaType<AccountResponseAttach::Signer>();
-    QMetaType::registerConverter<QVariantList ,QList<AccountResponseAttach::Balance> >(&convert<AccountResponseAttach::Balance>);
-    QMetaType::registerConverter<QVariantList ,QList<AccountResponseAttach::Signer> >(&convert<AccountResponseAttach::Signer>);
+    QMetaType::registerConverter<QVariantList ,QList<AccountResponseAttach::Balance> >(&ResponseConverters::convert<AccountResponseAttach::Balance>);
+    QMetaType::registerConverter<QVariantList ,QList<AccountResponseAttach::Signer> >(&ResponseConverters::convert<AccountResponseAttach::Signer>);
+    qRegisterMetaType<AccountResponseAttach::Data>();
+    QMetaType::registerConverter<QVariantMap ,AccountResponseAttach::Data>(&ResponseConverters::Account::convertData);
 }
 
 Q_COREAPP_STARTUP_FUNCTION(registerTypes)
 
 AccountResponse::AccountResponse(QNetworkReply *reply)
-    :Response(reply), m_keypair(0), m_sequence(0) ,m_subentryCount(0)
+    :Response(reply), m_keypair(nullptr), m_sequence(0) ,m_subentryCount(0)
 {
 
 }
@@ -72,6 +74,10 @@ QString AccountResponse::getHomeDomain() const{
     return m_homeDomain;
 }
 
+AccountResponseAttach::Data AccountResponse::getData() const{
+    return m_data;
+}
+
 AccountResponseAttach::Thresholds AccountResponse::getThresholds() const{
     return m_thresholds;
 }
@@ -120,15 +126,15 @@ Asset *Balance::getAsset() {
     return m_asset;
 }
 
-QString Balance::getAssetType() {
+QString Balance::getAssetType() const{
     return m_assetType;
 }
 
-QString Balance::getAssetCode() {
+QString Balance::getAssetCode() const{
     return m_assetCode;
 }
 
-QString Balance::assetIssuer() {
+QString Balance::assetIssuer() const{
     return m_assetIssuer;
 }
 
@@ -138,18 +144,21 @@ KeyPair &Balance::getAssetIssuer() {
     return *m_assetIssuerKeypair;
 }
 
-QString Balance::getBalance() {
+QString Balance::getBalance() const{
     return m_balance;
 }
 
-QString Balance::getLimit() {
+QString Balance::getLimit() const{
     return m_limit;
 }
 
 bool Balance::operator !=(Balance &b)
 {
-    Q_UNUSED(b)
-    return true;
+    return (this->m_assetType!=b.m_assetType)
+            || (this->m_assetCode!=b.m_assetCode)
+            || (this->m_assetIssuer!=b.m_assetIssuer)
+            || (this->m_limit!=b.m_limit)
+            || (this->m_balance!=b.m_balance);
 }
 
 bool Balance::operator ==(Balance &b)
@@ -186,13 +195,15 @@ int Signer::getWeight() const{
 
 bool Signer::operator !=(Signer &s)
 {
-    Q_UNUSED(s)
-    return true;
+    return (this->m_accountId!=s.m_accountId)
+                || (this->m_type!=s.m_type)
+                || (this->m_weight!=s.m_weight);
 }
 
 bool Signer::operator ==(Signer &s)
 {
     return (this->m_accountId==s.m_accountId)
+            && (this->m_type==s.m_type)
             && (this->m_weight==s.m_weight);
 }
 
@@ -218,8 +229,20 @@ Link AccountResponseAttach::Links::getTransactions() {
 
 bool Links::operator !=(Links &links)
 {
-    Q_UNUSED(links)
-    return true;
+    return  (m_effects!= links.m_effects)
+            || (m_offers!= links.m_offers)
+            || (m_operations!= links.m_operations)
+            || (m_self!= links.m_self)
+            || (m_transactions!= links.m_transactions);
+}
+
+bool Links::operator ==(Links &links)
+{
+    return  (m_effects== links.m_effects)
+            && (m_offers== links.m_offers)
+            && (m_operations== links.m_operations)
+            && (m_self== links.m_self)
+            && (m_transactions== links.m_transactions);
 }
 
 Flags::Flags()
@@ -229,18 +252,24 @@ Flags::Flags()
 
 }
 
-bool Flags::getAuthRequired() {
+bool Flags::getAuthRequired() const{
     return m_authRequired;
 }
 
-bool Flags::getAuthRevocable() {
+bool Flags::getAuthRevocable() const{
     return m_authRevocable;
 }
 
 bool Flags::operator !=(Flags &f)
 {
-    Q_UNUSED(f)
-    return true;
+    return (m_authRequired!=f.m_authRequired)
+            || (m_authRevocable != f.m_authRevocable);
+}
+
+bool Flags::operator ==(Flags &f)
+{
+    return (m_authRequired==f.m_authRequired)
+            && (m_authRevocable== f.m_authRevocable);
 }
 
 Thresholds::Thresholds()
@@ -251,23 +280,72 @@ Thresholds::Thresholds()
 
 }
 
-int Thresholds::getLowThreshold() {
+int Thresholds::getLowThreshold() const{
     return m_lowThreshold;
 }
 
-int Thresholds::getMedThreshold() {
+int Thresholds::getMedThreshold() const {
     return m_medThreshold;
 }
 
-int Thresholds::getHighThreshold() {
+int Thresholds::getHighThreshold() const{
     return m_highThreshold;
 }
 
 bool Thresholds::operator !=(Thresholds &t)
 {
-    Q_UNUSED(t)
-    return true;
+    return (m_lowThreshold!=t.m_lowThreshold)
+            || (m_medThreshold!=t.m_medThreshold)
+            || (m_highThreshold!=t.m_highThreshold);
+}
+
+bool Thresholds::operator ==(Thresholds &t)
+{
+    return (m_lowThreshold==t.m_lowThreshold)
+            && (m_medThreshold==t.m_medThreshold)
+            && (m_highThreshold==t.m_highThreshold);
+}
+
+Data::Data(){}
+
+Data::Data(const QVariantMap &data)
+{
+    for(QVariantMap::const_iterator it = data.begin(); it != data.end(); it++) {
+        m_data.insert(it.key(),it.value().toByteArray());
+    }
+
+}
+
+int Data::size() const
+{
+    return m_data.size();
+}
+
+QString Data::get(QString key) const{
+    return QString::fromUtf8(m_data.value(key));
+}
+
+QByteArray Data::getDecoded(QString key) const{
+    return QByteArray::fromBase64(m_data.value(key));
+}
+
+QByteArray Data::getRaw(QString key) const{
+    return m_data.value(key);
+}
+
+bool Data::operator !=(Data &data)
+{
+    return (this->m_data!=data.m_data);
+}
+
+bool Data::operator ==(Data &data)
+{
+    return (this->m_data==data.m_data);
 }
 
 }
 
+AccountResponseAttach::Data ResponseConverters::Account::convertData(const QVariantMap &source)
+{
+    return AccountResponseAttach::Data(source);
+}

@@ -8,7 +8,7 @@
 static void registerTypes()
 {
     qRegisterMetaType<OrderBookResponseAttach::Row>();
-    QMetaType::registerConverter<QVariantList ,QList<OrderBookResponseAttach::Row> >(&convert<OrderBookResponseAttach::Row>);
+    QMetaType::registerConverter<QVariantList ,QList<OrderBookResponseAttach::Row> >(&ResponseConverters::convert<OrderBookResponseAttach::Row>);
 }
 
 Q_COREAPP_STARTUP_FUNCTION(registerTypes)
