@@ -106,7 +106,7 @@ public:
     /**
     * Returns {@link TradeAggregationsRequestBuilder} instance.
     */
-    TradeAggregationsRequestBuilder tradeAggregations(Asset* baseAsset, Asset* counterAsset, qint64 startTime, qint64 endTime, qint64 resolution);
+    TradeAggregationsRequestBuilder tradeAggregations(Asset* baseAsset, Asset* counterAsset, qint64 startTime, qint64 endTime, qint64 resolution, qint64 offset);
 
 
     /**

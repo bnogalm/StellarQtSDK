@@ -5,6 +5,11 @@ TradeAggregationResponse::TradeAggregationResponse(QNetworkReply* reply):Respons
 
 }
 
+TradeAggregationResponse::~TradeAggregationResponse()
+{
+
+}
+
 qint64 TradeAggregationResponse::getTimestamp() const{
     return m_timestamp;
 }

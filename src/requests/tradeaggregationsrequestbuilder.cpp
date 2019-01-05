@@ -3,7 +3,7 @@
 #include "../asset.h"
 #include "../assettypecreditalphanum.h"
 #include "../keypair.h"
-TradeAggregationsRequestBuilder::TradeAggregationsRequestBuilder(Server *server, Asset *baseAsset, Asset *counterAsset, qint64 startTime, qint64 endTime, qint64 resolution)
+TradeAggregationsRequestBuilder::TradeAggregationsRequestBuilder(Server *server, Asset *baseAsset, Asset *counterAsset, qint64 startTime, qint64 endTime, qint64 resolution, qint64 offset)
     :RequestBuilder(server,"trade_aggregations")
 {
     this->baseAsset(baseAsset);
@@ -11,6 +11,7 @@ TradeAggregationsRequestBuilder::TradeAggregationsRequestBuilder(Server *server,
     addParameter("start_time", QString::number(startTime));
     addParameter("end_time", QString::number(endTime));
     addParameter("resolution", QString::number(resolution));
+    addParameter("offset", QString::number(offset));
 }
 
 Page<TradeAggregationResponse> *TradeAggregationsRequestBuilder::execute(QUrl uri)
