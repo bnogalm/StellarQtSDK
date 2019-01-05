@@ -98,6 +98,16 @@ LedgerResponseAttach::Links& LedgerResponse::getLinks(){
 
 bool LedgerResponseAttach::Links::operator !=(LedgerResponseAttach::Links &links)
 {
-    Q_UNUSED(links)
-    return true;
+    return (m_effects!=links.m_effects)
+            || (m_operations!=links.m_operations)
+            || (m_self!=links.m_self)
+            || (m_transactions!=links.m_transactions);
+}
+
+bool LedgerResponseAttach::Links::operator ==(LedgerResponseAttach::Links &links)
+{
+    return (m_effects==links.m_effects)
+            && (m_operations==links.m_operations)
+            && (m_self==links.m_self)
+            && (m_transactions==links.m_transactions);
 }

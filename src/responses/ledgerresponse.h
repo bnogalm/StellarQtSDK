@@ -39,6 +39,7 @@ public:
         return m_transactions;
     }
     bool operator !=(Links& links);
+    bool operator ==(Links& links);
 };
 }
 /**
