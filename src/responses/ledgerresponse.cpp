@@ -9,6 +9,7 @@ LedgerResponse::LedgerResponse(QNetworkReply *reply)
     ,m_baseFeeInStroops(0)
     ,m_baseReserveInStroops(0)
     ,m_maxTxSetSize(0)
+    ,m_protocolVersion(0)
 {
 
 }
@@ -79,6 +80,16 @@ qint64 LedgerResponse::baseReserveInStroops() const
 
 qint32 LedgerResponse::getMaxTxSetSize() const{
     return m_maxTxSetSize;
+}
+
+qint32 LedgerResponse::getProtocolVersion() const
+{
+    return m_protocolVersion;
+}
+
+QString LedgerResponse::getHeaderXdr() const
+{
+    return m_headerXdr;
 }
 
 LedgerResponseAttach::Links& LedgerResponse::getLinks(){
