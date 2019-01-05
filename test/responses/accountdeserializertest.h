@@ -46,7 +46,8 @@ class AccountDeserializerTest: public QObject
             "  },\n"
             "  \"flags\": {\n"
             "    \"auth_required\": false,\n"
-            "    \"auth_revocable\": true\n"
+            "    \"auth_revocable\": true,\n"
+            "    \"auth_immutable\": true\n"
             "  },\n"
             "  \"balances\": [\n"
             "    {\n"
@@ -108,6 +109,7 @@ private slots:
 
       QCOMPARE(account.getFlags().getAuthRequired(), false);
       QCOMPARE(account.getFlags().getAuthRevocable(), true);
+      QCOMPARE(account.getFlags().getAuthImmutable(), true);
 
       QCOMPARE(account.getBalances()[0].getAssetType(), QString("credit_alphanum4"));
       QCOMPARE(account.getBalances()[0].getAssetCode(), QString("ABC"));

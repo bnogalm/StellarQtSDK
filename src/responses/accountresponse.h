@@ -37,13 +37,16 @@ class Flags {
     Q_GADGET
     Q_PROPERTY(bool auth_required MEMBER m_authRequired)
     Q_PROPERTY(bool auth_revocable MEMBER m_authRevocable)
+    Q_PROPERTY(bool auth_immutable MEMBER m_authImmutable)
     bool m_authRequired;
     bool m_authRevocable;
+    bool m_authImmutable;
 public:
     Flags();
 
     bool getAuthRequired() const;
     bool getAuthRevocable() const;
+    bool getAuthImmutable() const;
     bool operator !=(Flags& f);
     bool operator ==(Flags& f);
 };

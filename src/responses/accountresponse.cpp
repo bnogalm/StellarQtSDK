@@ -106,7 +106,7 @@ void AccountResponse::setAccountID(QString account_id)
 
 namespace AccountResponseAttach
 {
-Balance::Balance():m_assetIssuerKeypair(0),m_asset(0){
+Balance::Balance():m_assetIssuerKeypair(nullptr),m_asset(nullptr){
 }
 
 Balance::~Balance()
@@ -248,6 +248,7 @@ bool Links::operator ==(Links &links)
 Flags::Flags()
     :m_authRequired(false)
     ,m_authRevocable(false)
+    ,m_authImmutable(false)
 {
 
 }
@@ -260,16 +261,22 @@ bool Flags::getAuthRevocable() const{
     return m_authRevocable;
 }
 
+bool Flags::getAuthImmutable() const{
+    return m_authImmutable;
+}
+
 bool Flags::operator !=(Flags &f)
 {
     return (m_authRequired!=f.m_authRequired)
-            || (m_authRevocable != f.m_authRevocable);
+            || (m_authRevocable != f.m_authRevocable)
+            || (m_authImmutable != f.m_authImmutable);
 }
 
 bool Flags::operator ==(Flags &f)
 {
     return (m_authRequired==f.m_authRequired)
-            && (m_authRevocable== f.m_authRevocable);
+            && (m_authRevocable== f.m_authRevocable)
+            && (m_authImmutable== f.m_authImmutable);
 }
 
 Thresholds::Thresholds()
