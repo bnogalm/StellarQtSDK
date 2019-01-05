@@ -45,6 +45,11 @@ bool TradeResponse::isBaseSeller() const
     return m_baseIsSeller;
 }
 
+QString TradeResponse::getBaseOfferId() const
+{
+    return m_baseOfferId;
+}
+
 KeyPair &TradeResponse::getBaseAccount() {
     if(!m_baseAccountKeypair)
     {
@@ -67,6 +72,11 @@ QString TradeResponse::getBaseAssetCode() const{
 
 QString TradeResponse::getBaseAssetIssuer() const{
     return m_baseAssetIssuer;
+}
+
+QString TradeResponse::getCounterOfferId() const
+{
+    return m_counterOfferId;
 }
 
 KeyPair &TradeResponse::getCounterAccount() {
