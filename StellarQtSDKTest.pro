@@ -61,7 +61,9 @@ HEADERS += \
     test/requests/tradeaggregationsrequestbuildertest.h \
     test/responses/tradeaggregationspagedeserializertest.h \
     test/responses/rootdeserializertest.h \
-    test/requests/rootrequestbuildtest.h
+    test/requests/rootrequestbuildtest.h \
+    test/requests/operationfeerequestbuildertest.h \
+    test/responses/operationfeestatsdeserializertest.h
 
 SOURCES += \
     test/main.cpp
