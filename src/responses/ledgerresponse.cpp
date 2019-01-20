@@ -9,6 +9,7 @@ LedgerResponse::LedgerResponse(QNetworkReply *reply)
     ,m_baseFeeInStroops(0)
     ,m_baseReserveInStroops(0)
     ,m_maxTxSetSize(0)
+    ,m_protocolVersion(0)
 {
 
 }
@@ -81,12 +82,32 @@ qint32 LedgerResponse::getMaxTxSetSize() const{
     return m_maxTxSetSize;
 }
 
+qint32 LedgerResponse::getProtocolVersion() const
+{
+    return m_protocolVersion;
+}
+
+QString LedgerResponse::getHeaderXdr() const
+{
+    return m_headerXdr;
+}
+
 LedgerResponseAttach::Links& LedgerResponse::getLinks(){
     return m_links;
 }
 
 bool LedgerResponseAttach::Links::operator !=(LedgerResponseAttach::Links &links)
 {
-    Q_UNUSED(links)
-    return true;
+    return (m_effects!=links.m_effects)
+            || (m_operations!=links.m_operations)
+            || (m_self!=links.m_self)
+            || (m_transactions!=links.m_transactions);
+}
+
+bool LedgerResponseAttach::Links::operator ==(LedgerResponseAttach::Links &links)
+{
+    return (m_effects==links.m_effects)
+            && (m_operations==links.m_operations)
+            && (m_self==links.m_self)
+            && (m_transactions==links.m_transactions);
 }

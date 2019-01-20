@@ -28,7 +28,8 @@ private slots:
                     Asset::createNonNativeAsset("BTC", KeyPair::fromAccountId("GATEMHCCKCY67ZUCKTROYN24ZYT5GK4EQZ65JJLDHKHRUZI3EUEKMTCH")),
                     1512689100000L,
                     1512775500000L,
-                    300000L
+                    300000L,
+                    3600L
                     ).limit(200).order(RequestBuilder::Order::ASC).buildUri();
 
         QCOMPARE(uri.toString(),QString("https://horizon-testnet.stellar.org/trade_aggregations?"
@@ -39,6 +40,7 @@ private slots:
                                         "start_time=1512689100000&"
                                         "end_time=1512775500000&"
                                         "resolution=300000&"
+                                        "offset=3600&"
                                         "limit=200&"
                                         "order=asc"));
 

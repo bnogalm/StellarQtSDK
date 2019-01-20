@@ -23,10 +23,11 @@ class Thresholds {
 public:
     Thresholds();
 
-    int getLowThreshold();
-    int getMedThreshold();
-    int getHighThreshold();
+    int getLowThreshold() const;
+    int getMedThreshold() const;
+    int getHighThreshold() const;
     bool operator !=(Thresholds& t);
+    bool operator ==(Thresholds& t);
 };
 
 /**
@@ -36,14 +37,18 @@ class Flags {
     Q_GADGET
     Q_PROPERTY(bool auth_required MEMBER m_authRequired)
     Q_PROPERTY(bool auth_revocable MEMBER m_authRevocable)
+    Q_PROPERTY(bool auth_immutable MEMBER m_authImmutable)
     bool m_authRequired;
     bool m_authRevocable;
+    bool m_authImmutable;
 public:
     Flags();
 
-    bool getAuthRequired();
-    bool getAuthRevocable();
+    bool getAuthRequired() const;
+    bool getAuthRevocable() const;
+    bool getAuthImmutable() const;
     bool operator !=(Flags& f);
+    bool operator ==(Flags& f);
 };
 
 /**
@@ -69,12 +74,12 @@ public:
     Balance();
     ~Balance();
     Asset* getAsset();
-    QString getAssetType();
-    QString getAssetCode();
-    QString assetIssuer();
+    QString getAssetType() const;
+    QString getAssetCode() const;
+    QString assetIssuer() const;
     KeyPair& getAssetIssuer();
-    QString getBalance();
-    QString getLimit();
+    QString getBalance() const;
+    QString getLimit() const;
     bool operator !=(Balance& b);
     bool operator ==(Balance& b);
 
@@ -132,13 +137,54 @@ public:
     Link getSelf();
     Link getTransactions();
     bool operator !=(Links& links);
+    bool operator ==(Links& links);
 };
+
+/**
+ * Data connected to account.
+ */
+class Data{
+    Q_GADGET
+    QHash<QString,QByteArray> m_data;
+public:
+    Data();
+    Data(const QVariantMap& data);
+    int size() const;
+     /**
+     * Gets base64-encoded value for a given key or utf8 representation.
+     * @param key Data entry name
+     * @return base64-encoded value/utf8 representation
+     */
+    QString get(QString key) const;
+     /**
+     * Gets decoded base64 value for a given key.
+     * @param key Data entry name
+     * @return decoded value
+     */
+    QByteArray getDecoded(QString key) const;
+    /**
+    * Gets raw value for a given key.
+    * @param key Data entry name
+    * @return raw value
+    */
+    QByteArray getRaw(QString key) const;
+    bool operator !=(Data& data);
+    bool operator ==(Data& data);
+};
+}
+namespace ResponseConverters{
+namespace Account{
+inline AccountResponseAttach::Data convertData(const QVariantMap& source);
+}
 }
 
 
 class AccountResponse : public Response
 {
     Q_OBJECT
+public:
+
+private:
     Q_PROPERTY(QString account_id READ accountID WRITE setAccountID)
     Q_PROPERTY(KeyPair* keypair READ getKeypair)//we dont allow to overwrite this
     Q_PROPERTY(qint64 sequence MEMBER m_sequence NOTIFY sequenceNumberChanged)
@@ -150,6 +196,7 @@ class AccountResponse : public Response
     Q_PROPERTY(AccountResponseAttach::Flags flags MEMBER m_flags NOTIFY flagsChanged)
     Q_PROPERTY(QList<AccountResponseAttach::Balance> balances MEMBER m_balances NOTIFY balancesChanged)
     Q_PROPERTY(QList<AccountResponseAttach::Signer> signers MEMBER m_signers NOTIFY signersChanged)
+    Q_PROPERTY(AccountResponseAttach::Data data MEMBER m_data NOTIFY dataChanged)
     Q_PROPERTY(AccountResponseAttach::Links _links MEMBER m_links NOTIFY linksChanged)
     QString m_account_id;
     KeyPair * m_keypair;//generated with m_account_id
@@ -163,6 +210,7 @@ class AccountResponse : public Response
     AccountResponseAttach::Flags m_flags;
     QList<AccountResponseAttach::Balance> m_balances;
     QList<AccountResponseAttach::Signer> m_signers;
+    AccountResponseAttach::Data m_data;
     AccountResponseAttach::Links m_links;
 
 public:
@@ -185,6 +233,7 @@ public:
     qint64 getSubentryCount() const;
     QString getInflationDestination() const;
     QString getHomeDomain() const;
+    AccountResponseAttach::Data getData() const;
     AccountResponseAttach::Thresholds getThresholds() const;
     AccountResponseAttach::Flags getFlags() const;
     QList<AccountResponseAttach::Balance> getBalances() const;
@@ -202,6 +251,7 @@ signals:
     void flagsChanged();
     void balancesChanged();
     void signersChanged();
+    void dataChanged();
     void linksChanged();
 
 };
@@ -211,5 +261,6 @@ Q_DECLARE_METATYPE(AccountResponseAttach::Flags)
 Q_DECLARE_METATYPE(AccountResponseAttach::Balance)
 Q_DECLARE_METATYPE(AccountResponseAttach::Signer)
 Q_DECLARE_METATYPE(AccountResponseAttach::Links)
+Q_DECLARE_METATYPE(AccountResponseAttach::Data)
 
 #endif // ACCOUNTRESPONSE_H

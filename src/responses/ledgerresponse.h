@@ -39,6 +39,7 @@ public:
         return m_transactions;
     }
     bool operator !=(Links& links);
+    bool operator ==(Links& links);
 };
 }
 /**
@@ -65,6 +66,8 @@ class LedgerResponse : public Response
     Q_PROPERTY(qint64 base_fee_in_stroops MEMBER m_baseFeeInStroops)
     Q_PROPERTY(qint64 base_reserve_in_stroops MEMBER m_baseReserveInStroops)
     Q_PROPERTY(qint32 max_tx_set_size MEMBER m_maxTxSetSize)
+    Q_PROPERTY(qint32 protocol_version MEMBER m_protocolVersion)
+    Q_PROPERTY(QString header_xdr MEMBER m_headerXdr)
     Q_PROPERTY(LedgerResponseAttach::Links _links MEMBER m_links)
 
     qint64 m_sequence;
@@ -80,7 +83,9 @@ class LedgerResponse : public Response
     QString m_baseReserve;
     qint64 m_baseFeeInStroops;
     qint64 m_baseReserveInStroops;
-    qint32 m_maxTxSetSize;
+    qint32 m_maxTxSetSize;    
+    qint32 m_protocolVersion;
+    QString m_headerXdr;
     LedgerResponseAttach::Links m_links;
 
 public:
@@ -101,6 +106,8 @@ public:
     qint64 baseFeeInStroops() const;
     qint64 baseReserveInStroops() const;
     qint32 getMaxTxSetSize() const;
+    qint32 getProtocolVersion() const;
+    QString getHeaderXdr() const;
     LedgerResponseAttach::Links& getLinks();
 };
 Q_DECLARE_METATYPE(LedgerResponseAttach::Links)

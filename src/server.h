@@ -15,6 +15,7 @@
 #include "requests/ledgersrequestbuilder.h"
 #include "requests/operationsrequestbuilder.h"
 #include "requests/effectsrequestbuilder.h"
+#include "requests/operationfeestatsrequestbuilder.h"
 #include <QTimer>
 #include <QHash>
 class Transaction;
@@ -89,6 +90,11 @@ public:
     OperationsRequestBuilder operations();
 
     /**
+       * Returns {@link OperationFeeStatsResponse} instance.
+       */
+    OperationFeeStatsRequestBuilder operationFeeStats();
+
+    /**
          * Returns {@link OrderBookRequestBuilder} instance.
          */
     OrderBookRequestBuilder orderBook();
@@ -100,7 +106,7 @@ public:
     /**
     * Returns {@link TradeAggregationsRequestBuilder} instance.
     */
-    TradeAggregationsRequestBuilder tradeAggregations(Asset* baseAsset, Asset* counterAsset, qint64 startTime, qint64 endTime, qint64 resolution);
+    TradeAggregationsRequestBuilder tradeAggregations(Asset* baseAsset, Asset* counterAsset, qint64 startTime, qint64 endTime, qint64 resolution, qint64 offset);
 
 
     /**

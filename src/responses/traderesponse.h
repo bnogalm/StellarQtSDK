@@ -50,6 +50,7 @@ class TradeResponse : public Response
 
 
     Q_PROPERTY(QString base_account READ baseAccount WRITE setBaseAccount)
+    Q_PROPERTY(QString base_offer_id MEMBER m_baseOfferId)
 
     Q_PROPERTY(QString base_amount MEMBER m_baseAmount)
     Q_PROPERTY(QString base_asset_type MEMBER m_baseAssetType WRITE setBaseAssetType)
@@ -57,6 +58,7 @@ class TradeResponse : public Response
     Q_PROPERTY(QString base_asset_issuer MEMBER m_baseAssetIssuer WRITE setBaseAssetIssuer)
 
     Q_PROPERTY(QString counter_account READ counterAccount WRITE setCounterAccount)
+    Q_PROPERTY(QString counter_offer_id MEMBER m_counterOfferId)
 
     Q_PROPERTY(QString counter_amount MEMBER m_counterAmount)
     Q_PROPERTY(QString counter_asset_type MEMBER m_counterAssetType WRITE setCounterAssetType)
@@ -76,6 +78,7 @@ class TradeResponse : public Response
 
 
     QString m_baseAccount;
+    QString m_baseOfferId;
     KeyPair *m_baseAccountKeypair;
 
     QString m_baseAmount;
@@ -84,6 +87,7 @@ class TradeResponse : public Response
     QString m_baseAssetIssuer;
 
     QString m_counterAccount;
+    QString m_counterOfferId;
     KeyPair *m_counterAccountKeypair;
 
     QString m_counterAmount;
@@ -109,6 +113,8 @@ public:
 
     bool isBaseSeller() const;
 
+    QString getBaseOfferId() const;
+
     KeyPair& getBaseAccount();
 
     QString getBaseAmount() const;
@@ -118,6 +124,8 @@ public:
     QString getBaseAssetCode() const;
 
     QString getBaseAssetIssuer() const;
+
+    QString getCounterOfferId() const;
 
     KeyPair& getCounterAccount();
 

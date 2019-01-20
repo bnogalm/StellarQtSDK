@@ -70,6 +70,16 @@ public:
      static KeyPair* fromPublicKey(QByteArray publicKey);
 
      /**
+      * Finds the KeyPair for the path m/44'/148'/accountNumber' using the method described in
+      * <a href="https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0005.md">SEP-0005</a>.
+      *
+      * @param bip39Seed     The output of BIP0039
+      * @param accountNumber The number of the account
+      * @return KeyPair with secret
+      */
+     static KeyPair *fromBip39Seed(QByteArray bip39Seed, int accountNumber);
+
+     /**
       * Generates a random Stellar keypair.
       * DON'T USE IT, just for prototyping or tests
       * This method is not recomended. You should mix std::random_device values with some other accesible noise.

@@ -7,7 +7,7 @@ class Asset;
 class TradeAggregationsRequestBuilder : public RequestBuilder
 {
 public:
-    TradeAggregationsRequestBuilder(Server* server , Asset* baseAsset, Asset* counterAsset, qint64 startTime, qint64 endTime, qint64 resolution);
+    TradeAggregationsRequestBuilder(Server* server , Asset* baseAsset, Asset* counterAsset, qint64 startTime, qint64 endTime, qint64 resolution, qint64 offset);
 
 
 

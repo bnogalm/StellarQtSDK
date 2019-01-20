@@ -28,6 +28,7 @@ class TradeAggregationResponse : public Response
 
 public:
     Q_INVOKABLE explicit TradeAggregationResponse(QNetworkReply* reply=nullptr);
+    virtual ~TradeAggregationResponse();
     qint64 getTimestamp() const;
     QDateTime getDate() const;
     qint32 getTradeCount() const;

@@ -38,7 +38,12 @@ class LedgerDeserializerTest: public QObject
             "  \"fee_pool\": \"1908.2248818\",\n"
             "  \"base_fee\": 100,\n"
             "  \"base_reserve\": \"10.0000000\",\n"
-            "  \"max_tx_set_size\": 50\n"
+            "  \"max_tx_set_size\": 50,\n"
+            "  \"protocol_version\": 10,\n"
+            "  \"header_xdr\": \"AAAACvkxR60p1bwRO3PdsRy48pkWVtuyF08xyvB3jU7u437r9tK/G7DoXa+J8N5ptWhpHGrc/"
+            "a+5k9Ak3kHnZSAaiPgAAAAAW4aHyQAAAAAAAAAAyz4xx/YIt7Z9PLeCHj/ZrFGcDaNSJpQX+jpL1IX3uqSCiFrU4CFidqxjmmJzXNWN1rY4cBwliHN21hicu/"
+            "JyawCkgzIOdhy8pVTcbQA+gekx1NpNAAAA2QAAAAAACsLiAAAAZABMS0AAAAAykmy96ckoDVk3UDBm7B4n8oC6+cdCxGDnWu7tO6aU34xipth5GRNy+I5Y8m+E/"
+            "bHlElCDX2J8y6kuKr7yU6xvyjMb9nwaii7EHN74adNyyUuselmxQcKfEVf/tj3j5l9yOMqgE05NDyU0+LycHY47062IWxvG0o2yDaaxp2Z72pwAAAAA\"\n"
 "}";
 public:
 
@@ -67,6 +72,11 @@ private slots:
         QCOMPARE(ledger.getBaseFee(), 100);
         QCOMPARE(ledger.getBaseReserve(), QString("10.0000000"));
         QCOMPARE(ledger.getMaxTxSetSize(), 50);
+        QCOMPARE(ledger.getProtocolVersion(), 10);
+        QCOMPARE(ledger.getHeaderXdr(), QString("AAAACvkxR60p1bwRO3PdsRy48pkWVtuyF08xyvB3jU7u437r9tK/G7DoXa+J8N5ptWhpHGrc/"
+          "a+5k9Ak3kHnZSAaiPgAAAAAW4aHyQAAAAAAAAAAyz4xx/YIt7Z9PLeCHj/ZrFGcDaNSJpQX+jpL1IX3uqSCiFrU4CFidqxjmmJzXNWN1rY4cBwliHN21hicu/"
+          "JyawCkgzIOdhy8pVTcbQA+gekx1NpNAAAA2QAAAAAACsLiAAAAZABMS0AAAAAykmy96ckoDVk3UDBm7B4n8oC6+cdCxGDnWu7tO6aU34xipth5GRNy+I5Y8m+E/"
+          "bHlElCDX2J8y6kuKr7yU6xvyjMb9nwaii7EHN74adNyyUuselmxQcKfEVf/tj3j5l9yOMqgE05NDyU0+LycHY47062IWxvG0o2yDaaxp2Z72pwAAAAA"));
         QCOMPARE(ledger.getLinks().getEffects().getHref(), QString("/ledgers/898826/effects{?cursor,limit,order}"));
         QCOMPARE(ledger.getLinks().getOperations().getHref(), QString("/ledgers/898826/operations{?cursor,limit,order}"));
         QCOMPARE(ledger.getLinks().getSelf().getHref(), QString("/ledgers/898826"));

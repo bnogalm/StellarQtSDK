@@ -60,6 +60,9 @@ OperationsRequestBuilder Server::operations() {
     return OperationsRequestBuilder(this);
 }
 
+OperationFeeStatsRequestBuilder Server::operationFeeStats() {
+    return OperationFeeStatsRequestBuilder(this);
+}
 
 OrderBookRequestBuilder Server::orderBook() {
     return OrderBookRequestBuilder(this);
@@ -69,8 +72,8 @@ TradesRequestBuilder Server::trades() {
     return TradesRequestBuilder(this);
 }
 
-TradeAggregationsRequestBuilder Server::tradeAggregations(Asset *baseAsset, Asset *counterAsset, qint64 startTime, qint64 endTime, qint64 resolution) {
-    return TradeAggregationsRequestBuilder(this, baseAsset, counterAsset, startTime, endTime, resolution);
+TradeAggregationsRequestBuilder Server::tradeAggregations(Asset *baseAsset, Asset *counterAsset, qint64 startTime, qint64 endTime, qint64 resolution, qint64 offset) {
+    return TradeAggregationsRequestBuilder(this, baseAsset, counterAsset, startTime, endTime, resolution, offset);
 }
 
 PathsRequestBuilder Server::paths() {

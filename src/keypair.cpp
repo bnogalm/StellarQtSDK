@@ -7,6 +7,8 @@
 #include <cstring>
 #include <QDateTime>
 #include <QRandomGenerator>
+#include "slip10.h"
+
 
 void memset_s(char * data,int value, int size)
 {
@@ -93,6 +95,10 @@ KeyPair *KeyPair::fromAccountId(QString accountId) {
 
 KeyPair *KeyPair::fromPublicKey(QByteArray publicKey) {
     return new KeyPair((quint8*)publicKey.data());
+}
+
+KeyPair *KeyPair::fromBip39Seed(QByteArray bip39Seed, int accountNumber) {
+    return KeyPair::fromSecretSeed(SLIP10::deriveEd25519PrivateKey(bip39Seed, QVector<int>()<< 44<< 148<< accountNumber));
 }
 
 
