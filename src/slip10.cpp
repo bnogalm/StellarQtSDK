@@ -1,6 +1,6 @@
 #include "slip10.h"
 
-
+#include <QMessageAuthenticationCode>
 
 
 SLIP10::SLIP10()

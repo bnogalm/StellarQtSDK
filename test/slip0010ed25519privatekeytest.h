@@ -2,9 +2,6 @@
 #define SLIP0010ED25519PRIVATEKEYTEST_H
 
 #include <QObject>
-#include "src/strkey.h"
-#include "src/util.h"
-
 #include <QtTest>
 #include "testcollector.h"
 #include "slip10.h"

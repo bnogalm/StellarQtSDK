@@ -1,7 +1,5 @@
 #ifndef SLIP10_H
 #define SLIP10_H
-#include <QString>
-#include <QMessageAuthenticationCode>
 #include <QVector>
 class SLIP10
 {
