@@ -63,7 +63,9 @@ HEADERS += \
     test/responses/rootdeserializertest.h \
     test/requests/rootrequestbuildtest.h \
     test/requests/operationfeerequestbuildertest.h \
-    test/responses/operationfeestatsdeserializertest.h
+    test/responses/operationfeestatsdeserializertest.h \
+    test/sep0005keypairforaccountfrombip39seedtest.h \
+    test/slip0010ed25519privatekeytest.h
 
 SOURCES += \
     test/main.cpp
