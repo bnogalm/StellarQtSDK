@@ -55,7 +55,9 @@ class OfferPageDeserializerTest: public QObject
             "          \"n\": 10,\n"
             "          \"d\": 1\n"
             "        },\n"
-            "        \"price\": \"11.0000000\"\n"
+            "        \"price\": \"11.0000000\"\n,"
+            "        \"last_modified_ledger\": 22200794,\n"
+            "        \"last_modified_time\": \"2019-01-28T12:30:38Z\"\n"
             "      }\n"
             "    ]\n"
             "  }\n"
@@ -83,7 +85,8 @@ private slots:
         QVERIFY(offerPage.get(0).getBuying()->equals( Asset::createNonNativeAsset("USD", KeyPair::fromAccountId(QString("GA2IYMIZSAMDD6QQTTSIEL73H2BKDJQTA7ENDEEAHJ3LMVF7OYIZPXQD")))));
         QCOMPARE(offerPage.get(0).getAmount(), QString("10.0000000"));
         QCOMPARE(offerPage.get(0).getPrice(), QString("11.0000000"));
-
+        QCOMPARE(offerPage.get(0).getLastModifiedLedger(), 22200794);
+        QCOMPARE(offerPage.get(0).getLastModifiedTime(), "2019-01-28T12:30:38Z");
         QCOMPARE(offerPage.getLinks().getNext().getHref(), QString("https://horizon-testnet.stellar.org/accounts/GA2IYMIZSAMDD6QQTTSIEL73H2BKDJQTA7ENDEEAHJ3LMVF7OYIZPXQD/offers?order=asc&limit=10&cursor=241"));
         QCOMPARE(offerPage.getLinks().getPrev().getHref(), QString("https://horizon-testnet.stellar.org/accounts/GA2IYMIZSAMDD6QQTTSIEL73H2BKDJQTA7ENDEEAHJ3LMVF7OYIZPXQD/offers?order=desc&limit=10&cursor=241"));
         QCOMPARE(offerPage.getLinks().getSelf().getHref(), QString("https://horizon-testnet.stellar.org/accounts/GA2IYMIZSAMDD6QQTTSIEL73H2BKDJQTA7ENDEEAHJ3LMVF7OYIZPXQD/offers?order=asc&limit=10&cursor="));

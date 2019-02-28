@@ -4,6 +4,8 @@ LedgerResponse::LedgerResponse(QNetworkReply *reply)
     :Response(reply)
     ,m_sequence(0)
     ,m_transactionCount(0)
+    ,m_successfulTransactionCount(0)
+    ,m_failedTransactionCount(0)
     ,m_operationCount(0)
     ,m_baseFee(0)
     ,m_baseFeeInStroops(0)
@@ -32,6 +34,16 @@ QString LedgerResponse::getPrevHash() const{
 
 qint32 LedgerResponse::getTransactionCount() const{
     return m_transactionCount;
+}
+
+qint32 LedgerResponse::getSuccessfulTransactionCount() const
+{
+    return m_successfulTransactionCount;
+}
+
+qint32 LedgerResponse::getFailedTransactionCount() const
+{
+    return m_failedTransactionCount;
 }
 
 qint32 LedgerResponse::getOperationCount() const{

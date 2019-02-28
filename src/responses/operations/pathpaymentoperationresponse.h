@@ -15,6 +15,7 @@ class PathPaymentOperationResponse : public OperationResponse
 {
     Q_OBJECT
     Q_PROPERTY(QString amount MEMBER m_amount)
+    Q_PROPERTY(QString source_amount MEMBER m_sourceAmount)
     Q_PROPERTY(QString source_max MEMBER m_sourceMax)
     Q_PROPERTY(QString from READ from WRITE setFrom)
     Q_PROPERTY(QString to READ to WRITE setTo)
@@ -26,6 +27,7 @@ class PathPaymentOperationResponse : public OperationResponse
     Q_PROPERTY(QString source_asset_issuer READ sourceAssetIssuer WRITE setSourceAssetIssuer)
 
     QString m_amount;
+    QString m_sourceAmount;
     QString m_sourceMax;
 
     QString m_from;
@@ -48,7 +50,7 @@ public:
     virtual ~PathPaymentOperationResponse();
 
     QString getAmount() const;
-
+    QString getSourceAmount() const;
     QString getSourceMax() const;
 
     KeyPair& getFrom();

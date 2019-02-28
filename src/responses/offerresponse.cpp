@@ -3,7 +3,8 @@
 
 OfferResponse::OfferResponse(QNetworkReply *reply)
     :Response(reply)
-    ,m_sellerKeypair(nullptr),m_sellerAsset(nullptr),m_buyingAsset(nullptr)
+    ,m_id(0)
+    ,m_sellerKeypair(nullptr),m_sellerAsset(nullptr),m_buyingAsset(nullptr),m_lastModifiedLedger(0)
 {
 
 }
@@ -56,6 +57,16 @@ QString OfferResponse::getAmount(){
 
 QString OfferResponse::getPrice() const{
     return m_price;
+}
+
+qint32 OfferResponse::getLastModifiedLedger() const
+{
+    return m_lastModifiedLedger;
+}
+
+QString OfferResponse::getLastModifiedTime() const
+{
+    return m_lastModifiedTime;
 }
 
 OfferResponseAttach::Links OfferResponse::getLinks() const{
