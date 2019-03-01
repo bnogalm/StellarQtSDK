@@ -24,32 +24,43 @@ private slots:
     }
 
     void testTransactions() {
-      Server *server = new Server("https://horizon-testnet.stellar.org");
-      QUrl uri = server->transactions()
-              .limit(200)
-              .order(RequestBuilder::Order::DESC)
-              .buildUri();
-      QCOMPARE(QString("https://horizon-testnet.stellar.org/transactions?limit=200&order=desc"), uri.toString());
+        Server *server = new Server("https://horizon-testnet.stellar.org");
+        QUrl uri = server->transactions()
+                .limit(200)
+                .order(RequestBuilder::Order::DESC)
+                .buildUri();
+        QCOMPARE(QString("https://horizon-testnet.stellar.org/transactions?limit=200&order=desc"), uri.toString());
     }
 
     void testForAccount() {
-      Server* server = new Server("https://horizon-testnet.stellar.org");
-      QUrl uri = server->transactions()
-              .forAccount(KeyPair::fromAccountId(QString("GBRPYHIL2CI3FNQ4BXLFMNDLFJUNPU2HY3ZMFSHONUCEOASW7QC7OX2H")))
-              .limit(200)
-              .order(RequestBuilder::Order::DESC)
-              .buildUri();
-      QCOMPARE(QString("https://horizon-testnet.stellar.org/accounts/GBRPYHIL2CI3FNQ4BXLFMNDLFJUNPU2HY3ZMFSHONUCEOASW7QC7OX2H/transactions?limit=200&order=desc"), uri.toString());
+        Server* server = new Server("https://horizon-testnet.stellar.org");
+        QUrl uri = server->transactions()
+                .forAccount(KeyPair::fromAccountId(QString("GBRPYHIL2CI3FNQ4BXLFMNDLFJUNPU2HY3ZMFSHONUCEOASW7QC7OX2H")))
+                .limit(200)
+                .order(RequestBuilder::Order::DESC)
+                .buildUri();
+        QCOMPARE(QString("https://horizon-testnet.stellar.org/accounts/GBRPYHIL2CI3FNQ4BXLFMNDLFJUNPU2HY3ZMFSHONUCEOASW7QC7OX2H/transactions?limit=200&order=desc"), uri.toString());
     }
 
     void testForLedger() {
-      Server* server = new Server("https://horizon-testnet.stellar.org");
-      QUrl uri = server->transactions()
-              .forLedger(200000000000L)
-              .limit(50)
-              .order(RequestBuilder::Order::ASC)
-              .buildUri();
-      QCOMPARE(QString("https://horizon-testnet.stellar.org/ledgers/200000000000/transactions?limit=50&order=asc"), uri.toString());
+        Server* server = new Server("https://horizon-testnet.stellar.org");
+        QUrl uri = server->transactions()
+                .forLedger(200000000000L)
+                .limit(50)
+                .order(RequestBuilder::Order::ASC)
+                .buildUri();
+        QCOMPARE(QString("https://horizon-testnet.stellar.org/ledgers/200000000000/transactions?limit=50&order=asc"), uri.toString());
+    }
+
+    void testIncludeFailed() {
+        Server server("https://horizon-testnet.stellar.org");
+        QUrl uri = server.transactions()
+                .forLedger(200000000000L)
+                .includeFailed(true)
+                .limit(50)
+                .order(RequestBuilder::Order::ASC)
+                .buildUri();
+        QCOMPARE(uri.toString(), QString("https://horizon-testnet.stellar.org/ledgers/200000000000/transactions?include_failed=true&limit=50&order=asc"));
     }
 };
 

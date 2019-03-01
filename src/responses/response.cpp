@@ -98,9 +98,10 @@ void Response::fillObject(const QMetaObject* mo, void* obj,const QJsonObject& js
         //we check we have that property
         if(v.isValid())
         {
-            const QMetaObject* pmo = QMetaType::metaObjectForType(v.userType());
+            int propertyUserType = v.userType();
+            const QMetaObject* pmo = QMetaType::metaObjectForType(propertyUserType);
             //if is a gadget/qobject and there is not a custom conversion function registered
-            if(pmo && !QMetaType::hasRegisteredConverterFunction(qMetaTypeId<QVariantMap>(), v.userType()))
+            if(pmo && !QMetaType::hasRegisteredConverterFunction(qMetaTypeId<QVariantMap>(), propertyUserType))
             {
                 QJsonObject pobjJson = jsonObj.value(key).toObject();
                 fillObject(pmo,v.data(),pobjJson);
@@ -125,7 +126,7 @@ void Response::fillObject(const QMetaObject* mo, void* obj,const QJsonObject& js
         }
         else
         {
-            qWarning() << "invalid : "<< v.typeName()<< rawkey;
+            qWarning() << "invalid : "<< v.typeName()<< rawkey;// we dont allow QVariant Q_PROPERTIES without initializing the type. You should verify that type match.
         }
     }
 }

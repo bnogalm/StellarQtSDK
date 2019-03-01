@@ -1,5 +1,7 @@
 #include "util.h"
 
+
+
 Util::Util()
 {
 
@@ -102,5 +104,44 @@ Integer::operator quint32()
 }
 
 bool operator==(const Integer &a, const Integer &b){
+    return a.filled== b.filled && a.value==b.value;
+}
+
+
+Boolean::Boolean(){}
+
+Boolean::Boolean(bool v):Optional<bool>(v){}
+
+Boolean::Boolean(stellar::Optional<bool> optional){
+    if(optional.filled){
+        filled = optional.filled;
+        value = optional.value;
+    }
+}
+
+Boolean::Boolean(const QVariant& v){
+    if(!v.isNull()&&v.type()==QVariant::Bool)
+    {
+        filled = 1;
+        value = v.toBool();
+    }
+}
+
+bool Boolean::isNull() const{
+    return !filled;
+}
+
+bool Boolean::operator==(const Boolean &other){
+    return filled== other.filled && value==other.value;
+}
+
+Boolean::operator bool()
+{
+    if(filled)
+        return value;
+    return 0;
+}
+
+bool operator==(const Boolean &a, const Boolean &b){
     return a.filled== b.filled && a.value==b.value;
 }
