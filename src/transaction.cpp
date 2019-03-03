@@ -278,8 +278,9 @@ Transaction *Transaction::Builder::build() {
         m_operationFee = Builder::BASE_FEE;
     }
 
-
-    Transaction *transaction = new Transaction(m_sourceAccount->getKeypair(), static_cast<quint32>(m_operations.length()) * m_operationFee, m_sourceAccount->getIncrementedSequenceNumber(), m_operations, m_memo, m_timeBounds);
+    //we have to make a copy of the KeyPair in order to be able to destroy it without affecting Account object.
+    //when we create a transaction from XDR, a KeyPair object is also created.
+    Transaction *transaction = new Transaction(new KeyPair(*(m_sourceAccount->getKeypair())), static_cast<quint32>(m_operations.length()) * m_operationFee, m_sourceAccount->getIncrementedSequenceNumber(), m_operations, m_memo, m_timeBounds);
     // Increment sequence number when there were no exceptions when creating a transaction
     m_sourceAccount->incrementSequenceNumber();
 

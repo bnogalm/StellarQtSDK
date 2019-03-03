@@ -5,13 +5,14 @@
 #include <QNetworkRequest>
 #include <QTimer>
 #include <QTimerEvent>
-#define RECONNECT_DELAY 250
+#define RECONNECT_DELAY 1000
 
 Response::Response(QNetworkReply *reply)    
     :m_status(0)
     ,m_timeoutTimerID(0)
     ,m_reconnectTimerID(0)
-    ,m_reply(nullptr)
+    ,m_retryTime(RECONNECT_DELAY)
+    ,m_reply(nullptr)    
     ,m_rateLimitLimit(0)
     ,m_rateLimitRemaining(0)
     ,m_rateLimitReset(0)
@@ -152,14 +153,17 @@ void Response::reconnectStream()
 {
     if(!m_reconnectTimerID)
     {
-        m_reconnectTimerID= this->startTimer(RECONNECT_DELAY);
+        m_reconnectTimerID= this->startTimer(m_retryTime);
     }
 }
 void Response::reconnectStreamDelayed()
 {
     QNetworkAccessManager* manager = m_reply->manager();
     //qDebug() << "RECONNECT TO "<<m_reply->request().url()<< m_reply->request().rawHeaderList()<< " POINTER "<< m_reply;
-    QNetworkReply * reply = manager->get(QNetworkRequest(m_reply->request()));
+    QNetworkRequest request(m_reply->request());
+    if(!m_lastID.isEmpty())
+        request.setRawHeader("Last-Event-ID",m_lastID);
+    QNetworkReply * reply = manager->get(request);
     loadFromReply(reply);
 }
 
@@ -204,11 +208,14 @@ bool Response::preprocessResponse(QNetworkReply *response)
     // Too Many Requests
     if (errorCode == 429) {
         int retryAfter = response->rawHeader("Retry-After").toInt();
-
-        QString err = QString("too many request exception %1").arg(retryAfter);
+        m_retryTime=qMax(retryAfter,m_retryTime);
+        reconnectStream();
+        //QString err = QString("too many request exception %1").arg(retryAfter);
         //throw std::runtime_error(err.toStdString());
         //qDebug() << err;
+
         emit error();
+
         return false;
     }
     // Other errors
@@ -239,18 +246,54 @@ void Response::processPartialResponse()
 
         if(searchIndex>=0){
             QByteArray data = QByteArray::fromRawData(pendingData.data(),searchIndex);
-            try{
-                int dataIndex = data.indexOf("data: ")+strlen("data: ");
-                QByteArray entity = QByteArray::fromRawData(pendingData.data()+dataIndex,searchIndex-dataIndex);
-                if(entity=="\"hello\"")
+            //qDebug() << "DATA: "<< QString::fromLatin1(data);
+            {
+                //read retry time
+                int retryIndex = data.indexOf("retry: ");
+                if(retryIndex>=0)
                 {
-                    alreadyProcessed+=searchIndex+2;
-                    searchIndex=0;
+                    retryIndex+=strlen("retry: ");
+                    int endLineRetry = data.indexOf('\n',retryIndex);
+                    if(endLineRetry>0)
+                    {
+                        QByteArray retryTime = QByteArray::fromRawData(pendingData.data()+retryIndex,endLineRetry - retryIndex);
+                        m_retryTime = qMax(retryTime.toInt(),RECONNECT_DELAY);
+                        //qDebug() << "RETRY TIME: "<< retryTime << retryTime.toInt();
+                    }
                 }
-                else{
-                    this->loadFromJson(entity);
-                    alreadyProcessed+=searchIndex+2;
-                    searchIndex=0;
+                int idIndex = data.indexOf("id: ");
+                if(idIndex>=0)
+                {
+                    idIndex+=strlen("id: ");
+                    int endLineId = data.indexOf('\n',idIndex);
+                    if(endLineId>0)
+                    {
+                        m_lastID = QByteArray::fromRawData(pendingData.data()+idIndex,endLineId - idIndex);
+                        //qDebug() << "ID: "<< m_lastID << m_lastID.toLongLong();
+                    }
+                }
+            }
+            try{
+                int dataIndex = data.indexOf("data: ");
+                if(dataIndex>=0)
+                {
+                    dataIndex+=strlen("data: ");
+                    QByteArray entity = QByteArray::fromRawData(pendingData.data()+dataIndex,searchIndex-dataIndex);
+                    if(entity=="\"hello\"")
+                    {
+                        alreadyProcessed+=searchIndex+2;
+                        searchIndex=0;
+                    }
+                    else if(entity=="\"byebye\""){
+                        alreadyProcessed+=searchIndex+2;
+                        searchIndex=0;
+                    }
+                    else{
+                        this->loadFromJson(entity);
+                        emit ready();
+                        alreadyProcessed+=searchIndex+2;
+                        searchIndex=0;
+                    }
                 }
             }
             catch(std::runtime_error& err)
@@ -267,7 +310,7 @@ void Response::processPartialResponse()
             break;
     }while(searchIndex>=0);
     m_pendingData.remove(0,alreadyProcessed);
-    emit ready();
+    //emit ready();
 }
 void Response::processResponse()
 {

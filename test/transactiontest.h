@@ -91,7 +91,7 @@ private slots:
         //compareBase64(expected,transaction->toEnvelopeXdrBase64());
         QCOMPARE(transaction->toEnvelopeXdrBase64(),expected);
 
-        QVERIFY(transaction->getSourceAccount()==source);
+        QVERIFY(*(transaction->getSourceAccount()) == *source);
         QVERIFY(transaction->getSequenceNumber()== sequenceNumber +1);
         QVERIFY(transaction->getFee()==100);
     }

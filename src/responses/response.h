@@ -52,6 +52,8 @@ class Response : public QObject
     QByteArray m_pendingData;
     int m_timeoutTimerID;//timeout request
     int m_reconnectTimerID;//used for streamed request
+    int m_retryTime;//for streamed responses SSE
+    QByteArray m_lastID;//last id received
 protected:
     QNetworkReply * m_reply;
     int m_rateLimitLimit;

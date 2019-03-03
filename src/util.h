@@ -108,7 +108,7 @@ bool operator==(const Integer &a, const Integer &b);
 
 /**
  * @brief The Boolean struct
- * helper struct to be able to have unassigned value as in java Integer type
+ * helper struct to be able to have unassigned value as in java Boolean type
  */
 
 struct Boolean: public stellar::Optional<bool>
