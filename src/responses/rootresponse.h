@@ -16,6 +16,8 @@ class RootResponse : public Response
     Q_PROPERTY(qint32 core_latest_ledger MEMBER m_coreLatestLedger)
     Q_PROPERTY(QString network_passphrase MEMBER m_networkPassphrase)
     Q_PROPERTY(qint32 protocol_version MEMBER m_protocolVersion)
+    Q_PROPERTY(qint32 current_protocol_version MEMBER m_currentProtocolVersion)
+    Q_PROPERTY(qint32 core_supported_protocol_version MEMBER m_coreSupportedProtocolVersion)
 
     QString m_horizonVersion;
     QString m_coreVersion;
@@ -24,6 +26,8 @@ class RootResponse : public Response
     qint32 m_coreLatestLedger;
     QString m_networkPassphrase;
     qint32 m_protocolVersion;
+    qint32 m_currentProtocolVersion;
+    qint32 m_coreSupportedProtocolVersion;
 public:
     RootResponse(QNetworkReply *reply=nullptr);
     virtual ~RootResponse();
@@ -39,7 +43,14 @@ public:
 
     QString getNetworkPassphrase() const;
 
-    qint32 getProtocolVersion() const;
+    /**
+     * @deprecated Will be removed in Horizon 0.17.0
+     */
+    Q_DECL_DEPRECATED qint32 getProtocolVersion() const;
+
+    qint32 getCurrentProtocolVersion() const;
+
+    qint32 getCoreSupportedProtocolVersion() const;
 };
 Q_DECLARE_METATYPE(RootResponse*)
 #endif // ROOTRESPONSE_H

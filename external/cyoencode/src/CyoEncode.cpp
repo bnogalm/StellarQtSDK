@@ -145,6 +145,10 @@ size_t Base32::cyoBase32Encode( char* dest, const void* src, size_t size )
             /* Encode inputs */
             dwBlockSize = (dwSrcSize < BASE32_INPUT ? dwSrcSize : BASE32_INPUT);
             n1 = n2 = n3 = n4 = n5 = n6 = n7 = n8 = 0;
+#ifndef _MSC_VER
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wimplicit-fallthrough"
+#endif
             switch (dwBlockSize)
             {
             case 5:
@@ -169,6 +173,9 @@ size_t Base32::cyoBase32Encode( char* dest, const void* src, size_t size )
             default:
                 assert( 0 );
             }
+#ifndef _MSC_VER
+#pragma GCC diagnostic pop
+#endif
             pSrc += dwBlockSize;
             dwSrcSize -= dwBlockSize;
 
@@ -181,6 +188,10 @@ size_t Base32::cyoBase32Encode( char* dest, const void* src, size_t size )
             assert( n6 <= 31 );
             assert( n7 <= 31 );
             assert( n8 <= 31 );
+#ifndef _MSC_VER
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wimplicit-fallthrough"
+#endif
 
             /* Padding */
             switch (dwBlockSize)
@@ -195,7 +206,9 @@ size_t Base32::cyoBase32Encode( char* dest, const void* src, size_t size )
             default:
                 assert( 0 );
             }
-
+#ifndef _MSC_VER
+#pragma GCC diagnostic pop
+#endif
             /* 8 outputs */
             *dest++ = BASE32_TABLE[ n1 ];
             *dest++ = BASE32_TABLE[ n2 ];
@@ -298,6 +311,10 @@ size_t Base64::cyoBase64Encode( char* dest, const void* src, size_t size )
             /* Encode inputs */
             dwBlockSize = (dwSrcSize < BASE64_INPUT ? dwSrcSize : BASE64_INPUT);
             n1 = n2 = n3 = n4 = 0;
+#ifndef _MSC_VER
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wimplicit-fallthrough"
+#endif
             switch (dwBlockSize)
             {
             case 3:
@@ -314,6 +331,7 @@ size_t Base64::cyoBase64Encode( char* dest, const void* src, size_t size )
             default:
                 assert( 0 );
             }
+
             pSrc += dwBlockSize;
             dwSrcSize -= dwBlockSize;
 
@@ -334,7 +352,9 @@ size_t Base64::cyoBase64Encode( char* dest, const void* src, size_t size )
             default:
                 assert( 0 );
             }
-
+#ifndef _MSC_VER
+#pragma GCC diagnostic pop
+#endif
             /* 4 outputs */
             *dest++ = BASE64_TABLE[ n1 ];
             *dest++ = BASE64_TABLE[ n2 ];

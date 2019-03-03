@@ -4,7 +4,7 @@
 #include <QObject>
 #include "../response.h"
 #include "../link.h"
-
+#include "../../util.h"
 
 
 namespace OperationResponseAttach
@@ -68,6 +68,7 @@ class OperationResponse : public Response
     Q_PROPERTY(QString paging_token MEMBER m_pagingToken)
     Q_PROPERTY(QString created_at MEMBER m_createdAt)
     Q_PROPERTY(QString transaction_hash MEMBER m_transactionHash)
+    Q_PROPERTY(QVariant transaction_successful MEMBER m_transactionSuccessful WRITE setTransactionSuccessful)//we use a custom set method to filter non Bool types
     Q_PROPERTY(QString type MEMBER m_type)
     Q_PROPERTY(OperationResponseAttach::Links _links MEMBER m_links)
     qint64 m_id;
@@ -76,6 +77,7 @@ class OperationResponse : public Response
     QString m_pagingToken;
     QString m_createdAt;
     QString m_transactionHash;
+    QVariant m_transactionSuccessful;
     QString m_type;
     OperationResponseAttach::Links m_links;
 
@@ -111,11 +113,14 @@ public:
        */
       QString getType() const;
 
+      Boolean isTransactionSuccessful() const;
+
       OperationResponseAttach::Links& getLinks();
 
       QString sourceAccount() const;
 public slots:
       void setSourceAccount(QString sourceAccount);
+      void setTransactionSuccessful(QVariant transactionSuccessful);
 };
 Q_DECLARE_METATYPE(OperationResponseAttach::Links)
 Q_DECLARE_METATYPE(OperationResponse*)

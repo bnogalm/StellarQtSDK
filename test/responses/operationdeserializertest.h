@@ -64,7 +64,7 @@ private slots:
                 "}";
         GenericOperation genericOperation;
         genericOperation.loadFromJson(json);
-        CreateAccountOperationResponse& operation= *(CreateAccountOperationResponse*)genericOperation.operation();
+        CreateAccountOperationResponse& operation= * static_cast<CreateAccountOperationResponse*>(genericOperation.operation());
 
         QCOMPARE(operation.getSourceAccount().getAccountId(), QString("GD6WU64OEP5C4LRBH6NK3MHYIA2ADN6K6II6EXPNVUR3ERBXT4AN4ACD"));
         QCOMPARE(operation.getPagingToken(), QString("3936840037961729"));
@@ -116,6 +116,8 @@ private slots:
         QCOMPARE(operation.getPagingToken(), QString("3936840037961729"));
         QCOMPARE(operation.getId(), 3936840037961729L);
 
+        QVERIFY(operation.isTransactionSuccessful().isNull());
+
         QCOMPARE(operation.getAccount().getAccountId(), QString("GAR4DDXYNSN2CORG3XQFLAPWYKTUMLZYHYWV4Y2YJJ4JO6ZJFXMJD7PT"));
         QCOMPARE(operation.getStartingBalance(), QString("299454.904954"));
         QCOMPARE(operation.getFunder().getAccountId(), QString("GD6WU64OEP5C4LRBH6NK3MHYIA2ADN6K6II6EXPNVUR3ERBXT4AN4ACD"));
@@ -148,6 +150,7 @@ private slots:
                 "        },\n"
                 "        \"amount\": \"100.0\",\n"
                 "        \"asset_type\": \"native\",\n"
+                "        \"transaction_successful\": false,\n"
                 "        \"from\": \"GB6NVEN5HSUBKMYCE5ZOWSK5K23TBWRUQLZY3KNMXUZ3AQ2ESC4MY4AQ\",\n"
                 "        \"id\": 3940808587743233,\n"
                 "        \"paging_token\": \"3940808587743233\",\n"
@@ -160,11 +163,14 @@ private slots:
         operation.loadFromJson(json);
         QCOMPARE(operation.getSourceAccount().getAccountId(), QString("GB6NVEN5HSUBKMYCE5ZOWSK5K23TBWRUQLZY3KNMXUZ3AQ2ESC4MY4AQ"));
         QCOMPARE(operation.getId(), 3940808587743233L);
-
+        QVERIFY(!operation.isTransactionSuccessful());
+        QVERIFY(!operation.isTransactionSuccessful().isNull());
+        QCOMPARE(operation.isTransactionSuccessful(),Boolean(false));
         QCOMPARE(operation.getFrom().getAccountId(), QString("GB6NVEN5HSUBKMYCE5ZOWSK5K23TBWRUQLZY3KNMXUZ3AQ2ESC4MY4AQ"));
         QCOMPARE(operation.getTo().getAccountId(), QString("GDWNY2POLGK65VVKIH5KQSH7VWLKRTQ5M6ADLJAYC2UEHEBEARCZJWWI"));
         QCOMPARE(operation.getAmount(), QString("100.0"));
         QVERIFY(operation.getAsset()->equals(new AssetTypeNative()));
+
     }
     void testDeserializeNonNativePaymentOperation() {
         QByteArray json = "{\n"
@@ -187,6 +193,7 @@ private slots:
                 "        },\n"
                 "        \"id\": \"3603043769651201\",\n"
                 "        \"paging_token\": \"3603043769651201\",\n"
+                "        \"transaction_successful\": true,\n"
                 "        \"source_account\": \"GAZN3PPIDQCSP5JD4ETQQQ2IU2RMFYQTAL4NNQZUGLLO2XJJJ3RDSDGA\",\n"
                 "        \"type\": \"payment\",\n"
                 "        \"type_i\": 1,\n"
@@ -200,6 +207,10 @@ private slots:
 
         PaymentOperationResponse operation;
         operation.loadFromJson(json);
+
+        QVERIFY(operation.isTransactionSuccessful());
+        QVERIFY(!operation.isTransactionSuccessful().isNull());
+        QCOMPARE(operation.isTransactionSuccessful(),Boolean(true));
 
         QCOMPARE(operation.getFrom().getAccountId(), QString("GAZN3PPIDQCSP5JD4ETQQQ2IU2RMFYQTAL4NNQZUGLLO2XJJJ3RDSDGA"));
         QCOMPARE(operation.getTo().getAccountId(), QString("GBHUSIZZ7FS2OMLZVZ4HLWJMXQ336NFSXHYERD7GG54NRITDTEWWBBI6"));
@@ -327,15 +338,15 @@ private slots:
         SetOptionsOperationResponse operation;
         operation.loadFromJson(json);
 
-        QCOMPARE(operation.getSigner()->getAccountId(), QString("GD3ZYXVC7C3ECD5I4E5NGPBFJJSULJ6HJI2FBHGKYFV34DSIWB4YEKJZ"));
+        //QCOMPARE(operation.getSigner()->getAccountId(), QString("GD3ZYXVC7C3ECD5I4E5NGPBFJJSULJ6HJI2FBHGKYFV34DSIWB4YEKJZ"));
         QCOMPARE(operation.getSignerKey(), QString("GD3ZYXVC7C3ECD5I4E5NGPBFJJSULJ6HJI2FBHGKYFV34DSIWB4YEKJZ"));
-        QCOMPARE(operation.getSignerWeight(), (quint32)1);
+        QCOMPARE(operation.getSignerWeight(), quint32(1));
         QCOMPARE(operation.getHomeDomain(), QString("stellar.org"));
         QCOMPARE(operation.getInflationDestination()->getAccountId(), QString("GBYWSY4NPLLPTP22QYANGTT7PEHND64P4D4B6LFEUHGUZRVYJK2H4TBE"));
-        QCOMPARE(operation.getLowThreshold(), (quint32)1);
-        QCOMPARE(operation.getMedThreshold(), (quint32)2);
-        QCOMPARE(operation.getHighThreshold(), (quint32)3);
-        QCOMPARE(operation.getMasterKeyWeight(), (quint32)4);
+        QCOMPARE(operation.getLowThreshold(), quint32(1));
+        QCOMPARE(operation.getMedThreshold(), quint32(2));
+        QCOMPARE(operation.getHighThreshold(), quint32(3));
+        QCOMPARE(operation.getMasterKeyWeight(), quint32(4));
         QCOMPARE(operation.getSetFlags()[0], QString("auth_required_flag"));
         QCOMPARE(operation.getClearFlags()[0], QString("auth_revocable_flag"));
     }
@@ -371,7 +382,14 @@ private slots:
         SetOptionsOperationResponse operation;
         operation.loadFromJson(json);
         try {
+#ifndef _MSC_VER
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#endif
             operation.getSigner();
+#ifndef _MSC_VER
+#pragma GCC diagnostic pop
+#endif
             QFAIL("not known key type signer");
         } catch (FormatException e) {
             //QCOMPARE(QString::fromLatin1(e.what()),QString("Version byte is invalid"));
@@ -530,6 +548,7 @@ private slots:
                           "  \"to\": \"GC45JH537XZD4DY4WTV5PCUJL4KPOIE4WMGX5OP5KSPS2OLGRUOVVIGD\",\n"
                           "  \"amount\": \"2.5000000\",\n"
                           "  \"path\": [],\n"
+                          "  \"source_amount\": \"1.1777000\",\n"
                           "  \"source_max\": \"1.1779523\",\n"
                           "  \"source_asset_type\": \"native\"\n"
                           "}";
@@ -538,6 +557,7 @@ private slots:
         QCOMPARE(operation.getFrom().getAccountId(), QString("GC45JH537XZD4DY4WTV5PCUJL4KPOIE4WMGX5OP5KSPS2OLGRUOVVIGD"));
         QCOMPARE(operation.getTo().getAccountId(), QString("GC45JH537XZD4DY4WTV5PCUJL4KPOIE4WMGX5OP5KSPS2OLGRUOVVIGD"));
         QCOMPARE(operation.getAmount(), QString("2.5000000"));
+        QCOMPARE(operation.getSourceAmount(), QString("1.1777000"));
         QCOMPARE(operation.getSourceMax(), QString("1.1779523"));
         QVERIFY(operation.getSourceAsset()->equals(new AssetTypeNative()));
         QVERIFY(operation.getAsset()->equals(Asset::createNonNativeAsset("XRP", KeyPair::fromAccountId(QString("GBVOL67TMUQBGL4TZYNMY3ZQ5WGQYFPFD5VJRWXR72VA33VFNL225PL5")))));

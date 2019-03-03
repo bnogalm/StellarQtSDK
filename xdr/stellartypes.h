@@ -22,14 +22,14 @@ namespace stellar
 
     enum class PublicKeyType : qint32
     {
-        PUBLIC_KEY_TYPE_ED25519 = CryptoKeyType::KEY_TYPE_ED25519
+        PUBLIC_KEY_TYPE_ED25519 = static_cast<qint32>(CryptoKeyType::KEY_TYPE_ED25519)
     };
 
     enum class SignerKeyType : qint32
     {
-        SIGNER_KEY_TYPE_ED25519 = CryptoKeyType::KEY_TYPE_ED25519,
-        SIGNER_KEY_TYPE_PRE_AUTH_TX = CryptoKeyType::KEY_TYPE_PRE_AUTH_TX,  // SHA-256 Hash of TransactionSignaturePayload structure
-        SIGNER_KEY_TYPE_HASH_X = CryptoKeyType::KEY_TYPE_HASH_X
+        SIGNER_KEY_TYPE_ED25519 = static_cast<qint32>(CryptoKeyType::KEY_TYPE_ED25519),
+        SIGNER_KEY_TYPE_PRE_AUTH_TX = static_cast<qint32>(CryptoKeyType::KEY_TYPE_PRE_AUTH_TX),  // SHA-256 Hash of TransactionSignaturePayload structure
+        SIGNER_KEY_TYPE_HASH_X = static_cast<qint32>(CryptoKeyType::KEY_TYPE_HASH_X)
     };
 
     typedef quint8 Key[32];

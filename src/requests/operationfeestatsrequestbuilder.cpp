@@ -1,7 +1,7 @@
 #include "operationfeestatsrequestbuilder.h"
 #include "../server.h"
 OperationFeeStatsRequestBuilder::OperationFeeStatsRequestBuilder(Server *server)
-    :RequestBuilder(server, "operation_fee_stats")
+    :RequestBuilder(server, "fee_stats")
 {
 
 }

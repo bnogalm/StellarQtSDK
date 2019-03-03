@@ -29,7 +29,7 @@ quint64 Operation::toXdrAmount(QString value) {
         return value.toULongLong()*Operation::ONE;
     QStringList parse = value.split('.');
     if(parse[1].length()<Operation::FRACTIONAL)
-        return parse[0].toULongLong() * Operation::ONE + parse[1].toLongLong() *  (quint64)std::pow(10,(Operation::FRACTIONAL-parse[1].length()));
+        return parse[0].toULongLong() * Operation::ONE + parse[1].toULongLong() *  get_power(quint32(10),quint32((Operation::FRACTIONAL-parse[1].length())));
     for(int i=Operation::FRACTIONAL ; i<parse[1].length();i++){
         if(parse[1][i]!=QChar('0')){
             throw std::runtime_error("amount with too many decimals");
@@ -73,7 +73,7 @@ QString Operation::toXdrBase64() {
 
 Operation *Operation::fromXdr(stellar::Operation &xdr) {
 
-    Operation* operation=0;
+    Operation* operation=nullptr;
     switch (xdr.type) {
     case stellar::OperationType::CREATE_ACCOUNT:
         operation = CreateAccountOperation::build(xdr.operationCreateAccount);

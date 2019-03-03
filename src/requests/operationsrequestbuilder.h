@@ -14,6 +14,13 @@ public:
     OperationsRequestBuilder(Server* server);
 
     /**
+     * Adds a parameter defining whether to include operations of failed transactions. By default only operations of
+     * successful transactions are returned.
+     * @param value Set to <code>true</code> to include operations of failed transactions.
+     */
+    OperationsRequestBuilder& includeFailed(bool value);
+
+    /**
        * Requests specific <code>uri</code> and returns {@link OperationResponse}.
        * This method is helpful for getting the links.
        * @throws IOException

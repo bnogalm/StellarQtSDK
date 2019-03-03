@@ -1,14 +1,17 @@
 #include "transaction.h"
 #include "account.h"
+#include <QDateTime>
 
-Transaction::Transaction(KeyPair *sourceAccount, qint64 sequenceNumber, QVector<Operation *> operations, Memo *memo, TimeBounds *timeBounds) {
+quint32 Transaction::Builder::s_defaultOperationFee = Transaction::Builder::BASE_FEE;
+
+Transaction::Transaction(KeyPair *sourceAccount, quint32 fee, qint64 sequenceNumber, QVector<Operation *> operations, Memo *memo, TimeBounds *timeBounds) {
     m_sourceAccount = checkNotNull(sourceAccount, "sourceAccount cannot be null");
     m_sequenceNumber=sequenceNumber;//we cant check this, all the values are valid
 
 
     checkArgument(operations.length() > 0, "At least one operation required");
     m_operations = operations;
-    m_fee = operations.length() * BASE_FEE;
+    m_fee = fee;
     m_memo =(memo) ? memo : Memo::none();
     m_timeBounds = timeBounds;
 }
@@ -105,7 +108,7 @@ QVector<Operation *> Transaction::getOperations() const{
     return m_operations;
 }
 
-int Transaction::getFee() {
+quint32 Transaction::getFee() {
     return m_fee;
 }
 
@@ -141,13 +144,10 @@ Transaction *Transaction::fromXdr(stellar::Transaction &xdr)
     {
         ops.append(Operation::fromXdr(op));
     }
-    return new Transaction(sourceAccount,xdr.seqNum,ops,Memo::fromXdr(xdr.memo), xdr.timeBounds.filled ? TimeBounds::fromXdr(xdr.timeBounds.value) : nullptr);
+    return new Transaction(sourceAccount,xdr.fee,xdr.seqNum,ops,Memo::fromXdr(xdr.memo), xdr.timeBounds.filled ? TimeBounds::fromXdr(xdr.timeBounds.value) : nullptr);
 }
 
 stellar::TransactionEnvelope Transaction::toEnvelopeXdr() {
-    if (m_signatures.size() == 0) {
-        throw std::runtime_error("Transaction must be signed by at least one signer. Use transaction.sign().");
-    }
 
     stellar::TransactionEnvelope xdr;
     xdr.tx=this->toXdr();
@@ -158,6 +158,11 @@ stellar::TransactionEnvelope Transaction::toEnvelopeXdr() {
 }
 
 Transaction *Transaction::fromXdrEnvelope(stellar::TransactionEnvelope &xdr)
+{
+    return Transaction::fromEnvelopeXdr(xdr);
+}
+
+Transaction *Transaction::fromEnvelopeXdr(stellar::TransactionEnvelope &xdr)
 {
     Transaction * transaction = Transaction::fromXdr(xdr.tx);
     for(stellar::DecoratedSignature& signature : xdr.signatures.value){
@@ -179,12 +184,13 @@ Transaction::Builder::Builder(TransactionBuilderAccount *sourceAccount) {
     m_sourceAccount = checkNotNull(sourceAccount, "sourceAccount cannot be null");
     m_memo=nullptr;
     m_timeBounds=nullptr;
+    m_operationFee = s_defaultOperationFee;
+    m_timeoutSet=false;
 }
 
 Transaction::Builder::~Builder()
 {
-    if(m_sourceAccount)
-        delete m_sourceAccount;
+    //it will not destroy the account object
     if(m_memo)
         delete m_memo;
     if(m_timeBounds)
@@ -196,6 +202,13 @@ Transaction::Builder::~Builder()
 
 int Transaction::Builder::getOperationsCount() {
     return m_operations.size();
+}
+
+void Transaction::Builder::setDefaultOperationFee(quint32 opFee) {
+    if (opFee < Builder::BASE_FEE) {
+        throw std::runtime_error(QString("DefaultOperationFee cannot be smaller than the BASE_FEE (\" %1 \"): %2").arg(Builder::BASE_FEE).arg(opFee).toStdString());
+    }
+    s_defaultOperationFee = opFee;
 }
 
 Transaction::Builder &Transaction::Builder::addOperation(Operation *operation) {
@@ -221,19 +234,61 @@ Transaction::Builder &Transaction::Builder::addTimeBounds(TimeBounds *timeBounds
     return *this;
 }
 
+Transaction::Builder &Transaction::Builder::setTimeout(qint64 timeout) {
+    if (m_timeBounds && m_timeBounds->getMaxTime() > 0) {
+        throw std::runtime_error("TimeBounds.max_time has been already set - setting timeout would overwrite it.");
+    }
+
+    if (timeout < 0) {
+        throw std::runtime_error("timeout cannot be negative");
+    }
+
+    m_timeoutSet = true;
+    if (timeout > 0) {
+        qint64 timeoutTimestamp = QDateTime::currentMSecsSinceEpoch()/ 1000L + timeout;
+        if (!m_timeBounds) {
+            m_timeBounds = new TimeBounds(0, timeoutTimestamp);
+        } else {
+            qint64 min = m_timeBounds->getMinTime();
+            delete m_timeBounds;
+            m_timeBounds = new TimeBounds(min, timeoutTimestamp);
+        }
+    }
+
+    return *this;
+}
+
+Transaction::Builder &Transaction::Builder::setOperationFee(quint32 operationFee) {
+    if (operationFee < Builder::BASE_FEE) {
+        throw std::runtime_error(QString("OperationFee cannot be smaller than the BASE_FEE (\" %1 \"): %2").arg(Builder::BASE_FEE).arg(operationFee).toStdString());
+    }
+
+    m_operationFee = operationFee;
+    return *this;
+}
+
 Transaction *Transaction::Builder::build() {
-    //so objects dont get destroyed on exception, we use a pointer copy
-    auto account = m_sourceAccount;
-    auto memo = m_memo;
-    auto timebounds = m_timeBounds;
-    m_sourceAccount=nullptr;
+    // Ensure setTimeout called or maxTime is set
+    if ((!m_timeBounds || (m_timeBounds  && m_timeBounds->getMaxTime() == 0)) && !m_timeoutSet) {
+      throw std::runtime_error("TimeBounds has to be set or you must call setTimeout(TIMEOUT_INFINITE).");
+    }
+
+    if (m_operationFee == 0) {
+        qDebug()<< "[TransactionBuilder] The `operationFee` parameter of `TransactionBuilder` is required. Setting to BASE_FEE=" << Builder::BASE_FEE << ". Future versions of this library will error if not provided.";
+        m_operationFee = Builder::BASE_FEE;
+    }
+
+    //we have to make a copy of the KeyPair in order to be able to destroy it without affecting Account object.
+    //when we create a transaction from XDR, a KeyPair object is also created.
+    Transaction *transaction = new Transaction(new KeyPair(*(m_sourceAccount->getKeypair())), static_cast<quint32>(m_operations.length()) * m_operationFee, m_sourceAccount->getIncrementedSequenceNumber(), m_operations, m_memo, m_timeBounds);
+    // Increment sequence number when there were no exceptions when creating a transaction
+    m_sourceAccount->incrementSequenceNumber();
+
+    //so objects dont get destroyed with the builder, all the checks were done already
     m_memo=nullptr;
     m_timeBounds=nullptr;
-    Transaction *transaction = new Transaction(account->getKeypair(), account->getIncrementedSequenceNumber(), m_operations, memo, timebounds);
-    // Increment sequence number when there were no exceptions when creating a transaction
-    account->incrementSequenceNumber();
-    //it lose ownership of the assigned data, we reset it.
     m_operations.clear();
+
     return transaction;
 }
 

@@ -124,7 +124,7 @@ FederationResponse *FederationServer::resolveAddress(const QString &address) {
     return new FederationResponse(reply);
 }
 
-
+#ifdef USE_CPPTOML
 //some helpers
 class membuf : public std::basic_streambuf<char> {
 public:
@@ -143,7 +143,7 @@ public:
 private:
     membuf _buffer;
 };
-
+#endif
 
 //initalize the federation server from reply, reply is the sender()
 void FederationServer::initialize()

@@ -7,11 +7,8 @@ class Operation
 {
 
     static const qint32 FRACTIONAL = 7;
-#ifndef _MSC_VER
-    static constexpr quint64 ONE = std::pow(10,FRACTIONAL);
-#else
-    static constexpr quint64 ONE = get_power_for_msvc<10,FRACTIONAL>::value;
-#endif
+    static constexpr quint64 ONE = get_power_s<10,FRACTIONAL, quint64>::value;
+
 protected:
     KeyPair *m_sourceAccount;
 public:

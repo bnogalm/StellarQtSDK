@@ -25,7 +25,7 @@ private slots:
         Server* server = new Server("https://horizon-testnet.stellar.org");
         QUrl uri = server->operationFeeStats()
                 .buildUri();
-        QString expected("https://horizon-testnet.stellar.org/operation_fee_stats");
+        QString expected("https://horizon-testnet.stellar.org/fee_stats");
         QVERIFY(uri.toString() == expected);
 
     }

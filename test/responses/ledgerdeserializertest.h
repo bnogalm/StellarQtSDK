@@ -31,8 +31,10 @@ class LedgerDeserializerTest: public QObject
             "  \"hash\": \"686bb246db89b099cd3963a4633eb5e4315d89dfd3c00594c80b41a483847bfa\",\n"
             "  \"prev_hash\": \"50c8695eb32171a19858413e397cc50b504ceacc819010bdf8ff873aff7858d7\",\n"
             "  \"sequence\": 898826,\n"
-            "  \"transaction_count\": 1,\n"
-            "  \"operation_count\": 2,\n"
+            "  \"transaction_count\": 5,\n"
+            "  \"successful_transaction_count\": 3,\n"
+            "  \"failed_transaction_count\": 2,\n"
+            "  \"operation_count\": 10,\n"
             "  \"closed_at\": \"2015-11-19T21:35:59Z\",\n"
             "  \"total_coins\": \"101343867604.8975480\",\n"
             "  \"fee_pool\": \"1908.2248818\",\n"
@@ -64,8 +66,17 @@ private slots:
         QCOMPARE(ledger.getPagingToken(), QString("3860428274794496"));
         QCOMPARE(ledger.getPrevHash(), QString("50c8695eb32171a19858413e397cc50b504ceacc819010bdf8ff873aff7858d7"));
         QCOMPARE(ledger.getSequence(), 898826);
-        QCOMPARE(ledger.getTransactionCount(), 1);
-        QCOMPARE(ledger.getOperationCount(), 2);
+#ifndef _MSC_VER
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#endif
+        QCOMPARE(ledger.getTransactionCount(), 5);
+#ifndef _MSC_VER
+#pragma GCC diagnostic pop
+#endif
+        QCOMPARE(ledger.getSuccessfulTransactionCount(), 3);
+        QCOMPARE(ledger.getFailedTransactionCount(), 2);
+        QCOMPARE(ledger.getOperationCount(), 10);
         QCOMPARE(ledger.getClosedAt(), QString("2015-11-19T21:35:59Z"));
         QCOMPARE(ledger.getTotalCoins(), QString("101343867604.8975480"));
         QCOMPARE(ledger.getFeePool(), QString("1908.2248818"));

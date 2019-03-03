@@ -5,6 +5,11 @@ TransactionsRequestBuilder::TransactionsRequestBuilder(Server* server):RequestBu
 {
 }
 
+TransactionsRequestBuilder &TransactionsRequestBuilder::includeFailed(bool value) {
+    addParameter("include_failed", value ? "true" : "false");
+    return *this;
+}
+
 TransactionResponse* TransactionsRequestBuilder::transaction(QUrl uri) {
     this->setRequestUri(uri);//we overwrite the uri
     return server()->get<TransactionResponse>(this);

@@ -105,18 +105,40 @@ struct Integer: public stellar::Optional<quint32>
 };
 bool operator==(const Integer &a, const Integer &b);
 
-#ifdef _MSC_VER
-template <int A, int B>
-struct get_power_for_msvc
+
+/**
+ * @brief The Boolean struct
+ * helper struct to be able to have unassigned value as in java Boolean type
+ */
+
+struct Boolean: public stellar::Optional<bool>
 {
-    static const int value = A * get_power_for_msvc<A, B - 1>::value;
+    Boolean();
+    Boolean(bool v);
+    Boolean(stellar::Optional<bool> optional);
+    Boolean(const QVariant& v);
+    operator bool();
+    bool isNull() const;
+    bool operator==(const Boolean &other);
 };
-template <int A>
-struct get_power_for_msvc<A, 0>
+bool operator==(const Boolean &a, const Boolean &b);
+
+
+
+template <int A, int B, typename T>
+struct get_power_s
 {
-    static const int value = 1;
+    static const T value = A * get_power_s<A, B - 1, T>::value;
 };
-#endif
+template <int A, typename T>
+struct get_power_s<A, 0, T>
+{
+    static const T value = 1;
+};
+
+
+quint64 get_power(quint32 a, quint32 b);
+
 
 
 

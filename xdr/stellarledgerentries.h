@@ -54,7 +54,7 @@ namespace stellar
             out << obj.alphaNum4.assetCode << obj.alphaNum4.issuer; break;
         case AssetType::ASSET_TYPE_CREDIT_ALPHANUM12:
             out << obj.alphaNum12.assetCode << obj.alphaNum12.issuer; break;
-        default: break;
+        //default: break;
         }
 
        return out;
@@ -68,7 +68,7 @@ namespace stellar
             in >> obj.alphaNum4.assetCode  >> obj.alphaNum4.issuer; break;
         case AssetType::ASSET_TYPE_CREDIT_ALPHANUM12:
             in >> obj.alphaNum12.assetCode >> obj.alphaNum12.issuer; break;
-        default: break;
+        //default: break;
         }
 
        return in;
@@ -92,7 +92,7 @@ namespace stellar
     }
 
 
-    struct alignas(4) Liabilities
+    struct Liabilities
     {
         qint64 buying;
         qint64 selling;
@@ -346,6 +346,7 @@ namespace stellar
             OfferEntry offer;
             DataEntry data;
         };
+        ~LedgerEntry(){}
     };
 
     inline QDataStream &operator<<(QDataStream &out, const  LedgerEntry &obj) {
@@ -359,7 +360,7 @@ namespace stellar
             out << obj.offer; break;
         case LedgerEntryType::DATA:
             out << obj.data; break;
-        default: break;
+        //default: break;
         }
 
        return out;
@@ -376,7 +377,7 @@ namespace stellar
             in >> obj.offer; break;
         case LedgerEntryType::DATA:
             in >> obj.data; break;
-        default: break;
+        //default: break;
         }
        return in;
     }

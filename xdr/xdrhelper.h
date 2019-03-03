@@ -11,7 +11,7 @@ namespace xdr{
  *  It also has an alternative way to fill the value, using filler() so you don't need to make copies.
  */
 template<class T>
-struct alignas(4) Optional
+struct Optional
 {
 
     Optional<T>():filled(0)
@@ -110,7 +110,7 @@ struct Array{
         QByteArray ba;
         QDataStream stream(&ba,QIODevice::WriteOnly);
         for(int i=0;i<value.size();i++){
-            stream << (T)value[i];
+            stream << static_cast<T>(value[i]);
         }
         return ba;
     }
@@ -118,15 +118,15 @@ struct Array{
 
 template <class T, int max=std::numeric_limits<int>::max()>
 inline QDataStream &operator<<(QDataStream &out, const  Array<T,max> &obj) {
-    int pos = out.device()->pos();
-    out << (qint32)obj.value.length();
+    auto pos = out.device()->pos();
+    out << static_cast<qint32>(obj.value.length());
     for(int i=0;i<obj.value.length();i++)
-        out << (T)obj.value[i];
-    int diff = out.device()->pos() - pos;
-    int missingBytes = 4-(diff&3);
+        out << static_cast<T>(obj.value[i]);
+    auto diff = out.device()->pos() - pos;
+    qint32 missingBytes = 4-(diff&3);
     if(missingBytes<4){
-        static const qint32 zero=0;
-        out.writeRawData((char*)&zero,missingBytes);
+        qint32 zero=0;
+        out.writeRawData(reinterpret_cast<char*>(&zero),missingBytes);
     }
 
    return out;
@@ -136,7 +136,7 @@ template <class T, int max=std::numeric_limits<int>::max()>
 inline QDataStream &operator>>(QDataStream &in,  Array<T,max> &obj) {
     //we take care of reading the max
     qint32 n;
-    int pos =in.device()->pos();
+    auto pos =in.device()->pos();
     in>> n;
     while(n>0 && !in.atEnd()){
         n--;
@@ -144,11 +144,11 @@ inline QDataStream &operator>>(QDataStream &in,  Array<T,max> &obj) {
         in >> v;
         obj.value.append(v);
     }
-    int diff = in.device()->pos() - pos;
+    auto diff = in.device()->pos() - pos;
     int missingBytes = 4-(diff&3);
     if(missingBytes<4){
         qint32 zero=0;
-        in.readRawData((char*)&zero,missingBytes);
+        in.readRawData(reinterpret_cast<char*>(&zero),missingBytes);
         if(zero!=0)
             throw std::runtime_error("padding must be zero");
     }
@@ -161,13 +161,13 @@ inline QDataStream &operator>>(QDataStream &in,  Array<T,max> &obj) {
 inline typename std::enable_if<std::is_standard_layout<Type>::value,QDataStream&>::type \
 operator<<(QDataStream &out, const Type &t)\
 {\
-    out.writeRawData((const char*)&t,sizeof(Type));\
+    out.writeRawData(reinterpret_cast<const char*>(&t),sizeof(Type));\
     return out;\
 }\
 inline typename std::enable_if<std::is_standard_layout<Type>::value,QDataStream&>::type \
 operator>>(QDataStream &in, Type &t)\
 {\
-    in.readRawData((char*)&t,sizeof(Type));\
+    in.readRawData(reinterpret_cast<char*>(&t),sizeof(Type));\
     return in;\
 }
 
@@ -190,7 +190,7 @@ inline typename std::enable_if<std::is_enum<Type>::value,QDataStream&>::type
 {
     typename std::underlying_type<Type>::type underlying;
     in >> underlying;
-    t= (Type)underlying;//we could do it directly
+    t= static_cast<Type>(underlying);//we could do it directly
     return in;
 }
 

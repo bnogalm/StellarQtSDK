@@ -7,6 +7,11 @@ OperationsRequestBuilder::OperationsRequestBuilder(Server *server):RequestBuilde
 
 }
 
+OperationsRequestBuilder &OperationsRequestBuilder::includeFailed(bool value) {
+    addParameter("include_failed",value ? "true":"false");
+    return *this;
+}
+
 GenericOperation* OperationsRequestBuilder::operation(QUrl uri) {
     this->setRequestUri(uri);//we overwrite the uri
     return server()->get<GenericOperation>(this);

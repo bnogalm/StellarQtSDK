@@ -56,6 +56,17 @@ private slots:
        QCOMPARE(uri.toString(),QString("https://horizon-testnet.stellar.org/transactions/991534d902063b7715cd74207bef4e7bd7aa2f108f62d3eba837ce6023b2d4f3/operations"));
    }
 
+     void testIncludeFailed() {
+         Server server("https://horizon-testnet.stellar.org");
+         QUrl uri = server.operations()
+                 .forLedger(200000000000L)
+                 .includeFailed(true)
+                 .limit(50)
+                 .order(RequestBuilder::Order::ASC)
+                 .buildUri();
+         QCOMPARE(uri.toString(), QString("https://horizon-testnet.stellar.org/ledgers/200000000000/operations?include_failed=true&limit=50&order=asc"));
+     }
+
 };
 
 ADD_TEST(OperationsRequestBuilderTest)
