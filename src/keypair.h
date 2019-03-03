@@ -140,10 +140,13 @@ public:
       */
      bool verify(QByteArray data, QByteArray signature);
 
-     bool equals(KeyPair* obj);
+     bool equals(const KeyPair* obj) const;
+
+     bool operator==(const KeyPair &other) const;
 
 };
 
 KeyPair* checkNotNull(KeyPair* keypair, const char *error);
+
 
 #endif // KEYPAIR_H

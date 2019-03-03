@@ -56,6 +56,8 @@ class LedgerResponse : public Response
     Q_PROPERTY(QString paging_token MEMBER m_pagingToken)
     Q_PROPERTY(QString prev_hash MEMBER m_prevHash)
     Q_PROPERTY(qint32 transaction_count MEMBER m_transactionCount)
+    Q_PROPERTY(qint32 successful_transaction_count MEMBER m_successfulTransactionCount)
+    Q_PROPERTY(qint32 failed_transaction_count MEMBER m_failedTransactionCount)
     Q_PROPERTY(qint32 operation_count MEMBER m_operationCount)
     Q_PROPERTY(QString closed_at MEMBER m_closedAt)
     Q_PROPERTY(QString total_coins MEMBER m_totalCoins)
@@ -75,6 +77,8 @@ class LedgerResponse : public Response
     QString m_pagingToken;
     QString m_prevHash;
     qint32 m_transactionCount;
+    qint32 m_successfulTransactionCount;
+    qint32 m_failedTransactionCount;
     qint32 m_operationCount;
     QString m_closedAt;
     QString m_totalCoins;
@@ -94,7 +98,12 @@ public:
     QString getHash() const;
     QString getPagingToken() const;
     QString getPrevHash() const;
-    qint32 getTransactionCount() const;
+    /**
+     * @deprecated Will be removed in Horizon 0.17.0
+     */
+    Q_DECL_DEPRECATED qint32 getTransactionCount() const;
+    qint32 getSuccessfulTransactionCount() const;
+    qint32 getFailedTransactionCount() const;
     qint32 getOperationCount() const;
     QString getClosedAt() const;
     QString getTotalCoins() const;

@@ -42,6 +42,7 @@ class TransactionDeserializerTest: public QObject
                       "  },\n"
                       "  \"id\": \"5c2e4dad596941ef944d72741c8f8f1a4282f8f2f141e81d827f44bf365d626b\",\n"
                       "  \"paging_token\": \"3933090531512320\",\n"
+                      "  \"successful\": true,\n"
                       "  \"hash\": \"5c2e4dad596941ef944d72741c8f8f1a4282f8f2f141e81d827f44bf365d626b\",\n"
                       "  \"ledger\": 915744,\n"
                       "  \"created_at\": \"2015-11-20T17:01:28Z\",\n"
@@ -87,6 +88,7 @@ class TransactionDeserializerTest: public QObject
                               "  },\n"
                               "  \"id\": \"5c2e4dad596941ef944d72741c8f8f1a4282f8f2f141e81d827f44bf365d626b\",\n"
                               "  \"paging_token\": \"3933090531512320\",\n"
+                              "  \"successful\": false,\n"
                               "  \"hash\": \"5c2e4dad596941ef944d72741c8f8f1a4282f8f2f141e81d827f44bf365d626b\",\n"
                               "  \"ledger\": 915744,\n"
                               "  \"created_at\": \"2015-11-20T17:01:28Z\",\n"
@@ -114,6 +116,7 @@ private slots:
         QCOMPARE(transaction.getLedger(), 915744);
         QCOMPARE(transaction.getCreatedAt(), QString("2015-11-20T17:01:28Z"));
         QCOMPARE(transaction.getPagingToken(), QString("3933090531512320"));
+        QCOMPARE(transaction.isSuccessful(), Boolean(true));
         QCOMPARE(transaction.getSourceAccount()->getAccountId(), QString("GCUB7JL4APK7LKJ6MZF7Q2JTLHAGNBIUA7XIXD5SQTG52GQ2DAT6XZMK"));
         QCOMPARE(transaction.getSourceAccountSequence(), 2373051035426646L);
         QCOMPARE(transaction.getFeePaid(), 100);
@@ -140,6 +143,7 @@ private slots:
         transaction.loadFromJson(jsonMemoNone);
 
         QVERIFY(dynamic_cast<MemoNone*>(transaction.getMemo()));
+        QCOMPARE(transaction.isSuccessful(), Boolean(false));
     }
 
 };

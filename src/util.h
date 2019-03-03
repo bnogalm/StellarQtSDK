@@ -105,6 +105,25 @@ struct Integer: public stellar::Optional<quint32>
 };
 bool operator==(const Integer &a, const Integer &b);
 
+
+/**
+ * @brief The Boolean struct
+ * helper struct to be able to have unassigned value as in java Boolean type
+ */
+
+struct Boolean: public stellar::Optional<bool>
+{
+    Boolean();
+    Boolean(bool v);
+    Boolean(stellar::Optional<bool> optional);
+    Boolean(const QVariant& v);
+    operator bool();
+    bool isNull() const;
+    bool operator==(const Boolean &other);
+};
+bool operator==(const Boolean &a, const Boolean &b);
+
+
 #ifdef _MSC_VER
 template <int A, int B>
 struct get_power_for_msvc

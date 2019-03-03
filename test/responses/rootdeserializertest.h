@@ -68,7 +68,9 @@ private slots:
                 "  \"history_elder_ledger\": 1,\n"
                 "  \"core_latest_ledger\": 18369117,\n"
                 "  \"network_passphrase\": \"Public Global Stellar Network ; September 2015\",\n"
-                "  \"protocol_version\": 9\n"
+                "  \"protocol_version\": 9,\n"
+                "  \"current_protocol_version\": 10\n,"
+                "  \"core_supported_protocol_version\": 11\n"
                 "}";
             RootResponse root;
             root.loadFromJson(json);
@@ -80,6 +82,8 @@ private slots:
             QCOMPARE(root.getCoreLatestLedger(), 18369117);
             QCOMPARE(root.getNetworkPassphrase(), QString("Public Global Stellar Network ; September 2015"));
             QCOMPARE(root.getProtocolVersion(), 9);
+            QCOMPARE(root.getCurrentProtocolVersion(), 10);
+            QCOMPARE(root.getCoreSupportedProtocolVersion(), 11);
         }
 
 

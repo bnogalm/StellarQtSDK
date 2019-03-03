@@ -12,6 +12,14 @@ public:
      * Builds requests connected to transactions.
      */
     TransactionsRequestBuilder(Server* server);
+
+    /**
+     * Adds a parameter defining whether to include failed transactions. By default only successful transactions are
+     * returned.
+     * @param value Set to <code>true</code> to include failed transactions.
+     */
+    TransactionsRequestBuilder& includeFailed(bool value);
+
     /**
      * Requests specific <code>uri</code> and returns {@link TransactionResponse}.
      * This method is helpful for getting the links.

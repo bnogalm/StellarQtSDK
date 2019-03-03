@@ -5,6 +5,7 @@
 #include "response.h"
 #include "link.h"
 
+#include "../util.h"
 
 namespace TransactionResponseAttach
 {
@@ -72,6 +73,9 @@ class TransactionResponse : public Response
     Q_PROPERTY(qint64 ledger MEMBER m_ledger)
     Q_PROPERTY(QString created_at MEMBER m_createdAt)
     Q_PROPERTY(QString source_account READ sourceAccount WRITE setSourceAccount)
+
+    Q_PROPERTY(QVariant successful MEMBER m_successful WRITE setSuccessful) //we use a custom set method to filter non Bool types
+
     Q_PROPERTY(QString paging_token MEMBER m_pagingToken)
     Q_PROPERTY(qint64 source_account_sequence MEMBER m_sourceAccountSequence)
     Q_PROPERTY(qint64 fee_paid MEMBER m_feePaid)
@@ -91,6 +95,7 @@ class TransactionResponse : public Response
     QString m_createdAt;
 
     KeyPair* m_sourceAccountKeypair;
+    QVariant m_successful;
 
     QString m_pagingToken;
     qint64 m_sourceAccountSequence;
@@ -121,6 +126,8 @@ public:
 
       QString getPagingToken() const;
 
+      Boolean isSuccessful() const;
+
       qint64 getSourceAccountSequence() const;
 
       qint64 getFeePaid() const;
@@ -146,6 +153,7 @@ public slots:
       void setSourceAccount(QString sourceAccount);
       void setMemoType(QString memoType);
       void setMemo(QByteArray memoData);
+      void setSuccessful(QVariant successful);
 };
 Q_DECLARE_METATYPE(TransactionResponseAttach::Links)
 Q_DECLARE_METATYPE(TransactionResponse*)

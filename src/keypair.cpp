@@ -208,9 +208,23 @@ bool KeyPair::verify(QByteArray data, QByteArray signature) {
     return false;
 }
 
-bool KeyPair::equals(KeyPair *obj) {
+bool KeyPair::equals(const KeyPair *obj) const{
     if((obj->m_privateKey && !this->m_privateKey) || (!obj->m_privateKey &&this->m_privateKey))
         return false;
-    return ((memcmp(obj->m_privateKey,this->m_privateKey,KeyPair::keyLength)==0)
-            && (memcmp(obj->m_publicKey,this->m_publicKey,KeyPair::keyLength)==0));
+    if(obj->m_privateKey&& this->m_privateKey)
+    {
+        if(memcmp(obj->m_privateKey,this->m_privateKey,KeyPair::keyLength)!=0)
+            return false;
+    }
+    if(obj->m_publicKey&& this->m_publicKey)
+    {
+        if(memcmp(obj->m_publicKey,this->m_publicKey,KeyPair::keyLength)!=0)
+            return false;
+    }
+    return true;
+}
+
+bool KeyPair::operator==(const KeyPair &other) const
+{
+    return this->equals(&other);
 }

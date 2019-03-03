@@ -29,6 +29,51 @@ private slots:
 
     }
 
+    void testDefaultBaseFee(){
+      // GBPMKIRA2OQW2XZZQUCQILI5TMVZ6JNRKM423BSAISDM7ZFWQ6KWEBC4
+      KeyPair* source = KeyPair::fromSecretSeed(QString("SCH27VUZZ6UAKB67BDNF6FA42YMBMQCBKXWGMFD5TZ6S5ZZCZFLRXKHS"));
+      KeyPair* destination = KeyPair::fromAccountId(QString("GDW6AUTBXTOC7FIKUO5BOO3OGLK4SF7ZPOBLMQHMZDI45J2Z6VXRB5NR"));
+
+      Transaction::Builder::setDefaultOperationFee(2345);
+
+      Account* account = new Account(source, 2908908335136768L);
+      Transaction* transaction = Transaction::Builder(account)
+              .addOperation(new CreateAccountOperation(destination, "2000"))
+              .setTimeout(Transaction::Builder::TIMEOUT_INFINITE)
+              .build();
+
+      transaction->sign(source);
+
+      QCOMPARE(transaction->toEnvelopeXdrBase64(),QString("AAAAAF7FIiDToW1fOYUFBC0dmyufJbFTOa2GQESGz+S2h5ViAAAJKQAKVaMAAAABAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAA7eBSYbzcL5UKo7oXO24y1ckX+XuCtkDsyNHOp1n1bxAAAAAEqBfIAAAAAAAAAAABtoeVYgAAAEDf8XAGz9uOmfL0KJBP29eSXz/CZqZtl0Mm8jHye3xwLgo2HJDfvCJdijGKsx34AfNl6hvX+Cq3IVk062sLSuoK"));
+
+      auto xdr = transaction->toEnvelopeXdr();
+      Transaction* transaction2 = Transaction::fromEnvelopeXdr(xdr);
+
+      QCOMPARE(transaction->getSourceAccount()->getAccountId(), transaction2->getSourceAccount()->getAccountId());
+      QCOMPARE(transaction->getSequenceNumber(), transaction2->getSequenceNumber());
+      QCOMPARE(transaction->getFee(), transaction2->getFee());
+      QCOMPARE(
+              ((CreateAccountOperation*)transaction->getOperations()[0])->getStartingBalance(),
+              ((CreateAccountOperation*)transaction2->getOperations()[0])->getStartingBalance()
+      );
+
+
+      Transaction::Builder::setDefaultOperationFee(Transaction::Builder::BASE_FEE);//restart fee
+    }
+
+
+    void testDefaultBaseFeeThrows() {
+        try {
+            Transaction::Builder::setDefaultOperationFee(99);
+            QFAIL("expected IllegalArgumentException");
+        } catch (std::runtime_error e) {
+            // expected
+        }
+
+        // should succeed
+        Transaction::Builder::setDefaultOperationFee(100);
+    }
+
     void testBuilderSuccessTestnet(){
         // GBPMKIRA2OQW2XZZQUCQILI5TMVZ6JNRKM423BSAISDM7ZFWQ6KWEBC4
         KeyPair *source = KeyPair::fromSecretSeed(QString("SCH27VUZZ6UAKB67BDNF6FA42YMBMQCBKXWGMFD5TZ6S5ZZCZFLRXKHS"));
@@ -38,15 +83,15 @@ private slots:
         Account* account = new Account(source, sequenceNumber);
         Transaction* transaction = Transaction::Builder(account)
                 .addOperation(new CreateAccountOperation(destination, "2000"))
+                .setTimeout(Transaction::Builder::TIMEOUT_INFINITE)
                 .build();
 
         transaction->sign(source);
         QString expected("AAAAAF7FIiDToW1fOYUFBC0dmyufJbFTOa2GQESGz+S2h5ViAAAAZAAKVaMAAAABAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAA7eBSYbzcL5UKo7oXO24y1ckX+XuCtkDsyNHOp1n1bxAAAAAEqBfIAAAAAAAAAAABtoeVYgAAAEDLki9Oi700N60Lo8gUmEFHbKvYG4QSqXiLIt9T0ru2O5BphVl/jR9tYtHAD+UeDYhgXNgwUxqTEu1WukvEyYcD");
         //compareBase64(expected,transaction->toEnvelopeXdrBase64());
-        QVERIFY(expected
-                ==transaction->toEnvelopeXdrBase64());
+        QCOMPARE(transaction->toEnvelopeXdrBase64(),expected);
 
-        QVERIFY(transaction->getSourceAccount()==source);
+        QVERIFY(*(transaction->getSourceAccount()) == *source);
         QVERIFY(transaction->getSequenceNumber()== sequenceNumber +1);
         QVERIFY(transaction->getFee()==100);
     }
@@ -61,6 +106,7 @@ private slots:
         Transaction *transaction = Transaction::Builder(account)
                 .addOperation(new CreateAccountOperation(destination, "2000"))
                 .addMemo(Memo::text("Hello world!"))
+                .setTimeout(Transaction::Builder::TIMEOUT_INFINITE)
                 .build();
 
         transaction->sign(source);
@@ -71,45 +117,119 @@ private slots:
 
     void testBuilderTimeBounds()
     {
-      // GBPMKIRA2OQW2XZZQUCQILI5TMVZ6JNRKM423BSAISDM7ZFWQ6KWEBC4
-      KeyPair* source = KeyPair::fromSecretSeed(QString("SCH27VUZZ6UAKB67BDNF6FA42YMBMQCBKXWGMFD5TZ6S5ZZCZFLRXKHS"));
-      KeyPair* destination = KeyPair::fromAccountId(QString("GDW6AUTBXTOC7FIKUO5BOO3OGLK4SF7ZPOBLMQHMZDI45J2Z6VXRB5NR"));
+        // GBPMKIRA2OQW2XZZQUCQILI5TMVZ6JNRKM423BSAISDM7ZFWQ6KWEBC4
+        KeyPair* source = KeyPair::fromSecretSeed(QString("SCH27VUZZ6UAKB67BDNF6FA42YMBMQCBKXWGMFD5TZ6S5ZZCZFLRXKHS"));
+        KeyPair* destination = KeyPair::fromAccountId(QString("GDW6AUTBXTOC7FIKUO5BOO3OGLK4SF7ZPOBLMQHMZDI45J2Z6VXRB5NR"));
 
-      Account* account = new Account(source, 2908908335136768L);
-      Transaction* transaction = Transaction::Builder(account)
-              .addOperation(CreateAccountOperation::create(destination, "2000"))
-              .addTimeBounds(new TimeBounds(42, 1337))
-              .addMemo(Memo::hash(QString("abcdef")))
-              .build();
+        Account* account = new Account(source, 2908908335136768L);
+        Transaction* transaction = Transaction::Builder(account)
+                .addOperation(CreateAccountOperation::create(destination, "2000"))
+                .addTimeBounds(new TimeBounds(42, 1337))
+                .addMemo(Memo::hash(QString("abcdef")))
+                .build();
 
-      transaction->sign(source);
+        transaction->sign(source);
 
-      // Convert transaction to binary XDR and back again to make sure timebounds are correctly de/serialized.
-      QByteArray data;
-      QDataStream streamWrite(&data,QIODevice::WriteOnly);
-      streamWrite << transaction->toXdr();
-      QDataStream streamRead(&data,QIODevice::ReadOnly);
-      stellar::Transaction decodedTransaction;
-      streamRead >> decodedTransaction;
+        // Convert transaction to binary XDR and back again to make sure timebounds are correctly de/serialized.
+        QByteArray data;
+        QDataStream streamWrite(&data,QIODevice::WriteOnly);
+        streamWrite << transaction->toXdr();
+        QDataStream streamRead(&data,QIODevice::ReadOnly);
+        stellar::Transaction decodedTransaction;
+        streamRead >> decodedTransaction;
 
 
 
-      QCOMPARE(decodedTransaction.timeBounds.value.minTime, 42UL);
-      QCOMPARE(decodedTransaction.timeBounds.value.maxTime, 1337UL);
-      auto xdrEnvelope = transaction->toEnvelopeXdr();
-      Transaction* transaction2 = Transaction::fromXdrEnvelope(xdrEnvelope);
-      qDebug() << "HASH "<<dynamic_cast<MemoHash*>(transaction->getMemo())->getHexValue();
-      qDebug() << "HASH "<<dynamic_cast<MemoHash*>(transaction2->getMemo())->getHexValue();
-      QCOMPARE(transaction->getSourceAccount()->getAccountId(), transaction2->getSourceAccount()->getAccountId());
-      QCOMPARE(transaction->getSequenceNumber(), transaction2->getSequenceNumber());
-      QVERIFY(transaction->getMemo()->equals(transaction2->getMemo()));
-      QVERIFY(transaction->getTimeBounds()->equals(transaction2->getTimeBounds()));
-      QCOMPARE(transaction->getFee(), transaction2->getFee());
-      QCOMPARE(
-              ((CreateAccountOperation*)transaction->getOperations()[0])->getStartingBalance(),
-              ((CreateAccountOperation*)transaction2->getOperations()[0])->getStartingBalance()
-      );
-  }
+        QCOMPARE(decodedTransaction.timeBounds.value.minTime, 42UL);
+        QCOMPARE(decodedTransaction.timeBounds.value.maxTime, 1337UL);
+        auto xdrEnvelope = transaction->toEnvelopeXdr();
+        Transaction* transaction2 = Transaction::fromXdrEnvelope(xdrEnvelope);
+        //qDebug() << "HASH "<<dynamic_cast<MemoHash*>(transaction->getMemo())->getHexValue();
+        //qDebug() << "HASH "<<dynamic_cast<MemoHash*>(transaction2->getMemo())->getHexValue();
+        QCOMPARE(transaction->getSourceAccount()->getAccountId(), transaction2->getSourceAccount()->getAccountId());
+        QCOMPARE(transaction->getSequenceNumber(), transaction2->getSequenceNumber());
+        QVERIFY(transaction->getMemo()->equals(transaction2->getMemo()));
+        QVERIFY(transaction->getTimeBounds()->equals(transaction2->getTimeBounds()));
+        QCOMPARE(transaction->getFee(), transaction2->getFee());
+        QCOMPARE(
+                    ((CreateAccountOperation*)transaction->getOperations()[0])->getStartingBalance(),
+                ((CreateAccountOperation*)transaction2->getOperations()[0])->getStartingBalance()
+                );
+    }
+
+
+
+    void testBuilderTimeoutNotCalled(){
+        Account* account = new Account(KeyPair::random(), 2908908335136768L);
+        try {
+            Transaction::Builder(account)
+                    .addOperation(CreateAccountOperation::create(KeyPair::random(), "2000"))
+                    .addTimeBounds(new TimeBounds(42, 1337))
+                    .addMemo(Memo::hash(QString("abcdef")))
+                    .build();
+        } catch (std::runtime_error exception) {
+            // Should not throw as max_time is set
+            QFAIL("Should not throw");
+        }
+    }
+
+    void testBuilderTimeoutNegative(){
+        Account* account = new Account(KeyPair::random(), 2908908335136768L);
+        try {
+            Transaction::Builder(account)
+                    .addOperation(CreateAccountOperation::create(KeyPair::random(), "2000"))
+                    .addMemo(Memo::hash(QString("abcdef")))
+                    .setTimeout(-1)
+                    .build();
+            QFAIL("missing exception");
+        } catch (std::runtime_error exception) {
+            QVERIFY(QString(exception.what()).contains("timeout cannot be negative"));
+            QCOMPARE(account->getSequenceNumber(),2908908335136768L);
+        }
+    }
+
+    void testBuilderTimeoutSetsTimeBounds() {
+        Account* account = new Account(KeyPair::random(), 2908908335136768L);
+        Transaction* transaction = Transaction::Builder(account)
+                .addOperation(CreateAccountOperation::create(KeyPair::random(), "2000"))
+                .setTimeout(10)
+                .build();
+
+        QVERIFY(transaction->getTimeBounds());
+        QCOMPARE(transaction->getTimeBounds()->getMinTime(),0);
+        qint64 currentUnix = QDateTime::currentMSecsSinceEpoch() / 1000L;
+        QCOMPARE(transaction->getTimeBounds()->getMaxTime(),currentUnix + 10);
+    }
+
+    void testBuilderFailsWhenSettingTimeoutAndMaxTimeAlreadySet() {
+        Account* account = new Account(KeyPair::random(), 2908908335136768L);
+        try {
+            Transaction::Builder(account)
+                    .addOperation(CreateAccountOperation::create(KeyPair::random(), "2000"))
+                    .addTimeBounds(new TimeBounds(42, 1337))
+                    .setTimeout(10)
+                    .build();
+            QFAIL("missing exception");
+        } catch (std::runtime_error exception) {
+            QVERIFY(QString(exception.what()).contains("TimeBounds.max_time has been already set"));
+            QCOMPARE(account->getSequenceNumber(),2908908335136768L);
+        }
+    }
+
+    void testBuilderFailsWhenSettingTimeoutAndMaxTimeNotSet() {
+        Account* account = new Account(KeyPair::random(), 2908908335136768L);
+        Transaction* transaction = Transaction::Builder(account)
+                .addOperation(CreateAccountOperation::create(KeyPair::random(), "2000"))
+                .addTimeBounds(new TimeBounds(42, 0))
+                .setTimeout(10)
+                .build();
+
+        QCOMPARE(transaction->getTimeBounds()->getMinTime(),42);
+        // Should add max_time
+        qint64 currentUnix = QDateTime::currentMSecsSinceEpoch() / 1000L;
+        QCOMPARE(transaction->getTimeBounds()->getMaxTime(),currentUnix + 10);
+    }
+
 
     void testBuilderTimeBoundsNoMaxTime()
     {
@@ -121,6 +241,7 @@ private slots:
               .addOperation(CreateAccountOperation::create(destination, "2000"))
               .addTimeBounds(new TimeBounds(42, 0))
               .addMemo(Memo::hash(QString("abcdef")))
+              .setTimeout(Transaction::Builder::TIMEOUT_INFINITE)
               .build();
       transaction->sign(source);
       // Convert transaction to binary XDR and back again to make sure timebounds are correctly de/serialized.
@@ -145,6 +266,7 @@ private slots:
         Account *account = new Account(source, 2908908335136768);
         Transaction *transaction = Transaction::Builder(account)
                 .addOperation(new CreateAccountOperation(destination, "2000"))
+                .setTimeout(Transaction::Builder::TIMEOUT_INFINITE)
                 .build();
 
         transaction->sign(source);
@@ -161,6 +283,7 @@ private slots:
         Account *account = new Account(source, 0);
         Transaction *transaction = Transaction::Builder(account)
                 .addOperation(new PaymentOperation(destination, new AssetTypeNative(), "2000"))
+                .setTimeout(Transaction::Builder::TIMEOUT_INFINITE)
                 .build();
 
         quint8 preimage[64];
@@ -187,14 +310,12 @@ private slots:
       Account *account = new Account(source, 2908908335136768L);
       Transaction *transaction = Transaction::Builder(account)
               .addOperation(new CreateAccountOperation(destination, "2000"))
+              .setTimeout(Transaction::Builder::TIMEOUT_INFINITE)
               .build();
 
-      try {
-        transaction->toEnvelopeXdrBase64();
-        QFAIL("missing exception");
-      } catch (std::runtime_error exception) {
-        QVERIFY(QString(exception.what()).contains("Transaction must be signed by at least one signer."));
-      }
+      QCOMPARE(transaction->toEnvelopeXdrBase64()
+               ,QString("AAAAAF7FIiDToW1fOYUFBC0dmyufJbFTOa2GQESGz+S2h5ViAAAAZAAKVaMAAAABAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAA7eBSYbzcL5UKo7oXO24y1ckX+XuCtkDsyNHOp1n1bxAAAAAEqBfIAAAAAAAAAAAA"));
+
     }
 
     void testNoOperations() {
@@ -203,7 +324,7 @@ private slots:
 
       Account *account = new Account(source, 2908908335136768);
       try {
-        Transaction *transaction = Transaction::Builder(account).build();
+        Transaction *transaction = Transaction::Builder(account).setTimeout(Transaction::Builder::TIMEOUT_INFINITE).build();
         Q_UNUSED(transaction);
         QFAIL("missing exception");
       } catch (std::runtime_error exception) {
@@ -239,6 +360,7 @@ private slots:
         Transaction *transaction = Transaction::Builder(account)
                 .addOperation(new CreateAccountOperation(destination, "2000"))
                 .addMemo(Memo::text("Hello world!"))
+                .setTimeout(Transaction::Builder::TIMEOUT_INFINITE)
                 .build();
 
         transaction->sign(source);

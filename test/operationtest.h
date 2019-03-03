@@ -381,7 +381,7 @@ private slots:
        Account* account = new Account(source, sequenceNumber);
 
 
-       Transaction* transaction = Transaction::Builder(account).addOperation(new CreateAccountOperation(destination,"2000")).build();
+       Transaction* transaction = Transaction::Builder(account).addOperation(new CreateAccountOperation(destination,"2000")).setTimeout(Transaction::Builder::TIMEOUT_INFINITE).build();
 
 
        // GC5SIC4E3V56VOHJ3OZAX5SJDTWY52JYI2AFK6PUGSXFVRJQYQXXZBZF

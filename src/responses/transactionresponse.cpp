@@ -4,6 +4,7 @@
 TransactionResponse::TransactionResponse(QNetworkReply *reply)
     :Response(reply)
     ,m_sourceAccountKeypair(nullptr)
+    ,m_successful(QVariant::Bool)// we have to indicate the type or it will not be filled, it will stay returning isNull as true if it is not initialized
     ,m_sourceAccountSequence(0)
     ,m_feePaid(0)
     ,m_operationCount(0)
@@ -41,6 +42,10 @@ KeyPair *TransactionResponse::getSourceAccount() {
 
 QString TransactionResponse::getPagingToken() const{
     return m_pagingToken;
+}
+
+Boolean TransactionResponse::isSuccessful() const{
+    return Boolean(m_successful);
 }
 
 qint64 TransactionResponse::getSourceAccountSequence() const{
@@ -122,4 +127,12 @@ void TransactionResponse::setMemo(QByteArray memoData)
         m_memo=nullptr;
     }
     m_memoData = memoData;
+}
+
+void TransactionResponse::setSuccessful(QVariant successful)
+{
+    if(successful.type()==QVariant::Bool)
+    {
+        m_successful = successful;
+    }
 }

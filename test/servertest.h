@@ -17,8 +17,8 @@ class ServerTest: public QObject
     Q_OBJECT
 
     Server *m_server;
-    Transaction * m_transaction=0;
-    Transaction * m_transactionWrong=0;
+    Transaction * m_transaction=nullptr;
+    Transaction * m_transactionWrong=nullptr;
 
     void setUp()  {
         Network::useTestNetwork();
@@ -28,7 +28,7 @@ class ServerTest: public QObject
 
 
     void resetNetwork() {
-        Network::use(0);
+        Network::use(nullptr);
     }
 
 
@@ -53,7 +53,8 @@ private slots:
         Account* account = new Account(source, sequenceNumber);
         Transaction::Builder *builder = new Transaction::Builder(account);
         builder->addOperation(new CreateAccountOperation(destination, "2000"))
-                .addMemo(Memo::text("Hello world!"));
+                .addMemo(Memo::text("Hello world!"))
+                .setTimeout(Transaction::Builder::TIMEOUT_INFINITE);
 
         QVERIFY(1 == builder->getOperationsCount());
         Transaction *transaction = builder->build();
@@ -64,9 +65,10 @@ private slots:
         m_transaction=transaction;
 
     }
+#ifndef STELLAR_SKIP_LIVE_TESTS
      void testSubmitTransactionSuccess()  {
          QVERIFY(m_transaction);
-         SubmitTransactionResponse *r=0;
+         SubmitTransactionResponse *r=nullptr;
          QMetaObject::Connection c = QObject::connect(m_server,&Server::transactionResponse,[&r](SubmitTransactionResponse *response){
              qDebug() << "RECEIVED ANSWER";
              r = response;
@@ -76,13 +78,14 @@ private slots:
 
          WAIT_FOR(!r)
          QObject::disconnect(c);
-         QVERIFY(r!=0);
+         QVERIFY(r!=nullptr);
          QVERIFY(r->isSuccess());
          QVERIFY(r->getLedger()==1676526);
          QString expected("732ac60a45c9bc86fcf14292bb7c7ebf6fec4a83767c1fc09148ac946e4b2ef1");
          QVERIFY(r->getHash() == expected);
          QVERIFY(r->getExtras().getTransactionResultCode().isEmpty());
      }
+#endif
      void testBuildWrongTransaction()
      {
          qint64 sequenceNumber=1;
@@ -93,7 +96,7 @@ private slots:
          Account* account = new Account(source, sequenceNumber);
          Transaction::Builder *builder = new Transaction::Builder(account);
          builder->addOperation(new CreateAccountOperation(destination, "2000"))
-                 .addMemo(Memo::text("Hello world!"));
+                 .addMemo(Memo::text("Hello world!")).setTimeout(Transaction::Builder::TIMEOUT_INFINITE);
 
          QVERIFY(1 == builder->getOperationsCount());
          Transaction *transaction = builder->build();
@@ -104,10 +107,10 @@ private slots:
          m_transactionWrong=transaction;
 
      }
-
+#ifndef STELLAR_SKIP_LIVE_TESTS
      void testSubmitTransactionFail() {
          QVERIFY(m_transactionWrong);
-         SubmitTransactionResponse *r=0;
+         SubmitTransactionResponse *r=nullptr;
          QMetaObject::Connection c = QObject::connect(m_server,&Server::transactionResponse,[&r](SubmitTransactionResponse *response){
                  qDebug() << "RECEIVED ANSWER";
                  r = response;
@@ -116,7 +119,7 @@ private slots:
          m_server->submitTransaction(this->m_transactionWrong);
          WAIT_FOR(!r)
                  QObject::disconnect(c);
-         QVERIFY(r!=0);
+         QVERIFY(r!=nullptr);
          QVERIFY(!r->isSuccess());
          QVERIFY(r->getLedger()==0);
          QVERIFY(r->getHash().isEmpty());
@@ -124,9 +127,10 @@ private slots:
          QVERIFY(r->getExtras().getResultXdr() =="AAAAAAAAAAD////7AAAAAA==");
          QVERIFY(r->getExtras().getResultCodes().getTransactionResultCode()=="tx_bad_seq");
      }
+#endif
 
 };
-#ifndef STELLAR_SKIP_LIVE_TESTS
+
 ADD_TEST(ServerTest)
-#endif
+
 #endif // SERVERTEST_H

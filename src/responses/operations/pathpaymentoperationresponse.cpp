@@ -25,6 +25,11 @@ QString PathPaymentOperationResponse::getAmount() const {
     return m_amount;
 }
 
+QString PathPaymentOperationResponse::getSourceAmount() const
+{
+    return m_sourceAmount;
+}
+
 QString PathPaymentOperationResponse::getSourceMax() const{
     return m_sourceMax;
 }

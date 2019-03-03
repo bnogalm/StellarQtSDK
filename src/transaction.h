@@ -18,8 +18,7 @@ class Transaction : public QObject
 
     Q_OBJECT
 
-    const int BASE_FEE = 100;
-    int m_fee;
+    quint32 m_fee;
     KeyPair* m_sourceAccount;
     qint64 m_sequenceNumber;
     QVector<Operation*> m_operations;
@@ -29,7 +28,7 @@ class Transaction : public QObject
 
     friend class Builder;
 
-    Transaction(KeyPair* sourceAccount, qint64 sequenceNumber, QVector<Operation*> operations, Memo* memo, TimeBounds *timeBounds);
+    Transaction(KeyPair* sourceAccount, quint32 fee, qint64 sequenceNumber, QVector<Operation*> operations, Memo* memo, TimeBounds *timeBounds);
 
 
 public:
@@ -77,7 +76,7 @@ public:
      /**
       * Returns fee paid for transaction in stroops (1 stroop = 0.0000001 XLM).
       */
-     int getFee();
+     quint32 getFee();
 
      /**
       * Generates Transaction XDR object.
@@ -90,7 +89,7 @@ public:
       */
      static Transaction* fromXdr(stellar::Transaction& xdr);
      /**
-      * Generates TransactionEnvelope XDR object. Transaction need to have at least one signature.
+      * Generates TransactionEnvelope XDR object.
       */
      stellar::TransactionEnvelope toEnvelopeXdr();
 
@@ -98,7 +97,8 @@ public:
       * Returns new Transaction object from Transaction XDR object.
       * @param xdr XDR object
       */
-     static Transaction* fromXdrEnvelope(stellar::TransactionEnvelope& xdr);
+     Q_DECL_DEPRECATED static Transaction* fromXdrEnvelope(stellar::TransactionEnvelope& xdr);
+     static Transaction* fromEnvelopeXdr(stellar::TransactionEnvelope& xdr);//this is the correct name
 
      /**
       * Returns base64-encoded TransactionEnvelope XDR object. Transaction need to have at least one signature.
@@ -109,21 +109,31 @@ public:
       * Builds a new Transaction object.
       */
      class Builder {
+
          TransactionBuilderAccount *m_sourceAccount;
          Memo *m_memo;
          TimeBounds *m_timeBounds;
          QVector<Operation*> m_operations;
+         bool m_timeoutSet;
+
+         quint32 m_operationFee;
+         static quint32 s_defaultOperationFee;
+        void clear();
      public:
+        static const quint32 BASE_FEE = 100;
+        static const qint64 TIMEOUT_INFINITE = 0;
          /**
         * Construct a new transaction builder.
         * @param sourceAccount The source account for this transaction. This account is the account
         * who will use a sequence number. When build() is called, the account object's sequence number
-        * will be incremented.
+        * will be incremented.        
         */
          Builder(TransactionBuilderAccount *sourceAccount);
         ~Builder();
 
          int getOperationsCount();
+
+         static void setDefaultOperationFee(quint32 opFee);
 
          /**
         * Adds a new <a href="https://www.stellar.org/developers/learn/concepts/list-of-operations.html" target="_blank">operation</a> to this transaction.
@@ -148,6 +158,27 @@ public:
           * @see TimeBounds
           */
          Builder& addTimeBounds(TimeBounds* timeBounds);
+
+         /**
+          * Because of the distributed nature of the Stellar network it is possible that the status of your transaction
+          * will be determined after a long time if the network is highly congested.
+          * If you want to be sure to receive the status of the transaction within a given period you should set the
+          * {@link TimeBounds} with <code>maxTime</code> on the transaction (this is what <code>setTimeout</code> does
+          * internally; if there's <code>minTime</code> set but no <code>maxTime</code> it will be added).
+          * Call to <code>Builder.setTimeout</code> is required if Transaction does not have <code>max_time</code> set.
+          * If you don't want to set timeout, use <code>TIMEOUT_INFINITE</code>. In general you should set
+          * <code>TIMEOUT_INFINITE</code> only in smart contracts.
+          * Please note that Horizon may still return <code>504 Gateway Timeout</code> error, even for short timeouts.
+          * In such case you need to resubmit the same transaction again without making any changes to receive a status.
+          * This method is using the machine system time (UTC), make sure it is set correctly.
+          * @param timeout Timeout in seconds.
+          * @see TimeBounds
+          * @return
+          */
+         Builder& setTimeout(qint64 timeout);
+
+         Builder& setOperationFee(quint32 operationFee);
+
          /**
         * Builds a transaction. It will increment sequence number of the source account.
         * You take ownership of the object so delete it when you don't need anymore.
