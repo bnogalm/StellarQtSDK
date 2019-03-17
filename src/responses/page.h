@@ -50,7 +50,7 @@ class PageBase : public Response
 protected:
     QList<Response*> m_records;
 public:
-    PageBase(QNetworkReply *reply=0);
+    PageBase(QNetworkReply *reply=nullptr);
     virtual ~PageBase();
 
     template<class T>
@@ -90,7 +90,7 @@ template<class T>
 class Page : public PageBase
 {
 public:
-    Page(QNetworkReply * reply = 0):PageBase(reply)
+    Page(QNetworkReply * reply = nullptr):PageBase(reply)
     {
         setType<T>();
     }
@@ -104,7 +104,7 @@ public:
      */
     T& get(size_t index)
     {
-        return (T&)(*this->m_records[index]);
+        return static_cast<T&>(*this->m_records[static_cast<int>(index)]);
     }
     /**
      * @brief at    same as get but returns a pointer.
@@ -113,7 +113,7 @@ public:
      */
     T* at(size_t index)
     {
-        return (T*)this->m_records[index];
+        return static_cast<T*>(this->m_records[static_cast<int>(index)]);
     }
     /**
      * @brief streamedElement We use pages to also get streamed elements
@@ -121,7 +121,7 @@ public:
      */
     T* streamedElement()
     {
-        return (T*)this->m_records[0];
+        return static_cast<T*>(this->m_records[0]);
     }
 };
 

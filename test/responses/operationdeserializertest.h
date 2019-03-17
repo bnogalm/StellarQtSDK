@@ -64,7 +64,7 @@ private slots:
                 "}";
         GenericOperation genericOperation;
         genericOperation.loadFromJson(json);
-        CreateAccountOperationResponse& operation= *(CreateAccountOperationResponse*)genericOperation.operation();
+        CreateAccountOperationResponse& operation= * static_cast<CreateAccountOperationResponse*>(genericOperation.operation());
 
         QCOMPARE(operation.getSourceAccount().getAccountId(), QString("GD6WU64OEP5C4LRBH6NK3MHYIA2ADN6K6II6EXPNVUR3ERBXT4AN4ACD"));
         QCOMPARE(operation.getPagingToken(), QString("3936840037961729"));
@@ -338,15 +338,15 @@ private slots:
         SetOptionsOperationResponse operation;
         operation.loadFromJson(json);
 
-        QCOMPARE(operation.getSigner()->getAccountId(), QString("GD3ZYXVC7C3ECD5I4E5NGPBFJJSULJ6HJI2FBHGKYFV34DSIWB4YEKJZ"));
+        //QCOMPARE(operation.getSigner()->getAccountId(), QString("GD3ZYXVC7C3ECD5I4E5NGPBFJJSULJ6HJI2FBHGKYFV34DSIWB4YEKJZ"));
         QCOMPARE(operation.getSignerKey(), QString("GD3ZYXVC7C3ECD5I4E5NGPBFJJSULJ6HJI2FBHGKYFV34DSIWB4YEKJZ"));
-        QCOMPARE(operation.getSignerWeight(), (quint32)1);
+        QCOMPARE(operation.getSignerWeight(), quint32(1));
         QCOMPARE(operation.getHomeDomain(), QString("stellar.org"));
         QCOMPARE(operation.getInflationDestination()->getAccountId(), QString("GBYWSY4NPLLPTP22QYANGTT7PEHND64P4D4B6LFEUHGUZRVYJK2H4TBE"));
-        QCOMPARE(operation.getLowThreshold(), (quint32)1);
-        QCOMPARE(operation.getMedThreshold(), (quint32)2);
-        QCOMPARE(operation.getHighThreshold(), (quint32)3);
-        QCOMPARE(operation.getMasterKeyWeight(), (quint32)4);
+        QCOMPARE(operation.getLowThreshold(), quint32(1));
+        QCOMPARE(operation.getMedThreshold(), quint32(2));
+        QCOMPARE(operation.getHighThreshold(), quint32(3));
+        QCOMPARE(operation.getMasterKeyWeight(), quint32(4));
         QCOMPARE(operation.getSetFlags()[0], QString("auth_required_flag"));
         QCOMPARE(operation.getClearFlags()[0], QString("auth_revocable_flag"));
     }
@@ -382,7 +382,14 @@ private slots:
         SetOptionsOperationResponse operation;
         operation.loadFromJson(json);
         try {
+#ifndef _MSC_VER
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#endif
             operation.getSigner();
+#ifndef _MSC_VER
+#pragma GCC diagnostic pop
+#endif
             QFAIL("not known key type signer");
         } catch (FormatException e) {
             //QCOMPARE(QString::fromLatin1(e.what()),QString("Version byte is invalid"));

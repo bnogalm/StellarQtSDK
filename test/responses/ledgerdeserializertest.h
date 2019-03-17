@@ -66,7 +66,14 @@ private slots:
         QCOMPARE(ledger.getPagingToken(), QString("3860428274794496"));
         QCOMPARE(ledger.getPrevHash(), QString("50c8695eb32171a19858413e397cc50b504ceacc819010bdf8ff873aff7858d7"));
         QCOMPARE(ledger.getSequence(), 898826);
+#ifndef _MSC_VER
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#endif
         QCOMPARE(ledger.getTransactionCount(), 5);
+#ifndef _MSC_VER
+#pragma GCC diagnostic pop
+#endif
         QCOMPARE(ledger.getSuccessfulTransactionCount(), 3);
         QCOMPARE(ledger.getFailedTransactionCount(), 2);
         QCOMPARE(ledger.getOperationCount(), 10);

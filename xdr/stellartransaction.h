@@ -385,7 +385,7 @@ namespace stellar
             out << obj.operationManageData; break;
         case OperationType::BUMP_SEQUENCE:
             out << obj.operationBumpSequence; break;
-        default: break;
+        //default: break;
         }
 
        return out;
@@ -421,7 +421,7 @@ namespace stellar
             in >> obj.operationManageData; break;
         case OperationType::BUMP_SEQUENCE:
             in >> obj.operationBumpSequence; break;
-        default: break;
+        //default: break;
         }
        return in;
     }
@@ -457,7 +457,7 @@ namespace stellar
             out << obj.hash; break;
         case MemoType::MEMO_RETURN:
             out << obj.retHash; break;
-        default: break;
+        //default: break;
         }
        return out;
     }
@@ -475,13 +475,13 @@ namespace stellar
             in >> obj.hash; break;
         case MemoType::MEMO_RETURN:
             in >> obj.retHash; break;
-        default: break;
+        //default: break;
         }
        return in;
     }
 
 
-    struct alignas(4) TimeBounds
+    struct TimeBounds
     {
         quint64 minTime;
         quint64 maxTime; // 0 here means no maxTime
@@ -934,12 +934,20 @@ namespace stellar
     };
     XDR_SERIALIZER(InflationResultCode)
 
-    struct alignas(4) InflationPayout // or use PaymentResultAtom to limit types?
+    struct InflationPayout // or use PaymentResultAtom to limit types?
     {
         AccountID destination;
         qint64 amount;
     };
-    XDR_SERIALIZER(InflationPayout)
+    inline QDataStream &operator<<(QDataStream &out, const  InflationPayout &obj) {
+        out << obj.destination << obj.amount;
+       return out;
+    }
+
+    inline QDataStream &operator>>(QDataStream &in,  InflationPayout &obj) {
+        in >> obj.destination >> obj.amount;
+       return in;
+    }
 
     struct InflationResult
     {
@@ -1068,9 +1076,9 @@ namespace stellar
                 out << obj.manageDataResult; break;
             case OperationType::BUMP_SEQUENCE:
                 out << obj.bumpSequenceResult; break;
-            default:
-                break;
+            //default:break;
             }
+            break;
         }
         default:break;
         }
@@ -1110,9 +1118,9 @@ namespace stellar
                 in >> obj.manageDataResult; break;
             case OperationType::BUMP_SEQUENCE:
                 in >> obj.bumpSequenceResult; break;
-            default:
-                break;
+            //default: break;
             }
+            break;
         }
         default:break;
         }

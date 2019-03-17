@@ -145,3 +145,13 @@ Boolean::operator bool()
 bool operator==(const Boolean &a, const Boolean &b){
     return a.filled== b.filled && a.value==b.value;
 }
+
+quint64 get_power(quint32 a, quint32 b)
+{
+    quint64 res = 1;
+    for(quint32 i=0;i<b;i++)
+    {
+        res *= a ;
+    }
+    return res;
+}

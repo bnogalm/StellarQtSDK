@@ -81,7 +81,14 @@ private slots:
             QCOMPARE(root.getHistoryElderLedger(), 1);
             QCOMPARE(root.getCoreLatestLedger(), 18369117);
             QCOMPARE(root.getNetworkPassphrase(), QString("Public Global Stellar Network ; September 2015"));
+#ifndef _MSC_VER
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#endif
             QCOMPARE(root.getProtocolVersion(), 9);
+#ifndef _MSC_VER
+#pragma GCC diagnostic pop
+#endif
             QCOMPARE(root.getCurrentProtocolVersion(), 10);
             QCOMPARE(root.getCoreSupportedProtocolVersion(), 11);
         }

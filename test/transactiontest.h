@@ -53,8 +53,8 @@ private slots:
       QCOMPARE(transaction->getSequenceNumber(), transaction2->getSequenceNumber());
       QCOMPARE(transaction->getFee(), transaction2->getFee());
       QCOMPARE(
-              ((CreateAccountOperation*)transaction->getOperations()[0])->getStartingBalance(),
-              ((CreateAccountOperation*)transaction2->getOperations()[0])->getStartingBalance()
+              (static_cast<CreateAccountOperation*>(transaction->getOperations()[0]))->getStartingBalance(),
+              (static_cast<CreateAccountOperation*>(transaction2->getOperations()[0]))->getStartingBalance()
       );
 
 
@@ -143,7 +143,7 @@ private slots:
         QCOMPARE(decodedTransaction.timeBounds.value.minTime, 42UL);
         QCOMPARE(decodedTransaction.timeBounds.value.maxTime, 1337UL);
         auto xdrEnvelope = transaction->toEnvelopeXdr();
-        Transaction* transaction2 = Transaction::fromXdrEnvelope(xdrEnvelope);
+        Transaction* transaction2 = Transaction::fromEnvelopeXdr(xdrEnvelope);
         //qDebug() << "HASH "<<dynamic_cast<MemoHash*>(transaction->getMemo())->getHexValue();
         //qDebug() << "HASH "<<dynamic_cast<MemoHash*>(transaction2->getMemo())->getHexValue();
         QCOMPARE(transaction->getSourceAccount()->getAccountId(), transaction2->getSourceAccount()->getAccountId());
@@ -152,8 +152,8 @@ private slots:
         QVERIFY(transaction->getTimeBounds()->equals(transaction2->getTimeBounds()));
         QCOMPARE(transaction->getFee(), transaction2->getFee());
         QCOMPARE(
-                    ((CreateAccountOperation*)transaction->getOperations()[0])->getStartingBalance(),
-                ((CreateAccountOperation*)transaction2->getOperations()[0])->getStartingBalance()
+                (static_cast<CreateAccountOperation*>(transaction->getOperations()[0]))->getStartingBalance(),
+                (static_cast<CreateAccountOperation*>(transaction2->getOperations()[0]))->getStartingBalance()
                 );
     }
 
@@ -288,14 +288,14 @@ private slots:
 
         quint8 preimage[64];
         for(int i=0;i<64;i++){
-            preimage[i] = rand()%256;
+            preimage[i] = static_cast<quint8>(rand()%256);
         }
-        QByteArray hash = Util::hash(QByteArray((char*)preimage,64));
+        QByteArray hash = Util::hash(QByteArray(reinterpret_cast<char*>(preimage),64));
 
-        transaction->sign(QByteArray((char*)preimage,64));
+        transaction->sign(QByteArray(reinterpret_cast<char*>(preimage),64));
 
-        qDebug() <<QByteArray((char*)preimage,64).toHex();
-        qDebug() << transaction->getSignatures()[0].signature.binary().toHex();
+        //qDebug() <<QByteArray(reinterpret_cast<char*>(preimage),64).toHex();
+        //qDebug() << transaction->getSignatures()[0].signature.binary().toHex();
         QVERIFY(memcmp(preimage, transaction->getSignatures()[0].signature.binary().data(),sizeof(preimage))==0);
         QByteArray hint = hash.right(4);
         QVERIFY(memcmp(hint.data(),transaction->getSignatures()[0].hint.signatureHint,4)==0);
@@ -366,13 +366,13 @@ private slots:
         transaction->sign(source);
         stellar::TransactionEnvelope envelope= transaction->toEnvelopeXdr();
 
-        Transaction *deserialized = Transaction::fromXdrEnvelope(envelope);
+        Transaction *deserialized = Transaction::fromEnvelopeXdr(envelope);
         QVERIFY(deserialized->getFee()==transaction->getFee());
         QVERIFY(deserialized->getSequenceNumber()==transaction->getSequenceNumber());
         QVERIFY(dynamic_cast<MemoText*>(deserialized->getMemo())->getText() == dynamic_cast<MemoText*>(transaction->getMemo())->getText());
         QVERIFY(deserialized->getSourceAccount()->getPublicKey()== transaction->getSourceAccount()->getPublicKey());
-        QVERIFY(memcmp((char*)deserialized->getSignatures().first().hint.signatureHint, (char*)transaction->getSignatures().first().hint.signatureHint,4)==0);
-        QVERIFY(memcmp((char*)deserialized->getSignatures().first().signature.value.data(),(char*)transaction->getSignatures().first().signature.value.data(),64)==0);
+        QVERIFY(memcmp(reinterpret_cast<char*>(deserialized->getSignatures().first().hint.signatureHint), reinterpret_cast<char*>(transaction->getSignatures().first().hint.signatureHint),4)==0);
+        QVERIFY(memcmp(reinterpret_cast<char*>(deserialized->getSignatures().first().signature.value.data()),reinterpret_cast<char*>(transaction->getSignatures().first().signature.value.data()),64)==0);
     }
 };
 

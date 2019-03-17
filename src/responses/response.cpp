@@ -231,7 +231,7 @@ bool Response::preprocessResponse(QNetworkReply *response)
 void Response::processPartialResponse()
 {
     this->restartTimeoutTimer();
-    QNetworkReply* response = (QNetworkReply*)sender();
+    QNetworkReply* response = static_cast<QNetworkReply*>(sender());
     if(!preprocessResponse(response)){
         return;
     }
@@ -252,7 +252,7 @@ void Response::processPartialResponse()
                 int retryIndex = data.indexOf("retry: ");
                 if(retryIndex>=0)
                 {
-                    retryIndex+=strlen("retry: ");
+                    retryIndex+=static_cast<int>(strlen("retry: "));
                     int endLineRetry = data.indexOf('\n',retryIndex);
                     if(endLineRetry>0)
                     {
@@ -264,7 +264,7 @@ void Response::processPartialResponse()
                 int idIndex = data.indexOf("id: ");
                 if(idIndex>=0)
                 {
-                    idIndex+=strlen("id: ");
+                    idIndex+=static_cast<int>(strlen("id: "));
                     int endLineId = data.indexOf('\n',idIndex);
                     if(endLineId>0)
                     {
@@ -277,7 +277,7 @@ void Response::processPartialResponse()
                 int dataIndex = data.indexOf("data: ");
                 if(dataIndex>=0)
                 {
-                    dataIndex+=strlen("data: ");
+                    dataIndex+=static_cast<int>(strlen("data: "));
                     QByteArray entity = QByteArray::fromRawData(pendingData.data()+dataIndex,searchIndex-dataIndex);
                     if(entity=="\"hello\"")
                     {
@@ -314,7 +314,7 @@ void Response::processPartialResponse()
 }
 void Response::processResponse()
 {
-    QNetworkReply* response = (QNetworkReply*)sender();
+    QNetworkReply* response = static_cast<QNetworkReply*>(sender());
 
 
     QByteArray entity;

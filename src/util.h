@@ -124,18 +124,21 @@ struct Boolean: public stellar::Optional<bool>
 bool operator==(const Boolean &a, const Boolean &b);
 
 
-#ifdef _MSC_VER
-template <int A, int B>
-struct get_power_for_msvc
+
+template <int A, int B, typename T>
+struct get_power_s
 {
-    static const int value = A * get_power_for_msvc<A, B - 1>::value;
+    static const T value = A * get_power_s<A, B - 1, T>::value;
 };
-template <int A>
-struct get_power_for_msvc<A, 0>
+template <int A, typename T>
+struct get_power_s<A, 0, T>
 {
-    static const int value = 1;
+    static const T value = 1;
 };
-#endif
+
+
+quint64 get_power(quint32 a, quint32 b);
+
 
 
 
