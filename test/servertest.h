@@ -36,6 +36,8 @@ private slots:
 
     void initTestCase()
     {
+        qDebug() <<"qtcpp stellar client name:"<<STELLAR_QT_SDK_CLIENT_NAME;
+        qDebug() <<"qtcpp stellar client version:"<< STELLAR_QT_SDK_CLIENT_VERSION;
         this->setUp();
     }
     void cleanupTestCase()

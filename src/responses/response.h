@@ -32,14 +32,14 @@ inline QList<T> convert(QVariantList source)
 class Response : public QObject
 {
     Q_OBJECT
-    Q_PROPERTY(int rateLimitLimit READ getRateLimitLimit NOTIFY ready)
-    Q_PROPERTY(int rateLimitRemaining READ getRateLimitRemaining NOTIFY ready)
-    Q_PROPERTY(int rateLimitReset READ getRateLimitReset NOTIFY ready)
-    Q_PROPERTY(QString type MEMBER m_type NOTIFY ready)
-    Q_PROPERTY(QString title MEMBER m_title NOTIFY ready)
-    Q_PROPERTY(int status MEMBER m_status NOTIFY ready)
-    Q_PROPERTY(QString instance MEMBER m_instance NOTIFY ready)
-    Q_PROPERTY(QString detail MEMBER m_detail NOTIFY ready)
+    Q_PROPERTY(int rateLimitLimit READ getRateLimitLimit NOTIFY rateLimitChanged)
+    Q_PROPERTY(int rateLimitRemaining READ getRateLimitRemaining NOTIFY rateLimitChanged)
+    Q_PROPERTY(int rateLimitReset READ getRateLimitReset NOTIFY rateLimitChanged)
+    Q_PROPERTY(QString type MEMBER m_type NOTIFY typeChanged)
+    Q_PROPERTY(QString title MEMBER m_title NOTIFY titleChanged)
+    Q_PROPERTY(int status MEMBER m_status NOTIFY statusChanged)
+    Q_PROPERTY(QString instance MEMBER m_instance NOTIFY instanceChanged)
+    Q_PROPERTY(QString detail MEMBER m_detail NOTIFY detailChanged)
 
 
     QString m_type;
@@ -73,6 +73,13 @@ public:
 signals:
     void ready();
     void error();
+    void rateLimitChanged();
+    void typeChanged();
+    void titleChanged();
+    void statusChanged();
+    void instanceChanged();
+    void detailChanged();
+
 private:
     bool preprocessResponse(QNetworkReply *response);
     void restartTimeoutTimer();

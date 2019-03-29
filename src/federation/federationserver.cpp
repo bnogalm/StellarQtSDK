@@ -81,7 +81,7 @@ FederationServer::FederationServer(QString serverUri, QString domain) {
 FederationServer *FederationServer::createForDomain(QString domain) {
 
     if(s_cachedFederationServers){
-        FederationServer * cached = s_cachedFederationServers->value(domain,0);
+        FederationServer * cached = s_cachedFederationServers->value(domain,nullptr);
         if(cached)
             return cached;
     }

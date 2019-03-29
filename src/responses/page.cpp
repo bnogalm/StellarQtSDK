@@ -86,7 +86,10 @@ PageBase *PageBase::getNextPage(){
         return nullptr;
     }
     QNetworkAccessManager* manager = this->m_reply->manager();
-    QNetworkReply * reply = manager->get(QNetworkRequest(this->getLinks().getNext().getHref()));
+    QNetworkRequest request(this->getLinks().getNext().getHref());
+    request.setRawHeader("X-Client-Name", STELLAR_QT_SDK_CLIENT_NAME);
+    request.setRawHeader("X-Client-Version", STELLAR_QT_SDK_CLIENT_VERSION);
+    QNetworkReply * reply = manager->get(request);
     this->loadFromReply(reply);
     return this;//we reuse same object
 }

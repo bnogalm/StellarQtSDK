@@ -163,6 +163,9 @@ void Response::reconnectStreamDelayed()
     QNetworkRequest request(m_reply->request());
     if(!m_lastID.isEmpty())
         request.setRawHeader("Last-Event-ID",m_lastID);
+    request.setRawHeader("X-Client-Name", STELLAR_QT_SDK_CLIENT_NAME);
+    request.setRawHeader("X-Client-Version", STELLAR_QT_SDK_CLIENT_VERSION);
+
     QNetworkReply * reply = manager->get(request);
     loadFromReply(reply);
 }
@@ -204,7 +207,7 @@ bool Response::preprocessResponse(QNetworkReply *response)
     m_rateLimitLimit  =response->rawHeader("X-Ratelimit-Limit").toInt();
     m_rateLimitRemaining =response->rawHeader("X-Ratelimit-Remaining").toInt();
     m_rateLimitReset =response->rawHeader("X-Ratelimit-Reset").toInt();
-
+    emit rateLimitChanged();
     // Too Many Requests
     if (errorCode == 429) {
         int retryAfter = response->rawHeader("Retry-After").toInt();

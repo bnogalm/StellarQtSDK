@@ -42,6 +42,8 @@ public:
         QNetworkRequest request(rb->requestUri());
         if(rb->streamMode())
             request.setRawHeader("Accept","text/event-stream");
+        request.setRawHeader("X-Client-Name", STELLAR_QT_SDK_CLIENT_NAME);
+        request.setRawHeader("X-Client-Version", STELLAR_QT_SDK_CLIENT_VERSION);
         QNetworkReply * r = m_httpClient->get(request);
         auto response = new T(r);
         response->setParent(this);//so it is not collected by QML

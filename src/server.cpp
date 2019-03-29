@@ -12,6 +12,8 @@ QNetworkRequest Server::prepareRequest()
 {
     QNetworkRequest request;
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
+    request.setRawHeader("X-Client-Name", STELLAR_QT_SDK_CLIENT_NAME);
+    request.setRawHeader("X-Client-Version", STELLAR_QT_SDK_CLIENT_VERSION);
     return request;
 }
 
