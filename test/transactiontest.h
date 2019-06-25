@@ -159,7 +159,7 @@ private slots:
 
 
 
-    void testBuilderTimeoutNotCalled(){
+    void testBuilderWithTimeBoundsButNoTimeout(){
         Account* account = new Account(KeyPair::random(), 2908908335136768L);
         try {
             Transaction::Builder(account)
@@ -170,6 +170,18 @@ private slots:
         } catch (std::runtime_error exception) {
             // Should not throw as max_time is set
             QFAIL("Should not throw");
+        }
+    }
+
+    void testBuilderRequiresTimeoutOrTimeBounds(){
+        Account* account = new Account(KeyPair::random(), 2908908335136768L);
+        try {
+            Transaction::Builder(account)
+                    .addOperation(CreateAccountOperation::create(KeyPair::random(), "2000"))
+                    .addMemo(Memo::hash(QString("abcdef")))
+                    .build();
+        } catch (std::runtime_error exception) {
+            QVERIFY(QString(exception.what()).compare("TimeBounds has to be set or you must call setTimeout(TIMEOUT_INFINITE).")==0);
         }
     }
 
