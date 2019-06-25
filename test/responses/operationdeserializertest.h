@@ -16,6 +16,7 @@
 #include "../../src/responses/operations/managedataoperationresponse.h"
 #include "../../src/responses/operations/setoptionsoperationresponse.h"
 #include "../../src/responses/operations/manageofferoperationresponse.h"
+#include "../../src/responses/operations/bumpsequenceoperationresponse.h"
 #include "../../src/responses/genericoperation.h"
 
 
@@ -703,6 +704,40 @@ private slots:
         operation.loadFromJson(json);
 
         QCOMPARE(operation.getValue(), QString());
+    }
+
+    void testDeserializeBumpSequenceOperation() {
+        QByteArray json = "{\n"
+              "  \"_links\": {\n"
+              "    \"effects\": {\n"
+              "      \"href\": \"/operations/12884914177/effects/{?cursor,limit,order}\",\n"
+              "      \"templated\": true\n"
+              "    },\n"
+              "    \"precedes\": {\n"
+              "      \"href\": \"/operations?cursor=12884914177\\u0026order=asc\"\n"
+              "    },\n"
+              "    \"self\": {\n"
+              "      \"href\": \"/operations/12884914177\"\n"
+              "    },\n"
+              "    \"succeeds\": {\n"
+              "      \"href\": \"/operations?cursor=12884914177\\u0026order=desc\"\n"
+              "    },\n"
+              "    \"transaction\": {\n"
+              "      \"href\": \"/transactions/12884914176\"\n"
+              "    }\n"
+              "  },\n"
+              "  \"id\": 12884914177,\n"
+              "  \"paging_token\": \"12884914177\",\n"
+              "  \"type_i\": 11,\n"
+              "  \"type\": \"bump_sequence\",\n"
+              "  \"bump_to\": \"79473726952833048\"\n"
+              "}";
+
+      BumpSequenceOperationResponse operation;
+      operation.loadFromJson(json);
+
+      QCOMPARE(operation.getId(), 12884914177L);
+      QCOMPARE(operation.getBumpTo(), 79473726952833048L);
     }
 
 };

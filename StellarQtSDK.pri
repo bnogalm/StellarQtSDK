@@ -31,6 +31,7 @@ SOURCES += \
     $$PWD/src/changetrustoperation.cpp \
     $$PWD/src/createaccountoperation.cpp \
     $$PWD/src/createpassiveofferoperation.cpp \
+    $$PWD/src/responses/operations/bumpsequenceoperationresponse.cpp \
     $$PWD/src/strkey.cpp \
     $$PWD/src/inflationoperation.cpp \
     $$PWD/src/util.cpp \
@@ -151,6 +152,7 @@ DEFINES += QT_DEPRECATED_WARNINGS
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 HEADERS += \
+    $$PWD/src/responses/operations/bumpsequenceoperationresponse.h \
     $$PWD/xdr/stellartypes.h \
     $$PWD/src/account.h \
     $$PWD/src/transactionbuilderaccount.h \
