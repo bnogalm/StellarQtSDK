@@ -36,3 +36,8 @@ OffersRequestBuilder &OffersRequestBuilder::order(RequestBuilder::Order directio
     RequestBuilder::order(direction);
     return *this;
 }
+
+OffersRequestBuilder &OffersRequestBuilder::stream() {
+    setStreamMode();
+    return *this;
+}
