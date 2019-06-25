@@ -21,7 +21,7 @@ class ManageDataOperationResponse : public OperationResponse
 
 public:
     ManageDataOperationResponse(QNetworkReply *reply=nullptr);
-
+    virtual ~ManageDataOperationResponse();
     QString getName() const;
 
     QString getValue() const;
