@@ -31,7 +31,7 @@ class AllowTrustOperationResponse : public OperationResponse
     bool m_authorize;
 public:
     AllowTrustOperationResponse(QNetworkReply* reply=nullptr);
-
+    virtual ~AllowTrustOperationResponse();
     KeyPair& getTrustor();
     KeyPair& getTrustee();
     Asset* getAsset();

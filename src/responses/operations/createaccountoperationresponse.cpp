@@ -21,10 +21,24 @@ KeyPair &CreateAccountOperationResponse::getAccount() {
     return *m_accountKeypair;
 }
 
+QString CreateAccountOperationResponse::getStartingBalance() const{
+    return m_startingBalance;
+}
+
 KeyPair &CreateAccountOperationResponse::getFunder() {
     if(!m_funderKeypair)
         m_funderKeypair = KeyPair::fromAccountId(m_funder);
     return *m_funderKeypair;
+}
+
+QString CreateAccountOperationResponse::account() const
+{
+    return m_account;
+}
+
+QString CreateAccountOperationResponse::funder() const
+{
+    return m_funder;
 }
 
 void CreateAccountOperationResponse::setAccount(QString account)
@@ -33,7 +47,7 @@ void CreateAccountOperationResponse::setAccount(QString account)
     if(m_accountKeypair)
     {
         delete m_accountKeypair;
-        m_accountKeypair=0;
+        m_accountKeypair=nullptr;
     }
     m_account = account;
 }
@@ -44,7 +58,7 @@ void CreateAccountOperationResponse::setFunder(QString funder)
     if(m_funderKeypair)
     {
         delete m_funderKeypair;
-        m_funderKeypair=0;
+        m_funderKeypair=nullptr;
     }
     m_funder = funder;   
 }

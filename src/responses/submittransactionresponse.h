@@ -111,12 +111,12 @@ public:
     bool isSuccess() const;
     QString getEnvelopeXdr();
     /**
-        * Helper method that returns Offer ID for ManageOffer from TransactionResult Xdr.
+        * Helper method that returns Offer ID for ManageSellOffer/ManageBuyOffer from TransactionResult Xdr.
         * This is helpful when you need ID of an offer to update it later.
-        * @param position Position of ManageOffer operation. If ManageOffer is second operation in this transaction this should be equal <code>1</code>.
-        * @return Offer ID or <code>null</code> when operation at <code>position</code> is not a ManageOffer operation or error has occurred.
+        * @param position Position of ManageSellOffer/ManageBuyOffer operation. If it is second operation in this transaction this should be equal <code>1</code>.
+        * @return Offer ID or <code>null</code> when operation at <code>position</code> is not a ManageSellOffer/ManageBuyOffer operation or error has occurred.
         */
-    quint64 getOfferIdFromResult(int position);
+    qint64 getOfferIdFromResult(int position);
 signals:
     void responseReady();
 };

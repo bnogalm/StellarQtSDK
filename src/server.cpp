@@ -62,8 +62,8 @@ OperationsRequestBuilder Server::operations() {
     return OperationsRequestBuilder(this);
 }
 
-OperationFeeStatsRequestBuilder Server::operationFeeStats() {
-    return OperationFeeStatsRequestBuilder(this);
+FeeStatsRequestBuilder Server::operationFeeStats() {
+    return FeeStatsRequestBuilder(this);
 }
 
 OrderBookRequestBuilder Server::orderBook() {

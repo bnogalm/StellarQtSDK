@@ -14,6 +14,7 @@ class InflationOperationResponse : public OperationResponse
     Q_OBJECT
 public:
     InflationOperationResponse(QNetworkReply* reply=nullptr);
+    virtual ~InflationOperationResponse();
 };
 Q_DECLARE_METATYPE(InflationOperationResponse*)
 #endif // INFLATIONOPERATIONRESPONSE_H

@@ -137,7 +137,7 @@ struct get_power_s<A, 0, T>
 };
 
 
-quint64 get_power(quint32 a, quint32 b);
+qint64 get_power(quint32 a, quint32 b);
 
 
 

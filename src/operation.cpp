@@ -6,11 +6,12 @@
 #include "pathpaymentoperation.h"
 #include "allowtrustoperation.h"
 #include "changetrustoperation.h"
-#include "createpassiveofferoperation.h"
+#include "createpassivesellofferoperation.h"
 #include "managedataoperation.h"
 #include "setoptionsoperation.h"
-#include "manageofferoperation.h"
+#include "managesellofferoperation.h"
 #include "bumpsequenceoperation.h"
+#include "managebuyofferoperation.h"
 
 Operation::Operation() : m_sourceAccount(nullptr)
 {
@@ -22,26 +23,26 @@ Operation::~Operation()
         delete m_sourceAccount;
 }
 
-quint64 Operation::toXdrAmount(QString value) {
+qint64 Operation::toXdrAmount(QString value) {
     value = checkNotNull(value, "value cannot be null");
     value = value.replace(',','.');
     if(!value.contains('.'))
-        return value.toULongLong()*Operation::ONE;
+        return value.toLongLong()*Operation::ONE;
     QStringList parse = value.split('.');
     if(parse[1].length()<Operation::FRACTIONAL)
-        return parse[0].toULongLong() * Operation::ONE + parse[1].toULongLong() *  get_power(quint32(10),quint32((Operation::FRACTIONAL-parse[1].length())));
+        return parse[0].toLongLong() * Operation::ONE + parse[1].toLongLong() *  get_power(quint32(10),quint32((Operation::FRACTIONAL-parse[1].length())));
     for(int i=Operation::FRACTIONAL ; i<parse[1].length();i++){
         if(parse[1][i]!=QChar('0')){
             throw std::runtime_error("amount with too many decimals");
         }
     }
-    return parse[0].toULongLong() * Operation::ONE + parse[1].left(Operation::FRACTIONAL).toULongLong();
+    return parse[0].toLongLong() * Operation::ONE + parse[1].left(Operation::FRACTIONAL).toLongLong();
 }
 
 
-QString Operation::fromXdrAmount(quint64 value) {
-    quint64 n= value/Operation::ONE;
-    quint64 decimal = value - n*Operation::ONE;
+QString Operation::fromXdrAmount(qint64 value) {
+    qint64 n= value/Operation::ONE;
+    qint64 decimal = value - n*Operation::ONE;
     if(decimal==0)
         return  QString::number(value/Operation::ONE);
     else{
@@ -84,11 +85,11 @@ Operation *Operation::fromXdr(stellar::Operation &xdr) {
     case stellar::OperationType::PATH_PAYMENT:
         operation = PathPaymentOperation::build(xdr.operationPathPayment);
         break;
-    case stellar::OperationType::MANAGE_OFFER:
-        operation = ManageOfferOperation::build(xdr.operationManageOffer);
+    case stellar::OperationType::MANAGE_SELL_OFFER:
+        operation = ManageSellOfferOperation::build(xdr.operationManageSellOffer);
         break;
-    case stellar::OperationType::CREATE_PASSIVE_OFFER:
-        operation = CreatePassiveOfferOperation::build(xdr.operationCreatePassiveOffer);
+    case stellar::OperationType::CREATE_PASSIVE_SELL_OFFER:
+        operation = CreatePassiveSellOfferOperation::build(xdr.operationCreatePassiveSellOffer);
         break;
     case stellar::OperationType::SET_OPTIONS:
         operation = SetOptionsOperation::build(xdr.operationSetOptions);
@@ -107,6 +108,9 @@ Operation *Operation::fromXdr(stellar::Operation &xdr) {
         break;
     case stellar::OperationType::BUMP_SEQUENCE:
         operation = BumpSequenceOperation::build(xdr.operationBumpSequence);
+        break;
+    case stellar::OperationType::MANAGE_BUY_OFFER:
+        operation = ManageBuyOfferOperation::build(xdr.operationManageBuyOffer);
         break;
     default:
         throw std::runtime_error("Unknown operation body");

@@ -63,7 +63,23 @@ Price *Price::fromString(QString price) {
 
 QString Price::toString(qint32 n, qint32 d)
 {
-    QString price = QString::number((double)n/(double)d,'f',11);
+    QString price;
+    //we print too many decimals when integer part is not zero
+    //this match java sdk decimals
+    if(d!=0){
+        qint32 integer= n/d;
+        if(integer!=0)
+        {
+            price = QString::number(integer);
+            int size=price.size();
+            price = QString::number(static_cast<double>(n)/static_cast<double>(d),'f',16-size);
+        }
+        else
+            price = QString::number(static_cast<double>(n)/static_cast<double>(d),'f',16);
+    }
+    else{
+        price = QString::number(static_cast<double>(n)/static_cast<double>(d),'f',16);
+    }
     if(price.contains('.')){
         price = Util::removeTailChars(price,'0');
     }

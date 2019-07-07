@@ -13,7 +13,9 @@
 #include "operations/createpassiveofferoperationresponse.h"
 #include "operations/managedataoperationresponse.h"
 #include "operations/setoptionsoperationresponse.h"
-#include "operations/manageofferoperationresponse.h"
+#include "operations/managesellofferoperationresponse.h"
+#include "operations/bumpsequenceoperationresponse.h"
+#include "operations/managebuyofferoperationresponse.h"
 
 GenericOperation::GenericOperation(QNetworkReply *reply)
     :Response(reply),m_operation(nullptr)
@@ -50,9 +52,9 @@ void GenericOperation::loadFromJson(QByteArray data)
     case 2:
         m_operation = new PathPaymentOperationResponse(this->m_reply); break;
     case 3:
-        m_operation = new ManageOfferOperationResponse(this->m_reply); break;
+        m_operation = new ManageSellOfferOperationResponse(this->m_reply); break;
     case 4:
-        m_operation = new CreatePassiveOfferOperationResponse(this->m_reply); break;
+        m_operation = new CreatePassiveSellOfferOperationResponse(this->m_reply); break;
     case 5:
         m_operation = new SetOptionsOperationResponse(this->m_reply); break;
     case 6:
@@ -65,6 +67,10 @@ void GenericOperation::loadFromJson(QByteArray data)
         m_operation = new InflationOperationResponse(this->m_reply); break;
     case 10:
         m_operation = new ManageDataOperationResponse(this->m_reply); break;
+    case 11:
+        m_operation = new BumpSequenceOperationResponse(this->m_reply); break;
+    case 12:
+        m_operation = new ManageBuyOfferOperationResponse(this->m_reply); break;
     default:
         throw std::runtime_error("Invalid operation type");
     }

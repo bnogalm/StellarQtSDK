@@ -27,15 +27,16 @@ namespace stellar
         CREATE_ACCOUNT = 0,
         PAYMENT = 1,
         PATH_PAYMENT = 2,
-        MANAGE_OFFER = 3,
-        CREATE_PASSIVE_OFFER = 4,
+        MANAGE_SELL_OFFER = 3,
+        CREATE_PASSIVE_SELL_OFFER = 4,
         SET_OPTIONS = 5,
         CHANGE_TRUST = 6,
         ALLOW_TRUST = 7,
         ACCOUNT_MERGE = 8,
         INFLATION = 9,
         MANAGE_DATA = 10,
-        BUMP_SEQUENCE = 11
+        BUMP_SEQUENCE = 11,
+        MANAGE_BUY_OFFER = 12
     };
 
     /* CreateAccount
@@ -116,9 +117,9 @@ namespace stellar
 
     /* Creates, updates or deletes an offer
     Threshold: med
-    Result: ManageOfferResult
+    Result: ManageSellOfferResult
     */
-    struct ManageOfferOp
+    struct ManageSellOfferOp
     {
         Asset selling;
         Asset buying;
@@ -126,36 +127,64 @@ namespace stellar
         Price price;  // price of thing being sold in terms of what you are buying
 
         // 0=create a new offer, otherwise edit an existing offer
-        quint64 offerID;
+        qint64 offerID;
     };
-    inline QDataStream &operator<<(QDataStream &out, const  ManageOfferOp &obj) {
+    inline QDataStream &operator<<(QDataStream &out, const  ManageSellOfferOp &obj) {
         out << obj.selling << obj.buying << obj.amount << obj.price << obj.offerID;
        return out;
     }
 
-    inline QDataStream &operator>>(QDataStream &in,  ManageOfferOp &obj) {
+    inline QDataStream &operator>>(QDataStream &in,  ManageSellOfferOp &obj) {
        in >> obj.selling >> obj.buying >> obj.amount >> obj.price >> obj.offerID;
        return in;
     }
 
 
+    /* Creates, updates or deletes an offer with amount in terms of buying asset
+    Threshold: med
+    Result: ManageBuyOfferResult
+    */
+    struct ManageBuyOfferOp
+    {
+        Asset selling;
+        Asset buying;
+        qint64 buyAmount; // amount being bought. if set to 0, delete the offer
+        Price price;     // price of thing being bought in terms of what you are
+                         // selling
+
+        // 0=create a new offer, otherwise edit an existing offer
+        qint64 offerID;
+    };
+
+    inline QDataStream &operator<<(QDataStream &out, const  ManageBuyOfferOp &obj) {
+        out << obj.selling << obj.buying << obj.buyAmount << obj.price << obj.offerID;
+       return out;
+    }
+
+    inline QDataStream &operator>>(QDataStream &in,  ManageBuyOfferOp &obj) {
+       in >> obj.selling >> obj.buying >> obj.buyAmount >> obj.price >> obj.offerID;
+       return in;
+    }
+
+
+
     /* Creates an offer that doesn't take offers of the same price
     Threshold: med
-    Result: CreatePassiveOfferResult
+    Result: CreatePassiveSellOfferResult
     */
-    struct CreatePassiveOfferOp
+    struct CreatePassiveSellOfferOp
     {
         Asset selling; // A
         Asset buying;  // B
         qint64 amount;  // amount taker gets. if set to 0, delete the offer
         Price price;   // cost of A in terms of B
     };
-    inline QDataStream &operator<<(QDataStream &out, const  CreatePassiveOfferOp &obj) {
+    inline QDataStream &operator<<(QDataStream &out, const  CreatePassiveSellOfferOp &obj) {
         out << obj.selling << obj.buying << obj.amount << obj.price;
        return out;
     }
 
-    inline QDataStream &operator>>(QDataStream &in,  CreatePassiveOfferOp &obj) {
+    inline QDataStream &operator>>(QDataStream &in,  CreatePassiveSellOfferOp &obj) {
        in >> obj.selling >> obj.buying >> obj.amount >> obj.price;
        return in;
     }
@@ -287,7 +316,7 @@ namespace stellar
     /* ManageData
         Adds, Updates, or Deletes a key value pair associated with a particular
         account.
-        Threshold: med
+        Threshold: low
         Result: ManageDataResult
     */
 
@@ -333,13 +362,15 @@ namespace stellar
         union{
         CreateAccountOp operationCreateAccount;
         PaymentOp operationPayment;
-        ManageOfferOp operationManageOffer;
-        CreatePassiveOfferOp operationCreatePassiveOffer;
+        ManageSellOfferOp operationManageSellOffer;
+        CreatePassiveSellOfferOp operationCreatePassiveSellOffer;
         ChangeTrustOp operationChangeTrust;
         AllowTrustOp operationAllowTrust;
         AccountID operationAccountMerge;
         AccountID operationInflation;
         BumpSequenceOp operationBumpSequence;
+        ManageBuyOfferOp operationManageBuyOffer;
+
         //non trivials, you MUST call contructor explicity to use them
         PathPaymentOp operationPathPayment;
         SetOptionsOp operationSetOptions;
@@ -367,10 +398,10 @@ namespace stellar
             out << obj.operationPayment; break;
         case OperationType::PATH_PAYMENT:
             out << obj.operationPathPayment; break;
-        case OperationType::MANAGE_OFFER:
-            out << obj.operationManageOffer; break;
-        case OperationType::CREATE_PASSIVE_OFFER:
-            out << obj.operationCreatePassiveOffer; break;
+        case OperationType::MANAGE_SELL_OFFER:
+            out << obj.operationManageSellOffer; break;
+        case OperationType::CREATE_PASSIVE_SELL_OFFER:
+            out << obj.operationCreatePassiveSellOffer; break;
         case OperationType::SET_OPTIONS:
             out << obj.operationSetOptions; break;
         case OperationType::CHANGE_TRUST:
@@ -385,6 +416,8 @@ namespace stellar
             out << obj.operationManageData; break;
         case OperationType::BUMP_SEQUENCE:
             out << obj.operationBumpSequence; break;
+        case OperationType::MANAGE_BUY_OFFER:
+            out << obj.operationManageBuyOffer; break;
         //default: break;
         }
 
@@ -401,10 +434,10 @@ namespace stellar
         case OperationType::PATH_PAYMENT:
             new (&obj.operationPathPayment) PathPaymentOp();
             in >> obj.operationPathPayment; break;        
-        case OperationType::MANAGE_OFFER:
-            in >> obj.operationManageOffer; break;
-        case OperationType::CREATE_PASSIVE_OFFER:
-            in >> obj.operationCreatePassiveOffer; break;
+        case OperationType::MANAGE_SELL_OFFER:
+            in >> obj.operationManageSellOffer; break;
+        case OperationType::CREATE_PASSIVE_SELL_OFFER:
+            in >> obj.operationCreatePassiveSellOffer; break;
         case OperationType::SET_OPTIONS:
             new (&obj.operationSetOptions) SetOptionsOp();
             in >> obj.operationSetOptions; break;
@@ -421,6 +454,8 @@ namespace stellar
             in >> obj.operationManageData; break;
         case OperationType::BUMP_SEQUENCE:
             in >> obj.operationBumpSequence; break;
+        case OperationType::MANAGE_BUY_OFFER:
+            in >> obj.operationManageBuyOffer; break;
         //default: break;
         }
        return in;
@@ -483,8 +518,8 @@ namespace stellar
 
     struct TimeBounds
     {
-        quint64 minTime;
-        quint64 maxTime; // 0 here means no maxTime
+        TimePoint minTime;
+        TimePoint maxTime; // 0 here means no maxTime
     };
     inline QDataStream &operator<<(QDataStream &out, const  TimeBounds &obj) {
         out << obj.minTime << obj.maxTime;;
@@ -495,6 +530,8 @@ namespace stellar
         in >> obj.minTime >> obj.maxTime;;
        return in;
     }
+    // maximum number of operations per transaction
+    const int MAX_OPS_PER_TX = 100;
 
     /* a transaction is a container for a set of operations
         - is executed by an account
@@ -520,7 +557,7 @@ namespace stellar
 
         Memo memo;
 
-        Array<Operation,100> operations; //max <100>;
+        Array<Operation,MAX_OPS_PER_TX> operations; //max <100>;
 
         // reserved for future use
         Reserved ext;
@@ -578,7 +615,7 @@ namespace stellar
     {
         // emitted to identify the offer
         AccountID sellerID; // Account that owns the offer
-        quint64 offerID;
+        qint64 offerID;
 
         // amount and asset taken from the owner
         Asset assetSold;
@@ -718,31 +755,31 @@ namespace stellar
     }
 
 
-    /******* ManageOffer Result ********/
+    /******* ManageSellOffer Result ********/
 
-    enum class ManageOfferResultCode :qint32
+    enum class ManageSellOfferResultCode :qint32
     {
         // codes considered as "success" for the operation
-        MANAGE_OFFER_SUCCESS = 0,
+        MANAGE_SELL_OFFER_SUCCESS  = 0,
 
         // codes considered as "failure" for the operation
-        MANAGE_OFFER_MALFORMED = -1,     // generated offer would be invalid
-        MANAGE_OFFER_SELL_NO_TRUST = -2, // no trust line for what we're selling
-        MANAGE_OFFER_BUY_NO_TRUST = -3,  // no trust line for what we're buying
-        MANAGE_OFFER_SELL_NOT_AUTHORIZED = -4, // not authorized to sell
-        MANAGE_OFFER_BUY_NOT_AUTHORIZED = -5,  // not authorized to buy
-        MANAGE_OFFER_LINE_FULL = -6,      // can't receive more of what it's buying
-        MANAGE_OFFER_UNDERFUNDED = -7,    // doesn't hold what it's trying to sell
-        MANAGE_OFFER_CROSS_SELF = -8,     // would cross an offer from the same user
-        MANAGE_OFFER_SELL_NO_ISSUER = -9, // no issuer for what we're selling
-        MANAGE_OFFER_BUY_NO_ISSUER = -10, // no issuer for what we're buying
+        MANAGE_SELL_OFFER_MALFORMED  = -1,     // generated offer would be invalid
+        MANAGE_SELL_OFFER_SELL_NO_TRUST = -2, // no trust line for what we're selling
+        MANAGE_SELL_OFFER_BUY_NO_TRUST = -3,  // no trust line for what we're buying
+        MANAGE_SELL_OFFER_SELL_NOT_AUTHORIZED = -4, // not authorized to sell
+        MANAGE_SELL_OFFER_BUY_NOT_AUTHORIZED = -5,  // not authorized to buy
+        MANAGE_SELL_OFFER_LINE_FULL = -6,      // can't receive more of what it's buying
+        MANAGE_SELL_OFFER_UNDERFUNDED = -7,    // doesn't hold what it's trying to sell
+        MANAGE_SELL_OFFER_CROSS_SELF = -8,     // would cross an offer from the same user
+        MANAGE_SELL_OFFER_SELL_NO_ISSUER = -9, // no issuer for what we're selling
+        MANAGE_SELL_OFFER_BUY_NO_ISSUER = -10, // no issuer for what we're buying
 
         // update errors
-        MANAGE_OFFER_NOT_FOUND = -11, // offerID does not match an existing offer
+        MANAGE_SELL_OFFER_NOT_FOUND = -11, // offerID does not match an existing offer
 
-        MANAGE_OFFER_LOW_RESERVE = -12 // not enough funds to create a new Offer
+        MANAGE_SELL_OFFER_LOW_RESERVE = -12 // not enough funds to create a new Offer
     };
-    XDR_SERIALIZER(ManageOfferResultCode)
+    XDR_SERIALIZER(ManageSellOfferResultCode)
 
 
     enum class ManageOfferEffect : qint32
@@ -784,16 +821,16 @@ namespace stellar
     }
 
 
-    struct ManageOfferResult
+    struct ManageSellOfferResult
     {
-        ManageOfferResultCode code;
+        ManageSellOfferResultCode code;
         ManageOfferSuccessResult success;
     };
 
-    inline QDataStream &operator<<(QDataStream &out, const  ManageOfferResult &obj) {
+    inline QDataStream &operator<<(QDataStream &out, const  ManageSellOfferResult &obj) {
         out << obj.code;
         switch(obj.code){
-        case ManageOfferResultCode::MANAGE_OFFER_SUCCESS:
+        case ManageSellOfferResultCode::MANAGE_SELL_OFFER_SUCCESS :
             out << obj.success; break;
         default: break;
         }
@@ -801,10 +838,62 @@ namespace stellar
        return out;
     }
 
-    inline QDataStream &operator>>(QDataStream &in,  ManageOfferResult &obj) {
+    inline QDataStream &operator>>(QDataStream &in,  ManageSellOfferResult &obj) {
         in >> obj.code;
         switch(obj.code){
-        case ManageOfferResultCode::MANAGE_OFFER_SUCCESS:
+        case ManageSellOfferResultCode::MANAGE_SELL_OFFER_SUCCESS :
+            in >> obj.success; break;
+        default: break;
+        }
+       return in;
+    }
+
+    /******* ManageBuyOffer Result ********/
+
+    enum class ManageBuyOfferResultCode : qint32
+    {
+        // codes considered as "success" for the operation
+        MANAGE_BUY_OFFER_SUCCESS = 0,
+
+        // codes considered as "failure" for the operation
+        MANAGE_BUY_OFFER_MALFORMED = -1,     // generated offer would be invalid
+        MANAGE_BUY_OFFER_SELL_NO_TRUST = -2, // no trust line for what we're selling
+        MANAGE_BUY_OFFER_BUY_NO_TRUST = -3,  // no trust line for what we're buying
+        MANAGE_BUY_OFFER_SELL_NOT_AUTHORIZED = -4, // not authorized to sell
+        MANAGE_BUY_OFFER_BUY_NOT_AUTHORIZED = -5,  // not authorized to buy
+        MANAGE_BUY_OFFER_LINE_FULL = -6,      // can't receive more of what it's buying
+        MANAGE_BUY_OFFER_UNDERFUNDED = -7,    // doesn't hold what it's trying to sell
+        MANAGE_BUY_OFFER_CROSS_SELF = -8,     // would cross an offer from the same user
+        MANAGE_BUY_OFFER_SELL_NO_ISSUER = -9, // no issuer for what we're selling
+        MANAGE_BUY_OFFER_BUY_NO_ISSUER = -10, // no issuer for what we're buying
+
+        // update errors
+        MANAGE_BUY_OFFER_NOT_FOUND = -11, // offerID does not match an existing offer
+
+        MANAGE_BUY_OFFER_LOW_RESERVE = -12 // not enough funds to create a new Offer
+    };
+
+    struct ManageBuyOfferResult
+    {
+        ManageBuyOfferResultCode code;
+        ManageOfferSuccessResult success;
+    };
+
+    inline QDataStream &operator<<(QDataStream &out, const  ManageBuyOfferResult &obj) {
+        out << obj.code;
+        switch(obj.code){
+        case ManageBuyOfferResultCode::MANAGE_BUY_OFFER_SUCCESS :
+            out << obj.success; break;
+        default: break;
+        }
+
+       return out;
+    }
+
+    inline QDataStream &operator>>(QDataStream &in,  ManageBuyOfferResult &obj) {
+        in >> obj.code;
+        switch(obj.code){
+        case ManageBuyOfferResultCode::MANAGE_BUY_OFFER_SUCCESS :
             in >> obj.success; break;
         default: break;
         }
@@ -1016,10 +1105,12 @@ namespace stellar
 
     enum class OperationResultCode : qint32
     {
-        opINNER = 0, // inner object result is valid
-
-        opBAD_AUTH = -1,  // too few valid signatures / wrong network
-        opNO_ACCOUNT = -2 // source account was not found
+         opINNER = 0, // inner object result is valid
+         opBAD_AUTH = -1,  // too few valid signatures / wrong network
+         opNO_ACCOUNT = -2, // source account was not found
+         opNOT_SUPPORTED = -3, // operation not supported at this time
+         opTOO_MANY_SUBENTRIES = -4, // max number of subentries already reached
+         opEXCEEDED_WORK_LIMIT = -5  // operation did too much work
     };
     XDR_SERIALIZER(OperationResultCode)
 
@@ -1036,14 +1127,29 @@ namespace stellar
         AccountMergeResult accountMergeResult;
         ManageDataResult manageDataResult;
         BumpSequenceResult bumpSequenceResult;
-        };
-        //non trivial
+
+        //no trivial
+        ManageBuyOfferResult manageBuyOfferResult;
         PaymentResult paymentResult;
         PathPaymentResult pathPaymentResult;
-        ManageOfferResult manageOfferResult;
-        ManageOfferResult createPassiveOfferResult;
+        ManageSellOfferResult manageSellOfferResult;
+        ManageSellOfferResult createPassiveOfferResult;
         InflationResult inflationResult;
+        };
+        //no trivial
+        /**
+         * @brief Operation
+         * builds an Operation, it will not construct any of the non trivials members of the union
+         * as it is used internally, to fill any of the non trivials you have to call the according placement constructor
+         */
+        OperationResult();
+
+        OperationResult(const stellar::OperationResult& op);
+        ~OperationResult();
+        const OperationResult& operator = (const OperationResult& op);
+
     };
+
     inline QDataStream &operator<<(QDataStream &out, const  OperationResult &obj) {
         out << obj.code;
         switch(obj.code){
@@ -1058,9 +1164,9 @@ namespace stellar
                 out << obj.paymentResult; break;
             case OperationType::PATH_PAYMENT:
                 out << obj.pathPaymentResult; break;
-            case OperationType::MANAGE_OFFER:
-                out << obj.manageOfferResult; break;
-            case OperationType::CREATE_PASSIVE_OFFER:
+            case OperationType::MANAGE_SELL_OFFER:                
+                out << obj.manageSellOfferResult; break;
+            case OperationType::CREATE_PASSIVE_SELL_OFFER:
                 out << obj.createPassiveOfferResult; break;
             case OperationType::SET_OPTIONS:
                 out << obj.setOptionsResult; break;
@@ -1076,6 +1182,8 @@ namespace stellar
                 out << obj.manageDataResult; break;
             case OperationType::BUMP_SEQUENCE:
                 out << obj.bumpSequenceResult; break;
+            case OperationType::MANAGE_BUY_OFFER:
+                out << obj.manageBuyOfferResult; break;
             //default:break;
             }
             break;
@@ -1097,12 +1205,16 @@ namespace stellar
             case OperationType::CREATE_ACCOUNT:
                 in >> obj.createAccountResult; break;
             case OperationType::PAYMENT:
+                new (&obj.paymentResult) PaymentResult();
                 in >> obj.paymentResult; break;
             case OperationType::PATH_PAYMENT:
+                new (&obj.pathPaymentResult) PathPaymentResult();
                 in >> obj.pathPaymentResult; break;
-            case OperationType::MANAGE_OFFER:
-                in >> obj.manageOfferResult; break;
-            case OperationType::CREATE_PASSIVE_OFFER:
+            case OperationType::MANAGE_SELL_OFFER:
+                new (&obj.manageSellOfferResult) ManageSellOfferResult();
+                in >> obj.manageSellOfferResult; break;
+            case OperationType::CREATE_PASSIVE_SELL_OFFER:
+                new (&obj.createPassiveOfferResult) ManageSellOfferResult();
                 in >> obj.createPassiveOfferResult; break;
             case OperationType::SET_OPTIONS:
                 in >> obj.setOptionsResult; break;
@@ -1113,11 +1225,15 @@ namespace stellar
             case OperationType::ACCOUNT_MERGE:
                 in >> obj.accountMergeResult; break;
             case OperationType::INFLATION:
+                new (&obj.inflationResult) InflationResult();
                 in >> obj.inflationResult; break;
             case OperationType::MANAGE_DATA:
                 in >> obj.manageDataResult; break;
             case OperationType::BUMP_SEQUENCE:
                 in >> obj.bumpSequenceResult; break;
+            case OperationType::MANAGE_BUY_OFFER:
+                new (&obj.manageBuyOfferResult) ManageBuyOfferResult();
+                in >> obj.manageBuyOfferResult; break;
             //default: break;
             }
             break;

@@ -20,14 +20,15 @@
 #include "src/pathpaymentoperation.h"
 #include "src/allowtrustoperation.h"
 #include "src/changetrustoperation.h"
-#include "src/createpassiveofferoperation.h"
+#include "src/createpassivesellofferoperation.h"
 #include "src/managedataoperation.h"
 #include "src/signer.h"
 #include "src/setoptionsoperation.h"
 #include "src/account.h"
 #include "src/network.h"
 #include "src/transaction.h"
-#include "src/manageofferoperation.h"
+#include "src/managesellofferoperation.h"
+#include "src/managebuyofferoperation.h"
 #include "src/bumpsequenceoperation.h"
 
 
@@ -65,7 +66,7 @@ private slots:
 
 
        stellar::Operation xdr = operation->toXdr();
-       CreateAccountOperation* parsedOperation = (CreateAccountOperation*) Operation::fromXdr(xdr);
+       CreateAccountOperation* parsedOperation = static_cast<CreateAccountOperation*>(Operation::fromXdr(xdr));
 
        QVERIFY(10000000000L==xdr.operationCreateAccount.startingBalance);
 
@@ -96,7 +97,7 @@ private slots:
          stellar::Operation xdr = operation->toXdr();
 
 
-         PaymentOperation* parsedOperation = (PaymentOperation*) Operation::fromXdr(xdr);
+         PaymentOperation* parsedOperation = static_cast<PaymentOperation*>(Operation::fromXdr(xdr));
 
          QVERIFY(10000000000L==xdr.operationPayment.amount);
          QVERIFY(source->getAccountId()==parsedOperation->getSourceAccount()->getAccountId());
@@ -139,7 +140,7 @@ private slots:
 
 
        auto xdr = operation->toXdr();
-       PathPaymentOperation* parsedOperation = (PathPaymentOperation*) Operation::fromXdr(xdr);
+       PathPaymentOperation* parsedOperation = static_cast<PathPaymentOperation*>(Operation::fromXdr(xdr));
 
        QVERIFY(1000L== xdr.operationPathPayment.sendMax);
        QVERIFY(1000L== xdr.operationPathPayment.destAmount);
@@ -175,7 +176,7 @@ private slots:
        operation->setSourceAccount(source);
 
        auto xdr = operation->toXdr();
-       PathPaymentOperation* parsedOperation = (PathPaymentOperation*) Operation::fromXdr(xdr);
+       PathPaymentOperation* parsedOperation = static_cast<PathPaymentOperation*>(Operation::fromXdr(xdr));
 
        QVERIFY(1000L== xdr.operationPathPayment.sendMax);
 
@@ -203,7 +204,7 @@ private slots:
        operation->setSourceAccount(source);
 
        auto xdr = operation->toXdr();
-       ChangeTrustOperation* parsedOperation = (ChangeTrustOperation*) Operation::fromXdr(xdr);
+       ChangeTrustOperation* parsedOperation = static_cast<ChangeTrustOperation*>(Operation::fromXdr(xdr));
 
        QCOMPARE(9223372036854775807L, xdr.operationChangeTrust.limit);
        QCOMPARE(source->getAccountId(), parsedOperation->getSourceAccount()->getAccountId());
@@ -229,7 +230,7 @@ private slots:
 
 
        auto xdr = operation.toXdr();
-       AllowTrustOperation* parsedOperation = (AllowTrustOperation*) Operation::fromXdr(xdr);
+       AllowTrustOperation* parsedOperation = static_cast<AllowTrustOperation*>(Operation::fromXdr(xdr));
 
        QCOMPARE(source->getAccountId(), parsedOperation->getSourceAccount()->getAccountId());
        QCOMPARE(trustor->getAccountId(), parsedOperation->getTrustor()->getAccountId());
@@ -253,7 +254,7 @@ private slots:
            ->setSourceAccount(source);
 
        auto xdr = operation->toXdr();
-       AllowTrustOperation* parsedOperation = (AllowTrustOperation*) Operation::fromXdr(xdr);
+       AllowTrustOperation* parsedOperation = static_cast<AllowTrustOperation*>(Operation::fromXdr(xdr));
 
        QCOMPARE(assetCode, parsedOperation->getAssetCode());
      }
@@ -288,7 +289,7 @@ private slots:
            ->setSourceAccount(source);
 
        auto xdr = operation->toXdr();
-       SetOptionsOperation* parsedOperation = (SetOptionsOperation*) SetOptionsOperation::fromXdr(xdr);
+       SetOptionsOperation* parsedOperation = static_cast<SetOptionsOperation*>(SetOptionsOperation::fromXdr(xdr));
 
        QCOMPARE(inflationDestination->getAccountId(), parsedOperation->getInflationDestination()->getAccountId());
        QCOMPARE(clearFlags, parsedOperation->getClearFlags());
@@ -319,7 +320,7 @@ private slots:
            ->setSourceAccount(source);
 
        auto xdr = operation->toXdr();
-       SetOptionsOperation* parsedOperation = (SetOptionsOperation*) SetOptionsOperation::fromXdr(xdr);
+       SetOptionsOperation* parsedOperation = static_cast<SetOptionsOperation*>(SetOptionsOperation::fromXdr(xdr));
 
        QVERIFY(parsedOperation->getInflationDestination()==nullptr);
        QVERIFY(parsedOperation->getClearFlags().isNull());
@@ -329,7 +330,7 @@ private slots:
        QVERIFY(parsedOperation->getMediumThreshold().isNull());
        QVERIFY(parsedOperation->getHighThreshold().isNull());
        QCOMPARE(homeDomain, parsedOperation->getHomeDomain());
-       QVERIFY(parsedOperation->getSigner()==0);
+       QVERIFY(parsedOperation->getSigner()==nullptr);
        QVERIFY(parsedOperation->getSignerWeight().isNull());
        QCOMPARE(source->getAccountId(), parsedOperation->getSourceAccount()->getAccountId());
 
@@ -351,7 +352,7 @@ private slots:
 
        auto xdr = operation->toXdr();
 
-       SetOptionsOperation* parsedOperation = (SetOptionsOperation*) SetOptionsOperation::fromXdr(xdr);
+       SetOptionsOperation* parsedOperation = static_cast<SetOptionsOperation*>(SetOptionsOperation::fromXdr(xdr));
 
        QVERIFY(!parsedOperation->getInflationDestination());
 
@@ -363,8 +364,8 @@ private slots:
        QVERIFY(parsedOperation->getMediumThreshold().isNull());
        QVERIFY(parsedOperation->getHighThreshold().isNull());
        QVERIFY(parsedOperation->getHomeDomain().isNull());
-       QVERIFY(memcmp(hash.data(), parsedOperation->getSigner()->hashX,hash.size())==0);
-       QCOMPARE(10, (int)parsedOperation->getSignerWeight());
+       QVERIFY(memcmp(hash.data(), parsedOperation->getSigner()->hashX,static_cast<size_t>(hash.size()))==0);
+       QCOMPARE(10, static_cast<int>(parsedOperation->getSignerWeight()));
        QCOMPARE(source->getAccountId(), parsedOperation->getSourceAccount()->getAccountId());
 
        QCOMPARE(operation->toXdrBase64()
@@ -392,7 +393,7 @@ private slots:
                ->setSourceAccount(opSource);
 
        auto xdr = operation->toXdr();
-       SetOptionsOperation* parsedOperation = (SetOptionsOperation*) SetOptionsOperation::fromXdr(xdr);
+       SetOptionsOperation* parsedOperation = static_cast<SetOptionsOperation*>(SetOptionsOperation::fromXdr(xdr));
 
        QVERIFY(!parsedOperation->getInflationDestination());
        QVERIFY(parsedOperation->getClearFlags().isNull());
@@ -411,7 +412,7 @@ private slots:
      }
 
 
-     void testManageOfferOperation() {
+     void testManageSellOfferOperation() {
        // GC5SIC4E3V56VOHJ3OZAX5SJDTWY52JYI2AFK6PUGSXFVRJQYQXXZBZF
        KeyPair* source = KeyPair::fromSecretSeed(QString("SC4CGETADVYTCR5HEAVZRB3DZQY5Y4J7RFNJTRA6ESMHIPEZUSTE2QDK"));
        // GBCP5W2VS7AEWV2HFRN7YYC623LTSV7VSTGIHFXDEJU7S5BAGVCSETRR
@@ -424,15 +425,15 @@ private slots:
        Price* priceObj = Price::fromString(price);
        qint64 offerId = 1;
 
-       ManageOfferOperation* operation = ManageOfferOperation::create(selling, buying, amount, price)
+       ManageSellOfferOperation* operation = ManageSellOfferOperation::create(selling, buying, amount, price)
            ->setOfferId(offerId)
            ->setSourceAccount(source);
 
        auto xdr = operation->toXdr();
-       ManageOfferOperation* parsedOperation = (ManageOfferOperation*) ManageOfferOperation::fromXdr(xdr);
+       ManageSellOfferOperation* parsedOperation = (ManageSellOfferOperation*) ManageSellOfferOperation::fromXdr(xdr);
 
 
-       QCOMPARE(xdr.operationManageOffer.amount,(qint64)100L);
+       QCOMPARE(xdr.operationManageSellOffer.amount,(qint64)100L);
        QVERIFY(dynamic_cast<AssetTypeNative*>(parsedOperation->getSelling()));
        QVERIFY(dynamic_cast<AssetTypeCreditAlphaNum4*>(parsedOperation->getBuying()));
        QVERIFY(parsedOperation->getBuying()->equals(buying));
@@ -446,7 +447,76 @@ private slots:
                 ,QString("AAAAAQAAAAC7JAuE3XvquOnbsgv2SRztjuk4RoBVefQ0rlrFMMQvfAAAAAMAAAAAAAAAAVVTRAAAAAAARP7bVZfAS1dHLFv8YF7W1zlX9ZTMg5bjImn5dCA1RSIAAAAAAAAAZABRYZcAX14QAAAAAAAAAAE="));
      }
 
-     void testCreatePassiveOfferOperation() {
+     void testManageBuyOfferOperation() {
+       // GC5SIC4E3V56VOHJ3OZAX5SJDTWY52JYI2AFK6PUGSXFVRJQYQXXZBZF
+       KeyPair* source = KeyPair::fromSecretSeed(QString("SC4CGETADVYTCR5HEAVZRB3DZQY5Y4J7RFNJTRA6ESMHIPEZUSTE2QDK"));
+       // GBCP5W2VS7AEWV2HFRN7YYC623LTSV7VSTGIHFXDEJU7S5BAGVCSETRR
+       KeyPair* issuer = KeyPair::fromSecretSeed(QString("SA64U7C5C7BS5IHWEPA7YWFN3Z6FE5L6KAMYUIT4AQ7KVTVLD23C6HEZ"));
+
+       Asset* selling = new AssetTypeNative();
+       Asset* buying = Asset::createNonNativeAsset("USD", issuer);
+       QString amount = "0.00001";
+       QString price = "0.85334384"; // n=5333399 d=6250000
+       Price* priceObj = Price::fromString(price);
+       qint64 offerId = 1;
+
+       ManageBuyOfferOperation* operation = ManageBuyOfferOperation::create(selling, buying, amount, price)
+           ->setOfferId(offerId)
+           ->setSourceAccount(source);
+
+       auto xdr = operation->toXdr();
+       ManageBuyOfferOperation* parsedOperation = (ManageBuyOfferOperation*) ManageBuyOfferOperation::fromXdr(xdr);
+
+
+       QCOMPARE(xdr.operationManageBuyOffer.buyAmount,(qint64)100L);
+       QVERIFY(dynamic_cast<AssetTypeNative*>(parsedOperation->getSelling()));
+       QVERIFY(dynamic_cast<AssetTypeCreditAlphaNum4*>(parsedOperation->getBuying()));
+       QVERIFY(parsedOperation->getBuying()->equals(buying));
+       QCOMPARE(parsedOperation->getAmount(),amount);
+       QCOMPARE(parsedOperation->getPrice(),price);
+       QCOMPARE(priceObj->getNumerator(), 5333399);
+       QCOMPARE(priceObj->getDenominator(), 6250000);
+       QCOMPARE(parsedOperation->getOfferId(),offerId);
+
+       QCOMPARE(operation->toXdrBase64()
+                ,QString("AAAAAQAAAAC7JAuE3XvquOnbsgv2SRztjuk4RoBVefQ0rlrFMMQvfAAAAAwAAAAAAAAAAVVTRAAAAAAARP7bVZfAS1dHLFv8YF7W1zlX9ZTMg5bjImn5dCA1RSIAAAAAAAAAZABRYZcAX14QAAAAAAAAAAE="));
+     }
+
+     void testManageSellOfferOperation_BadArithmeticRegression(){
+        // from https://github.com/stellar/java-stellar-sdk/issues/183
+
+        QByteArray transactionEnvelopeToDecode = QByteArray::fromBase64("AAAAAButy5zasS3DLZ5uFpZHL25aiHUfKRwdv1+3Wp12Ce7XAAAAZAEyGwYAAAAOAAAAAAAAAAAAAAABAAAAAQAAAAAbrcuc2rEtwy2ebhaWRy9uWoh1HykcHb9ft1qddgnu1wAAAAMAAAAAAAAAAUtJTgAAAAAARkrT28ebM6YQyhVZi1ttlwq/dk6ijTpyTNuHIMgUp+EAAAAAAAARPSfDKZ0AAv7oAAAAAAAAAAAAAAAAAAAAAXYJ7tcAAABAbE8rEoFt0Hcv41iwVCl74C1Hyr+Lj8ZyaYn7zTJhezClbc+pTW1KgYFIZOJiGVth2xFnBT1pMXuQkVdTlB3FCw==");
+
+        stellar::TransactionEnvelope transactionEnvelope;
+        QDataStream stream(&transactionEnvelopeToDecode,QIODevice::ReadOnly);
+        stream >> transactionEnvelope;
+
+        QCOMPARE(transactionEnvelope.tx.operations.value.length(),1);
+        auto & opXdr = transactionEnvelope.tx.operations.value[0];
+        ManageSellOfferOperation* op = (ManageSellOfferOperation*)Operation::fromXdr(opXdr);
+
+        QCOMPARE(op->getPrice(),"3397.893306099996");
+      }
+
+     void testManageBuyOfferOperation_BadArithmeticRegression(){
+        // from https://github.com/stellar/java-stellar-sdk/issues/183
+
+        QByteArray transactionEnvelopeToDecode = QByteArray::fromBase64("AAAAAButy5zasS3DLZ5uFpZHL25aiHUfKRwdv1+3Wp12Ce7XAAAAZAEyGwYAAAAxAAAAAAAAAAAAAAABAAAAAQAAAAAbrcuc2rEtwy2ebhaWRy9uWoh1HykcHb9ft1qddgnu1wAAAAwAAAABS0lOAAAAAABGStPbx5szphDKFVmLW22XCr92TqKNOnJM24cgyBSn4QAAAAAAAAAAACNyOCfDKZ0AAv7oAAAAAAABv1IAAAAAAAAAAA==");
+
+        stellar::TransactionEnvelope transactionEnvelope;
+        QDataStream stream(&transactionEnvelopeToDecode,QIODevice::ReadOnly);
+        stream >> transactionEnvelope;
+
+        QCOMPARE(transactionEnvelope.tx.operations.value.length(),1);
+
+        Transaction * t = Transaction::fromEnvelopeXdr(transactionEnvelope);
+
+        ManageBuyOfferOperation* op = (ManageBuyOfferOperation*)t->getOperations().first();//Operation::fromXdr(transactionEnvelope.tx.operations.value[0]);
+
+        QCOMPARE(op->getPrice(),"3397.893306099996");//3397.893306099995925186
+      }
+
+     void testCreatePassiveSellOfferOperation() {
        // GC5SIC4E3V56VOHJ3OZAX5SJDTWY52JYI2AFK6PUGSXFVRJQYQXXZBZF
        KeyPair* source = KeyPair::fromSecretSeed(QString("SC4CGETADVYTCR5HEAVZRB3DZQY5Y4J7RFNJTRA6ESMHIPEZUSTE2QDK"));
        // GBCP5W2VS7AEWV2HFRN7YYC623LTSV7VSTGIHFXDEJU7S5BAGVCSETRR
@@ -458,13 +528,13 @@ private slots:
        QString price = "2.93850088"; // n=36731261 d=12500000
        Price* priceObj = Price::fromString(price);
 
-       CreatePassiveOfferOperation* operation = new CreatePassiveOfferOperation(selling, buying, amount, price);
+       CreatePassiveSellOfferOperation* operation = new CreatePassiveSellOfferOperation(selling, buying, amount, price);
        operation->setSourceAccount(source);
 
        auto xdr = operation->toXdr();
-       CreatePassiveOfferOperation* parsedOperation = (CreatePassiveOfferOperation*) CreatePassiveOfferOperation::fromXdr(xdr);
+       CreatePassiveSellOfferOperation* parsedOperation = static_cast<CreatePassiveSellOfferOperation*>(CreatePassiveSellOfferOperation::fromXdr(xdr));
 
-       QVERIFY(100L == xdr.operationCreatePassiveOffer.amount);
+       QVERIFY(100L == xdr.operationCreatePassiveSellOffer.amount);
        QVERIFY(dynamic_cast<AssetTypeNative*>(parsedOperation->getSelling()));
        QVERIFY(dynamic_cast<AssetTypeCreditAlphaNum4*>(parsedOperation->getBuying()));
        QVERIFY(parsedOperation->getBuying()->equals(buying));
@@ -509,7 +579,7 @@ private slots:
 
          auto xdr = operation->toXdr();
 
-         ManageDataOperation* parsedOperation = (ManageDataOperation*) Operation::fromXdr(xdr);
+         ManageDataOperation* parsedOperation = static_cast<ManageDataOperation*>(Operation::fromXdr(xdr));
 
          QCOMPARE(parsedOperation->getName(),QString("test"));
          QCOMPARE(parsedOperation->getValue(),data);
@@ -527,7 +597,7 @@ private slots:
 
          auto xdr = operation->toXdr();
 
-         ManageDataOperation* parsedOperation = (ManageDataOperation*) Operation::fromXdr(xdr);
+         ManageDataOperation* parsedOperation = static_cast<ManageDataOperation*>(Operation::fromXdr(xdr));
 
          QCOMPARE(parsedOperation->getName(),QString("test"));
          QCOMPARE(parsedOperation->getValue(),QByteArray());
@@ -542,7 +612,7 @@ private slots:
        BumpSequenceOperation* operation = BumpSequenceOperation::create(156L)
                ->setSourceAccount(source);
         auto xdr = operation->toXdr();
-        BumpSequenceOperation* parsedOperation = (BumpSequenceOperation*) Operation::fromXdr(xdr);
+        BumpSequenceOperation* parsedOperation = static_cast<BumpSequenceOperation*>(Operation::fromXdr(xdr));
         QCOMPARE(parsedOperation->getBumpTo(),156L);
         QCOMPARE(operation->toXdrBase64(),QString("AAAAAQAAAAC7JAuE3XvquOnbsgv2SRztjuk4RoBVefQ0rlrFMMQvfAAAAAsAAAAAAAAAnA=="));
      }

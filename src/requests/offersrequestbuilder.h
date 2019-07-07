@@ -40,6 +40,14 @@ public:
 
      OffersRequestBuilder& limit(int number);
      OffersRequestBuilder& order(RequestBuilder::Order direction);
+
+     /**
+      * Allows to stream SSE events from horizon.
+      * Certain endpoints in Horizon can be called in streaming mode using Server-Sent Events.
+      * This mode will keep the connection to horizon open and horizon will continue to return
+      * responses as ledgers close.
+      */
+     OffersRequestBuilder& stream();
 };
 
 #endif // OFFERSREQUESTBUILDER_H

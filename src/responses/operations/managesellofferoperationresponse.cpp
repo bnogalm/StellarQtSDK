@@ -1,16 +1,16 @@
-#include "manageofferoperationresponse.h"
+#include "managesellofferoperationresponse.h"
 #include "../../asset.h"
 #include "../../assettypenative.h"
 #include "../../keypair.h"
-ManageOfferOperationResponse::ManageOfferOperationResponse(QNetworkReply * reply)
+ManageSellOfferOperationResponse::ManageSellOfferOperationResponse(QNetworkReply * reply)
     :OperationResponse(reply)
-  ,m_buyingAsset(0),m_sellingAsset(0)
+  ,m_buyingAsset(nullptr),m_sellingAsset(nullptr)
 {
 
 }
 
 
-ManageOfferOperationResponse::~ManageOfferOperationResponse()
+ManageSellOfferOperationResponse::~ManageSellOfferOperationResponse()
 {
     if(m_buyingAsset)
         delete m_buyingAsset;
@@ -18,19 +18,19 @@ ManageOfferOperationResponse::~ManageOfferOperationResponse()
         delete m_sellingAsset;
 }
 
-qint32 ManageOfferOperationResponse::getOfferId() const {
+qint32 ManageSellOfferOperationResponse::getOfferId() const {
     return m_offerID;
 }
 
-QString ManageOfferOperationResponse::getAmount() const {
+QString ManageSellOfferOperationResponse::getAmount() const {
     return m_amount;
 }
 
-QString ManageOfferOperationResponse::getPrice() const{
+QString ManageSellOfferOperationResponse::getPrice() const{
     return m_price;
 }
 
-Asset* ManageOfferOperationResponse::getBuyingAsset() {
+Asset* ManageSellOfferOperationResponse::getBuyingAsset() {
     if(m_buyingAsset)
         return m_buyingAsset;
     if (m_buyingAssetType =="native") {
@@ -42,7 +42,7 @@ Asset* ManageOfferOperationResponse::getBuyingAsset() {
     return m_buyingAsset;
 }
 
-Asset* ManageOfferOperationResponse::getSellingAsset() {
+Asset* ManageSellOfferOperationResponse::getSellingAsset() {
     if(m_sellingAsset)
         return m_sellingAsset;
     if (m_sellingAssetType =="native") {
@@ -54,86 +54,86 @@ Asset* ManageOfferOperationResponse::getSellingAsset() {
     return m_sellingAsset;
 }
 
-QString ManageOfferOperationResponse::buyingAssetType() const
+QString ManageSellOfferOperationResponse::buyingAssetType() const
 {
     return m_buyingAssetType;
 }
 
-QString ManageOfferOperationResponse::buyingAssetCode() const
+QString ManageSellOfferOperationResponse::buyingAssetCode() const
 {
     return m_buyingAssetCode;
 }
 
-QString ManageOfferOperationResponse::buyingAssetIssuer() const
+QString ManageSellOfferOperationResponse::buyingAssetIssuer() const
 {
     return m_buyingAssetIssuer;
 }
 
-QString ManageOfferOperationResponse::sellingAssetType() const
+QString ManageSellOfferOperationResponse::sellingAssetType() const
 {
     return m_sellingAssetType;
 }
 
-QString ManageOfferOperationResponse::sellingAssetCode() const
+QString ManageSellOfferOperationResponse::sellingAssetCode() const
 {
     return m_sellingAssetCode;
 }
 
-QString ManageOfferOperationResponse::sellingAssetIssuer() const
+QString ManageSellOfferOperationResponse::sellingAssetIssuer() const
 {
     return m_sellingAssetIssuer;
 }
 
-void ManageOfferOperationResponse::setBuyingAssetType(QString buyingAssetType)
+void ManageSellOfferOperationResponse::setBuyingAssetType(QString buyingAssetType)
 {
     if(m_buyingAsset){
         delete m_buyingAsset;
-        m_buyingAsset=0;
+        m_buyingAsset=nullptr;
     }
     m_buyingAssetType = buyingAssetType;
 }
 
-void ManageOfferOperationResponse::setBuyingAssetCode(QString buyingAssetCode)
+void ManageSellOfferOperationResponse::setBuyingAssetCode(QString buyingAssetCode)
 {
     if(m_buyingAsset){
         delete m_buyingAsset;
-        m_buyingAsset=0;
+        m_buyingAsset=nullptr;
     }
     m_buyingAssetCode = buyingAssetCode;
 }
 
-void ManageOfferOperationResponse::setBuyingAssetIssuer(QString buyingAssetIssuer)
+void ManageSellOfferOperationResponse::setBuyingAssetIssuer(QString buyingAssetIssuer)
 {
     if(m_buyingAsset){
         delete m_buyingAsset;
-        m_buyingAsset=0;
+        m_buyingAsset=nullptr;
     }
     m_buyingAssetIssuer = buyingAssetIssuer;
 }
 
-void ManageOfferOperationResponse::setSellingAssetType(QString sellingAssetType)
+void ManageSellOfferOperationResponse::setSellingAssetType(QString sellingAssetType)
 {
     if(m_sellingAsset){
         delete m_sellingAsset;
-        m_sellingAsset=0;
+        m_sellingAsset=nullptr;
     }
     m_sellingAssetType = sellingAssetType;
 }
 
-void ManageOfferOperationResponse::setSellingAssetCode(QString sellingAssetCode)
+void ManageSellOfferOperationResponse::setSellingAssetCode(QString sellingAssetCode)
 {
     if(m_sellingAsset){
         delete m_sellingAsset;
-        m_sellingAsset=0;
+        m_sellingAsset=nullptr;
     }
     m_sellingAssetCode = sellingAssetCode;
 }
 
-void ManageOfferOperationResponse::setSellingAssetIssuer(QString sellingAssetIssuer)
+void ManageSellOfferOperationResponse::setSellingAssetIssuer(QString sellingAssetIssuer)
 {
     if(m_sellingAsset){
         delete m_sellingAsset;
-        m_sellingAsset=0;
+        m_sellingAsset=nullptr;
     }
     m_sellingAssetIssuer = sellingAssetIssuer;
 }

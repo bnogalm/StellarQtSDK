@@ -32,26 +32,26 @@ class PaymentOperationResponse : public OperationResponse
 
 public:
     PaymentOperationResponse(QNetworkReply* reply=nullptr);
-   virtual ~PaymentOperationResponse();
-      QString getAmount();
+    virtual ~PaymentOperationResponse();
+    QString getAmount();
 
-      QString assetType();
-      QString assetCode();
-      Asset* getAsset();
+    QString assetType();
+    QString assetCode();
+    Asset* getAsset();
 
-      KeyPair& getFrom();
+    KeyPair& getFrom();
 
-      KeyPair& getTo();
-      QString from() const;
-      QString to() const;
-      QString assetIssuer() const;
+    KeyPair& getTo();
+    QString from() const;
+    QString to() const;
+    QString assetIssuer() const;
 
 public slots:
-      void setFrom(QString from);
-      void setTo(QString to);
-      void setAssetType(QString assetType);
-      void setAssetCode(QString assetCode);
-      void setAssetIssuer(QString assetIssuer);
+    void setFrom(QString from);
+    void setTo(QString to);
+    void setAssetType(QString assetType);
+    void setAssetCode(QString assetCode);
+    void setAssetIssuer(QString assetIssuer);
 };
 
 Q_DECLARE_METATYPE(PaymentOperationResponse*)

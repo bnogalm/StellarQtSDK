@@ -6,6 +6,8 @@ ManageDataOperationResponse::ManageDataOperationResponse(QNetworkReply *reply)
 
 }
 
+ManageDataOperationResponse::~ManageDataOperationResponse(){}
+
 QString ManageDataOperationResponse::getName() const
 {
     return m_name;

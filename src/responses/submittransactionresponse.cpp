@@ -56,7 +56,7 @@ QString SubmitTransactionResponse::getEnvelopeXdr() {
     }
 }
 
-quint64 SubmitTransactionResponse::getOfferIdFromResult(int position) {
+qint64 SubmitTransactionResponse::getOfferIdFromResult(int position) {
     if (!this->isSuccess()) {
         return 0;
     }
@@ -69,13 +69,22 @@ quint64 SubmitTransactionResponse::getOfferIdFromResult(int position) {
     if (result.results.length()<=position) {
         return 0;
     }
+    auto& operationResult = result.results.at(position);
+    auto operationType = operationResult.type;
 
-    if (result.results.at(position).type != stellar::OperationType::MANAGE_OFFER) {
-        return 0;
+    if (operationType == stellar::OperationType::MANAGE_SELL_OFFER) {
+        auto& effect = operationResult.manageSellOfferResult.success.effect;
+        if (effect == stellar::ManageOfferEffect::MANAGE_OFFER_CREATED
+                ||effect == stellar::ManageOfferEffect::MANAGE_OFFER_UPDATED) {
+            return operationResult.manageSellOfferResult.success.offer.offerID;
+        }
     }
-    if (result.results.at(position).manageOfferResult.success.effect == stellar::ManageOfferEffect::MANAGE_OFFER_CREATED
-            ||result.results.at(position).manageOfferResult.success.effect == stellar::ManageOfferEffect::MANAGE_OFFER_UPDATED) {
-        return result.results.at(position).manageOfferResult.success.offer.offerID;
+    if (operationType == stellar::OperationType::MANAGE_BUY_OFFER) {
+        auto& effect = operationResult.manageBuyOfferResult.success.effect;
+        if (effect == stellar::ManageOfferEffect::MANAGE_OFFER_CREATED
+                ||effect == stellar::ManageOfferEffect::MANAGE_OFFER_UPDATED) {
+            return operationResult.manageBuyOfferResult.success.offer.offerID;
+        }
     }
     return 0;
 }

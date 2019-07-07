@@ -5,3 +5,5 @@ InflationOperationResponse::InflationOperationResponse(QNetworkReply *reply)
 {
 
 }
+
+InflationOperationResponse::~InflationOperationResponse(){}

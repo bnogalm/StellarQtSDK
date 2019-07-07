@@ -1,16 +1,16 @@
-#include "createpassiveofferoperationresponse.h"
-#include "../../asset.h"
-#include "../../keypair.h"
+#include "managebuyofferoperationresponse.h"
 #include "../../asset.h"
 #include "../../assettypenative.h"
-
-CreatePassiveSellOfferOperationResponse::CreatePassiveSellOfferOperationResponse(QNetworkReply *reply)
-    :OperationResponse(reply),m_offerID(0),m_buyingAsset(nullptr),m_sellingAsset(nullptr)
+#include "../../keypair.h"
+ManageBuyOfferOperationResponse::ManageBuyOfferOperationResponse(QNetworkReply * reply)
+    :OperationResponse(reply)
+  ,m_buyingAsset(nullptr),m_sellingAsset(nullptr)
 {
 
 }
 
-CreatePassiveSellOfferOperationResponse::~CreatePassiveSellOfferOperationResponse()
+
+ManageBuyOfferOperationResponse::~ManageBuyOfferOperationResponse()
 {
     if(m_buyingAsset)
         delete m_buyingAsset;
@@ -18,19 +18,19 @@ CreatePassiveSellOfferOperationResponse::~CreatePassiveSellOfferOperationRespons
         delete m_sellingAsset;
 }
 
-qint32 CreatePassiveSellOfferOperationResponse::getOfferId() const {
+qint32 ManageBuyOfferOperationResponse::getOfferId() const {
     return m_offerID;
 }
 
-QString CreatePassiveSellOfferOperationResponse::getAmount() const {
+QString ManageBuyOfferOperationResponse::getAmount() const {
     return m_amount;
 }
 
-QString CreatePassiveSellOfferOperationResponse::getPrice() const{
+QString ManageBuyOfferOperationResponse::getPrice() const{
     return m_price;
 }
 
-Asset* CreatePassiveSellOfferOperationResponse::getBuyingAsset() {
+Asset* ManageBuyOfferOperationResponse::getBuyingAsset() {
     if(m_buyingAsset)
         return m_buyingAsset;
     if (m_buyingAssetType =="native") {
@@ -42,7 +42,7 @@ Asset* CreatePassiveSellOfferOperationResponse::getBuyingAsset() {
     return m_buyingAsset;
 }
 
-Asset* CreatePassiveSellOfferOperationResponse::getSellingAsset() {
+Asset* ManageBuyOfferOperationResponse::getSellingAsset() {
     if(m_sellingAsset)
         return m_sellingAsset;
     if (m_sellingAssetType =="native") {
@@ -54,37 +54,37 @@ Asset* CreatePassiveSellOfferOperationResponse::getSellingAsset() {
     return m_sellingAsset;
 }
 
-QString CreatePassiveSellOfferOperationResponse::buyingAssetType() const
+QString ManageBuyOfferOperationResponse::buyingAssetType() const
 {
     return m_buyingAssetType;
 }
 
-QString CreatePassiveSellOfferOperationResponse::buyingAssetCode() const
+QString ManageBuyOfferOperationResponse::buyingAssetCode() const
 {
     return m_buyingAssetCode;
 }
 
-QString CreatePassiveSellOfferOperationResponse::buyingAssetIssuer() const
+QString ManageBuyOfferOperationResponse::buyingAssetIssuer() const
 {
     return m_buyingAssetIssuer;
 }
 
-QString CreatePassiveSellOfferOperationResponse::sellingAssetType() const
+QString ManageBuyOfferOperationResponse::sellingAssetType() const
 {
     return m_sellingAssetType;
 }
 
-QString CreatePassiveSellOfferOperationResponse::sellingAssetCode() const
+QString ManageBuyOfferOperationResponse::sellingAssetCode() const
 {
     return m_sellingAssetCode;
 }
 
-QString CreatePassiveSellOfferOperationResponse::sellingAssetIssuer() const
+QString ManageBuyOfferOperationResponse::sellingAssetIssuer() const
 {
     return m_sellingAssetIssuer;
 }
 
-void CreatePassiveSellOfferOperationResponse::setBuyingAssetType(QString buyingAssetType)
+void ManageBuyOfferOperationResponse::setBuyingAssetType(QString buyingAssetType)
 {
     if(m_buyingAsset){
         delete m_buyingAsset;
@@ -93,7 +93,7 @@ void CreatePassiveSellOfferOperationResponse::setBuyingAssetType(QString buyingA
     m_buyingAssetType = buyingAssetType;
 }
 
-void CreatePassiveSellOfferOperationResponse::setBuyingAssetCode(QString buyingAssetCode)
+void ManageBuyOfferOperationResponse::setBuyingAssetCode(QString buyingAssetCode)
 {
     if(m_buyingAsset){
         delete m_buyingAsset;
@@ -102,7 +102,7 @@ void CreatePassiveSellOfferOperationResponse::setBuyingAssetCode(QString buyingA
     m_buyingAssetCode = buyingAssetCode;
 }
 
-void CreatePassiveSellOfferOperationResponse::setBuyingAssetIssuer(QString buyingAssetIssuer)
+void ManageBuyOfferOperationResponse::setBuyingAssetIssuer(QString buyingAssetIssuer)
 {
     if(m_buyingAsset){
         delete m_buyingAsset;
@@ -111,7 +111,7 @@ void CreatePassiveSellOfferOperationResponse::setBuyingAssetIssuer(QString buyin
     m_buyingAssetIssuer = buyingAssetIssuer;
 }
 
-void CreatePassiveSellOfferOperationResponse::setSellingAssetType(QString sellingAssetType)
+void ManageBuyOfferOperationResponse::setSellingAssetType(QString sellingAssetType)
 {
     if(m_sellingAsset){
         delete m_sellingAsset;
@@ -120,7 +120,7 @@ void CreatePassiveSellOfferOperationResponse::setSellingAssetType(QString sellin
     m_sellingAssetType = sellingAssetType;
 }
 
-void CreatePassiveSellOfferOperationResponse::setSellingAssetCode(QString sellingAssetCode)
+void ManageBuyOfferOperationResponse::setSellingAssetCode(QString sellingAssetCode)
 {
     if(m_sellingAsset){
         delete m_sellingAsset;
@@ -129,7 +129,7 @@ void CreatePassiveSellOfferOperationResponse::setSellingAssetCode(QString sellin
     m_sellingAssetCode = sellingAssetCode;
 }
 
-void CreatePassiveSellOfferOperationResponse::setSellingAssetIssuer(QString sellingAssetIssuer)
+void ManageBuyOfferOperationResponse::setSellingAssetIssuer(QString sellingAssetIssuer)
 {
     if(m_sellingAsset){
         delete m_sellingAsset;

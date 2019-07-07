@@ -20,6 +20,9 @@ INCLUDEPATH *=  $$PWD/src/
 SOURCES += \
     $$PWD/src/account.cpp \
     $$PWD/src/accountmergeoperation.cpp \
+    $$PWD/src/createpassivesellofferoperation.cpp \
+    $$PWD/src/managebuyofferoperation.cpp \
+    $$PWD/src/managesellofferoperation.cpp \
     $$PWD/src/operation.cpp \
     $$PWD/src/keypair.cpp \
     $$PWD/src/allowtrustoperation.cpp \
@@ -30,7 +33,11 @@ SOURCES += \
     $$PWD/src/assettypenative.cpp \
     $$PWD/src/changetrustoperation.cpp \
     $$PWD/src/createaccountoperation.cpp \
-    $$PWD/src/createpassiveofferoperation.cpp \
+    $$PWD/src/requests/feestatsrequestbuilder.cpp \
+    $$PWD/src/responses/feestatsresponse.cpp \
+    $$PWD/src/responses/operations/bumpsequenceoperationresponse.cpp \
+    $$PWD/src/responses/operations/managebuyofferoperationresponse.cpp \
+    $$PWD/src/responses/operations/managesellofferoperationresponse.cpp \
     $$PWD/src/strkey.cpp \
     $$PWD/src/inflationoperation.cpp \
     $$PWD/src/util.cpp \
@@ -89,8 +96,6 @@ SOURCES += \
     $$PWD/src/managedataoperation.cpp \
     $$PWD/src/responses/operations/managedataoperationresponse.cpp \
     $$PWD/src/responses/operations/setoptionsoperationresponse.cpp \
-    $$PWD/src/manageofferoperation.cpp \
-    $$PWD/src/responses/operations/manageofferoperationresponse.cpp \
     $$PWD/xdr/stellartransaction.cpp \
     $$PWD/src/requests/tradesrequestbuilder.cpp \
     $$PWD/src/responses/traderesponse.cpp \
@@ -135,8 +140,6 @@ SOURCES += \
     $$PWD/src/requests/rootrequestbuilder.cpp \
     $$PWD/src/bumpsequenceoperation.cpp \
     $$PWD/src/timebounds.cpp \
-    $$PWD/src/requests/operationfeestatsrequestbuilder.cpp \
-    $$PWD/src/responses/operationfeestatsresponse.cpp \
     $$PWD/src/slip10.cpp
 
 # The following define makes your compiler emit warnings if you use
@@ -151,6 +154,14 @@ DEFINES += QT_DEPRECATED_WARNINGS
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 HEADERS += \
+    $$PWD/src/createpassivesellofferoperation.h \
+    $$PWD/src/managebuyofferoperation.h \
+    $$PWD/src/managesellofferoperation.h \
+    $$PWD/src/requests/feestatsrequestbuilder.h \
+    $$PWD/src/responses/feestatsresponse.h \
+    $$PWD/src/responses/operations/bumpsequenceoperationresponse.h \
+    $$PWD/src/responses/operations/managebuyofferoperationresponse.h \
+    $$PWD/src/responses/operations/managesellofferoperationresponse.h \
     $$PWD/xdr/stellartypes.h \
     $$PWD/src/account.h \
     $$PWD/src/transactionbuilderaccount.h \
@@ -165,7 +176,6 @@ HEADERS += \
     $$PWD/src/assettypenative.h \
     $$PWD/src/changetrustoperation.h \
     $$PWD/src/createaccountoperation.h \
-    $$PWD/src/createpassiveofferoperation.h \
     $$PWD/src/strkey.h \
     $$PWD/src/inflationoperation.h \
     $$PWD/src/util.h \
@@ -224,8 +234,6 @@ HEADERS += \
     $$PWD/src/managedataoperation.h \
     $$PWD/src/responses/operations/managedataoperationresponse.h \
     $$PWD/src/responses/operations/setoptionsoperationresponse.h \
-    $$PWD/src/manageofferoperation.h \
-    $$PWD/src/responses/operations/manageofferoperationresponse.h \
     $$PWD/src/requests/tradesrequestbuilder.h \
     $$PWD/src/responses/traderesponse.h \
     $$PWD/src/responses/pathresponse.h \
@@ -270,8 +278,6 @@ HEADERS += \
     $$PWD/src/requests/rootrequestbuilder.h \
     $$PWD/src/bumpsequenceoperation.h \
     $$PWD/src/timebounds.h \
-    $$PWD/src/requests/operationfeestatsrequestbuilder.h \
-    $$PWD/src/responses/operationfeestatsresponse.h \
     $$PWD/src/slip10.h
 
 #to maintain it easier, until we dont support more than read FEDERATION_SERVER address, we dont use CPPTOML

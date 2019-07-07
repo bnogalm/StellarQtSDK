@@ -25,19 +25,11 @@ public:
     virtual ~CreateAccountOperationResponse();
     KeyPair& getAccount();
 
-    QString getStartingBalance() {
-        return m_startingBalance;
-    }
+    QString getStartingBalance() const;
 
     KeyPair& getFunder();
-    QString account() const
-    {
-        return m_account;
-    }
-    QString funder() const
-    {
-        return m_funder;
-    }
+    QString account() const;
+    QString funder() const;
 
 public slots:
     void setAccount(QString account);

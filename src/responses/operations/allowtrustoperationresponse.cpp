@@ -3,10 +3,12 @@
 #include "../../asset.h"
 #include "../../assettypenative.h"
 AllowTrustOperationResponse::AllowTrustOperationResponse(QNetworkReply *reply)
-    :OperationResponse(reply),m_trustorKeypair(0),m_trusteeKeypair(0),m_asset(0),m_authorize(false)
+    :OperationResponse(reply),m_trustorKeypair(nullptr),m_trusteeKeypair(nullptr),m_asset(nullptr),m_authorize(false)
 {
 
 }
+
+AllowTrustOperationResponse::~AllowTrustOperationResponse(){}
 
 KeyPair& AllowTrustOperationResponse::getTrustor() {
     if(!m_trustorKeypair)
@@ -66,7 +68,7 @@ void AllowTrustOperationResponse::setTrustor(QString trustor)
 {
     if(m_trustorKeypair){
         delete m_trustorKeypair;
-        m_trustorKeypair=0;
+        m_trustorKeypair=nullptr;
     }
     m_trustor = trustor;
 }
@@ -75,7 +77,7 @@ void AllowTrustOperationResponse::setTrustee(QString trustee)
 {
     if(m_trusteeKeypair){
         delete m_trusteeKeypair;
-        m_trusteeKeypair=0;
+        m_trusteeKeypair=nullptr;
     }
     m_trustee = trustee;
 }
@@ -84,7 +86,7 @@ void AllowTrustOperationResponse::setAssetType(QString assetType)
 {
     if(m_asset){
         delete m_asset;
-        m_asset=0;
+        m_asset=nullptr;
     }
     m_assetType = assetType;
 }
@@ -93,7 +95,7 @@ void AllowTrustOperationResponse::setAssetCode(QString assetCode)
 {
     if(m_asset){
         delete m_asset;
-        m_asset=0;
+        m_asset=nullptr;
     }
     m_assetCode = assetCode;
 }
@@ -102,7 +104,7 @@ void AllowTrustOperationResponse::setAssetIssuer(QString assetIssuer)
 {
     if(m_asset){
         delete m_asset;
-        m_asset=0;
+        m_asset=nullptr;
     }
     m_assetIssuer = assetIssuer;
 }
