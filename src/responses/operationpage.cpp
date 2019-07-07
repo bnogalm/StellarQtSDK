@@ -11,7 +11,7 @@
 #include "operations/createpassiveofferoperationresponse.h"
 #include "operations/managedataoperationresponse.h"
 #include "operations/setoptionsoperationresponse.h"
-#include "operations/manageofferoperationresponse.h"
+#include "operations/managesellofferoperationresponse.h"
 #include "operations/bumpsequenceoperationresponse.h"
 
 OperationPage::OperationPage(QNetworkReply *reply):Page<OperationResponse>(reply)

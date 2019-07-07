@@ -1,20 +1,20 @@
-#ifndef MANAGEOFFEROPERATIONRESPONSE_H
-#define MANAGEOFFEROPERATIONRESPONSE_H
+#ifndef MANAGESELLOFFEROPERATIONRESPONSE_H
+#define MANAGESELLOFFEROPERATIONRESPONSE_H
 
 #include <QObject>
 #include "operationresponse.h"
 
 class Asset;
 /**
- * Represents ManageOffer operation response.
+ * Represents ManageSellOfferOperationResponse operation response.
  * @see <a href="https://www.stellar.org/developers/horizon/reference/resources/operation.html" target="_blank">Operation documentation</a>
  * @see org.stellar.sdk.requests.OperationsRequestBuilder
  * @see org.stellar.sdk.Server#operations()
  */
-class ManageOfferOperationResponse : public OperationResponse
+class ManageSellOfferOperationResponse : public OperationResponse
 {
     Q_OBJECT
-    Q_PROPERTY(quint32 offer_id MEMBER m_offerID)
+    Q_PROPERTY(qint32 offer_id MEMBER m_offerID)
     Q_PROPERTY(QString amount MEMBER m_amount)
     // Price is not implemented yet in horizon
     Q_PROPERTY(QString price MEMBER m_price)
@@ -27,7 +27,7 @@ class ManageOfferOperationResponse : public OperationResponse
     Q_PROPERTY(QString selling_asset_code READ sellingAssetCode WRITE setSellingAssetCode)
     Q_PROPERTY(QString selling_asset_issuer READ sellingAssetIssuer WRITE setSellingAssetIssuer)
 
-    quint32 m_offerID;
+    qint32 m_offerID;
     QString m_amount;
     QString m_price;
 
@@ -43,8 +43,8 @@ class ManageOfferOperationResponse : public OperationResponse
 
 
 public:
-    ManageOfferOperationResponse(QNetworkReply *reply = nullptr);
-    virtual ~ManageOfferOperationResponse();
+    ManageSellOfferOperationResponse(QNetworkReply *reply = nullptr);
+    virtual ~ManageSellOfferOperationResponse();
     qint32 getOfferId() const;
     QString getAmount() const;
     QString getPrice() const;
@@ -65,5 +65,5 @@ public slots:
     void setSellingAssetCode(QString sellingAssetCode);
     void setSellingAssetIssuer(QString sellingAssetIssuer);
 };
-Q_DECLARE_METATYPE(ManageOfferOperationResponse*)
-#endif // MANAGEOFFEROPERATIONRESPONSE_H
+Q_DECLARE_METATYPE(ManageSellOfferOperationResponse*)
+#endif // MANAGESELLOFFEROPERATIONRESPONSE_H

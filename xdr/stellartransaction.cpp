@@ -15,10 +15,10 @@ stellar::Operation::Operation(const stellar::Operation &op){
     case OperationType::PATH_PAYMENT:
         new (&operationPathPayment) PathPaymentOp();
         operationPathPayment = op.operationPathPayment; break;
-    case OperationType::MANAGE_OFFER:
-        operationManageOffer = op.operationManageOffer; break;
-    case OperationType::CREATE_PASSIVE_OFFER:
-        operationCreatePassiveOffer = op.operationCreatePassiveOffer; break;
+    case OperationType::MANAGE_SELL_OFFER:
+        operationManageSellOffer = op.operationManageSellOffer; break;
+    case OperationType::CREATE_PASSIVE_SELL_OFFER:
+        operationCreatePassiveSellOffer = op.operationCreatePassiveSellOffer; break;
     case OperationType::SET_OPTIONS:
         new (&operationSetOptions) SetOptionsOp();
         operationSetOptions = op.operationSetOptions; break;
@@ -35,6 +35,8 @@ stellar::Operation::Operation(const stellar::Operation &op){
         operationManageData = op.operationManageData; break;
     case OperationType::BUMP_SEQUENCE:
         operationBumpSequence = op.operationBumpSequence; break;
+    case OperationType::MANAGE_BUY_OFFER:
+        operationManageBuyOffer = op.operationManageBuyOffer; break;
     default: break;
     }
 }
@@ -81,10 +83,10 @@ const stellar::Operation &stellar::Operation::operator =(const stellar::Operatio
     case OperationType::PATH_PAYMENT:
         new (&operationPathPayment) PathPaymentOp();
         operationPathPayment = op.operationPathPayment; break;
-    case OperationType::MANAGE_OFFER:
-        operationManageOffer = op.operationManageOffer; break;
-    case OperationType::CREATE_PASSIVE_OFFER:
-        operationCreatePassiveOffer = op.operationCreatePassiveOffer; break;
+    case OperationType::MANAGE_SELL_OFFER:
+        operationManageSellOffer = op.operationManageSellOffer; break;
+    case OperationType::CREATE_PASSIVE_SELL_OFFER:
+        operationCreatePassiveSellOffer = op.operationCreatePassiveSellOffer; break;
     case OperationType::SET_OPTIONS:
         new (&operationSetOptions) SetOptionsOp();
         operationSetOptions = op.operationSetOptions; break;
@@ -101,6 +103,160 @@ const stellar::Operation &stellar::Operation::operator =(const stellar::Operatio
         operationManageData = op.operationManageData; break;
     case OperationType::BUMP_SEQUENCE:
         operationBumpSequence = op.operationBumpSequence; break;
+    case OperationType::MANAGE_BUY_OFFER:
+        operationManageBuyOffer = op.operationManageBuyOffer; break;
+    default: break;
+    }
+    return *this;
+}
+
+stellar::OperationResult::OperationResult():type(OperationType::CREATE_ACCOUNT)
+{
+
+}
+//CreateAccountResult createAccountResult;
+//SetOptionsResult setOptionsResult;
+//ChangeTrustResult changeTrustResult;
+//AllowTrustResult allowTrustResult;
+//AccountMergeResult accountMergeResult;
+//ManageDataResult manageDataResult;
+//BumpSequenceResult bumpSequenceResult;
+//};
+////no trivial
+//ManageBuyOfferResult manageBuyOfferResult;
+//PaymentResult paymentResult;
+//PathPaymentResult pathPaymentResult;
+//ManageSellOfferResult manageSellOfferResult;
+//ManageSellOfferResult createPassiveOfferResult;
+//InflationResult inflationResult;
+stellar::OperationResult::OperationResult(const stellar::OperationResult &op)
+{
+    code = op.code;
+    type = op.type;
+    switch(op.type){
+    case OperationType::CREATE_ACCOUNT:
+        createAccountResult = op.createAccountResult; break;
+    case OperationType::PAYMENT:
+        new (&pathPaymentResult) PaymentResult();
+        paymentResult = op.paymentResult; break;
+    case OperationType::PATH_PAYMENT:
+        new (&pathPaymentResult) PathPaymentResult();
+        pathPaymentResult = op.pathPaymentResult; break;
+    case OperationType::MANAGE_SELL_OFFER:
+        new (&manageSellOfferResult) ManageSellOfferResult();
+        manageSellOfferResult = op.manageSellOfferResult; break;
+    case OperationType::CREATE_PASSIVE_SELL_OFFER:
+        new (&createPassiveOfferResult) ManageSellOfferResult();
+        createPassiveOfferResult = op.createPassiveOfferResult; break;
+    case OperationType::SET_OPTIONS:
+        setOptionsResult = op.setOptionsResult; break;
+    case OperationType::CHANGE_TRUST:
+        changeTrustResult = op.changeTrustResult; break;
+    case OperationType::ALLOW_TRUST:
+        allowTrustResult = op.allowTrustResult; break;
+    case OperationType::ACCOUNT_MERGE:
+        accountMergeResult = op.accountMergeResult; break;
+    case OperationType::INFLATION:
+        new (&inflationResult) InflationResult();
+        inflationResult = op.inflationResult; break;
+    case OperationType::MANAGE_DATA:
+        manageDataResult = op.manageDataResult; break;
+    case OperationType::BUMP_SEQUENCE:
+        bumpSequenceResult = op.bumpSequenceResult; break;
+    case OperationType::MANAGE_BUY_OFFER:
+        new (&manageBuyOfferResult) ManageBuyOfferResult();
+        manageBuyOfferResult = op.manageBuyOfferResult; break;
+    default: break;
+    }
+}
+
+stellar::OperationResult::~OperationResult()
+{
+    switch(type)
+    {
+    case OperationType::PAYMENT:
+        paymentResult.~PaymentResult();
+        break;
+    case OperationType::PATH_PAYMENT:
+        pathPaymentResult.~PathPaymentResult();
+        break;
+    case OperationType::MANAGE_SELL_OFFER:
+        manageSellOfferResult.~ManageSellOfferResult();
+        break;
+    case OperationType::CREATE_PASSIVE_SELL_OFFER:
+        createPassiveOfferResult.~ManageSellOfferResult();
+        break;
+    case OperationType::INFLATION:
+        inflationResult.~InflationResult();
+        break;
+    case OperationType::MANAGE_BUY_OFFER:
+        manageBuyOfferResult.~ManageBuyOfferResult();
+        break;
+    default:
+        break;
+    }
+}
+
+const stellar::OperationResult &stellar::OperationResult::operator =(const stellar::OperationResult &op)
+{
+    switch(type)
+    {
+    case OperationType::PAYMENT:
+        paymentResult.~PaymentResult();
+        break;
+    case OperationType::PATH_PAYMENT:
+        pathPaymentResult.~PathPaymentResult();
+        break;
+    case OperationType::MANAGE_SELL_OFFER:
+        manageSellOfferResult.~ManageSellOfferResult();
+        break;
+    case OperationType::CREATE_PASSIVE_SELL_OFFER:
+        createPassiveOfferResult.~ManageSellOfferResult();
+        break;
+    case OperationType::INFLATION:
+        inflationResult.~InflationResult();
+        break;
+    case OperationType::MANAGE_BUY_OFFER:
+        manageBuyOfferResult.~ManageBuyOfferResult();
+        break;
+    default:
+        break;
+    }
+    code = op.code;
+    type = op.type;
+    switch(op.type){
+    case OperationType::CREATE_ACCOUNT:
+        createAccountResult = op.createAccountResult; break;
+    case OperationType::PAYMENT:
+        new (&pathPaymentResult) PaymentResult();
+        paymentResult = op.paymentResult; break;
+    case OperationType::PATH_PAYMENT:
+        new (&pathPaymentResult) PathPaymentResult();
+        pathPaymentResult = op.pathPaymentResult; break;
+    case OperationType::MANAGE_SELL_OFFER:
+        new (&manageSellOfferResult) ManageSellOfferResult();
+        manageSellOfferResult = op.manageSellOfferResult; break;
+    case OperationType::CREATE_PASSIVE_SELL_OFFER:
+        new (&createPassiveOfferResult) ManageSellOfferResult();
+        createPassiveOfferResult = op.createPassiveOfferResult; break;
+    case OperationType::SET_OPTIONS:
+        setOptionsResult = op.setOptionsResult; break;
+    case OperationType::CHANGE_TRUST:
+        changeTrustResult = op.changeTrustResult; break;
+    case OperationType::ALLOW_TRUST:
+        allowTrustResult = op.allowTrustResult; break;
+    case OperationType::ACCOUNT_MERGE:
+        accountMergeResult = op.accountMergeResult; break;
+    case OperationType::INFLATION:
+        new (&inflationResult) InflationResult();
+        inflationResult = op.inflationResult; break;
+    case OperationType::MANAGE_DATA:
+        manageDataResult = op.manageDataResult; break;
+    case OperationType::BUMP_SEQUENCE:
+        bumpSequenceResult = op.bumpSequenceResult; break;
+    case OperationType::MANAGE_BUY_OFFER:
+        new (&manageBuyOfferResult) ManageBuyOfferResult();
+        manageBuyOfferResult = op.manageBuyOfferResult; break;
     default: break;
     }
     return *this;

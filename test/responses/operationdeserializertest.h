@@ -15,7 +15,8 @@
 #include "../../src/responses/operations/createpassiveofferoperationresponse.h"
 #include "../../src/responses/operations/managedataoperationresponse.h"
 #include "../../src/responses/operations/setoptionsoperationresponse.h"
-#include "../../src/responses/operations/manageofferoperationresponse.h"
+#include "../../src/responses/operations/managesellofferoperationresponse.h"
+#include "../../src/responses/operations/managebuyofferoperationresponse.h"
 #include "../../src/responses/operations/bumpsequenceoperationresponse.h"
 #include "../../src/responses/genericoperation.h"
 
@@ -462,7 +463,7 @@ private slots:
                 "        \"selling_asset_type\": \"native\"\n"
                 "      }";
 
-        ManageOfferOperationResponse operation;
+        ManageSellOfferOperationResponse operation;
         operation.loadFromJson(json);
 
         QCOMPARE(operation.getOfferId(), 0);
@@ -470,6 +471,48 @@ private slots:
         QVERIFY(operation.getBuyingAsset()->equals( Asset::createNonNativeAsset("CNY", KeyPair::fromAccountId(QString("GAZWSWPDQTBHFIPBY4FEDFW2J6E2LE7SZHJWGDZO6Q63W7DBSRICO2KN")))));
         QVERIFY(operation.getSellingAsset()->equals( new AssetTypeNative()));
     }
+
+
+    void testDeserializeManageBuyOfferOperation() {
+        QByteArray json = "{\n"
+                          "        \"_links\": {\n"
+                          "          \"self\": {\n"
+                          "            \"href\": \"http://horizon-testnet.stellar.org/operations/3320426331639809\"\n"
+                          "          },\n"
+                          "          \"transaction\": {\n"
+                          "            \"href\": \"http://horizon-testnet.stellar.org/transactions/1f8fc03b26110e917d124381645d7dcf85927f17e46d8390d254a0bd99cfb0ad\"\n"
+                          "          },\n"
+                          "          \"effects\": {\n"
+                          "            \"href\": \"http://horizon-testnet.stellar.org/operations/3320426331639809/effects\"\n"
+                          "          },\n"
+                          "          \"succeeds\": {\n"
+                          "            \"href\": \"http://horizon-testnet.stellar.org/effects?order=desc\\u0026cursor=3320426331639809\"\n"
+                          "          },\n"
+                          "          \"precedes\": {\n"
+                          "            \"href\": \"http://horizon-testnet.stellar.org/effects?order=asc\\u0026cursor=3320426331639809\"\n"
+                          "          }\n"
+                          "        },\n"
+                          "        \"id\": \"3320426331639809\",\n"
+                          "        \"paging_token\": \"3320426331639809\",\n"
+                          "        \"source_account\": \"GCR6QXX7IRIJVIM5WA5ASQ6MWDOEJNBW3V6RTC5NJXEMOLVTUVKZ725X\",\n"
+                          "        \"type\": \"manage_buy_offer\",\n"
+                          "        \"type_i\": 12,\n"
+                          "        \"offer_id\": 0,\n"
+                          "        \"amount\": \"100.0\",\n"
+                          "        \"buying_asset_type\": \"credit_alphanum4\",\n"
+                          "        \"buying_asset_code\": \"CNY\",\n"
+                          "        \"buying_asset_issuer\": \"GAZWSWPDQTBHFIPBY4FEDFW2J6E2LE7SZHJWGDZO6Q63W7DBSRICO2KN\",\n"
+                          "        \"selling_asset_type\": \"native\"\n"
+                          "      }";
+
+        ManageBuyOfferOperationResponse operation;
+        operation.loadFromJson(json);
+        QCOMPARE(operation.getOfferId(), 0);
+        QCOMPARE(operation.getAmount(), QString("100.0"));
+        QVERIFY(operation.getBuyingAsset()->equals( Asset::createNonNativeAsset("CNY", KeyPair::fromAccountId(QString("GAZWSWPDQTBHFIPBY4FEDFW2J6E2LE7SZHJWGDZO6Q63W7DBSRICO2KN")))));
+        QVERIFY(operation.getSellingAsset()->equals( new AssetTypeNative()));
+    }
+
     void testDeserializePathPaymentOperation() {
         QByteArray json = "{\n"
                 "  \"_links\": {\n"
@@ -600,7 +643,7 @@ private slots:
                 "  \"type\": \"create_passive_offer\"\n"
                 "}";
 
-        CreatePassiveOfferOperationResponse operation;
+        CreatePassiveSellOfferOperationResponse operation;
         operation.loadFromJson(json);
 
         QCOMPARE(operation.getAmount(), QString("11.27827"));

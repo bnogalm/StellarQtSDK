@@ -38,7 +38,7 @@ private slots:
                        "  }\n"
                        "}";
 
-        SubmitTransactionResponse *submitTransactionResponse = new SubmitTransactionResponse(0,0);
+        SubmitTransactionResponse *submitTransactionResponse = new SubmitTransactionResponse(nullptr,nullptr);
         submitTransactionResponse->loadFromJson(json.toLatin1());
 
         QVERIFY(submitTransactionResponse->isSuccess()== false);
@@ -72,7 +72,7 @@ private slots:
                        "  }\n"
                        "}";
 
-        SubmitTransactionResponse* submitTransactionResponse = new SubmitTransactionResponse(0,0);
+        SubmitTransactionResponse* submitTransactionResponse = new SubmitTransactionResponse(nullptr,nullptr);
         submitTransactionResponse->loadFromJson(json.toLatin1());
         QVERIFY(submitTransactionResponse->isSuccess()== false);
         QVERIFY(submitTransactionResponse->getEnvelopeXdr()==QString("AAAAAF2O0axA67+p2jMunG6G188kDSHIvqQ13d9l29YCSA/uAAAAZAAvvc0AAAABAAAAAAAAAAEAAAAAAAAAAQAAAAAAAAABAAAAAD3sEVVGZGi/NoC3ta/8f/YZKMzyi9ZJpOi0H47x7IqYAAAAAAAAAAAF9eEAAAAAAAAAAAECSA/uAAAAQFuZVAjftHa+JZes1VxSk8naOfjjAz9V86mY1AZf8Ik6PtTsBpDsCfG57EYsq4jWyZcT+vhXyWsw5evF1ELqMw4="));
@@ -96,7 +96,7 @@ private slots:
                        "  \"result_meta_xdr\": \"AAAAAAAAAAEAAAACAAAAAAAvoHwAAAACAAAAADSMMRmQGDH6EJzkgi/7PoKhphMHyNGQgDp2tlS/dhGXAAAAAAAAAPEAAAABSU5SAAAAAAA0jDEZkBgx+hCc5IIv+z6CoaYTB8jRkIA6drZUv3YRlwAAAAFVU0QAAAAAADSMMRmQGDH6EJzkgi/7PoKhphMHyNGQgDp2tlS/dhGXAAAAAAX14QAAAAAKAAAAAQAAAAAAAAAAAAAAAAAAAAEAL6B8AAAAAAAAAAA0jDEZkBgx+hCc5IIv+z6CoaYTB8jRkIA6drZUv3YRlwAAABZ9zvNAABPdNQAAADAAAAAEAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAA==\"\n"
                        "}";
 
-        SubmitTransactionResponse *submitTransactionResponse = new SubmitTransactionResponse(0,0);
+        SubmitTransactionResponse *submitTransactionResponse = new SubmitTransactionResponse(nullptr,nullptr);
         submitTransactionResponse->loadFromJson(json.toLatin1());
 
         QVERIFY(submitTransactionResponse->isSuccess()== true);
@@ -124,7 +124,7 @@ private slots:
                           "  \"result_meta_xdr\": \"AAAAAAAAAAEAAAACAAAAAAAvoHwAAAACAAAAADSMMRmQGDH6EJzkgi/7PoKhphMHyNGQgDp2tlS/dhGXAAAAAAAAAPEAAAABSU5SAAAAAAA0jDEZkBgx+hCc5IIv+z6CoaYTB8jRkIA6drZUv3YRlwAAAAFVU0QAAAAAADSMMRmQGDH6EJzkgi/7PoKhphMHyNGQgDp2tlS/dhGXAAAAAAX14QAAAAAKAAAAAQAAAAAAAAAAAAAAAAAAAAEAL6B8AAAAAAAAAAA0jDEZkBgx+hCc5IIv+z6CoaYTB8jRkIA6drZUv3YRlwAAABZ9zvNAABPdNQAAADAAAAAEAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAA==\"\n"
                           "}";
 
-        SubmitTransactionResponse submitTransactionResponse(0,0);
+        SubmitTransactionResponse submitTransactionResponse(nullptr,nullptr);
         submitTransactionResponse.loadFromJson(json);
         QCOMPARE(submitTransactionResponse.isSuccess(), true);
         QVERIFY(submitTransactionResponse.getOfferIdFromResult(0)==0);

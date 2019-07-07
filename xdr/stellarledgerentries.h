@@ -16,6 +16,7 @@ namespace stellar
     typedef Array<char,32> string32; //<32> //max
     typedef Array<char,64> string64; //<64>
     typedef qint64 SequenceNumber;
+    typedef quint64 TimePoint;
 
     typedef Array<quint8,64> DataValue; //<64>
 
@@ -286,7 +287,7 @@ namespace stellar
     struct OfferEntry
     {
         AccountID sellerID;
-        quint64 offerID;
+        qint64 offerID;
         Asset selling; // A
         Asset buying;  // B
         qint64 amount;  // amount of A
@@ -389,7 +390,8 @@ namespace stellar
     {
         ENVELOPE_TYPE_SCP = 1,
         ENVELOPE_TYPE_TX = 2,
-        ENVELOPE_TYPE_AUTH = 3
+        ENVELOPE_TYPE_AUTH = 3,
+        ENVELOPE_TYPE_SCPVALUE = 4
     };
 }
 

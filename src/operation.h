@@ -7,7 +7,7 @@ class Operation
 {
 
     static const qint32 FRACTIONAL = 7;
-    static constexpr quint64 ONE = get_power_s<10,FRACTIONAL, quint64>::value;
+    static constexpr qint64 ONE = get_power_s<10,FRACTIONAL, qint64>::value;
 
 protected:
     KeyPair *m_sourceAccount;
@@ -15,9 +15,9 @@ public:
     Operation();
     virtual ~Operation();
 
-    static quint64 toXdrAmount(QString value);
+    static qint64 toXdrAmount(QString value);
 
-    static QString fromXdrAmount(quint64 value);
+    static QString fromXdrAmount(qint64 value);
 
     /**
      * Generates Operation XDR object.
