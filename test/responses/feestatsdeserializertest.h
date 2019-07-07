@@ -3,9 +3,9 @@
 #include <QObject>
 #include <QtTest>
 #include "../testcollector.h"
-#include "../../src/responses/operationfeestatsresponse.h"
+#include "../../src/responses/feestatsresponse.h"
 
-class OperationFeeStatsDeserializerTest: public QObject
+class FeeStatsDeserializerTest: public QObject
 {
     Q_OBJECT
     const QByteArray json = "{\n"
@@ -39,7 +39,7 @@ private slots:
 
     }
     void testDeserialize() {
-        OperationFeeStatsResponse stats;
+        FeeStatsResponse stats;
         stats.loadFromJson(json);
         QCOMPARE(stats.getLastLedger(),20882791);
         QCOMPARE(stats.getLastLedgerBaseFee(),100);
@@ -61,5 +61,5 @@ private slots:
 
 };
 
-ADD_TEST(OperationFeeStatsDeserializerTest)
+ADD_TEST(FeeStatsDeserializerTest)
 #endif // OPERATIONFEESTATSDESERIALIZERTEST_H

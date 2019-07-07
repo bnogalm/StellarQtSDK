@@ -18,6 +18,7 @@ include(StellarQtSDK.pri)
 
 HEADERS += \
     test/keypairtest.h \
+    test/responses/feestatsdeserializertest.h \
     test/strkeytest.h \
     test/testcollector.h \
     test/operationtest.h \
@@ -63,7 +64,6 @@ HEADERS += \
     test/responses/rootdeserializertest.h \
     test/requests/rootrequestbuildtest.h \
     test/requests/operationfeerequestbuildertest.h \
-    test/responses/operationfeestatsdeserializertest.h \
     test/sep0005keypairforaccountfrombip39seedtest.h \
     test/slip0010ed25519privatekeytest.h
 

@@ -3,7 +3,7 @@
 
 #include "response.h"
 
-class OperationFeeStatsResponse : public Response
+class FeeStatsResponse : public Response
 {
     Q_OBJECT
     Q_PROPERTY(qint64 min_accepted_fee MEMBER m_min)
@@ -44,8 +44,8 @@ class OperationFeeStatsResponse : public Response
     qint64 m_lastLedger;
 
 public:
-    Q_INVOKABLE explicit OperationFeeStatsResponse(QNetworkReply* reply=nullptr);
-    virtual ~OperationFeeStatsResponse();
+    Q_INVOKABLE explicit FeeStatsResponse(QNetworkReply* reply=nullptr);
+    virtual ~FeeStatsResponse();
 
     qint64 getMin() const;
 

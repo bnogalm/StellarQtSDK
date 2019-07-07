@@ -33,6 +33,8 @@ SOURCES += \
     $$PWD/src/assettypenative.cpp \
     $$PWD/src/changetrustoperation.cpp \
     $$PWD/src/createaccountoperation.cpp \
+    $$PWD/src/requests/feestatsrequestbuilder.cpp \
+    $$PWD/src/responses/feestatsresponse.cpp \
     $$PWD/src/responses/operations/bumpsequenceoperationresponse.cpp \
     $$PWD/src/responses/operations/managebuyofferoperationresponse.cpp \
     $$PWD/src/responses/operations/managesellofferoperationresponse.cpp \
@@ -138,8 +140,6 @@ SOURCES += \
     $$PWD/src/requests/rootrequestbuilder.cpp \
     $$PWD/src/bumpsequenceoperation.cpp \
     $$PWD/src/timebounds.cpp \
-    $$PWD/src/requests/operationfeestatsrequestbuilder.cpp \
-    $$PWD/src/responses/operationfeestatsresponse.cpp \
     $$PWD/src/slip10.cpp
 
 # The following define makes your compiler emit warnings if you use
@@ -157,6 +157,8 @@ HEADERS += \
     $$PWD/src/createpassivesellofferoperation.h \
     $$PWD/src/managebuyofferoperation.h \
     $$PWD/src/managesellofferoperation.h \
+    $$PWD/src/requests/feestatsrequestbuilder.h \
+    $$PWD/src/responses/feestatsresponse.h \
     $$PWD/src/responses/operations/bumpsequenceoperationresponse.h \
     $$PWD/src/responses/operations/managebuyofferoperationresponse.h \
     $$PWD/src/responses/operations/managesellofferoperationresponse.h \
@@ -276,8 +278,6 @@ HEADERS += \
     $$PWD/src/requests/rootrequestbuilder.h \
     $$PWD/src/bumpsequenceoperation.h \
     $$PWD/src/timebounds.h \
-    $$PWD/src/requests/operationfeestatsrequestbuilder.h \
-    $$PWD/src/responses/operationfeestatsresponse.h \
     $$PWD/src/slip10.h
 
 #to maintain it easier, until we dont support more than read FEDERATION_SERVER address, we dont use CPPTOML

@@ -15,7 +15,7 @@
 #include "requests/ledgersrequestbuilder.h"
 #include "requests/operationsrequestbuilder.h"
 #include "requests/effectsrequestbuilder.h"
-#include "requests/operationfeestatsrequestbuilder.h"
+#include "requests/feestatsrequestbuilder.h"
 #include <QTimer>
 #include <QHash>
 class Transaction;
@@ -94,7 +94,7 @@ public:
     /**
        * Returns {@link OperationFeeStatsResponse} instance.
        */
-    OperationFeeStatsRequestBuilder operationFeeStats();
+    FeeStatsRequestBuilder operationFeeStats();
 
     /**
          * Returns {@link OrderBookRequestBuilder} instance.
