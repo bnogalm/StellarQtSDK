@@ -1,5 +1,5 @@
-#ifndef OPERATIONFEESTATSRESPONSE_H
-#define OPERATIONFEESTATSRESPONSE_H
+#ifndef FEESTATSRESPONSE_H
+#define FEESTATSRESPONSE_H
 
 #include "response.h"
 
@@ -81,7 +81,7 @@ public:
 
 };
 
-#endif // OPERATIONFEESTATSRESPONSE_H
+#endif // FEESTATSRESPONSE_H
 
 
 

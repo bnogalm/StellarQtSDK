@@ -92,7 +92,7 @@ public:
     OperationsRequestBuilder operations();
 
     /**
-       * Returns {@link OperationFeeStatsResponse} instance.
+       * Returns {@link FeeStatsResponse} instance.
        */
     FeeStatsRequestBuilder operationFeeStats();
 
