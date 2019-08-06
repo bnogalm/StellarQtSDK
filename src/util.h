@@ -34,6 +34,11 @@ inline QVector<Type> checkNotNull(QVector<Type> &p, const char *error)
 #define checkArgument(EXP,error)\
     if(!(EXP)) throw std::runtime_error(error)
 
+
+class KeyPair;
+class Transaction;
+
+
 class Util
 {
 public:
@@ -72,6 +77,16 @@ public:
     static QString paddedByteArrayToString(QByteArray bytes);
     static QByteArray removeTailChars(QByteArray bytes, const char c);
     static QString removeTailChars(QString string, QChar c);
+
+    // BuildChallengeTx is a factory method that creates a valid SEP 10 challenge, for use in web authentication.
+    // "timebound" is the time duration the transaction should be valid for, O means infinity.
+    // More details on SEP 10: https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0010.md
+    //returned Transaction must be deleted after use, you can use the Transaction class to obtain the base64 encoded
+    static Transaction* buildChallengeTx(KeyPair* serverSignerSecret,QString clientAccountID, QString anchorName, qint64 timebound);
+
+    // generateRandomNonce creates a cryptographically secure random slice of `n` bytes.
+    static QByteArray generateRandomNonce(int n);
+
 };
 
 

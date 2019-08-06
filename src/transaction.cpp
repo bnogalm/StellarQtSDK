@@ -40,7 +40,7 @@ void Transaction::sign(QByteArray preimage) {
     stellar::DecoratedSignature decoratedSignature;
     stellar::Signature &signature = decoratedSignature.signature;
 
-    signature.set((uchar*)preimage.data(),preimage.length());
+    signature.set(reinterpret_cast<uchar*>(preimage.data()),preimage.length());
 
 
     QByteArray hash = Util::hash(preimage);
@@ -62,7 +62,7 @@ QByteArray Transaction::hash() {
 }
 
 QByteArray Transaction::signatureBase() {
-    if (Network::current() == 0) {
+    if (Network::current() == nullptr) {
         throw new NoNetworkSelectedException();
     }
 
@@ -120,8 +120,8 @@ stellar::Transaction Transaction::toXdr() {
     if(m_timeBounds)
     {
         stellar::TimeBounds& tm = transaction.timeBounds.filler();
-        tm.minTime=m_timeBounds->getMinTime();
-        tm.maxTime=m_timeBounds->getMaxTime();
+        tm.minTime=static_cast<quint64>(m_timeBounds->getMinTime());
+        tm.maxTime=static_cast<quint64>(m_timeBounds->getMaxTime());
     }
     // fee
     transaction.fee = m_fee;
@@ -229,8 +229,9 @@ Transaction::Builder &Transaction::Builder::addTimeBounds(TimeBounds *timeBounds
     if (this->m_timeBounds) {
         throw std::runtime_error("TimeBounds has been already added.");
     }
-    checkNotNull((intptr_t)timeBounds, "timeBounds cannot be null");
+    checkNotNull(reinterpret_cast<intptr_t>(timeBounds), "timeBounds cannot be null");
     m_timeBounds = timeBounds;
+    m_timeoutSet = true;
     return *this;
 }
 
