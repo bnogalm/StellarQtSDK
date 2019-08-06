@@ -80,7 +80,7 @@ QDataStream &operator>>(QDataStream &in,  char& c);
 template <class T, int max=std::numeric_limits<int>::max()>
 struct Array{
     QVector<T> value;
-    static int maxSize(){
+    static int maxSize(){        
         return max;
     }
 
@@ -107,7 +107,7 @@ struct Array{
     //returns continuos data
     QByteArray binary()
     {
-        QByteArray ba;
+        QByteArray ba(sizeof (T)*value.size(),Qt::Uninitialized);
         QDataStream stream(&ba,QIODevice::WriteOnly);
         for(int i=0;i<value.size();i++){
             stream << static_cast<T>(value[i]);

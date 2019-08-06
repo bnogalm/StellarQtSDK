@@ -65,7 +65,8 @@ HEADERS += \
     test/requests/rootrequestbuildtest.h \
     test/requests/operationfeerequestbuildertest.h \
     test/sep0005keypairforaccountfrombip39seedtest.h \
-    test/slip0010ed25519privatekeytest.h
+    test/slip0010ed25519privatekeytest.h \
+    test/utiltest.h
 
 SOURCES += \
     test/main.cpp
