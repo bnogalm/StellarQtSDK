@@ -1,6 +1,7 @@
-#include "pathpaymentoperation.h"
+#include "pathpaymentstrictreceiveoperation.h"
 
-PathPaymentOperation::PathPaymentOperation()
+
+PathPaymentStrictReceiveOperation::PathPaymentStrictReceiveOperation()
 :m_sendAsset(nullptr)
 ,m_destination(nullptr)
 ,m_destAsset(nullptr)
@@ -8,7 +9,7 @@ PathPaymentOperation::PathPaymentOperation()
 
 }
 
-PathPaymentOperation::PathPaymentOperation(stellar::PathPaymentStrictReceiveOp &op)
+PathPaymentStrictReceiveOperation::PathPaymentStrictReceiveOperation(stellar::PathPaymentStrictReceiveOp &op)
     :m_sendAsset(nullptr)
   ,m_destination(nullptr)
   ,m_destAsset(nullptr)
@@ -16,7 +17,7 @@ PathPaymentOperation::PathPaymentOperation(stellar::PathPaymentStrictReceiveOp &
 
 }
 
-PathPaymentOperation::~PathPaymentOperation()
+PathPaymentStrictReceiveOperation::~PathPaymentStrictReceiveOperation()
 {
     if(m_sendAsset)
         delete m_sendAsset;
@@ -30,7 +31,7 @@ PathPaymentOperation::~PathPaymentOperation()
     }
 }
 
-PathPaymentOperation::PathPaymentOperation(Asset *sendAsset, QString sendMax, KeyPair *destination, Asset *destAsset, QString destAmount, QList<Asset*> path)
+PathPaymentStrictReceiveOperation::PathPaymentStrictReceiveOperation(Asset *sendAsset, QString sendMax, KeyPair *destination, Asset *destAsset, QString destAmount, QList<Asset*> path)
     :m_sendAsset(nullptr)
     ,m_destination(nullptr)
     ,m_destAsset(nullptr){
@@ -52,33 +53,33 @@ PathPaymentOperation::PathPaymentOperation(Asset *sendAsset, QString sendMax, Ke
     }
 }
 
-Asset *PathPaymentOperation::getSendAsset() {
+Asset *PathPaymentStrictReceiveOperation::getSendAsset() {
     if(!m_sendAsset)
         m_sendAsset = Asset::fromXdr(m_op.sendAsset);
     return m_sendAsset;
 }
 
-QString PathPaymentOperation::getSendMax() {
+QString PathPaymentStrictReceiveOperation::getSendMax() {
     return Operation::fromXdrAmount(m_op.sendMax);
 }
 
-KeyPair *PathPaymentOperation::getDestination() {
+KeyPair *PathPaymentStrictReceiveOperation::getDestination() {
     if(!m_destination)
         m_destination = KeyPair::fromXdrPublicKey(m_op.destination);
     return m_destination;
 }
 
-Asset *PathPaymentOperation::getDestAsset() {
+Asset *PathPaymentStrictReceiveOperation::getDestAsset() {
     if(!m_destAsset)
         m_destAsset = Asset::fromXdr(m_op.destAsset);
     return m_destAsset;
 }
 
-QString PathPaymentOperation::getDestAmount() {
+QString PathPaymentStrictReceiveOperation::getDestAmount() {
     return Operation::fromXdrAmount(m_op.destAmount);
 }
 
-QList<Asset *> PathPaymentOperation::getPath() {
+QList<Asset *> PathPaymentStrictReceiveOperation::getPath() {
     if(m_path.isEmpty()){
         for (int i = 0; i < m_op.path.value.length(); i++) {
             m_path.append(Asset::fromXdr(m_op.path.value[i]));
@@ -87,25 +88,25 @@ QList<Asset *> PathPaymentOperation::getPath() {
     return m_path;
 }
 
-void PathPaymentOperation::fillOperationBody(stellar::Operation &op)
+void PathPaymentStrictReceiveOperation::fillOperationBody(stellar::Operation &op)
 {
     op.type = stellar::OperationType::PATH_PAYMENT_STRICT_RECEIVE;
     new (&op.operationPathPaymentStrictReceive) stellar::PathPaymentStrictReceiveOp();
     op.operationPathPaymentStrictReceive = m_op;
 }
 
-PathPaymentOperation *PathPaymentOperation::build(stellar::PathPaymentStrictReceiveOp &op)
+PathPaymentStrictReceiveOperation *PathPaymentStrictReceiveOperation::build(stellar::PathPaymentStrictReceiveOp &op)
 {
-    return new PathPaymentOperation(op);
+    return new PathPaymentStrictReceiveOperation(op);
 }
 
-PathPaymentOperation *PathPaymentOperation::create(Asset* sendAsset, QString sendMax, KeyPair* destination,
+PathPaymentStrictReceiveOperation *PathPaymentStrictReceiveOperation::create(Asset* sendAsset, QString sendMax, KeyPair* destination,
                                                    Asset* destAsset, QString destAmount)
 {
-    return new PathPaymentOperation(sendAsset,sendMax,destination,destAsset,destAmount);
+    return new PathPaymentStrictReceiveOperation(sendAsset,sendMax,destination,destAsset,destAmount);
 }
 
-PathPaymentOperation *PathPaymentOperation::setPath(QList<Asset *> path) {
+PathPaymentStrictReceiveOperation *PathPaymentStrictReceiveOperation::setPath(QList<Asset *> path) {
     checkArgument(path.length() <= 5, "The maximum number of assets in the path is 5");
     for(auto a : m_path)
     {
@@ -118,14 +119,13 @@ PathPaymentOperation *PathPaymentOperation::setPath(QList<Asset *> path) {
     return this;
 }
 
-PathPaymentOperation *PathPaymentOperation::setSourceAccount(KeyPair *sourceAccount) {
+PathPaymentStrictReceiveOperation *PathPaymentStrictReceiveOperation::setSourceAccount(KeyPair *sourceAccount) {
     Operation::setSourceAccount(sourceAccount);
     return this;
 }
 
-PathPaymentOperation *PathPaymentOperation::setSourceAccount(KeyPair &sourceAccount)
+PathPaymentStrictReceiveOperation *PathPaymentStrictReceiveOperation::setSourceAccount(KeyPair &sourceAccount)
 {
     Operation::setSourceAccount(new KeyPair(sourceAccount));
     return this;
 }
-

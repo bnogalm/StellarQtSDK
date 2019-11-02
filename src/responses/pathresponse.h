@@ -76,7 +76,7 @@ public:
 
     QString getDestinationAmount();
     QString getSourceAmount();
-    QList<Asset*> getPath();
+    const QList<Asset*>& getPath();
     Asset& getDestinationAsset();
     Asset& getSourceAsset();
     PathResponseAttach::Links& getLinks();

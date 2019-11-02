@@ -30,6 +30,8 @@
 #include "src/managesellofferoperation.h"
 #include "src/managebuyofferoperation.h"
 #include "src/bumpsequenceoperation.h"
+#include "src/pathpaymentstrictreceiveoperation.h"
+#include "src/pathpaymentstrictsendoperation.h"
 
 
 
@@ -142,8 +144,8 @@ private slots:
        auto xdr = operation->toXdr();
        PathPaymentOperation* parsedOperation = static_cast<PathPaymentOperation*>(Operation::fromXdr(xdr));
 
-       QVERIFY(1000L== xdr.operationPathPayment.sendMax);
-       QVERIFY(1000L== xdr.operationPathPayment.destAmount);
+       QVERIFY(1000L== xdr.operationPathPaymentStrictReceive.sendMax);
+       QVERIFY(1000L== xdr.operationPathPaymentStrictReceive.destAmount);
        QVERIFY(dynamic_cast<AssetTypeNative*>(parsedOperation->getSendAsset()));
        QCOMPARE(source->getAccountId(), parsedOperation->getSourceAccount()->getAccountId());
        QCOMPARE(destination->getAccountId(), parsedOperation->getDestination()->getAccountId());
@@ -178,9 +180,9 @@ private slots:
        auto xdr = operation->toXdr();
        PathPaymentOperation* parsedOperation = static_cast<PathPaymentOperation*>(Operation::fromXdr(xdr));
 
-       QVERIFY(1000L== xdr.operationPathPayment.sendMax);
+       QVERIFY(1000L== xdr.operationPathPaymentStrictReceive.sendMax);
 
-       QVERIFY(1000L== xdr.operationPathPayment.destAmount);
+       QVERIFY(1000L== xdr.operationPathPaymentStrictReceive.destAmount);
        QVERIFY(dynamic_cast<AssetTypeNative*>(parsedOperation->getSendAsset()));
        QCOMPARE(source->getAccountId(), parsedOperation->getSourceAccount()->getAccountId());
        QCOMPARE(destination->getAccountId(), parsedOperation->getDestination()->getAccountId());
@@ -191,6 +193,84 @@ private slots:
 
        QCOMPARE(operation->toXdrBase64(),
                 QString("AAAAAQAAAAC7JAuE3XvquOnbsgv2SRztjuk4RoBVefQ0rlrFMMQvfAAAAAIAAAAAAAAAAAAAA+gAAAAA7eBSYbzcL5UKo7oXO24y1ckX+XuCtkDsyNHOp1n1bxAAAAABVVNEAAAAAACNlYd30HdCuLI54eyYjyX/fDyH9IJWIr/hKDcXKQbq1QAAAAAAAAPoAAAAAA=="));
+     }
+
+     void testPathPaymentStrictSendOperation()  {
+         // GC5SIC4E3V56VOHJ3OZAX5SJDTWY52JYI2AFK6PUGSXFVRJQYQXXZBZF
+         KeyPair* source = KeyPair::fromSecretSeed(QString("SC4CGETADVYTCR5HEAVZRB3DZQY5Y4J7RFNJTRA6ESMHIPEZUSTE2QDK"));
+         // GDW6AUTBXTOC7FIKUO5BOO3OGLK4SF7ZPOBLMQHMZDI45J2Z6VXRB5NR
+         KeyPair* destination = KeyPair::fromSecretSeed(QString("SDHZGHURAYXKU2KMVHPOXI6JG2Q4BSQUQCEOY72O3QQTCLR2T455PMII"));
+         // GCGZLB3X2B3UFOFSHHQ6ZGEPEX7XYPEH6SBFMIV74EUDOFZJA3VNL6X4
+         KeyPair* issuer = KeyPair::fromSecretSeed(QString("SBOBVZUN6WKVMI6KIL2GHBBEETEV6XKQGILITNH6LO6ZA22DBMSDCPAG"));
+
+         // GAVAQKT2M7B4V3NN7RNNXPU5CWNDKC27MYHKLF5UNYXH4FNLFVDXKRSV
+         KeyPair* pathIssuer1 = KeyPair::fromSecretSeed(QString("SALDLG5XU5AEJWUOHAJPSC4HJ2IK3Z6BXXP4GWRHFT7P7ILSCFFQ7TC5"));
+         // GBCP5W2VS7AEWV2HFRN7YYC623LTSV7VSTGIHFXDEJU7S5BAGVCSETRR
+         KeyPair* pathIssuer2 = KeyPair::fromSecretSeed(QString("SA64U7C5C7BS5IHWEPA7YWFN3Z6FE5L6KAMYUIT4AQ7KVTVLD23C6HEZ"));
+
+         Asset* sendAsset = new AssetTypeNative();
+         QString sendAmount = "0.0001";
+         Asset* destAsset = new AssetTypeCreditAlphaNum4("USD", issuer);
+         QString destMin = "0.0009";
+         QList<Asset*> path = {new AssetTypeCreditAlphaNum4("USD", pathIssuer1), new AssetTypeCreditAlphaNum12("TESTTEST", pathIssuer2)};
+
+         PathPaymentStrictSendOperation* operation = PathPaymentStrictSendOperation::create(
+                     sendAsset, sendAmount, destination, destAsset, destMin)
+                 ->setPath(path)
+                 ->setSourceAccount(source);
+
+         auto xdr = operation->toXdr();
+         PathPaymentStrictSendOperation* parsedOperation = static_cast<PathPaymentStrictSendOperation*>(Operation::fromXdr(xdr));
+
+         QCOMPARE(xdr.operationPathPaymentStrictSend.sendAmount,1000L);
+         QCOMPARE(xdr.operationPathPaymentStrictSend.destMin,9000L);
+         QVERIFY(dynamic_cast<AssetTypeNative*>(parsedOperation->getSendAsset()));
+         QCOMPARE(source->getAccountId(), parsedOperation->getSourceAccount()->getAccountId());
+         QCOMPARE(destination->getAccountId(), parsedOperation->getDestination()->getAccountId());
+         QCOMPARE(sendAmount, parsedOperation->getSendAmount());
+         QVERIFY(dynamic_cast<AssetTypeCreditAlphaNum4*>(parsedOperation->getDestAsset()));
+         QCOMPARE(destMin, parsedOperation->getDestMin());
+         QVERIFY((path.size() == parsedOperation->getPath().size()) && std::equal(path.begin(),path.end(),parsedOperation->getPath().begin(),[](Asset* a, Asset* b){return a->equals(b);}));
+
+         QCOMPARE(operation->toXdrBase64(),QString("AAAAAQAAAAC7JAuE3XvquOnbsgv2SRztjuk4RoBVefQ0rlrFMMQvfAAAAA0AAAAAAAAAAAAAA+gAAAAA7eBSYbzcL5UKo7oXO24y1ckX+XuCtkDsyNHOp1n1bxAAAAABVVNEAAAAAACNlYd30HdCuLI54eyYjyX/fDyH9IJWIr/hKDcXKQbq1QAAAAAAACMoAAAAAgAAAAFVU0QAAAAAACoIKnpnw8rtrfxa276dFZo1C19mDqWXtG4ufhWrLUd1AAAAAlRFU1RURVNUAAAAAAAAAABE/ttVl8BLV0csW/xgXtbXOVf1lMyDluMiafl0IDVFIg=="));
+     }
+
+     void testPathPaymentStrictSendEmptyPathOperation()
+     {
+         // GC5SIC4E3V56VOHJ3OZAX5SJDTWY52JYI2AFK6PUGSXFVRJQYQXXZBZF
+         KeyPair* source = KeyPair::fromSecretSeed(QString("SC4CGETADVYTCR5HEAVZRB3DZQY5Y4J7RFNJTRA6ESMHIPEZUSTE2QDK"));
+         // GDW6AUTBXTOC7FIKUO5BOO3OGLK4SF7ZPOBLMQHMZDI45J2Z6VXRB5NR
+         KeyPair* destination = KeyPair::fromSecretSeed(QString("SDHZGHURAYXKU2KMVHPOXI6JG2Q4BSQUQCEOY72O3QQTCLR2T455PMII"));
+         // GCGZLB3X2B3UFOFSHHQ6ZGEPEX7XYPEH6SBFMIV74EUDOFZJA3VNL6X4
+         KeyPair* issuer = KeyPair::fromSecretSeed(QString("SBOBVZUN6WKVMI6KIL2GHBBEETEV6XKQGILITNH6LO6ZA22DBMSDCPAG"));
+
+//         // GAVAQKT2M7B4V3NN7RNNXPU5CWNDKC27MYHKLF5UNYXH4FNLFVDXKRSV
+//         KeyPair* pathIssuer1 = KeyPair::fromSecretSeed(QString("SALDLG5XU5AEJWUOHAJPSC4HJ2IK3Z6BXXP4GWRHFT7P7ILSCFFQ7TC5"));
+//         // GBCP5W2VS7AEWV2HFRN7YYC623LTSV7VSTGIHFXDEJU7S5BAGVCSETRR
+//         KeyPair* pathIssuer2 = KeyPair::fromSecretSeed(QString("SA64U7C5C7BS5IHWEPA7YWFN3Z6FE5L6KAMYUIT4AQ7KVTVLD23C6HEZ"));
+
+         Asset* sendAsset = new AssetTypeNative();
+         QString sendAmount = "0.0001";
+         Asset* destAsset = new AssetTypeCreditAlphaNum4("USD", issuer);
+         QString destMin = "0.0009";
+
+         PathPaymentStrictSendOperation* operation = PathPaymentStrictSendOperation::create(
+                     sendAsset, sendAmount, destination, destAsset, destMin)->setSourceAccount(source);
+
+         auto xdr = operation->toXdr();
+         PathPaymentStrictSendOperation* parsedOperation = static_cast<PathPaymentStrictSendOperation*>(Operation::fromXdr(xdr));
+
+         QCOMPARE(xdr.operationPathPaymentStrictSend.sendAmount,1000L);
+         QCOMPARE(xdr.operationPathPaymentStrictSend.destMin,9000L);
+         QVERIFY(dynamic_cast<AssetTypeNative*>(parsedOperation->getSendAsset()));
+         QCOMPARE(source->getAccountId(), parsedOperation->getSourceAccount()->getAccountId());
+         QCOMPARE(destination->getAccountId(), parsedOperation->getDestination()->getAccountId());
+         QCOMPARE(sendAmount, parsedOperation->getSendAmount());
+         QVERIFY(dynamic_cast<AssetTypeCreditAlphaNum4*>(parsedOperation->getDestAsset()));
+         QCOMPARE(destMin, parsedOperation->getDestMin());
+         QCOMPARE(parsedOperation->getPath().length(), 0);
+
+         QCOMPARE(operation->toXdrBase64(),QString("AAAAAQAAAAC7JAuE3XvquOnbsgv2SRztjuk4RoBVefQ0rlrFMMQvfAAAAA0AAAAAAAAAAAAAA+gAAAAA7eBSYbzcL5UKo7oXO24y1ckX+XuCtkDsyNHOp1n1bxAAAAABVVNEAAAAAACNlYd30HdCuLI54eyYjyX/fDyH9IJWIr/hKDcXKQbq1QAAAAAAACMoAAAAAA=="));
      }
 
      void testChangeTrustOperation() {

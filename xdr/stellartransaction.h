@@ -26,7 +26,7 @@ namespace stellar
     {
         CREATE_ACCOUNT = 0,
         PAYMENT = 1,
-        PATH_PAYMENT = 2,
+        PATH_PAYMENT_STRICT_RECEIVE = 2,
         MANAGE_SELL_OFFER = 3,
         CREATE_PASSIVE_SELL_OFFER = 4,
         SET_OPTIONS = 5,
@@ -36,7 +36,8 @@ namespace stellar
         INFLATION = 9,
         MANAGE_DATA = 10,
         BUMP_SEQUENCE = 11,
-        MANAGE_BUY_OFFER = 12
+        MANAGE_BUY_OFFER = 12,
+        PATH_PAYMENT_STRICT_SEND = 13
     };
 
     /* CreateAccount
@@ -82,15 +83,15 @@ namespace stellar
        return in;
     }
 
-    /* PathPayment
+    /* PathPaymentStrictReceive
     send an amount to a destination account through a path.
     (up to sendMax, sendAsset)
     (X0, Path[0]) .. (Xn, Path[n])
     (destAmount, destAsset)
     Threshold: med
-    Result: PathPaymentResult
+    Result: PathPaymentStrictReceiveResult
     */
-    struct PathPaymentOp
+    struct PathPaymentStrictReceiveOp
     {
         Asset sendAsset; // asset we pay with
         qint64 sendMax;   // the maximum amount of sendAsset to
@@ -104,13 +105,45 @@ namespace stellar
         Array<Asset,5> path; //max <5>; // additional hops it must go through to get there
     };
 
-    inline QDataStream &operator<<(QDataStream &out, const  PathPaymentOp &obj) {
+    inline QDataStream &operator<<(QDataStream &out, const  PathPaymentStrictReceiveOp &obj) {
         out << obj.sendAsset << obj.sendMax << obj.destination << obj.destAsset << obj.destAmount<< obj.path;
        return out;
     }
 
-    inline QDataStream &operator>>(QDataStream &in,  PathPaymentOp &obj) {
+    inline QDataStream &operator>>(QDataStream &in,  PathPaymentStrictReceiveOp &obj) {
        in >> obj.sendAsset >> obj.sendMax >> obj.destination >> obj.destAsset >> obj.destAmount >> obj.path;
+       return in;
+    }
+
+    /* PathPaymentStrictSend
+    send an amount to a destination account through a path.
+    (sendMax, sendAsset)
+    (X0, Path[0]) .. (Xn, Path[n])
+    (at least destAmount, destAsset)
+    Threshold: med
+    Result: PathPaymentStrictSendResult
+    */
+    struct PathPaymentStrictSendOp
+    {
+        Asset sendAsset; // asset we pay with
+        qint64 sendAmount;   // amount of sendAsset to send (excluding fees)
+
+        AccountID destination; // recipient of the payment
+        Asset destAsset;       // what they end up with
+        qint64 destMin;         // the minimum amount of dest asset to
+                                // be received
+                                // The operation will fail if it can't be met
+
+        Array<Asset,5> path; //max <5>; // additional hops it must go through to get there
+    };
+
+    inline QDataStream &operator<<(QDataStream &out, const  PathPaymentStrictSendOp &obj) {
+        out << obj.sendAsset << obj.sendAmount << obj.destination << obj.destAsset << obj.destMin<< obj.path;
+       return out;
+    }
+
+    inline QDataStream &operator>>(QDataStream &in,  PathPaymentStrictSendOp &obj) {
+       in >> obj.sendAsset >> obj.sendAmount >> obj.destination >> obj.destAsset >> obj.destMin >> obj.path;
        return in;
     }
 
@@ -372,9 +405,10 @@ namespace stellar
         ManageBuyOfferOp operationManageBuyOffer;
 
         //non trivials, you MUST call contructor explicity to use them
-        PathPaymentOp operationPathPayment;
+        PathPaymentStrictReceiveOp operationPathPaymentStrictReceive;
         SetOptionsOp operationSetOptions;
         ManageDataOp operationManageData;
+        PathPaymentStrictSendOp  operationPathPaymentStrictSend;
         };
 
         /**
@@ -396,8 +430,8 @@ namespace stellar
             out << obj.operationCreateAccount; break;
         case OperationType::PAYMENT:
             out << obj.operationPayment; break;
-        case OperationType::PATH_PAYMENT:
-            out << obj.operationPathPayment; break;
+        case OperationType::PATH_PAYMENT_STRICT_RECEIVE:
+            out << obj.operationPathPaymentStrictReceive; break;
         case OperationType::MANAGE_SELL_OFFER:
             out << obj.operationManageSellOffer; break;
         case OperationType::CREATE_PASSIVE_SELL_OFFER:
@@ -418,6 +452,8 @@ namespace stellar
             out << obj.operationBumpSequence; break;
         case OperationType::MANAGE_BUY_OFFER:
             out << obj.operationManageBuyOffer; break;
+        case OperationType::PATH_PAYMENT_STRICT_SEND:
+            out << obj.operationPathPaymentStrictSend; break;
         //default: break;
         }
 
@@ -431,9 +467,9 @@ namespace stellar
             in >> obj.operationCreateAccount; break;
         case OperationType::PAYMENT:
             in >> obj.operationPayment; break;
-        case OperationType::PATH_PAYMENT:
-            new (&obj.operationPathPayment) PathPaymentOp();
-            in >> obj.operationPathPayment; break;        
+        case OperationType::PATH_PAYMENT_STRICT_RECEIVE:
+            new (&obj.operationPathPaymentStrictReceive) PathPaymentStrictReceiveOp();
+            in >> obj.operationPathPaymentStrictReceive; break;
         case OperationType::MANAGE_SELL_OFFER:
             in >> obj.operationManageSellOffer; break;
         case OperationType::CREATE_PASSIVE_SELL_OFFER:
@@ -456,6 +492,9 @@ namespace stellar
             in >> obj.operationBumpSequence; break;
         case OperationType::MANAGE_BUY_OFFER:
             in >> obj.operationManageBuyOffer; break;
+        case OperationType::PATH_PAYMENT_STRICT_SEND:
+            new (&obj.operationPathPaymentStrictSend) PathPaymentStrictSendOp();
+            in >> obj.operationPathPaymentStrictSend; break;
         //default: break;
         }
        return in;
@@ -683,28 +722,51 @@ namespace stellar
     };
     XDR_SERIALIZER(PaymentResult)
 
-    /******* Payment Result ********/
+    /******* PathPaymentStrictReceive Result ********/
 
-    enum class PathPaymentResultCode : qint32
+    enum class PathPaymentStrictReceiveResultCode: qint32
     {
         // codes considered as "success" for the operation
-        PATH_PAYMENT_SUCCESS = 0, // success
+        PATH_PAYMENT_STRICT_RECEIVE_SUCCESS = 0, // success
 
         // codes considered as "failure" for the operation
-        PATH_PAYMENT_MALFORMED = -1,          // bad input
-        PATH_PAYMENT_UNDERFUNDED = -2,        // not enough funds in source account
-        PATH_PAYMENT_SRC_NO_TRUST = -3,       // no trust line on source account
-        PATH_PAYMENT_SRC_NOT_AUTHORIZED = -4, // source not authorized to transfer
-        PATH_PAYMENT_NO_DESTINATION = -5,     // destination account does not exist
-        PATH_PAYMENT_NO_TRUST = -6,           // dest missing a trust line for asset
-        PATH_PAYMENT_NOT_AUTHORIZED = -7,     // dest not authorized to hold asset
-        PATH_PAYMENT_LINE_FULL = -8,          // dest would go above their limit
-        PATH_PAYMENT_NO_ISSUER = -9,          // missing issuer on one asset
-        PATH_PAYMENT_TOO_FEW_OFFERS = -10,    // not enough offers to satisfy path
-        PATH_PAYMENT_OFFER_CROSS_SELF = -11,  // would cross one of its own offers
-        PATH_PAYMENT_OVER_SENDMAX = -12       // could not satisfy sendmax
+        PATH_PAYMENT_STRICT_RECEIVE_MALFORMED = -1,          // bad input
+        PATH_PAYMENT_STRICT_RECEIVE_UNDERFUNDED = -2,        // not enough funds in source account
+        PATH_PAYMENT_STRICT_RECEIVE_SRC_NO_TRUST = -3,       // no trust line on source account
+        PATH_PAYMENT_STRICT_RECEIVE_SRC_NOT_AUTHORIZED = -4, // source not authorized to transfer
+        PATH_PAYMENT_STRICT_RECEIVE_NO_DESTINATION = -5,     // destination account does not exist
+        PATH_PAYMENT_STRICT_RECEIVE_NO_TRUST = -6,           // dest missing a trust line for asset
+        PATH_PAYMENT_STRICT_RECEIVE_NOT_AUTHORIZED = -7,     // dest not authorized to hold asset
+        PATH_PAYMENT_STRICT_RECEIVE_LINE_FULL = -8,          // dest would go above their limit
+        PATH_PAYMENT_STRICT_RECEIVE_NO_ISSUER = -9,          // missing issuer on one asset
+        PATH_PAYMENT_STRICT_RECEIVE_TOO_FEW_OFFERS = -10,    // not enough offers to satisfy path
+        PATH_PAYMENT_STRICT_RECEIVE_OFFER_CROSS_SELF = -11,  // would cross one of its own offers
+        PATH_PAYMENT_STRICT_RECEIVE_OVER_SENDMAX = -12       // could not satisfy sendmax
     };
-    XDR_SERIALIZER(PathPaymentResultCode)
+    XDR_SERIALIZER(PathPaymentStrictReceiveResultCode)
+
+    /******* PathPaymentStrictSend Result ********/
+
+    enum class PathPaymentStrictSendResultCode: qint32
+    {
+        // codes considered as "success" for the operation
+        PATH_PAYMENT_STRICT_SEND_SUCCESS = 0, // success
+
+        // codes considered as "failure" for the operation
+        PATH_PAYMENT_STRICT_SEND_MALFORMED = -1,          // bad input
+        PATH_PAYMENT_STRICT_SEND_UNDERFUNDED = -2,        // not enough funds in source account
+        PATH_PAYMENT_STRICT_SEND_SRC_NO_TRUST = -3,       // no trust line on source account
+        PATH_PAYMENT_STRICT_SEND_SRC_NOT_AUTHORIZED = -4, // source not authorized to transfer
+        PATH_PAYMENT_STRICT_SEND_NO_DESTINATION = -5,     // destination account does not exist
+        PATH_PAYMENT_STRICT_SEND_NO_TRUST = -6,           // dest missing a trust line for asset
+        PATH_PAYMENT_STRICT_SEND_NOT_AUTHORIZED = -7,     // dest not authorized to hold asset
+        PATH_PAYMENT_STRICT_SEND_LINE_FULL = -8,          // dest would go above their limit
+        PATH_PAYMENT_STRICT_SEND_NO_ISSUER = -9,          // missing issuer on one asset
+        PATH_PAYMENT_STRICT_SEND_TOO_FEW_OFFERS = -10,    // not enough offers to satisfy path
+        PATH_PAYMENT_STRICT_SEND_OFFER_CROSS_SELF = -11,  // would cross one of its own offers
+        PATH_PAYMENT_STRICT_SEND_OVER_SENDMAX = -12       // could not satisfy destMin
+    };
+    XDR_SERIALIZER(PathPaymentStrictSendResultCode)
 
     struct SimplePaymentResult
     {
@@ -722,38 +784,69 @@ namespace stellar
        return in;
     }
 
-    struct PathPaymentResult {
-        PathPaymentResultCode code;
+    struct PathPaymentStrictReceiveResult {
+        PathPaymentStrictReceiveResultCode code;
         QVector<ClaimOfferAtom> offers; //<>;
         union{
             SimplePaymentResult last;
             Asset noIssuer; // the asset that caused the error
         };
     };
-    inline QDataStream &operator<<(QDataStream &out, const  PathPaymentResult &obj) {
-        out << obj.code;;
+    inline QDataStream &operator<<(QDataStream &out, const  PathPaymentStrictReceiveResult &obj) {
+        out << obj.code;
         switch(obj.code){
-        case PathPaymentResultCode::PATH_PAYMENT_SUCCESS:
+        case PathPaymentStrictReceiveResultCode::PATH_PAYMENT_STRICT_RECEIVE_SUCCESS:
             out << obj.offers << obj.last; break;
-        case PathPaymentResultCode::PATH_PAYMENT_NO_ISSUER:
+        case PathPaymentStrictReceiveResultCode::PATH_PAYMENT_STRICT_RECEIVE_NO_ISSUER:
             out << obj.noIssuer; break;
         default: break;
         }
        return out;
     }
 
-    inline QDataStream &operator>>(QDataStream &in,  PathPaymentResult &obj) {
-        in >> obj.code;;
+    inline QDataStream &operator>>(QDataStream &in,  PathPaymentStrictReceiveResult &obj) {
+        in >> obj.code;
         switch(obj.code){
-        case PathPaymentResultCode::PATH_PAYMENT_SUCCESS:
+        case PathPaymentStrictReceiveResultCode::PATH_PAYMENT_STRICT_RECEIVE_SUCCESS:
             in >> obj.offers >> obj.last; break;
-        case PathPaymentResultCode::PATH_PAYMENT_NO_ISSUER:
+        case PathPaymentStrictReceiveResultCode::PATH_PAYMENT_STRICT_RECEIVE_NO_ISSUER:
             in >> obj.noIssuer; break;
         default: break;
         }
        return in;
     }
 
+    struct PathPaymentStrictSendResult {
+        PathPaymentStrictSendResultCode code;
+        QVector<ClaimOfferAtom> offers; //<>;
+        union{
+            SimplePaymentResult last;
+            Asset noIssuer; // the asset that caused the error
+        };
+    };
+    inline QDataStream &operator<<(QDataStream &out, const  PathPaymentStrictSendResult &obj) {
+        out << obj.code;
+        switch(obj.code){
+        case PathPaymentStrictSendResultCode::PATH_PAYMENT_STRICT_SEND_SUCCESS:
+            out << obj.offers << obj.last; break;
+        case PathPaymentStrictSendResultCode::PATH_PAYMENT_STRICT_SEND_NO_ISSUER:
+            out << obj.noIssuer; break;
+        default: break;
+        }
+       return out;
+    }
+
+    inline QDataStream &operator>>(QDataStream &in,  PathPaymentStrictSendResult &obj) {
+        in >> obj.code;
+        switch(obj.code){
+        case PathPaymentStrictSendResultCode::PATH_PAYMENT_STRICT_SEND_SUCCESS:
+            in >> obj.offers >> obj.last; break;
+        case PathPaymentStrictSendResultCode::PATH_PAYMENT_STRICT_SEND_NO_ISSUER:
+            in >> obj.noIssuer; break;
+        default: break;
+        }
+       return in;
+    }
 
     /******* ManageSellOffer Result ********/
 
@@ -1131,7 +1224,8 @@ namespace stellar
         //no trivial
         ManageBuyOfferResult manageBuyOfferResult;
         PaymentResult paymentResult;
-        PathPaymentResult pathPaymentResult;
+        PathPaymentStrictReceiveResult pathPaymentStrictReceiveResult;
+        PathPaymentStrictSendResult pathPaymentStrictSendResult;
         ManageSellOfferResult manageSellOfferResult;
         ManageSellOfferResult createPassiveOfferResult;
         InflationResult inflationResult;
@@ -1162,8 +1256,8 @@ namespace stellar
                 out << obj.createAccountResult; break;
             case OperationType::PAYMENT:
                 out << obj.paymentResult; break;
-            case OperationType::PATH_PAYMENT:
-                out << obj.pathPaymentResult; break;
+            case OperationType::PATH_PAYMENT_STRICT_RECEIVE:
+                out << obj.pathPaymentStrictReceiveResult; break;
             case OperationType::MANAGE_SELL_OFFER:                
                 out << obj.manageSellOfferResult; break;
             case OperationType::CREATE_PASSIVE_SELL_OFFER:
@@ -1184,6 +1278,8 @@ namespace stellar
                 out << obj.bumpSequenceResult; break;
             case OperationType::MANAGE_BUY_OFFER:
                 out << obj.manageBuyOfferResult; break;
+            case OperationType::PATH_PAYMENT_STRICT_SEND:
+                out << obj.pathPaymentStrictSendResult; break;
             //default:break;
             }
             break;
@@ -1207,9 +1303,9 @@ namespace stellar
             case OperationType::PAYMENT:
                 new (&obj.paymentResult) PaymentResult();
                 in >> obj.paymentResult; break;
-            case OperationType::PATH_PAYMENT:
-                new (&obj.pathPaymentResult) PathPaymentResult();
-                in >> obj.pathPaymentResult; break;
+            case OperationType::PATH_PAYMENT_STRICT_RECEIVE:
+                new (&obj.pathPaymentStrictReceiveResult) PathPaymentStrictReceiveResult();
+                in >> obj.pathPaymentStrictReceiveResult; break;
             case OperationType::MANAGE_SELL_OFFER:
                 new (&obj.manageSellOfferResult) ManageSellOfferResult();
                 in >> obj.manageSellOfferResult; break;
@@ -1234,6 +1330,9 @@ namespace stellar
             case OperationType::MANAGE_BUY_OFFER:
                 new (&obj.manageBuyOfferResult) ManageBuyOfferResult();
                 in >> obj.manageBuyOfferResult; break;
+            case OperationType::PATH_PAYMENT_STRICT_SEND:
+                new (&obj.pathPaymentStrictSendResult) PathPaymentStrictSendResult();
+                in >> obj.pathPaymentStrictSendResult; break;
             //default: break;
             }
             break;

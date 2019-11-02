@@ -4,6 +4,8 @@
 #include "createaccountoperation.h"
 #include "paymentoperation.h"
 #include "pathpaymentoperation.h"
+#include "pathpaymentstrictreceiveoperation.h"
+#include "pathpaymentstrictsendoperation.h"
 #include "allowtrustoperation.h"
 #include "changetrustoperation.h"
 #include "createpassivesellofferoperation.h"
@@ -82,8 +84,8 @@ Operation *Operation::fromXdr(stellar::Operation &xdr) {
     case stellar::OperationType::PAYMENT:
         operation = PaymentOperation::build(xdr.operationPayment);
         break;
-    case stellar::OperationType::PATH_PAYMENT:
-        operation = PathPaymentOperation::build(xdr.operationPathPayment);
+    case stellar::OperationType::PATH_PAYMENT_STRICT_RECEIVE:
+        operation = PathPaymentOperation::build(xdr.operationPathPaymentStrictReceive);
         break;
     case stellar::OperationType::MANAGE_SELL_OFFER:
         operation = ManageSellOfferOperation::build(xdr.operationManageSellOffer);
@@ -111,6 +113,9 @@ Operation *Operation::fromXdr(stellar::Operation &xdr) {
         break;
     case stellar::OperationType::MANAGE_BUY_OFFER:
         operation = ManageBuyOfferOperation::build(xdr.operationManageBuyOffer);
+        break;
+    case stellar::OperationType::PATH_PAYMENT_STRICT_SEND:
+        operation = PathPaymentStrictSendOperation::build(xdr.operationPathPaymentStrictSend);
         break;
     default:
         throw std::runtime_error("Unknown operation body");

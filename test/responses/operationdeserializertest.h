@@ -9,6 +9,10 @@
 #include "../../src/responses/operations/createaccountoperationresponse.h"
 #include "../../src/responses/operations/paymentoperationresponse.h"
 #include "../../src/responses/operations/pathpaymentoperationresponse.h"
+
+#include "../../src/responses/operations/pathpaymentstrictreceiveoperationresponse.h"
+#include "../../src/responses/operations/pathpaymentstrictsendoperationresponse.h"
+
 #include "../../src/responses/operations/inflationoperationresponse.h"
 #include "../../src/responses/operations/allowtrustoperationresponse.h"
 #include "../../src/responses/operations/changetrustoperationresponse.h"
@@ -590,8 +594,8 @@ private slots:
                           "  \"asset_issuer\": \"GBVOL67TMUQBGL4TZYNMY3ZQ5WGQYFPFD5VJRWXR72VA33VFNL225PL5\",\n"
                           "  \"from\": \"GC45JH537XZD4DY4WTV5PCUJL4KPOIE4WMGX5OP5KSPS2OLGRUOVVIGD\",\n"
                           "  \"to\": \"GC45JH537XZD4DY4WTV5PCUJL4KPOIE4WMGX5OP5KSPS2OLGRUOVVIGD\",\n"
-                          "  \"amount\": \"2.5000000\",\n"
-                          "  \"path\": [],\n"
+                          "  \"amount\": \"2.5000000\",\n"                          
+                          "  \"path\": [{\"asset_type\": \"native\"}, {\"asset_type\": \"credit_alphanum4\", \"asset_code\": \"CNY\", \"asset_issuer\": \"GAREELUB43IRHWEASCFBLKHURCGMHE5IF6XSE7EXDLACYHGRHM43RFOX\"}, {\"asset_type\": \"credit_alphanum12\", \"asset_code\": \"CNYMNL\", \"asset_issuer\": \"GAREELUB43IRHWEASCFBLKHURCGMHE5IF6XSE7EXDLACYHGRHM43RFOX\"}],\n"
                           "  \"source_amount\": \"1.1777000\",\n"
                           "  \"source_max\": \"1.1779523\",\n"
                           "  \"source_asset_type\": \"native\"\n"
@@ -604,8 +608,76 @@ private slots:
         QCOMPARE(operation.getSourceAmount(), QString("1.1777000"));
         QCOMPARE(operation.getSourceMax(), QString("1.1779523"));
         QVERIFY(operation.getSourceAsset()->equals(new AssetTypeNative()));
+
+        QList<Asset*> expectedAssetsPath = {
+                    new AssetTypeNative(),
+                    Asset::createNonNativeAsset("CNY", KeyPair::fromAccountId("GAREELUB43IRHWEASCFBLKHURCGMHE5IF6XSE7EXDLACYHGRHM43RFOX")),
+                    Asset::createNonNativeAsset("CNYMNL", KeyPair::fromAccountId("GAREELUB43IRHWEASCFBLKHURCGMHE5IF6XSE7EXDLACYHGRHM43RFOX"))
+            };
+        QVERIFY((expectedAssetsPath.size() == operation.getPath().size()) && std::equal(operation.getPath().begin(),operation.getPath().end(),expectedAssetsPath.begin(),[](Asset* a, Asset* b){return a->equals(b);}));
+
+
         QVERIFY(operation.getAsset()->equals(Asset::createNonNativeAsset("XRP", KeyPair::fromAccountId(QString("GBVOL67TMUQBGL4TZYNMY3ZQ5WGQYFPFD5VJRWXR72VA33VFNL225PL5")))));
     }
+
+    void testDeserializePathPaymentStrictSendOperation()
+    {
+      QByteArray json = "{\n"
+              "  \"_links\": {\n"
+              "    \"self\": {\n"
+              "      \"href\": \"https://horizon.stellar.org/operations/75252830662840321\"\n"
+              "    },\n"
+              "    \"transaction\": {\n"
+              "      \"href\": \"https://horizon.stellar.org/transactions/fb2f5655c70a459220ac09eb3d6870422b58dcf5c5ffb5e5b21817b4d248826e\"\n"
+              "    },\n"
+              "    \"effects\": {\n"
+              "      \"href\": \"https://horizon.stellar.org/operations/75252830662840321/effects\"\n"
+              "    },\n"
+              "    \"succeeds\": {\n"
+              "      \"href\": \"https://horizon.stellar.org/effects?order=desc\\u0026cursor=75252830662840321\"\n"
+              "    },\n"
+              "    \"precedes\": {\n"
+              "      \"href\": \"https://horizon.stellar.org/effects?order=asc\\u0026cursor=75252830662840321\"\n"
+              "    }\n"
+              "  },\n"
+              "  \"id\": \"75252830662840321\",\n"
+              "  \"paging_token\": \"75252830662840321\",\n"
+              "  \"source_account\": \"GC45JH537XZD4DY4WTV5PCUJL4KPOIE4WMGX5OP5KSPS2OLGRUOVVIGD\",\n"
+              "  \"type\": \"path_payment_strict_send\",\n"
+              "  \"type_i\": 13,\n"
+              "  \"created_at\": \"2018-04-24T12:58:12Z\",\n"
+              "  \"transaction_hash\": \"fb2f5655c70a459220ac09eb3d6870422b58dcf5c5ffb5e5b21817b4d248826e\",\n"
+              "  \"asset_type\": \"native\",\n"
+              "  \"from\": \"GC45JH537XZD4DY4WTV5PCUJL4KPOIE4WMGX5OP5KSPS2OLGRUOVVIGD\",\n"
+              "  \"to\": \"GC45JH537XZD4DY4WTV5PCUJL4KPOIE4WMGX5OP5KSPS2OLGRUOVVIGD\",\n"
+              "  \"amount\": \"2.5000000\",\n"
+              "  \"path\": [{\"asset_type\": \"native\"}, {\"asset_type\": \"credit_alphanum4\", \"asset_code\": \"CNY\", \"asset_issuer\": \"GAREELUB43IRHWEASCFBLKHURCGMHE5IF6XSE7EXDLACYHGRHM43RFOX\"}, {\"asset_type\": \"credit_alphanum12\", \"asset_code\": \"CNYMNL\", \"asset_issuer\": \"GAREELUB43IRHWEASCFBLKHURCGMHE5IF6XSE7EXDLACYHGRHM43RFOX\"}],\n"
+              "  \"source_amount\": \"1.1777000\",\n"
+              "  \"destination_min\": \"1.1779523\",\n"
+              "  \"source_asset_type\": \"credit_alphanum4\",\n"
+              "  \"source_asset_code\": \"XRP\",\n"
+              "  \"source_asset_issuer\": \"GBVOL67TMUQBGL4TZYNMY3ZQ5WGQYFPFD5VJRWXR72VA33VFNL225PL5\"\n"
+              "}";
+
+      PathPaymentStrictSendOperationResponse operation;
+      operation.loadFromJson(json);
+
+      QCOMPARE(operation.getFrom().getAccountId(), QString("GC45JH537XZD4DY4WTV5PCUJL4KPOIE4WMGX5OP5KSPS2OLGRUOVVIGD"));
+      QCOMPARE(operation.getTo().getAccountId(), QString("GC45JH537XZD4DY4WTV5PCUJL4KPOIE4WMGX5OP5KSPS2OLGRUOVVIGD"));
+      QCOMPARE(operation.getAmount(), QString("2.5000000"));
+      QCOMPARE(operation.getSourceAmount(), QString("1.1777000"));
+      QCOMPARE(operation.getDestinationMin(), QString("1.1779523"));
+      QVERIFY(operation.getAsset()->equals( new AssetTypeNative()));
+      QList<Asset*> expectedAssetsPath = {
+                  new AssetTypeNative(),
+                  Asset::createNonNativeAsset("CNY", KeyPair::fromAccountId("GAREELUB43IRHWEASCFBLKHURCGMHE5IF6XSE7EXDLACYHGRHM43RFOX")),
+                  Asset::createNonNativeAsset("CNYMNL", KeyPair::fromAccountId("GAREELUB43IRHWEASCFBLKHURCGMHE5IF6XSE7EXDLACYHGRHM43RFOX"))
+          };
+      QVERIFY((expectedAssetsPath.size() == operation.getPath().size()) && std::equal(operation.getPath().begin(),operation.getPath().end(),expectedAssetsPath.begin(),[](Asset* a, Asset* b){return a->equals(b);}));
+
+      QVERIFY(operation.getSourceAsset()->equals(Asset::createNonNativeAsset("XRP", KeyPair::fromAccountId("GBVOL67TMUQBGL4TZYNMY3ZQ5WGQYFPFD5VJRWXR72VA33VFNL225PL5"))));
+    }
+
     void testDeserializeCreatePassiveOfferOperation() {
         QByteArray json = "{\n"
                 "  \"_links\": {\n"

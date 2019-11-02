@@ -4,7 +4,7 @@
 #include "../keypair.h"
 #include "../assettypenative.h"
 
-inline Asset* assetFromVariantMap(QVariantMap &m)
+inline Asset* assetFromVariantMap(const QVariantMap &m)
 {
     Asset *asset;
     if (m.value(QStringLiteral("asset_type")).toString()=="native") {

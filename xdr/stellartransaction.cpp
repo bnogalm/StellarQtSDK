@@ -12,9 +12,9 @@ stellar::Operation::Operation(const stellar::Operation &op){
         operationCreateAccount = op.operationCreateAccount; break;
     case OperationType::PAYMENT:
         operationPayment = op.operationPayment; break;
-    case OperationType::PATH_PAYMENT:
-        new (&operationPathPayment) PathPaymentOp();
-        operationPathPayment = op.operationPathPayment; break;
+    case OperationType::PATH_PAYMENT_STRICT_RECEIVE:
+        new (&operationPathPaymentStrictReceive) PathPaymentStrictReceiveOp();
+        operationPathPaymentStrictReceive = op.operationPathPaymentStrictReceive; break;
     case OperationType::MANAGE_SELL_OFFER:
         operationManageSellOffer = op.operationManageSellOffer; break;
     case OperationType::CREATE_PASSIVE_SELL_OFFER:
@@ -37,6 +37,9 @@ stellar::Operation::Operation(const stellar::Operation &op){
         operationBumpSequence = op.operationBumpSequence; break;
     case OperationType::MANAGE_BUY_OFFER:
         operationManageBuyOffer = op.operationManageBuyOffer; break;
+    case OperationType::PATH_PAYMENT_STRICT_SEND:
+        new (&operationPathPaymentStrictSend) PathPaymentStrictSendOp();
+        operationPathPaymentStrictSend = op.operationPathPaymentStrictSend; break;
     default: break;
     }
 }
@@ -44,14 +47,17 @@ stellar::Operation::Operation(const stellar::Operation &op){
 stellar::Operation::~Operation(){
     switch(type)
     {
-    case OperationType::PATH_PAYMENT:
-        operationPathPayment.~PathPaymentOp();
+    case OperationType::PATH_PAYMENT_STRICT_RECEIVE:
+        operationPathPaymentStrictReceive.~PathPaymentStrictReceiveOp();
         break;
     case OperationType::SET_OPTIONS:
         operationSetOptions.~SetOptionsOp();
         break;
     case OperationType::MANAGE_DATA:
         operationManageData.~ManageDataOp();
+        break;
+    case OperationType::PATH_PAYMENT_STRICT_SEND:
+        operationPathPaymentStrictSend.~PathPaymentStrictSendOp();
         break;
     default:
         break;
@@ -61,14 +67,17 @@ stellar::Operation::~Operation(){
 const stellar::Operation &stellar::Operation::operator =(const stellar::Operation &op) {
     switch(type)
     {
-    case OperationType::PATH_PAYMENT:
-        operationPathPayment.~PathPaymentOp();
+    case OperationType::PATH_PAYMENT_STRICT_RECEIVE:
+        operationPathPaymentStrictReceive.~PathPaymentStrictReceiveOp();
         break;
     case OperationType::SET_OPTIONS:
         operationSetOptions.~SetOptionsOp();
         break;
     case OperationType::MANAGE_DATA:
         operationManageData.~ManageDataOp();
+        break;
+    case OperationType::PATH_PAYMENT_STRICT_SEND:
+        operationPathPaymentStrictSend.~PathPaymentStrictSendOp();
         break;
     default:
         break;
@@ -80,9 +89,9 @@ const stellar::Operation &stellar::Operation::operator =(const stellar::Operatio
         operationCreateAccount = op.operationCreateAccount; break;
     case OperationType::PAYMENT:
         operationPayment = op.operationPayment; break;
-    case OperationType::PATH_PAYMENT:
-        new (&operationPathPayment) PathPaymentOp();
-        operationPathPayment = op.operationPathPayment; break;
+    case OperationType::PATH_PAYMENT_STRICT_RECEIVE:
+        new (&operationPathPaymentStrictReceive) PathPaymentStrictReceiveOp();
+        operationPathPaymentStrictReceive = op.operationPathPaymentStrictReceive; break;
     case OperationType::MANAGE_SELL_OFFER:
         operationManageSellOffer = op.operationManageSellOffer; break;
     case OperationType::CREATE_PASSIVE_SELL_OFFER:
@@ -105,6 +114,9 @@ const stellar::Operation &stellar::Operation::operator =(const stellar::Operatio
         operationBumpSequence = op.operationBumpSequence; break;
     case OperationType::MANAGE_BUY_OFFER:
         operationManageBuyOffer = op.operationManageBuyOffer; break;
+    case OperationType::PATH_PAYMENT_STRICT_SEND:
+        new (&operationPathPaymentStrictSend) PathPaymentStrictSendOp();
+        operationPathPaymentStrictSend = op.operationPathPaymentStrictSend; break;
     default: break;
     }
     return *this;
@@ -125,7 +137,7 @@ stellar::OperationResult::OperationResult():type(OperationType::CREATE_ACCOUNT)
 ////no trivial
 //ManageBuyOfferResult manageBuyOfferResult;
 //PaymentResult paymentResult;
-//PathPaymentResult pathPaymentResult;
+//PathPaymentResult pathPaymentResult; Send and Receive
 //ManageSellOfferResult manageSellOfferResult;
 //ManageSellOfferResult createPassiveOfferResult;
 //InflationResult inflationResult;
@@ -137,11 +149,11 @@ stellar::OperationResult::OperationResult(const stellar::OperationResult &op)
     case OperationType::CREATE_ACCOUNT:
         createAccountResult = op.createAccountResult; break;
     case OperationType::PAYMENT:
-        new (&pathPaymentResult) PaymentResult();
+        new (&paymentResult) PaymentResult();
         paymentResult = op.paymentResult; break;
-    case OperationType::PATH_PAYMENT:
-        new (&pathPaymentResult) PathPaymentResult();
-        pathPaymentResult = op.pathPaymentResult; break;
+    case OperationType::PATH_PAYMENT_STRICT_RECEIVE:
+        new (&pathPaymentStrictReceiveResult) PathPaymentStrictReceiveResult();
+        pathPaymentStrictReceiveResult = op.pathPaymentStrictReceiveResult; break;
     case OperationType::MANAGE_SELL_OFFER:
         new (&manageSellOfferResult) ManageSellOfferResult();
         manageSellOfferResult = op.manageSellOfferResult; break;
@@ -166,6 +178,9 @@ stellar::OperationResult::OperationResult(const stellar::OperationResult &op)
     case OperationType::MANAGE_BUY_OFFER:
         new (&manageBuyOfferResult) ManageBuyOfferResult();
         manageBuyOfferResult = op.manageBuyOfferResult; break;
+    case OperationType::PATH_PAYMENT_STRICT_SEND:
+        new (&pathPaymentStrictSendResult) PathPaymentStrictSendResult();
+        pathPaymentStrictSendResult = op.pathPaymentStrictSendResult; break;
     default: break;
     }
 }
@@ -177,8 +192,8 @@ stellar::OperationResult::~OperationResult()
     case OperationType::PAYMENT:
         paymentResult.~PaymentResult();
         break;
-    case OperationType::PATH_PAYMENT:
-        pathPaymentResult.~PathPaymentResult();
+    case OperationType::PATH_PAYMENT_STRICT_RECEIVE:
+        pathPaymentStrictReceiveResult.~PathPaymentStrictReceiveResult();
         break;
     case OperationType::MANAGE_SELL_OFFER:
         manageSellOfferResult.~ManageSellOfferResult();
@@ -191,6 +206,9 @@ stellar::OperationResult::~OperationResult()
         break;
     case OperationType::MANAGE_BUY_OFFER:
         manageBuyOfferResult.~ManageBuyOfferResult();
+        break;
+    case OperationType::PATH_PAYMENT_STRICT_SEND:
+        pathPaymentStrictSendResult.~PathPaymentStrictSendResult();
         break;
     default:
         break;
@@ -204,8 +222,8 @@ const stellar::OperationResult &stellar::OperationResult::operator =(const stell
     case OperationType::PAYMENT:
         paymentResult.~PaymentResult();
         break;
-    case OperationType::PATH_PAYMENT:
-        pathPaymentResult.~PathPaymentResult();
+    case OperationType::PATH_PAYMENT_STRICT_RECEIVE:
+        pathPaymentStrictReceiveResult.~PathPaymentStrictReceiveResult();
         break;
     case OperationType::MANAGE_SELL_OFFER:
         manageSellOfferResult.~ManageSellOfferResult();
@@ -228,11 +246,11 @@ const stellar::OperationResult &stellar::OperationResult::operator =(const stell
     case OperationType::CREATE_ACCOUNT:
         createAccountResult = op.createAccountResult; break;
     case OperationType::PAYMENT:
-        new (&pathPaymentResult) PaymentResult();
+        new (&paymentResult) PaymentResult();
         paymentResult = op.paymentResult; break;
-    case OperationType::PATH_PAYMENT:
-        new (&pathPaymentResult) PathPaymentResult();
-        pathPaymentResult = op.pathPaymentResult; break;
+    case OperationType::PATH_PAYMENT_STRICT_RECEIVE:
+        new (&pathPaymentStrictReceiveResult) PathPaymentStrictReceiveResult();
+        pathPaymentStrictReceiveResult = op.pathPaymentStrictReceiveResult; break;
     case OperationType::MANAGE_SELL_OFFER:
         new (&manageSellOfferResult) ManageSellOfferResult();
         manageSellOfferResult = op.manageSellOfferResult; break;
@@ -257,6 +275,9 @@ const stellar::OperationResult &stellar::OperationResult::operator =(const stell
     case OperationType::MANAGE_BUY_OFFER:
         new (&manageBuyOfferResult) ManageBuyOfferResult();
         manageBuyOfferResult = op.manageBuyOfferResult; break;
+    case OperationType::PATH_PAYMENT_STRICT_SEND:
+        new (&pathPaymentStrictSendResult) PathPaymentStrictSendResult();
+        pathPaymentStrictSendResult = op.pathPaymentStrictSendResult; break;
     default: break;
     }
     return *this;
