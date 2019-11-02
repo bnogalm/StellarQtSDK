@@ -3,6 +3,7 @@
 #include "../keypair.h"
 #include "../assettypenative.h"
 #include "../assettypecreditalphanum.h"
+#include "common.h"
 
 PathResponse::PathResponse(QNetworkReply *reply )
     : Response(reply),m_destinationAsset(nullptr),m_sourceAsset(nullptr)
@@ -31,17 +32,12 @@ QString PathResponse::getSourceAmount() {
     return m_sourceAmount;
 }
 
-QList<Asset*> PathResponse::getPath() {
+const QList<Asset *>& PathResponse::getPath() {
     if(m_pathConverted.empty()){
         for(auto & a : m_path)
         {
             const QVariantMap m = a.toMap();
-            if (m.value(QStringLiteral("asset_type")).toString()=="native") {
-                m_pathConverted.append(new AssetTypeNative());
-            } else {
-                KeyPair* issuer = KeyPair::fromAccountId(m.value(QStringLiteral("asset_issuer")).toString());
-                m_pathConverted.append(Asset::createNonNativeAsset(m.value(QStringLiteral("asset_code")).toString(), issuer));
-            }
+            m_pathConverted.append(assetFromVariantMap(m));
         }
     }
     return m_pathConverted;

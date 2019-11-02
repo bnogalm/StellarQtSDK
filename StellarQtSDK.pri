@@ -33,11 +33,16 @@ SOURCES += \
     $$PWD/src/assettypenative.cpp \
     $$PWD/src/changetrustoperation.cpp \
     $$PWD/src/createaccountoperation.cpp \
+    $$PWD/src/pathpaymentstrictreceiveoperation.cpp \
+    $$PWD/src/pathpaymentstrictsendoperation.cpp \
     $$PWD/src/requests/feestatsrequestbuilder.cpp \
     $$PWD/src/responses/feestatsresponse.cpp \
     $$PWD/src/responses/operations/bumpsequenceoperationresponse.cpp \
     $$PWD/src/responses/operations/managebuyofferoperationresponse.cpp \
     $$PWD/src/responses/operations/managesellofferoperationresponse.cpp \
+    $$PWD/src/responses/operations/pathpaymentbaseoperationresponse.cpp \
+    $$PWD/src/responses/operations/pathpaymentstrictreceiveoperationresponse.cpp \
+    $$PWD/src/responses/operations/pathpaymentstrictsendoperationresponse.cpp \
     $$PWD/src/strkey.cpp \
     $$PWD/src/inflationoperation.cpp \
     $$PWD/src/util.cpp \
@@ -157,11 +162,16 @@ HEADERS += \
     $$PWD/src/createpassivesellofferoperation.h \
     $$PWD/src/managebuyofferoperation.h \
     $$PWD/src/managesellofferoperation.h \
+    $$PWD/src/pathpaymentstrictreceiveoperation.h \
+    $$PWD/src/pathpaymentstrictsendoperation.h \
     $$PWD/src/requests/feestatsrequestbuilder.h \
     $$PWD/src/responses/feestatsresponse.h \
     $$PWD/src/responses/operations/bumpsequenceoperationresponse.h \
     $$PWD/src/responses/operations/managebuyofferoperationresponse.h \
     $$PWD/src/responses/operations/managesellofferoperationresponse.h \
+    $$PWD/src/responses/operations/pathpaymentbaseoperationresponse.h \
+    $$PWD/src/responses/operations/pathpaymentstrictreceiveoperationresponse.h \
+    $$PWD/src/responses/operations/pathpaymentstrictsendoperationresponse.h \
     $$PWD/xdr/stellartypes.h \
     $$PWD/src/account.h \
     $$PWD/src/transactionbuilderaccount.h \
