@@ -48,7 +48,8 @@ class TransactionDeserializerTest: public QObject
                       "  \"created_at\": \"2015-11-20T17:01:28Z\",\n"
                       "  \"source_account\": \"GCUB7JL4APK7LKJ6MZF7Q2JTLHAGNBIUA7XIXD5SQTG52GQ2DAT6XZMK\",\n"
                       "  \"source_account_sequence\": 2373051035426646,\n"
-                      "  \"fee_paid\": 100,\n"
+                      "  \"max_fee\": 200,\n"
+                      "  \"fee_charged\": 100,\n"
                       "  \"operation_count\": 1,\n"
                       "  \"envelope_xdr\": \"AAAAAKgfpXwD1fWpPmZL+GkzWcBmhRQH7ouPsoTN3RoaGCfrAAAAZAAIbkcAAB9WAAAAAAAAAANRBBZE6D1qyGjISUGLY5Ldvp31PwAAAAAAAAAAAAAAAAAAAAEAAAABAAAAAP1qe44j+i4uIT+arbD4QDQBt8ryEeJd7a0jskQ3nwDeAAAAAAAAAADA7RnarSzCwj3OT+M2btCMFpVBdqxJS+Sr00qBjtFv7gAAAABLCs/QAAAAAAAAAAEaGCfrAAAAQG/56Cj2J8W/KCZr+oC4sWND1CTGWfaccHNtuibQH8kZIb+qBSDY94g7hiaAXrlIeg9b7oz/XuP3x9MWYw2jtwM=\",\n"
                       "  \"result_xdr\": \"AAAAAAAAAGQAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAA=\",\n"
@@ -94,7 +95,8 @@ class TransactionDeserializerTest: public QObject
                               "  \"created_at\": \"2015-11-20T17:01:28Z\",\n"
                               "  \"source_account\": \"GCUB7JL4APK7LKJ6MZF7Q2JTLHAGNBIUA7XIXD5SQTG52GQ2DAT6XZMK\",\n"
                               "  \"source_account_sequence\": 2373051035426646,\n"
-                              "  \"fee_paid\": 100,\n"
+                              "  \"max_fee\": 200,\n"
+                              "  \"fee_charged\": 100,\n"
                               "  \"operation_count\": 1,\n"
                               "  \"envelope_xdr\": \"AAAAAKgfpXwD1fWpPmZL+GkzWcBmhRQH7ouPsoTN3RoaGCfrAAAAZAAIbkcAAB9WAAAAAAAAAANRBBZE6D1qyGjISUGLY5Ldvp31PwAAAAAAAAAAAAAAAAAAAAEAAAABAAAAAP1qe44j+i4uIT+arbD4QDQBt8ryEeJd7a0jskQ3nwDeAAAAAAAAAADA7RnarSzCwj3OT+M2btCMFpVBdqxJS+Sr00qBjtFv7gAAAABLCs/QAAAAAAAAAAEaGCfrAAAAQG/56Cj2J8W/KCZr+oC4sWND1CTGWfaccHNtuibQH8kZIb+qBSDY94g7hiaAXrlIeg9b7oz/XuP3x9MWYw2jtwM=\",\n"
                               "  \"result_xdr\": \"AAAAAAAAAGQAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAA=\",\n"
@@ -119,7 +121,8 @@ private slots:
         QCOMPARE(transaction.isSuccessful(), Boolean(true));
         QCOMPARE(transaction.getSourceAccount()->getAccountId(), QString("GCUB7JL4APK7LKJ6MZF7Q2JTLHAGNBIUA7XIXD5SQTG52GQ2DAT6XZMK"));
         QCOMPARE(transaction.getSourceAccountSequence(), 2373051035426646L);
-        QCOMPARE(transaction.getFeePaid(), 100);
+        QCOMPARE(transaction.getMaxFee(), 200);
+        QCOMPARE(transaction.getFeeCharged(), 100);
         QCOMPARE(transaction.getOperationCount(), 1);
         QCOMPARE(transaction.getEnvelopeXdr(), QString("AAAAAKgfpXwD1fWpPmZL+GkzWcBmhRQH7ouPsoTN3RoaGCfrAAAAZAAIbkcAAB9WAAAAAAAAAANRBBZE6D1qyGjISUGLY5Ldvp31PwAAAAAAAAAAAAAAAAAAAAEAAAABAAAAAP1qe44j+i4uIT+arbD4QDQBt8ryEeJd7a0jskQ3nwDeAAAAAAAAAADA7RnarSzCwj3OT+M2btCMFpVBdqxJS+Sr00qBjtFv7gAAAABLCs/QAAAAAAAAAAEaGCfrAAAAQG/56Cj2J8W/KCZr+oC4sWND1CTGWfaccHNtuibQH8kZIb+qBSDY94g7hiaAXrlIeg9b7oz/XuP3x9MWYw2jtwM="));
         QCOMPARE(transaction.getResultXdr(), QString("AAAAAAAAAGQAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAA="));

@@ -77,8 +77,9 @@ class TransactionResponse : public Response
     Q_PROPERTY(QVariant successful MEMBER m_successful WRITE setSuccessful) //we use a custom set method to filter non Bool types
 
     Q_PROPERTY(QString paging_token MEMBER m_pagingToken)
-    Q_PROPERTY(qint64 source_account_sequence MEMBER m_sourceAccountSequence)
-    Q_PROPERTY(qint64 fee_paid MEMBER m_feePaid)
+    Q_PROPERTY(qint64 source_account_sequence MEMBER m_sourceAccountSequence)    
+    Q_PROPERTY(qint64 max_fee MEMBER m_maxFee)
+    Q_PROPERTY(qint64 fee_charged MEMBER m_feeCharged)
     Q_PROPERTY(int operation_count MEMBER m_operationCount)
     Q_PROPERTY(QString envelope_xdr MEMBER m_envelopeXdr)
     Q_PROPERTY(QString result_xdr MEMBER m_resultXdr)
@@ -99,7 +100,8 @@ class TransactionResponse : public Response
 
     QString m_pagingToken;
     qint64 m_sourceAccountSequence;
-    qint64 m_feePaid;
+    qint64 m_maxFee;
+    qint64 m_feeCharged;
     int m_operationCount;
     QString m_envelopeXdr;
     QString m_resultXdr;
@@ -130,7 +132,9 @@ public:
 
       qint64 getSourceAccountSequence() const;
 
-      qint64 getFeePaid() const;
+      qint64 getMaxFee() const;
+
+      qint64 getFeeCharged() const;
 
       int getOperationCount() const;
 

@@ -6,7 +6,8 @@ TransactionResponse::TransactionResponse(QNetworkReply *reply)
     ,m_sourceAccountKeypair(nullptr)
     ,m_successful(QVariant::Bool)// we have to indicate the type or it will not be filled, it will stay returning isNull as true if it is not initialized
     ,m_sourceAccountSequence(0)
-    ,m_feePaid(0)
+    ,m_maxFee(0)
+    ,m_feeCharged(0)
     ,m_operationCount(0)
     ,m_memo(nullptr)
 {
@@ -52,8 +53,12 @@ qint64 TransactionResponse::getSourceAccountSequence() const{
     return m_sourceAccountSequence;
 }
 
-qint64 TransactionResponse::getFeePaid() const{
-    return m_feePaid;
+qint64 TransactionResponse::getMaxFee() const{
+    return m_maxFee;
+}
+
+qint64 TransactionResponse::getFeeCharged() const{
+    return m_feeCharged;
 }
 
 int TransactionResponse::getOperationCount() const{
