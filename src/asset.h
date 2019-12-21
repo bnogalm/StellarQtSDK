@@ -6,6 +6,12 @@ class AssetCodeLengthInvalidException: public std::exception
 {
 };
 class KeyPair;
+
+/**
+ * @brief The Asset class
+ * The Asset class in the test are used directly as parameters in the request, they will not be deleted, so don't use it as an example.
+ * In an application using this SDK, there should be an Asset database/list/pool that is used to take already created Asset into requests.
+ */
 class Asset
 {
 public:

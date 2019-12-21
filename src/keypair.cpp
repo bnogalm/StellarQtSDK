@@ -57,6 +57,14 @@ KeyPair::KeyPair(quint8 *publicKey, quint8 *privateKey)
     }
 }
 
+KeyPair::KeyPair(QString accountId)
+{
+    QByteArray decoded = StrKey::decodeStellarAccountId(accountId);
+    m_publicKey = new quint8[keyLength];
+    memcpy(m_publicKey,decoded.data(),keyLength);
+    m_privateKey=nullptr;
+}
+
 bool KeyPair::canSign() {
 
     return m_privateKey != nullptr;

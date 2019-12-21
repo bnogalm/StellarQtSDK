@@ -18,11 +18,11 @@ AssetTypeCreditAlphaNum::~AssetTypeCreditAlphaNum()
     delete m_issuer;
 }
 
-KeyPair &AssetTypeCreditAlphaNum::getIssuer() {
+const KeyPair &AssetTypeCreditAlphaNum::getIssuer() {
     return *m_issuer;
 }
 
-int AssetTypeCreditAlphaNum::hashCode() {
+uint AssetTypeCreditAlphaNum::hashCode() {
     return qHash(m_issuer->getAccountId() + this->getCode());
 }
 

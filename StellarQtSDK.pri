@@ -36,6 +36,8 @@ SOURCES += \
     $$PWD/src/pathpaymentstrictreceiveoperation.cpp \
     $$PWD/src/pathpaymentstrictsendoperation.cpp \
     $$PWD/src/requests/feestatsrequestbuilder.cpp \
+    $$PWD/src/requests/strictreceivepathsrequestbuilder.cpp \
+    $$PWD/src/requests/strictsendpathsrequestbuilder.cpp \
     $$PWD/src/responses/feestatsresponse.cpp \
     $$PWD/src/responses/operations/bumpsequenceoperationresponse.cpp \
     $$PWD/src/responses/operations/managebuyofferoperationresponse.cpp \
@@ -74,7 +76,6 @@ SOURCES += \
     $$PWD/src/requests/offersrequestbuilder.cpp \
     $$PWD/src/requests/operationsrequestbuilder.cpp \
     $$PWD/src/requests/orderbookrequestbuilder.cpp \
-    $$PWD/src/requests/pathsrequestbuilder.cpp \
     $$PWD/src/requests/paymentsrequestbuilder.cpp \
     $$PWD/src/requests/requestbuilder.cpp \
     $$PWD/src/requests/transactionsrequestbuilder.cpp \
@@ -165,6 +166,8 @@ HEADERS += \
     $$PWD/src/pathpaymentstrictreceiveoperation.h \
     $$PWD/src/pathpaymentstrictsendoperation.h \
     $$PWD/src/requests/feestatsrequestbuilder.h \
+    $$PWD/src/requests/strictreceivepathsrequestbuilder.h \
+    $$PWD/src/requests/strictsendpathsrequestbuilder.h \
     $$PWD/src/responses/feestatsresponse.h \
     $$PWD/src/responses/operations/bumpsequenceoperationresponse.h \
     $$PWD/src/responses/operations/managebuyofferoperationresponse.h \
@@ -217,7 +220,6 @@ HEADERS += \
     $$PWD/src/requests/offersrequestbuilder.h \
     $$PWD/src/requests/operationsrequestbuilder.h \
     $$PWD/src/requests/orderbookrequestbuilder.h \
-    $$PWD/src/requests/pathsrequestbuilder.h \
     $$PWD/src/requests/paymentsrequestbuilder.h \
     $$PWD/src/requests/requestbuilder.h \
     $$PWD/src/requests/transactionsrequestbuilder.h \

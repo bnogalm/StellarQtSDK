@@ -78,8 +78,12 @@ TradeAggregationsRequestBuilder Server::tradeAggregations(Asset *baseAsset, Asse
     return TradeAggregationsRequestBuilder(this, baseAsset, counterAsset, startTime, endTime, resolution, offset);
 }
 
-PathsRequestBuilder Server::paths() {
-    return PathsRequestBuilder(this);
+StrictReceivePathsRequestBuilder Server::strictReceivePaths() {
+    return StrictReceivePathsRequestBuilder(this);
+}
+
+StrictSendPathsRequestBuilder Server::strictSendPaths() {
+    return StrictSendPathsRequestBuilder(this);
 }
 
 PaymentsRequestBuilder Server::payments() {

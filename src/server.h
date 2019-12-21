@@ -9,7 +9,8 @@
 #include "requests/transactionsrequestbuilder.h"
 #include "requests/tradesrequestbuilder.h"
 #include "requests/tradeaggregationsrequestbuilder.h"
-#include "requests/pathsrequestbuilder.h"
+#include "requests/strictreceivepathsrequestbuilder.h"
+#include "requests/strictsendpathsrequestbuilder.h"
 #include "requests/orderbookrequestbuilder.h"
 #include "requests/offersrequestbuilder.h"
 #include "requests/ledgersrequestbuilder.h"
@@ -112,28 +113,33 @@ public:
 
 
     /**
-         * Returns {@link PathsRequestBuilder} instance.
-         */
-    PathsRequestBuilder paths();
+    * Returns {@link StrictReceivePathsRequestBuilder} instance.
+    */
+    StrictReceivePathsRequestBuilder strictReceivePaths();
 
     /**
-         * Returns {@link PaymentsRequestBuilder} instance.
-         */
+    * Returns {@link StrictSendPathsRequestBuilder} instance.
+    */
+    StrictSendPathsRequestBuilder strictSendPaths();
+
+    /**
+    * Returns {@link PaymentsRequestBuilder} instance.
+    */
     PaymentsRequestBuilder payments();
 
     /**
-         * Returns {@link TransactionsRequestBuilder} instance.
-         */
+    * Returns {@link TransactionsRequestBuilder} instance.
+    */
     TransactionsRequestBuilder transactions();
 
     /**
-         * Submits transaction to the network.
-         * @param transaction transaction to submit to the network.
-         * Async method, you will get the response at transactionResponse signal
-         * You lose ownership of the object so don't delete it.
-         * You will have to delete the response returned by transactionResponse signal
-         * @throws IOException
-         */
+     * Submits transaction to the network.
+     * @param transaction transaction to submit to the network.
+     * Async method, you will get the response at transactionResponse signal
+     * You lose ownership of the object so don't delete it.
+     * You will have to delete the response returned by transactionResponse signal
+     * @throws IOException
+     */
     SubmitTransactionResponse* submitTransaction(Transaction* transaction);
 
     //        /**

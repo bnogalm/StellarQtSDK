@@ -31,6 +31,11 @@ QByteArray StrKey::encodeCheck(StrKey::VersionByte versionByte, QByteArray data)
 }
 
 QByteArray StrKey::decodeCheck(StrKey::VersionByte versionByte, QByteArray encoded) {
+
+    if(versionByte!= VersionByte::SEED && encoded.startsWith('S'))
+    {
+        throw std::runtime_error("decoding secret to wrong place");//this can be dangerous as it can expose a secret key on public application places
+    }
     for(int i=0;i< encoded.length();i++){
         if((quint8)encoded.at(i)>127){
             //qDebug("Illegal characters in encoded char array.");

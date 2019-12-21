@@ -33,6 +33,12 @@ public:
      * @param privateKey
      */
     KeyPair(quint8* publicKey,quint8* privateKey=nullptr);
+
+    /** Creates a new KeyPair from the given strkey encoded Stellar account ID.
+     * Some requesters and API classes requires KeyPair class, if KeyPair is not going to be used any longer, this constructor allow to build a keypair on the stack
+     * @param publicKey encoded
+     * */
+    KeyPair(QString accountId);
     /**
       * Returns true if this Keypair is capable of signing
       */

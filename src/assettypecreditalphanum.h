@@ -37,9 +37,9 @@ public:
     /**
      * Returns asset issuer
      */
-    KeyPair &getIssuer();
+    const KeyPair &getIssuer();
 
-    int hashCode();
+    uint hashCode();
 
     bool equals(Asset* object);
 };

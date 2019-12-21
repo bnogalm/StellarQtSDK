@@ -1,6 +1,10 @@
 #include "requestbuilder.h"
 #include "../server.h"
-
+#include "../asset.h"
+#include "../assettypenative.h"
+#include "../assettypecreditalphanum12.h"
+#include "../assettypecreditalphanum4.h"
+#include "../keypair.h"
 
 RequestBuilder::RequestBuilder(Server *server, QString defaultSegment):m_streamMode(false){
     m_server=server;
@@ -10,11 +14,6 @@ RequestBuilder::RequestBuilder(Server *server, QString defaultSegment):m_streamM
         this->setSegments(defaultSegment);
     }
     m_segmentsAdded = false; // Allow overwriting segments
-}
-
-RequestBuilder::~RequestBuilder()
-{
-
 }
 
 Server *RequestBuilder::server(){
@@ -49,6 +48,16 @@ void RequestBuilder::addParameter(QString key, QString value)
     m_queries.append(std::pair<QString,QString>(key,value));
 }
 
+QString RequestBuilder::parameter(QString key) const
+{
+    for(auto& q : m_queries)
+    {
+        if(q.first==key)
+            return q.second;
+    }
+    return QString();
+}
+
 RequestBuilder &RequestBuilder::cursor(QString cursor) {
     m_queries.append(std::pair<QString,QString>("cursor",cursor));
     return *this;
@@ -70,6 +79,24 @@ RequestBuilder &RequestBuilder::asc(){
 
 RequestBuilder &RequestBuilder::desc(){
     return order(RequestBuilder::Order::DESC);
+}
+
+RequestBuilder &RequestBuilder::setAssetsParameter(QString name, QList<Asset *> assets) {
+    QStringList assetStrings;
+    assetStrings.reserve(assets.size());
+    for (Asset* asset : assets) {
+        if (dynamic_cast<AssetTypeNative*>(asset)) {
+            assetStrings.append("native");
+        } else if (AssetTypeCreditAlphaNum * creditAsset = dynamic_cast<AssetTypeCreditAlphaNum*>(asset)) {
+            //assetStrings.append(creditAsset->getCode()+":"+creditAsset->getIssuer().getAccountId());
+            assetStrings.append(creditAsset->getCode()+"%3A"+creditAsset->getIssuer().getAccountId());//%3A is ":"  we already encode it to dont reencode everything
+
+        } else {
+            throw std::runtime_error("unsupported asset");
+        }
+    }
+    m_queries.append(std::pair<QString,QString>(name,assetStrings.join("%2C"))); //%2C is ","   we already encode it to dont reencode everything
+    return *this;
 }
 
 

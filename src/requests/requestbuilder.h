@@ -9,6 +9,8 @@
 
 
 class Server;
+class Asset;
+
 class RequestBuilder
 {
     QUrl m_uri;//origin of the uri
@@ -27,7 +29,6 @@ public:
       ,DESC//("desc");
    };
     RequestBuilder(Server *server, QString defaultSegment = QString());
-    virtual ~RequestBuilder();
     Server * server();
     bool streamMode();
 
@@ -39,6 +40,8 @@ protected:
     RequestBuilder& setSegments(QStringList segments);
 
     void addParameter(QString key, QString value);
+
+    QString parameter(QString key) const;
 public:
      /**
       * Sets <code>cursor</code> parameter on the request.
@@ -65,6 +68,12 @@ public:
      RequestBuilder& asc();
      RequestBuilder& desc();
 
+     /**
+      * Sets a parameter consisting of a comma separated list of assets on the request.
+      * @param name the name of the query parameter
+      * @param assets the list of assets to be serialized into the query parameter value
+      */
+     RequestBuilder& setAssetsParameter(QString name, QList<Asset*> assets);
 
      QUrl buildUri();
      void setRequestUri(QUrl &uri);//useful for the links
