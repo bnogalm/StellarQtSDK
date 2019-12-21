@@ -180,6 +180,7 @@ private slots:
                     .addOperation(CreateAccountOperation::create(KeyPair::random(), "2000"))
                     .addMemo(Memo::hash(QString("abcdef")))
                     .build();
+            QFAIL("missing exception");
         } catch (std::runtime_error exception) {
             QVERIFY(QString(exception.what()).compare("TimeBounds has to be set or you must call setTimeout(TIMEOUT_INFINITE).")==0);
         }
