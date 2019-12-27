@@ -175,7 +175,9 @@ operator>>(QDataStream &in, Type &t)\
 
 
 }
-
+#if QT_VERSION >= QT_VERSION_CHECK(5, 14, 0)
+    //since Qt5.14 this is defined already inside QDataStream
+#else
 
 template<typename Type>
 inline typename std::enable_if<std::is_enum<Type>::value,QDataStream&>::type
@@ -194,5 +196,6 @@ inline typename std::enable_if<std::is_enum<Type>::value,QDataStream&>::type
     return in;
 }
 
+#endif
 
 #endif // XDRHELPER_H
