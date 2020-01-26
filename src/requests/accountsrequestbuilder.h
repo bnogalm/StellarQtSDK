@@ -30,6 +30,23 @@ public:
       */
      AccountResponse *account(KeyPair* account);
 
+     /**
+      * @brief signer  filters accounts who have a given signer account id
+      * @see <a href="https://www.stellar.org/developers/horizon/reference/endpoints/accounts.html">Accounts</a>
+      * @param token Account ID
+      * @return AccountsRequestBuilder
+      */
+     AccountsRequestBuilder& signer(KeyPair* accountID);
+
+
+     /**
+      * @brief asset  filters accounts who have a given trustline
+      * @see <a href="https://www.stellar.org/developers/horizon/reference/endpoints/accounts.html">Accounts</a>
+      * @param asset issued asset to filter with
+      * @return AccountsRequestBuilder
+      */
+     AccountsRequestBuilder& asset(Asset* asset);
+
 
      AccountsRequestBuilder& cursor(QString token);
 

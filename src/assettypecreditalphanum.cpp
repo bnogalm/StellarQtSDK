@@ -18,11 +18,15 @@ AssetTypeCreditAlphaNum::~AssetTypeCreditAlphaNum()
     delete m_issuer;
 }
 
-const KeyPair &AssetTypeCreditAlphaNum::getIssuer() {
+QString AssetTypeCreditAlphaNum::getCode() const{
+    return m_code;
+}
+
+const KeyPair &AssetTypeCreditAlphaNum::getIssuer() const{
     return *m_issuer;
 }
 
-uint AssetTypeCreditAlphaNum::hashCode() {
+uint AssetTypeCreditAlphaNum::hashCode() const{
     return qHash(m_issuer->getAccountId() + this->getCode());
 }
 
@@ -32,4 +36,9 @@ bool AssetTypeCreditAlphaNum::equals(Asset *object) {
         return (this->m_code== asset->m_code) && (this->m_issuer->getAccountId() == asset->m_issuer->getAccountId());
     }
     return false;
+}
+
+QString AssetTypeCreditAlphaNum::toString() const
+{
+    return getCode()+":"+this->getIssuer().getAccountId();
 }

@@ -99,6 +99,18 @@ RequestBuilder &RequestBuilder::setAssetsParameter(QString name, QList<Asset *> 
     return *this;
 }
 
+RequestBuilder &RequestBuilder::setAssetParameter(QString name, Asset* asset) {
+
+        if (dynamic_cast<AssetTypeNative*>(asset)) {
+            this->addParameter(name, "native");
+        } else if (AssetTypeCreditAlphaNum * creditAsset = dynamic_cast<AssetTypeCreditAlphaNum*>(asset)) {
+            this->addParameter(name, creditAsset->getCode()+"%3A"+creditAsset->getIssuer().getAccountId());//%3A is ":"  we already encode it to dont reencode everything
+
+        } else {
+            throw std::runtime_error("unsupported asset");
+        }
+    return *this;
+}
 
 QUrl RequestBuilder::buildUri() {
     QString base = this->m_uri.toString();

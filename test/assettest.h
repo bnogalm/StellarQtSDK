@@ -31,6 +31,7 @@ private slots:
         auto xdr = asset.toXdr();
         Asset* parsedAsset = Asset::fromXdr(xdr);
         QVERIFY(dynamic_cast<AssetTypeNative*>(parsedAsset));
+        QCOMPARE(asset.toString(),QString("native"));
     }
 
     void testAssetTypeCreditAlphaNum4() {
@@ -41,6 +42,7 @@ private slots:
         AssetTypeCreditAlphaNum4* parsedAsset = (AssetTypeCreditAlphaNum4*) Asset::fromXdr(xdr);
         QCOMPARE(code, asset.getCode());
         QCOMPARE(issuer->getAccountId(), parsedAsset->getIssuer().getAccountId());
+        QCOMPARE(asset.toString(),QString("USDA:%1").arg(issuer->getAccountId()));
     }
 
     void testAssetTypeCreditAlphaNum12() {
@@ -51,6 +53,7 @@ private slots:
         AssetTypeCreditAlphaNum12* parsedAsset = (AssetTypeCreditAlphaNum12*) Asset::fromXdr(xdr);
         QCOMPARE(code, asset.getCode());
         QCOMPARE(issuer->getAccountId(), parsedAsset->getIssuer().getAccountId());
+        QCOMPARE(asset.toString(),QString("TESTTEST:%1").arg(issuer->getAccountId()));
     }
 
 
@@ -92,6 +95,7 @@ private slots:
         QVERIFY(!AssetTypeCreditAlphaNum12("ABCDE", *issuer1).equals(new AssetTypeCreditAlphaNum12("EDCBA", *issuer1)));
         QVERIFY(!AssetTypeCreditAlphaNum12("ABCDE", *issuer1).equals(new AssetTypeCreditAlphaNum12("ABCDE", *issuer2)));
     }
+
 };
 
 ADD_TEST(AssetTest)
