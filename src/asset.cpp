@@ -28,6 +28,11 @@ Asset *Asset::createNonNativeAsset(QString code, const KeyPair &issuer)
     }
 }
 
+Asset *Asset::createNonNativeAsset(QString code, QString issuer)
+{
+    return Asset::createNonNativeAsset(code, KeyPair::fromAccountId(issuer));
+}
+
 Asset *Asset::create(QString type, QString code, QString issuer) {
     if (type == "native") {
         return new AssetTypeNative();

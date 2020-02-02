@@ -30,18 +30,18 @@ public:
     /**
      * Returns asset code
      */
-    QString getCode() {
-        return m_code;
-    }
+    QString getCode() const;
 
     /**
      * Returns asset issuer
      */
-    const KeyPair &getIssuer();
+    const KeyPair &getIssuer() const;
 
-    uint hashCode();
+    uint hashCode() const;
 
     bool equals(Asset* object);
+
+    virtual QString toString() const;
 };
 
 #endif // ASSETTYPECREDITALPHANUM_H

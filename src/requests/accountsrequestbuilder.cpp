@@ -16,6 +16,18 @@ AccountResponse* AccountsRequestBuilder::account(KeyPair *account) {
     return this->account(this->buildUri());
 }
 
+AccountsRequestBuilder &AccountsRequestBuilder::signer(KeyPair *accountID)
+{
+    addParameter("signer", accountID->getAccountId());
+    return *this;
+}
+
+AccountsRequestBuilder &AccountsRequestBuilder::asset(Asset *asset)
+{
+    RequestBuilder::setAssetParameter("asset",asset);
+    return *this;
+}
+
 AccountsRequestBuilder &AccountsRequestBuilder::cursor(QString token) {
     RequestBuilder::cursor(token);
     return *this;

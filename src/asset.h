@@ -16,6 +16,8 @@ class Asset
 {
 public:
     virtual ~Asset(){}
+
+
     /**
      * Creates one of AssetTypeCreditAlphaNum4 or AssetTypeCreditAlphaNum12 object based on a <code>code</code> length
      * @param code Asset code
@@ -23,6 +25,7 @@ public:
      */
     static Asset* createNonNativeAsset(QString code, KeyPair* issuer);
     static Asset* createNonNativeAsset(QString code, const KeyPair& issuer);//makes a copy of issuer
+    static Asset* createNonNativeAsset(QString code, QString issuer);
     static Asset* create(QString type, QString code, QString issuer);
     /**
      * Generates Asset object from a given XDR object
@@ -45,6 +48,8 @@ public:
      * Generates XDR object from a given Asset object
      */
     virtual stellar::Asset toXdr() = 0;
+
+    virtual QString toString() const = 0;
 };
 
 Asset* checkNotNull(Asset* asset, const char *error);

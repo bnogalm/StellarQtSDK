@@ -18,9 +18,11 @@ public:
 
     bool equals(Asset *object);
 
-    int hashCode();
+    uint hashCode();
 
     stellar::Asset toXdr();
+
+    QString toString() const;
 };
 
 #endif // ASSETTYPENATIVE_H

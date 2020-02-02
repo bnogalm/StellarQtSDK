@@ -68,12 +68,7 @@ public:
      RequestBuilder& asc();
      RequestBuilder& desc();
 
-     /**
-      * Sets a parameter consisting of a comma separated list of assets on the request.
-      * @param name the name of the query parameter
-      * @param assets the list of assets to be serialized into the query parameter value
-      */
-     RequestBuilder& setAssetsParameter(QString name, QList<Asset*> assets);
+
 
      QUrl buildUri();
      void setRequestUri(QUrl &uri);//useful for the links
@@ -82,6 +77,15 @@ public:
 
      QString toString(Order order);
      Order orderFromString(QString s);
+
+protected:
+     /**
+      * Sets a parameter consisting of a comma separated list of assets on the request.
+      * @param name the name of the query parameter
+      * @param assets the list of assets to be serialized into the query parameter value
+      */
+     RequestBuilder& setAssetsParameter(QString name, QList<Asset*> assets);
+     RequestBuilder& setAssetParameter(QString name, Asset *asset);
 };
 
 
