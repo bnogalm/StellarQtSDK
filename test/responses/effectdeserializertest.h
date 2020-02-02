@@ -653,8 +653,54 @@ private slots:
       QCOMPARE(effect.getLinks().getOperation().getHref(), QString("http://horizon-testnet.stellar.org/operations/33788507721730"));
       QCOMPARE(effect.getLinks().getSucceeds().getHref(), QString("http://horizon-testnet.stellar.org/effects?order=desc&cursor=33788507721730-2"));
       QCOMPARE(effect.getLinks().getPrecedes().getHref(), QString("http://horizon-testnet.stellar.org/effects?order=asc&cursor=33788507721730-2"));
+
   }
 
+    void testDeserializeTradeEffectOfferIDString() {
+      QByteArray json = "{\n"
+              "        \"_links\": {\n"
+              "          \"operation\": {\n"
+              "            \"href\": \"http://horizon-testnet.stellar.org/operations/33788507721730\"\n"
+              "          },\n"
+              "          \"succeeds\": {\n"
+              "            \"href\": \"http://horizon-testnet.stellar.org/effects?order=desc\\u0026cursor=33788507721730-2\"\n"
+              "          },\n"
+              "          \"precedes\": {\n"
+              "            \"href\": \"http://horizon-testnet.stellar.org/effects?order=asc\\u0026cursor=33788507721730-2\"\n"
+              "          }\n"
+              "        },\n"
+              "        \"id\": \"0000033788507721730-0000000002\",\n"
+              "        \"paging_token\": \"33788507721730-2\",\n"
+              "        \"account\": \"GA6U5X6WOPNKKDKQULBR7IDHDBAQKOWPHYEC7WSXHZBFEYFD3XVZAKOO\",\n"
+              "        \"type\": \"trade\",\n"
+              "        \"type_i\": 33,\n"
+              "        \"seller\": \"GCVHDLN6EHZBYW2M3BQIY32C23E4GPIRZZDBNF2Q73DAZ5VJDRGSMYRB\",\n"
+              "        \"offer_id\": \"2\",\n"
+              "        \"sold_amount\": \"1000.0\",\n"
+              "        \"sold_asset_type\": \"credit_alphanum4\",\n"
+              "        \"sold_asset_code\": \"EUR\",\n"
+              "        \"sold_asset_issuer\": \"GCWVFBJ24754I5GXG4JOEB72GJCL3MKWC7VAEYWKGQHPVH3ENPNBSKWS\",\n"
+              "        \"bought_amount\": \"60.0\",\n"
+              "        \"bought_asset_type\": \"credit_alphanum12\",\n"
+              "        \"bought_asset_code\": \"TESTTEST\",\n"
+              "        \"bought_asset_issuer\": \"GAHXPUDP3AK6F2QQM4FIRBGPNGKLRDDSTQCVKEXXKKRHJZUUQ23D5BU7\"\n"
+              "      }";
+
+      TradeEffectResponse effect;
+      effect.loadFromJson(json);
+      QCOMPARE(effect.getAccount().getAccountId(), QString("GA6U5X6WOPNKKDKQULBR7IDHDBAQKOWPHYEC7WSXHZBFEYFD3XVZAKOO"));
+      QCOMPARE(effect.getSeller().getAccountId(), QString("GCVHDLN6EHZBYW2M3BQIY32C23E4GPIRZZDBNF2Q73DAZ5VJDRGSMYRB"));
+      QCOMPARE(effect.getOfferId(), 2);
+      QCOMPARE(effect.getSoldAmount(), QString("1000.0"));
+      QVERIFY(effect.getSoldAsset()->equals(Asset::createNonNativeAsset("EUR", KeyPair::fromAccountId(QString("GCWVFBJ24754I5GXG4JOEB72GJCL3MKWC7VAEYWKGQHPVH3ENPNBSKWS")))));
+      QCOMPARE(effect.getBoughtAmount(), QString("60.0"));
+      QVERIFY(effect.getBoughtAsset()->equals(Asset::createNonNativeAsset("TESTTEST", KeyPair::fromAccountId(QString("GAHXPUDP3AK6F2QQM4FIRBGPNGKLRDDSTQCVKEXXKKRHJZUUQ23D5BU7")))));
+
+      QCOMPARE(effect.getLinks().getOperation().getHref(), QString("http://horizon-testnet.stellar.org/operations/33788507721730"));
+      QCOMPARE(effect.getLinks().getSucceeds().getHref(), QString("http://horizon-testnet.stellar.org/effects?order=desc&cursor=33788507721730-2"));
+      QCOMPARE(effect.getLinks().getPrecedes().getHref(), QString("http://horizon-testnet.stellar.org/effects?order=asc&cursor=33788507721730-2"));
+
+  }
 
       void testDeserializeDataCreatedEffect() {
         QByteArray json = "{\n"

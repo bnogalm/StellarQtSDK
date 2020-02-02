@@ -40,6 +40,10 @@ private slots:
         QCOMPARE(page.get(0).getLow(), QString("0.0000124"));
         QCOMPARE(page.get(0).getOpen(), QString("0.0000125"));
         QCOMPARE(page.get(0).getClose(), QString("0.0000126"));
+
+        //support parse string timestamp and trade_count
+        QCOMPARE(page.get(1).getTimestamp(), (qint64)1512732300000);
+        QCOMPARE(page.get(1).getTradeCount(), (qint32)1);
     }
 
     QByteArray json = "{\n"
@@ -65,8 +69,8 @@ private slots:
                       "        \"close\": \"0.0000126\"\n"
                       "      },\n"
                       "      {\n"
-                      "        \"timestamp\": 1512732300000,\n"
-                      "        \"trade_count\": 1,\n"
+                      "        \"timestamp\": \"1512732300000\",\n"
+                      "        \"trade_count\": \"1\",\n"
                       "        \"base_volume\": \"233.6065573\",\n"
                       "        \"counter_volume\": \"0.0028500\",\n"
                       "        \"avg\": \"0.0000122\",\n"

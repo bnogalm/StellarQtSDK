@@ -104,9 +104,10 @@ public:
        *   <li>change_trust</li>
        *   <li>set_options</li>
        *   <li>account_merge</li>
-       *   <li>manage_offer</li>
-       *   <li>path_payment</li>
-       *   <li>create_passive_offer</li>
+       *   <li>manage_buy_offer</li>
+       *   <li>path_payment_strict_receive</li>
+       *   <li>manage_sell_offer</li>
+       *   <li>create_passive_sell_offer</li>
        *   <li>inflation</li>
        *   <li>manage_data</li>
        * </ul>

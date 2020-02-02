@@ -435,7 +435,8 @@ private slots:
         QCOMPARE(operation.getAccount().getAccountId(), QString("GD6GKRABNDVYDETEZJQEPS7IBQMERCN44R5RCI4LJNX6BMYQM2KPGGZ2"));
         QCOMPARE(operation.getInto().getAccountId(), QString("GAZWSWPDQTBHFIPBY4FEDFW2J6E2LE7SZHJWGDZO6Q63W7DBSRICO2KN"));
     }
-    void testDeserializeManageOfferOperation() {
+
+    void testDeserializeManageSellOfferOperation() {
         QByteArray json = "{\n"
                 "        \"_links\": {\n"
                 "          \"self\": {\n"
@@ -477,6 +478,47 @@ private slots:
     }
 
 
+    void testDeserializeManageSellOfferOperationOfferIDString() {
+        QByteArray json = "{\n"
+                "        \"_links\": {\n"
+                "          \"self\": {\n"
+                "            \"href\": \"http://horizon-testnet.stellar.org/operations/3320426331639809\"\n"
+                "          },\n"
+                "          \"transaction\": {\n"
+                "            \"href\": \"http://horizon-testnet.stellar.org/transactions/1f8fc03b26110e917d124381645d7dcf85927f17e46d8390d254a0bd99cfb0ad\"\n"
+                "          },\n"
+                "          \"effects\": {\n"
+                "            \"href\": \"http://horizon-testnet.stellar.org/operations/3320426331639809/effects\"\n"
+                "          },\n"
+                "          \"succeeds\": {\n"
+                "            \"href\": \"http://horizon-testnet.stellar.org/effects?order=desc\\u0026cursor=3320426331639809\"\n"
+                "          },\n"
+                "          \"precedes\": {\n"
+                "            \"href\": \"http://horizon-testnet.stellar.org/effects?order=asc\\u0026cursor=3320426331639809\"\n"
+                "          }\n"
+                "        },\n"
+                "        \"id\": \"3320426331639809\",\n"
+                "        \"paging_token\": \"3320426331639809\",\n"
+                "        \"source_account\": \"GCR6QXX7IRIJVIM5WA5ASQ6MWDOEJNBW3V6RTC5NJXEMOLVTUVKZ725X\",\n"
+                "        \"type\": \"manage_offer\",\n"
+                "        \"type_i\": 3,\n"
+                "        \"offer_id\": \"10\",\n"
+                "        \"amount\": \"100.0\",\n"
+                "        \"buying_asset_type\": \"credit_alphanum4\",\n"
+                "        \"buying_asset_code\": \"CNY\",\n"
+                "        \"buying_asset_issuer\": \"GAZWSWPDQTBHFIPBY4FEDFW2J6E2LE7SZHJWGDZO6Q63W7DBSRICO2KN\",\n"
+                "        \"selling_asset_type\": \"native\"\n"
+                "      }";
+
+        ManageSellOfferOperationResponse operation;
+        operation.loadFromJson(json);
+
+        QCOMPARE(operation.getOfferId(), 10);
+        QCOMPARE(operation.getAmount(), QString("100.0"));
+        QVERIFY(operation.getBuyingAsset()->equals( Asset::createNonNativeAsset("CNY", KeyPair::fromAccountId(QString("GAZWSWPDQTBHFIPBY4FEDFW2J6E2LE7SZHJWGDZO6Q63W7DBSRICO2KN")))));
+        QVERIFY(operation.getSellingAsset()->equals( new AssetTypeNative()));
+    }
+
     void testDeserializeManageBuyOfferOperation() {
         QByteArray json = "{\n"
                           "        \"_links\": {\n"
@@ -517,6 +559,47 @@ private slots:
         QVERIFY(operation.getSellingAsset()->equals( new AssetTypeNative()));
     }
 
+
+    void testDeserializeManageBuyOfferOperationOfferIDString() {
+        QByteArray json = "{\n"
+                          "        \"_links\": {\n"
+                          "          \"self\": {\n"
+                          "            \"href\": \"http://horizon-testnet.stellar.org/operations/3320426331639809\"\n"
+                          "          },\n"
+                          "          \"transaction\": {\n"
+                          "            \"href\": \"http://horizon-testnet.stellar.org/transactions/1f8fc03b26110e917d124381645d7dcf85927f17e46d8390d254a0bd99cfb0ad\"\n"
+                          "          },\n"
+                          "          \"effects\": {\n"
+                          "            \"href\": \"http://horizon-testnet.stellar.org/operations/3320426331639809/effects\"\n"
+                          "          },\n"
+                          "          \"succeeds\": {\n"
+                          "            \"href\": \"http://horizon-testnet.stellar.org/effects?order=desc\\u0026cursor=3320426331639809\"\n"
+                          "          },\n"
+                          "          \"precedes\": {\n"
+                          "            \"href\": \"http://horizon-testnet.stellar.org/effects?order=asc\\u0026cursor=3320426331639809\"\n"
+                          "          }\n"
+                          "        },\n"
+                          "        \"id\": \"3320426331639809\",\n"
+                          "        \"paging_token\": \"3320426331639809\",\n"
+                          "        \"source_account\": \"GCR6QXX7IRIJVIM5WA5ASQ6MWDOEJNBW3V6RTC5NJXEMOLVTUVKZ725X\",\n"
+                          "        \"type\": \"manage_buy_offer\",\n"
+                          "        \"type_i\": 12,\n"
+                          "        \"offer_id\": \"11\",\n"
+                          "        \"amount\": \"100.0\",\n"
+                          "        \"buying_asset_type\": \"credit_alphanum4\",\n"
+                          "        \"buying_asset_code\": \"CNY\",\n"
+                          "        \"buying_asset_issuer\": \"GAZWSWPDQTBHFIPBY4FEDFW2J6E2LE7SZHJWGDZO6Q63W7DBSRICO2KN\",\n"
+                          "        \"selling_asset_type\": \"native\"\n"
+                          "      }";
+
+        ManageBuyOfferOperationResponse operation;
+        operation.loadFromJson(json);
+        QCOMPARE(operation.getOfferId(), 11);
+        QCOMPARE(operation.getAmount(), QString("100.0"));
+        QVERIFY(operation.getBuyingAsset()->equals( Asset::createNonNativeAsset("CNY", KeyPair::fromAccountId(QString("GAZWSWPDQTBHFIPBY4FEDFW2J6E2LE7SZHJWGDZO6Q63W7DBSRICO2KN")))));
+        QVERIFY(operation.getSellingAsset()->equals( new AssetTypeNative()));
+    }
+
     void testDeserializePathPaymentOperation() {
         QByteArray json = "{\n"
                 "  \"_links\": {\n"
@@ -550,7 +633,7 @@ private slots:
                 "  \"source_max\": \"100.0\",\n"
                 "  \"to\": \"GA5WBPYA5Y4WAEHXWR2UKO2UO4BUGHUQ74EUPKON2QHV4WRHOIRNKKH2\",\n"
                 "  \"type_i\": 2,\n"
-                "  \"type\": \"path_payment\"\n"
+                "  \"type\": \"path_payment_strict_receive\"\n"
                 "}";
 
         PathPaymentOperationResponse operation;
@@ -585,7 +668,7 @@ private slots:
                           "  \"id\": \"75252830662840321\",\n"
                           "  \"paging_token\": \"75252830662840321\",\n"
                           "  \"source_account\": \"GC45JH537XZD4DY4WTV5PCUJL4KPOIE4WMGX5OP5KSPS2OLGRUOVVIGD\",\n"
-                          "  \"type\": \"path_payment\",\n"
+                          "  \"type\": \"path_payment_strict_receive\",\n"
                           "  \"type_i\": 2,\n"
                           "  \"created_at\": \"2018-04-24T12:58:12Z\",\n"
                           "  \"transaction_hash\": \"fb2f5655c70a459220ac09eb3d6870422b58dcf5c5ffb5e5b21817b4d248826e\",\n"
@@ -712,7 +795,7 @@ private slots:
                 "  },\n"
                 "  \"selling_asset_type\": \"native\",\n"
                 "  \"type_i\": 4,\n"
-                "  \"type\": \"create_passive_offer\"\n"
+                "  \"type\": \"create_passive_sell_offer\"\n"
                 "}";
 
         CreatePassiveSellOfferOperationResponse operation;
