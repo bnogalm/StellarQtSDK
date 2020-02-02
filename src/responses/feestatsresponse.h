@@ -3,27 +3,26 @@
 
 #include "response.h"
 
-class FeeStatsResponse : public Response
+class FeeDistribution
 {
-    Q_OBJECT
-    Q_PROPERTY(qint64 min_accepted_fee MEMBER m_min)
-    Q_PROPERTY(qint64 mode_accepted_fee MEMBER m_mode)
+    Q_GADGET
+    Q_PROPERTY(qint64 min MEMBER m_min)
+    Q_PROPERTY(qint64 max MEMBER m_max)
+    Q_PROPERTY(qint64 mode MEMBER m_mode)
 
-    Q_PROPERTY(qint64 p10_accepted_fee MEMBER m_p10)
-    Q_PROPERTY(qint64 p20_accepted_fee MEMBER m_p20)
-    Q_PROPERTY(qint64 p30_accepted_fee MEMBER m_p30)
-    Q_PROPERTY(qint64 p40_accepted_fee MEMBER m_p40)
-    Q_PROPERTY(qint64 p50_accepted_fee MEMBER m_p50)
-    Q_PROPERTY(qint64 p60_accepted_fee MEMBER m_p60)
-    Q_PROPERTY(qint64 p70_accepted_fee MEMBER m_p70)
-    Q_PROPERTY(qint64 p80_accepted_fee MEMBER m_p80)
-    Q_PROPERTY(qint64 p90_accepted_fee MEMBER m_p90)
-    Q_PROPERTY(qint64 p95_accepted_fee MEMBER m_p95)
-    Q_PROPERTY(qint64 p99_accepted_fee MEMBER m_p99)
-    Q_PROPERTY(float ledger_capacity_usage MEMBER m_ledgerCapacityUsage)
-    Q_PROPERTY(qint64 last_ledger_base_fee MEMBER m_lastLedgerBaseFee)
-    Q_PROPERTY(qint64 last_ledger MEMBER m_lastLedger)
+    Q_PROPERTY(qint64 p10 MEMBER m_p10)
+    Q_PROPERTY(qint64 p20 MEMBER m_p20)
+    Q_PROPERTY(qint64 p30 MEMBER m_p30)
+    Q_PROPERTY(qint64 p40 MEMBER m_p40)
+    Q_PROPERTY(qint64 p50 MEMBER m_p50)
+    Q_PROPERTY(qint64 p60 MEMBER m_p60)
+    Q_PROPERTY(qint64 p70 MEMBER m_p70)
+    Q_PROPERTY(qint64 p80 MEMBER m_p80)
+    Q_PROPERTY(qint64 p90 MEMBER m_p90)
+    Q_PROPERTY(qint64 p95 MEMBER m_p95)
+    Q_PROPERTY(qint64 p99 MEMBER m_p99)
     qint64 m_min;
+    qint64 m_max;
     qint64 m_mode;
 
     qint64 m_p10;
@@ -37,17 +36,11 @@ class FeeStatsResponse : public Response
     qint64 m_p90;
     qint64 m_p95;
     qint64 m_p99;
-    float m_ledgerCapacityUsage;
-
-
-    qint64 m_lastLedgerBaseFee;
-    qint64 m_lastLedger;
-
 public:
-    Q_INVOKABLE explicit FeeStatsResponse(QNetworkReply* reply=nullptr);
-    virtual ~FeeStatsResponse();
-
+    FeeDistribution();
     qint64 getMin() const;
+
+    qint64 getMax() const;
 
     qint64 getMode() const;
 
@@ -73,13 +66,45 @@ public:
 
     qint64 getP99() const;
 
+    bool operator !=(FeeDistribution& feeDistribution);
+    bool operator ==(FeeDistribution& feeDistribution);
+};
+
+class FeeStatsResponse : public Response
+{
+    Q_OBJECT
+    Q_PROPERTY(float ledger_capacity_usage MEMBER m_ledgerCapacityUsage)
+    Q_PROPERTY(qint64 last_ledger_base_fee MEMBER m_lastLedgerBaseFee)
+    Q_PROPERTY(qint64 last_ledger MEMBER m_lastLedger)
+    Q_PROPERTY(FeeDistribution fee_charged MEMBER m_feeCharged)
+    Q_PROPERTY(FeeDistribution max_fee MEMBER m_maxFee)
+
+    float m_ledgerCapacityUsage;
+
+
+    qint64 m_lastLedgerBaseFee;
+    qint64 m_lastLedger;
+    FeeDistribution m_feeCharged;
+    FeeDistribution m_maxFee;
+
+public:
+    Q_INVOKABLE explicit FeeStatsResponse(QNetworkReply* reply=nullptr);
+    virtual ~FeeStatsResponse();
+
+
     float getLedgerCapacityUsage() const;
 
     qint64 getLastLedgerBaseFee() const;
 
     qint64 getLastLedger() const;
 
+    FeeDistribution getFeeCharged() const;
+
+    FeeDistribution getMaxFee() const;
+
 };
+
+Q_DECLARE_METATYPE(FeeDistribution)
 
 #endif // FEESTATSRESPONSE_H
 

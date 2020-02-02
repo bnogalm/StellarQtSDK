@@ -9,23 +9,42 @@ class FeeStatsDeserializerTest: public QObject
 {
     Q_OBJECT
     const QByteArray json = "{\n"
-            "  \"last_ledger\": \"20882791\",\n"
-            "  \"last_ledger_base_fee\": \"100\",\n"
-            "  \"ledger_capacity_usage\": \"0.97\",\n"
-            "  \"min_accepted_fee\": \"101\",\n"
-            "  \"mode_accepted_fee\": \"102\",\n"
-            "  \"p10_accepted_fee\": \"103\",\n"
-            "  \"p20_accepted_fee\": \"104\",\n"
-            "  \"p30_accepted_fee\": \"105\",\n"
-            "  \"p40_accepted_fee\": \"106\",\n"
-            "  \"p50_accepted_fee\": \"107\",\n"
-            "  \"p60_accepted_fee\": \"108\",\n"
-            "  \"p70_accepted_fee\": \"109\",\n"
-            "  \"p80_accepted_fee\": \"110\",\n"
-            "  \"p90_accepted_fee\": \"111\",\n"
-            "  \"p95_accepted_fee\": \"112\",\n"
-            "  \"p99_accepted_fee\": \"113\""
-            "}";
+                            "  \"last_ledger\": \"22606298\",\n"
+                            "  \"last_ledger_base_fee\": \"100\",\n"
+                            "  \"ledger_capacity_usage\": \"0.97\",\n"
+                            "  \"max_fee\": {\n"
+                            "    \"min\": \"130\",\n"
+                            "    \"max\": \"8000\",\n"
+                            "    \"mode\": \"250\",\n"
+                            "    \"p10\": \"150\",\n"
+                            "    \"p20\": \"200\",\n"
+                            "    \"p30\": \"300\",\n"
+                            "    \"p40\": \"400\",\n"
+                            "    \"p50\": \"500\",\n"
+                            "    \"p60\": \"1000\",\n"
+                            "    \"p70\": \"2000\",\n"
+                            "    \"p80\": \"3000\",\n"
+                            "    \"p90\": \"4000\",\n"
+                            "    \"p95\": \"5000\",\n"
+                            "    \"p99\": \"8000\"\n"
+                            "  },\n"
+                            "  \"fee_charged\": {\n"
+                            "    \"min\": \"100\",\n"
+                            "    \"max\": \"102\",\n"
+                            "    \"mode\": \"101\",\n"
+                            "    \"p10\": \"103\",\n"
+                            "    \"p20\": \"104\",\n"
+                            "    \"p30\": \"105\",\n"
+                            "    \"p40\": \"106\",\n"
+                            "    \"p50\": \"107\",\n"
+                            "    \"p60\": \"108\",\n"
+                            "    \"p70\": \"109\",\n"
+                            "    \"p80\": \"110\",\n"
+                            "    \"p90\": \"111\",\n"
+                            "    \"p95\": \"112\",\n"
+                            "    \"p99\": \"113\"\n"
+                            "  }\n"
+                            "}";
 public:
 
 
@@ -41,22 +60,40 @@ private slots:
     void testDeserialize() {
         FeeStatsResponse stats;
         stats.loadFromJson(json);
-        QCOMPARE(stats.getLastLedger(),20882791);
+        QCOMPARE(stats.getLastLedger(),22606298);
         QCOMPARE(stats.getLastLedgerBaseFee(),100);
         QCOMPARE(stats.getLedgerCapacityUsage(),0.97f);
-        QCOMPARE(stats.getMin(),101);
-        QCOMPARE(stats.getMode(),102);
-        QCOMPARE(stats.getP10(),103);
-        QCOMPARE(stats.getP20(),104);
-        QCOMPARE(stats.getP30(),105);
-        QCOMPARE(stats.getP40(),106);
-        QCOMPARE(stats.getP50(),107);
-        QCOMPARE(stats.getP60(),108);
-        QCOMPARE(stats.getP70(),109);
-        QCOMPARE(stats.getP80(),110);
-        QCOMPARE(stats.getP90(),111);
-        QCOMPARE(stats.getP95(),112);
-        QCOMPARE(stats.getP99(),113);
+        FeeDistribution maxFee = stats.getMaxFee();
+        QCOMPARE(maxFee.getMin(),130);
+        QCOMPARE(maxFee.getMax(),8000);
+        QCOMPARE(maxFee.getMode(),250);
+        QCOMPARE(maxFee.getP10(),150);
+        QCOMPARE(maxFee.getP20(),200);
+        QCOMPARE(maxFee.getP30(),300);
+        QCOMPARE(maxFee.getP40(),400);
+        QCOMPARE(maxFee.getP50(),500);
+        QCOMPARE(maxFee.getP60(),1000);
+        QCOMPARE(maxFee.getP70(),2000);
+        QCOMPARE(maxFee.getP80(),3000);
+        QCOMPARE(maxFee.getP90(),4000);
+        QCOMPARE(maxFee.getP95(),5000);
+        QCOMPARE(maxFee.getP99(),8000);
+
+        FeeDistribution feeCharged = stats.getFeeCharged();
+        QCOMPARE(feeCharged.getMin(),100);
+        QCOMPARE(feeCharged.getMax(),102);
+        QCOMPARE(feeCharged.getMode(),101);
+        QCOMPARE(feeCharged.getP10(),103);
+        QCOMPARE(feeCharged.getP20(),104);
+        QCOMPARE(feeCharged.getP30(),105);
+        QCOMPARE(feeCharged.getP40(),106);
+        QCOMPARE(feeCharged.getP50(),107);
+        QCOMPARE(feeCharged.getP60(),108);
+        QCOMPARE(feeCharged.getP70(),109);
+        QCOMPARE(feeCharged.getP80(),110);
+        QCOMPARE(feeCharged.getP90(),111);
+        QCOMPARE(feeCharged.getP95(),112);
+        QCOMPARE(feeCharged.getP99(),113);
     }
 
 };
