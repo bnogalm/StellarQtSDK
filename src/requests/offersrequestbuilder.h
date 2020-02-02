@@ -41,6 +41,9 @@ public:
      OffersRequestBuilder& limit(int number);
      OffersRequestBuilder& order(RequestBuilder::Order direction);
 
+     OffersRequestBuilder& seller(KeyPair *accountId);
+     OffersRequestBuilder& selling(Asset* asset);
+     OffersRequestBuilder& buying(Asset* asset);
      /**
       * Allows to stream SSE events from horizon.
       * Certain endpoints in Horizon can be called in streaming mode using Server-Sent Events.

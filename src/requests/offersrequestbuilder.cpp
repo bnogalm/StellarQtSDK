@@ -1,6 +1,7 @@
 #include "offersrequestbuilder.h"
 #include "../keypair.h"
 #include "../server.h"
+#include "../assettypecreditalphanum.h"
 OffersRequestBuilder::OffersRequestBuilder(Server *server):RequestBuilder(server, "offers")
 {
 
@@ -34,6 +35,32 @@ OffersRequestBuilder &OffersRequestBuilder::limit(int number) {
 
 OffersRequestBuilder &OffersRequestBuilder::order(RequestBuilder::Order direction) {
     RequestBuilder::order(direction);
+    return *this;
+}
+
+OffersRequestBuilder &OffersRequestBuilder::seller(KeyPair *accountId)
+{
+    RequestBuilder::addParameter("seller",accountId->getAccountId());
+    return *this;
+}
+
+OffersRequestBuilder &OffersRequestBuilder::selling(Asset *asset)
+{
+    RequestBuilder::addParameter("selling_asset_type",asset->getType());
+    if (AssetTypeCreditAlphaNum * creditAsset = dynamic_cast<AssetTypeCreditAlphaNum*>(asset)) {
+        RequestBuilder::addParameter("selling_asset_code",creditAsset->getCode());
+        RequestBuilder::addParameter("selling_asset_issuer",creditAsset->getIssuer().getAccountId());
+    }
+    return *this;
+}
+
+OffersRequestBuilder &OffersRequestBuilder::buying(Asset *asset)
+{
+    RequestBuilder::addParameter("buying_asset_type",asset->getType());
+    if (AssetTypeCreditAlphaNum * creditAsset = dynamic_cast<AssetTypeCreditAlphaNum*>(asset)) {
+        RequestBuilder::addParameter("buying_asset_code",creditAsset->getCode());
+        RequestBuilder::addParameter("buying_asset_issuer",creditAsset->getIssuer().getAccountId());
+    }
     return *this;
 }
 
