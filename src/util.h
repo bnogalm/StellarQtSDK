@@ -87,8 +87,10 @@ public:
     // generateRandomNonce creates a cryptographically secure random slice of `n` bytes.
     static QByteArray generateRandomNonce(int n);
 
-
+    enum class SupportedMnemonicLanguages{ EN };
+    static QList<QString> mnemonicWords(SupportedMnemonicLanguages language = SupportedMnemonicLanguages::EN);
     static QByteArray mnemonicToBIP39Seed(QString words, QString passphrase=QString(""));
+
 };
 
 
