@@ -31,17 +31,17 @@ inline QList<T> convert(QVariantList source)
 
 class Response : public QObject
 {
-    Q_OBJECT
+    Q_OBJECT    
     Q_PROPERTY(int rateLimitLimit READ getRateLimitLimit NOTIFY rateLimitChanged)
     Q_PROPERTY(int rateLimitRemaining READ getRateLimitRemaining NOTIFY rateLimitChanged)
     Q_PROPERTY(int rateLimitReset READ getRateLimitReset NOTIFY rateLimitChanged)
     Q_PROPERTY(QString type MEMBER m_type NOTIFY typeChanged)
     Q_PROPERTY(QString title MEMBER m_title NOTIFY titleChanged)
-    Q_PROPERTY(int status MEMBER m_status NOTIFY statusChanged)
+    Q_PROPERTY(int status MEMBER m_status READ getStatus NOTIFY statusChanged)
     Q_PROPERTY(QString instance MEMBER m_instance NOTIFY instanceChanged)
     Q_PROPERTY(QString detail MEMBER m_detail NOTIFY detailChanged)
 
-
+    QNetworkReply::NetworkError m_lastErrorCode;
     QString m_type;
     QString m_title;
     int m_status;
@@ -50,6 +50,7 @@ class Response : public QObject
     QString m_detail;
 
     QByteArray m_pendingData;
+
     int m_timeoutTimerID;//timeout request
     int m_reconnectTimerID;//used for streamed request
     int m_retryTime;//for streamed responses SSE
@@ -90,26 +91,28 @@ private slots:
     void reconnectStreamDelayed();
     void clearReply(QObject *obj);
 public:
+    QNetworkReply::NetworkError lastErrorCode() const;
+    int getStatus() const;
     /**
      * Returns X-RateLimit-Limit header from the response.
      * This number represents the he maximum number of requests that the current client can
      * make in one hour.
      * @see <a href="https://www.stellar.org/developers/horizon/learn/rate-limiting.html" target="_blank">Rate Limiting</a>
      */
-    int getRateLimitLimit();
+    int getRateLimitLimit() const;
 
     /**
      * Returns X-RateLimit-Remaining header from the response.
      * The number of remaining requests for the current window.
      * @see <a href="https://www.stellar.org/developers/horizon/learn/rate-limiting.html" target="_blank">Rate Limiting</a>
      */
-    int getRateLimitRemaining();
+    int getRateLimitRemaining() const;
 
     /**
      * Returns X-RateLimit-Reset header from the response. Seconds until a new window starts.
      * @see <a href="https://www.stellar.org/developers/horizon/learn/rate-limiting.html" target="_blank">Rate Limiting</a>
      */
-    int getRateLimitReset();
+    int getRateLimitReset() const;
 
     // QObject interface
 protected:

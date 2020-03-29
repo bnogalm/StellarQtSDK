@@ -21,6 +21,7 @@ public:
       * @throws IOException
       */
      AccountResponse *account(QUrl uri);
+     AccountResponse *account(QString) = delete;//to protect someone passing an account without using KeyPair class.
 
      /**
       * Requests <code>GET /accounts/{account}</code>

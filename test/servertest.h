@@ -12,9 +12,21 @@
 #include "../src/account.h"
 #include "../src/createaccountoperation.h"
 #include "../src/responses/submittransactionresponse.h"
+#include "../src/paymentoperation.h"
+#include "../src/pathpaymentstrictreceiveoperation.h"
+#include "../src/pathpaymentstrictsendoperation.h"
+#include "../src/accountmergeoperation.h"
+#include "../src/memo.h"
+#include "../src/assettypecreditalphanum4.h"
+#include "../src/assettypecreditalphanum12.h"
+#include "../src/managedataoperation.h"
+
+#include "fakeserver.h"
+
 class ServerTest: public QObject
 {
     Q_OBJECT
+
 
     Server *m_server;
     Transaction * m_transaction=nullptr;
@@ -31,7 +43,44 @@ class ServerTest: public QObject
         Network::use(nullptr);
     }
 
+    /**
+     * The following tests are related to SEP-0029.
+     */
+    QString DESTINATION_ACCOUNT_MEMO_REQUIRED_A = "GCMDQXJJGQE6TJ5XUHJMJUUIWECC5S6VANRAOWIQMMV4ALW43JOY2SEB";
+    QString DESTINATION_ACCOUNT_MEMO_REQUIRED_B = "GDUR2DMT5AQ7DJUGBIBB45NKRNQXGRJTWTQ7DPRP37EKBELSMK57RMZK";
+    QString DESTINATION_ACCOUNT_MEMO_REQUIRED_C = "GCS36NBLT6OKYN5EUQOQ7ZZIM6WXXNX5ME4JGTCG3HVZOYXRRMNUHNMM";
+    QString DESTINATION_ACCOUNT_MEMO_REQUIRED_D = "GAKQNN6GNGNPLYBVEDCD5QAIEHAZVNCQET3HAUR4YWQAP5RPBLU2W7UG";
+    QString DESTINATION_ACCOUNT_NO_MEMO_REQUIRED = "GDYC2D4P2SRC5DCEDDK2OUFESSPCTZYLDOEF6NYHR2T7X5GUTEABCQC2";
+    QString DESTINATION_ACCOUNT_NO_FOUND = "GD2OVSQPGD5FBJPMW4YN3FGDJ7JDFKNOMJT35T4H52FLHXJK5MFSR5RA";
+    QString DESTINATION_ACCOUNT_FETCH_ERROR = "GB7WNQUTDLD6YJ4MR3KQN3Y6ZIDIGTA7GRKNH47HOGMP2ETFGRSLD6OG";
+    QString successTransactionResponse ="{\n"
+                            "  \"_links\": {\n"
+                            "    \"transaction\": {\n"
+                            "      \"href\": \"/transactions/2634d2cf5adcbd3487d1df042166eef53830115844fdde1588828667bf93ff42\"\n"
+                            "    }\n"
+                            "  },\n"
+                            "  \"hash\": \"2634d2cf5adcbd3487d1df042166eef53830115844fdde1588828667bf93ff42\",\n"
+                            "  \"ledger\": 826150,\n"
+                            "  \"envelope_xdr\": \"AAAAAKu3N77S+cHLEDfVD2eW/CqRiN9yvAKH+qkeLjHQs1u+AAAAZAAMkoMAAAADAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAbYQq8ek1GitmNBUloGnetfWxSpxlsgK48Xi66dIL3MoAAAAAC+vCAAAAAAAAAAAB0LNbvgAAAEDadQ25SNHWTg0L+2wr/KNWd8/EwSNFkX/ncGmBGA3zkNGx7lAow78q8SQmnn2IsdkD9MwICirhsOYDNbaqShwO\",\n"
+                            "  \"result_xdr\": \"AAAAAAAAAGQAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAA=\",\n"
+                            "  \"result_meta_xdr\": \"AAAAAAAAAAEAAAACAAAAAAAMmyYAAAAAAAAAAG2EKvHpNRorZjQVJaBp3rX1sUqcZbICuPF4uunSC9zKAAAAAAvrwgAADJsmAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAQAMmyYAAAAAAAAAAKu3N77S+cHLEDfVD2eW/CqRiN9yvAKH+qkeLjHQs1u+AAAAFzCfYtQADJKDAAAAAwAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAA\"\n"
+                            "}";
+    QString memoRequiredResponse = "{\n"
+               "    \"data\": {\n"
+               "        \"config.memo_required\": \"MQ==\"\n"
+               "    }\n"
+               "}";
+    QString noMemoRequiredResponse = "{\n"
+               "    \"data\": {\n"
+               "    }\n"
+               "}";
 
+    QString resourceMissingResponse = "{\n"
+                                      " \"type\": \"https://stellar.org/horizon-errors/not_found\",\n"
+                                      " \"title\": \"Resource Missing\",\n"
+                                      " \"status\": 404,\n"
+                                      " \"detail\": \"The resource at the url requested was not found.  This usually occurs for one of two reasons:  The url requested is not valid, or no data in our database could be found with the parameters provided.\"\n"
+                                    "}";
 private slots:
 
     void initTestCase()
@@ -76,7 +125,7 @@ private slots:
              r = response;
 
          });
-         m_server->submitTransaction(this->m_transaction);
+         m_server->submitTransaction(this->m_transaction,true);
 
          WAIT_FOR(!r)
          QObject::disconnect(c);
@@ -117,8 +166,8 @@ private slots:
                  qDebug() << "RECEIVED ANSWER";
                  r = response;
 
-     });
-         m_server->submitTransaction(this->m_transactionWrong);
+        });
+         m_server->submitTransaction(this->m_transactionWrong,true);
          WAIT_FOR(!r)
                  QObject::disconnect(c);
          QVERIFY(r!=nullptr);
@@ -130,6 +179,350 @@ private slots:
          QVERIFY(r->getExtras().getResultCodes().getTransactionResultCode()=="tx_bad_seq");
      }
 #endif
+
+
+
+     void testCheckMemoRequiredWithMemo() {
+
+         FakeServer fakeServer;
+
+         fakeServer.addPost("/transactions",successTransactionResponse);
+         m_server = new Server("http://localhost:8080");
+
+         KeyPair* source = KeyPair::fromSecretSeed(QString("SDQXFKA32UVQHUTLYJ42N56ZUEM5PNVVI4XE7EA5QFMLA2DHDCQX3GPY"));
+         Account* account = new Account(source, 1L);
+         Transaction *transaction =  Transaction::Builder(account)
+                 .addOperation(PaymentOperation::create(KeyPair::fromAccountId(DESTINATION_ACCOUNT_MEMO_REQUIRED_A), new AssetTypeNative(), "10"))
+                 .addOperation(PathPaymentStrictReceiveOperation::create(new AssetTypeNative(), "10", KeyPair::fromAccountId(DESTINATION_ACCOUNT_MEMO_REQUIRED_B), new AssetTypeCreditAlphaNum4("BTC", QString("GA7GYB3QGLTZNHNGXN3BMANS6TC7KJT3TCGTR763J4JOU4QHKL37RVV2")), "5"))
+                 .addOperation(PathPaymentStrictSendOperation::create(new AssetTypeNative(), "10", KeyPair::fromAccountId(DESTINATION_ACCOUNT_MEMO_REQUIRED_C), new AssetTypeCreditAlphaNum4("BTC", QString("GA7GYB3QGLTZNHNGXN3BMANS6TC7KJT3TCGTR763J4JOU4QHKL37RVV2")), "5"))
+                 .addOperation(AccountMergeOperation::create(KeyPair::fromAccountId(DESTINATION_ACCOUNT_MEMO_REQUIRED_D)))
+                 .setTimeout(Transaction::Builder::TIMEOUT_INFINITE)
+                 .addMemo(new MemoText("Hello, Stellar."))
+                 .setOperationFee(100)
+                 .build();
+
+         transaction->sign(source);
+
+         SubmitTransactionResponse *r=nullptr;
+         QMetaObject::Connection c = QObject::connect(m_server,&Server::transactionResponse,[&r](SubmitTransactionResponse *response){
+             r = response;
+
+         });
+         m_server->submitTransaction(transaction);
+
+         WAIT_FOR(!r)
+         WAIT_FOR(!r)
+
+
+        QVERIFY(r);
+
+     }
+
+     void testCheckMemoRequiredWithSkipCheck(){
+         FakeServer fakeServer;
+
+         fakeServer.addPost("/transactions",successTransactionResponse);
+         m_server = new Server("http://localhost:8080");
+
+         KeyPair* source = KeyPair::fromSecretSeed(QString("SDQXFKA32UVQHUTLYJ42N56ZUEM5PNVVI4XE7EA5QFMLA2DHDCQX3GPY"));
+         Account* account = new Account(source, 1L);
+         Transaction *transaction =  Transaction::Builder(account)
+                 .addOperation(PaymentOperation::create(KeyPair::fromAccountId(DESTINATION_ACCOUNT_MEMO_REQUIRED_A), new AssetTypeNative(), "10"))
+                 .addOperation(PathPaymentStrictReceiveOperation::create(new AssetTypeNative(), "10", KeyPair::fromAccountId(DESTINATION_ACCOUNT_MEMO_REQUIRED_B), new AssetTypeCreditAlphaNum4("BTC", QString("GA7GYB3QGLTZNHNGXN3BMANS6TC7KJT3TCGTR763J4JOU4QHKL37RVV2")), "5"))
+                 .addOperation(PathPaymentStrictSendOperation::create(new AssetTypeNative(), "10", KeyPair::fromAccountId(DESTINATION_ACCOUNT_MEMO_REQUIRED_C), new AssetTypeCreditAlphaNum4("BTC", QString("GA7GYB3QGLTZNHNGXN3BMANS6TC7KJT3TCGTR763J4JOU4QHKL37RVV2")), "5"))
+                 .addOperation(AccountMergeOperation::create(KeyPair::fromAccountId(DESTINATION_ACCOUNT_MEMO_REQUIRED_D)))
+                 .setTimeout(Transaction::Builder::TIMEOUT_INFINITE)
+                 .setOperationFee(100)
+                 .build();
+
+         transaction->sign(source);
+
+         SubmitTransactionResponse *r=nullptr;
+         QMetaObject::Connection c = QObject::connect(m_server,&Server::transactionResponse,[&r](SubmitTransactionResponse *response){
+             r = response;
+
+         });
+         m_server->submitTransaction(transaction,true);
+
+         WAIT_FOR(!r)
+
+
+        QVERIFY(r);
+     }
+
+     void testCheckMemoRequiredWithPaymentOperationNoMemo() {
+         FakeServer fakeServer;
+
+         fakeServer.addPost("/transactions",successTransactionResponse);
+         m_server = new Server("http://localhost:8080");
+
+         KeyPair* source = KeyPair::fromSecretSeed(QString("SDQXFKA32UVQHUTLYJ42N56ZUEM5PNVVI4XE7EA5QFMLA2DHDCQX3GPY"));
+         Account* account = new Account(source, 1L);
+         Transaction *transaction =  Transaction::Builder(account)
+                 .addOperation(PaymentOperation::create(KeyPair::fromAccountId(DESTINATION_ACCOUNT_MEMO_REQUIRED_A), new AssetTypeNative(), "10"))
+                 .addOperation(PathPaymentStrictReceiveOperation::create(new AssetTypeNative(), "10", KeyPair::fromAccountId(DESTINATION_ACCOUNT_NO_MEMO_REQUIRED), new AssetTypeCreditAlphaNum4("BTC", QString("GA7GYB3QGLTZNHNGXN3BMANS6TC7KJT3TCGTR763J4JOU4QHKL37RVV2")), "5"))
+                 .addOperation(PathPaymentStrictSendOperation::create(new AssetTypeNative(), "10", KeyPair::fromAccountId(DESTINATION_ACCOUNT_NO_MEMO_REQUIRED), new AssetTypeCreditAlphaNum4("BTC", QString("GA7GYB3QGLTZNHNGXN3BMANS6TC7KJT3TCGTR763J4JOU4QHKL37RVV2")), "5"))
+                 .addOperation(AccountMergeOperation::create(KeyPair::fromAccountId(DESTINATION_ACCOUNT_NO_MEMO_REQUIRED)))
+                 .setTimeout(Transaction::Builder::TIMEOUT_INFINITE)
+                 .setOperationFee(100)
+                 .build();
+
+         transaction->sign(source);
+
+         SubmitTransactionResponse *r=nullptr;
+
+         QMetaObject::Connection c = QObject::connect(m_server,&Server::transactionError,[&r](SubmitTransactionResponse *response){
+             r = response;
+         });
+         m_server->submitTransaction(transaction);
+
+         WAIT_FOR(!r)
+
+
+         QVERIFY(r);//r is set because we received an error
+
+     }
+     void testCheckMemoRequiredWithPathPaymentStrictReceiveOperationNoMemo() {
+         FakeServer fakeServer;
+
+         fakeServer.addPost("/transactions",successTransactionResponse);
+         m_server = new Server("http://localhost:8080");
+
+         KeyPair* source = KeyPair::fromSecretSeed(QString("SDQXFKA32UVQHUTLYJ42N56ZUEM5PNVVI4XE7EA5QFMLA2DHDCQX3GPY"));
+         Account* account = new Account(source, 1L);
+         Transaction *transaction =  Transaction::Builder(account)
+                 .addOperation(PaymentOperation::create(KeyPair::fromAccountId(DESTINATION_ACCOUNT_NO_MEMO_REQUIRED), new AssetTypeNative(), "10"))
+                 .addOperation(PathPaymentStrictReceiveOperation::create(new AssetTypeNative(), "10", KeyPair::fromAccountId(DESTINATION_ACCOUNT_MEMO_REQUIRED_B), new AssetTypeCreditAlphaNum4("BTC", QString("GA7GYB3QGLTZNHNGXN3BMANS6TC7KJT3TCGTR763J4JOU4QHKL37RVV2")), "5"))
+                 .addOperation(PathPaymentStrictSendOperation::create(new AssetTypeNative(), "10", KeyPair::fromAccountId(DESTINATION_ACCOUNT_NO_MEMO_REQUIRED), new AssetTypeCreditAlphaNum4("BTC", QString("GA7GYB3QGLTZNHNGXN3BMANS6TC7KJT3TCGTR763J4JOU4QHKL37RVV2")), "5"))
+                 .addOperation(AccountMergeOperation::create(KeyPair::fromAccountId(DESTINATION_ACCOUNT_NO_MEMO_REQUIRED)))
+                 .setTimeout(Transaction::Builder::TIMEOUT_INFINITE)
+                 .setOperationFee(100)
+                 .build();
+
+         transaction->sign(source);
+
+         SubmitTransactionResponse *r=nullptr;
+
+         QMetaObject::Connection c = QObject::connect(m_server,&Server::transactionError,[&r](SubmitTransactionResponse *response){
+             r = response;
+         });
+         m_server->submitTransaction(transaction);
+
+         WAIT_FOR(!r)
+
+
+         QVERIFY(r);//r is set because we received an error
+     }
+
+
+     void testCheckMemoRequiredWithPathPaymentStrictSendOperationNoMemo(){
+         FakeServer fakeServer;
+
+         fakeServer.addPost("/transactions",successTransactionResponse);
+         m_server = new Server("http://localhost:8080");
+
+         KeyPair* source = KeyPair::fromSecretSeed(QString("SDQXFKA32UVQHUTLYJ42N56ZUEM5PNVVI4XE7EA5QFMLA2DHDCQX3GPY"));
+         Account* account = new Account(source, 1L);
+         Transaction *transaction =  Transaction::Builder(account)
+                 .addOperation(PaymentOperation::create(KeyPair::fromAccountId(DESTINATION_ACCOUNT_NO_MEMO_REQUIRED), new AssetTypeNative(), "10"))
+                 .addOperation(PathPaymentStrictReceiveOperation::create(new AssetTypeNative(), "10", KeyPair::fromAccountId(DESTINATION_ACCOUNT_NO_MEMO_REQUIRED), new AssetTypeCreditAlphaNum4("BTC", QString("GA7GYB3QGLTZNHNGXN3BMANS6TC7KJT3TCGTR763J4JOU4QHKL37RVV2")), "5"))
+                 .addOperation(PathPaymentStrictSendOperation::create(new AssetTypeNative(), "10", KeyPair::fromAccountId(DESTINATION_ACCOUNT_MEMO_REQUIRED_C), new AssetTypeCreditAlphaNum4("BTC", QString("GA7GYB3QGLTZNHNGXN3BMANS6TC7KJT3TCGTR763J4JOU4QHKL37RVV2")), "5"))
+                 .addOperation(AccountMergeOperation::create(KeyPair::fromAccountId(DESTINATION_ACCOUNT_NO_MEMO_REQUIRED)))
+                 .setTimeout(Transaction::Builder::TIMEOUT_INFINITE)
+                 .setOperationFee(100)
+                 .build();
+
+         transaction->sign(source);
+
+         SubmitTransactionResponse *r=nullptr;
+
+         QMetaObject::Connection c = QObject::connect(m_server,&Server::transactionError,[&r](SubmitTransactionResponse *response){
+             r = response;
+         });
+         m_server->submitTransaction(transaction);
+
+         WAIT_FOR(!r)
+
+
+         QVERIFY(r);//r is set because we received an error
+     }
+
+     void testCheckMemoRequiredWithAccountMergeOperationNoMemo() {
+         FakeServer fakeServer;
+
+         fakeServer.addPost("/transactions",successTransactionResponse);
+         m_server = new Server("http://localhost:8080");
+
+         KeyPair* source = KeyPair::fromSecretSeed(QString("SDQXFKA32UVQHUTLYJ42N56ZUEM5PNVVI4XE7EA5QFMLA2DHDCQX3GPY"));
+         Account* account = new Account(source, 1L);
+         Transaction *transaction =  Transaction::Builder(account)
+                 .addOperation(PaymentOperation::create(KeyPair::fromAccountId(DESTINATION_ACCOUNT_NO_MEMO_REQUIRED), new AssetTypeNative(), "10"))
+                 .addOperation(PathPaymentStrictReceiveOperation::create(new AssetTypeNative(), "10", KeyPair::fromAccountId(DESTINATION_ACCOUNT_NO_MEMO_REQUIRED), new AssetTypeCreditAlphaNum4("BTC", QString("GA7GYB3QGLTZNHNGXN3BMANS6TC7KJT3TCGTR763J4JOU4QHKL37RVV2")), "5"))
+                 .addOperation(PathPaymentStrictSendOperation::create(new AssetTypeNative(), "10", KeyPair::fromAccountId(DESTINATION_ACCOUNT_NO_MEMO_REQUIRED), new AssetTypeCreditAlphaNum4("BTC", QString("GA7GYB3QGLTZNHNGXN3BMANS6TC7KJT3TCGTR763J4JOU4QHKL37RVV2")), "5"))
+                 .addOperation(AccountMergeOperation::create(KeyPair::fromAccountId(DESTINATION_ACCOUNT_MEMO_REQUIRED_D)))
+                 .setTimeout(Transaction::Builder::TIMEOUT_INFINITE)
+                 .setOperationFee(100)
+                 .build();
+
+         transaction->sign(source);
+
+         SubmitTransactionResponse *r=nullptr;
+
+         QMetaObject::Connection c = QObject::connect(m_server,&Server::transactionError,[&r](SubmitTransactionResponse *response){
+             r = response;
+         });
+         m_server->submitTransaction(transaction);
+
+         WAIT_FOR(!r)
+
+
+         QVERIFY(r);//r is set because we received an error
+     }
+
+     void testCheckMemoRequiredTwoOperationsWithSameDestination(){
+         FakeServer fakeServer;
+
+         fakeServer.addPost("/transactions",successTransactionResponse);
+         m_server = new Server("http://localhost:8080");
+
+         KeyPair* source = KeyPair::fromSecretSeed(QString("SDQXFKA32UVQHUTLYJ42N56ZUEM5PNVVI4XE7EA5QFMLA2DHDCQX3GPY"));
+         Account* account = new Account(source, 1L);
+         Transaction *transaction =  Transaction::Builder(account)
+                 .addOperation(PaymentOperation::create(KeyPair::fromAccountId(DESTINATION_ACCOUNT_NO_MEMO_REQUIRED), new AssetTypeNative(), "10"))
+                 .addOperation(PathPaymentStrictReceiveOperation::create(new AssetTypeNative(), "10", KeyPair::fromAccountId(DESTINATION_ACCOUNT_NO_MEMO_REQUIRED), new AssetTypeCreditAlphaNum4("BTC", QString("GA7GYB3QGLTZNHNGXN3BMANS6TC7KJT3TCGTR763J4JOU4QHKL37RVV2")), "5"))
+                 .addOperation(PathPaymentStrictSendOperation::create(new AssetTypeNative(), "10", KeyPair::fromAccountId(DESTINATION_ACCOUNT_MEMO_REQUIRED_C), new AssetTypeCreditAlphaNum4("BTC", QString("GA7GYB3QGLTZNHNGXN3BMANS6TC7KJT3TCGTR763J4JOU4QHKL37RVV2")), "5"))
+                 .addOperation(AccountMergeOperation::create(KeyPair::fromAccountId(DESTINATION_ACCOUNT_MEMO_REQUIRED_D)))
+                 .setTimeout(Transaction::Builder::TIMEOUT_INFINITE)
+                 .setOperationFee(100)
+                 .build();
+
+         transaction->sign(source);
+
+         SubmitTransactionResponse *r=nullptr;
+
+         QMetaObject::Connection c = QObject::connect(m_server,&Server::transactionError,[&r](SubmitTransactionResponse *response){
+             r = response;
+         });
+         m_server->submitTransaction(transaction);
+
+         WAIT_FOR(!r)
+
+
+         QVERIFY(r);//r is set because we received an error
+     }
+
+
+     void testCheckMemoRequiredNoDestinationOperation() {
+         FakeServer fakeServer;
+
+         fakeServer.addPost("/transactions",successTransactionResponse);
+         m_server = new Server("http://localhost:8080");
+
+         KeyPair* source = KeyPair::fromSecretSeed(QString("SDQXFKA32UVQHUTLYJ42N56ZUEM5PNVVI4XE7EA5QFMLA2DHDCQX3GPY"));
+         Account* account = new Account(source, 1L);
+         Transaction *transaction =  Transaction::Builder(account)
+                 .addOperation(ManageDataOperation::create("Hello", "Stellar"))
+                 .addOperation(PaymentOperation::create(KeyPair::fromAccountId(DESTINATION_ACCOUNT_MEMO_REQUIRED_A), new AssetTypeNative(), "10"))
+                 .addOperation(PathPaymentStrictReceiveOperation::create(new AssetTypeNative(), "10", KeyPair::fromAccountId(DESTINATION_ACCOUNT_MEMO_REQUIRED_A), new AssetTypeCreditAlphaNum4("BTC", QString("GA7GYB3QGLTZNHNGXN3BMANS6TC7KJT3TCGTR763J4JOU4QHKL37RVV2")), "5"))
+                 .addOperation(PathPaymentStrictSendOperation::create(new AssetTypeNative(), "10", KeyPair::fromAccountId(DESTINATION_ACCOUNT_MEMO_REQUIRED_C), new AssetTypeCreditAlphaNum4("BTC", QString("GA7GYB3QGLTZNHNGXN3BMANS6TC7KJT3TCGTR763J4JOU4QHKL37RVV2")), "5"))
+                 .addOperation(AccountMergeOperation::create(KeyPair::fromAccountId(DESTINATION_ACCOUNT_MEMO_REQUIRED_D)))
+                 .setTimeout(Transaction::Builder::TIMEOUT_INFINITE)
+                 .setOperationFee(100)
+                 .build();
+
+         transaction->sign(source);
+
+         SubmitTransactionResponse *r=nullptr;
+
+         QMetaObject::Connection c = QObject::connect(m_server,&Server::transactionError,[&r](SubmitTransactionResponse *response){
+             r = response;
+         });
+         m_server->submitTransaction(transaction);
+
+         WAIT_FOR(!r)
+
+
+         QVERIFY(r);//r is set because we received an error
+     }
+
+
+     void testCheckMemoRequiredAccountNotFound(){
+         FakeServer fakeServer;
+
+         fakeServer.addPost("/transactions",successTransactionResponse);
+         fakeServer.addGet("/accounts/"+DESTINATION_ACCOUNT_NO_FOUND,resourceMissingResponse,"404 Not Found");
+         m_server = new Server("http://localhost:8080");
+
+         KeyPair* source = KeyPair::fromSecretSeed(QString("SDQXFKA32UVQHUTLYJ42N56ZUEM5PNVVI4XE7EA5QFMLA2DHDCQX3GPY"));
+         Account* account = new Account(source, 1L);
+         Transaction *transaction =  Transaction::Builder(account)
+                 .addOperation(PaymentOperation::create(KeyPair::fromAccountId(DESTINATION_ACCOUNT_NO_FOUND), new AssetTypeNative(), "10"))
+                 .addOperation(PathPaymentStrictReceiveOperation::create(new AssetTypeNative(), "10", KeyPair::fromAccountId(DESTINATION_ACCOUNT_NO_FOUND), new AssetTypeCreditAlphaNum4("BTC", QString("GA7GYB3QGLTZNHNGXN3BMANS6TC7KJT3TCGTR763J4JOU4QHKL37RVV2")), "5"))
+                 .addOperation(PathPaymentStrictSendOperation::create(new AssetTypeNative(), "10", KeyPair::fromAccountId(DESTINATION_ACCOUNT_NO_FOUND), new AssetTypeCreditAlphaNum4("BTC", QString("GA7GYB3QGLTZNHNGXN3BMANS6TC7KJT3TCGTR763J4JOU4QHKL37RVV2")), "5"))
+                 .addOperation(AccountMergeOperation::create(KeyPair::fromAccountId(DESTINATION_ACCOUNT_NO_FOUND)))
+                 .setTimeout(Transaction::Builder::TIMEOUT_INFINITE)
+                 .setOperationFee(100)
+                 .build();
+
+         transaction->sign(source);
+
+         SubmitTransactionResponse *r=nullptr;
+
+         QMetaObject::Connection c = QObject::connect(m_server,&Server::transactionResponse,[&r](SubmitTransactionResponse *response){
+             r = response;
+         });
+         m_server->submitTransaction(transaction);
+
+         WAIT_FOR(!r)
+
+
+
+         QVERIFY(r);
+     }
+
+
+     void testCheckMemoRequiredFetchAccountError() {
+         FakeServer fakeServer;
+
+         fakeServer.addPost("/transactions",successTransactionResponse);
+         fakeServer.addGet("/accounts/"+DESTINATION_ACCOUNT_NO_FOUND,resourceMissingResponse,"404 Not Found");
+         fakeServer.addGet("/accounts/"+DESTINATION_ACCOUNT_MEMO_REQUIRED_A,memoRequiredResponse);
+         fakeServer.addGet("/accounts/"+DESTINATION_ACCOUNT_MEMO_REQUIRED_B,memoRequiredResponse);
+         fakeServer.addGet("/accounts/"+DESTINATION_ACCOUNT_MEMO_REQUIRED_C,memoRequiredResponse);
+         fakeServer.addGet("/accounts/"+DESTINATION_ACCOUNT_MEMO_REQUIRED_D,memoRequiredResponse);
+
+         m_server = new Server("http://localhost:8080");
+
+         KeyPair* source = KeyPair::fromSecretSeed(QString("SDQXFKA32UVQHUTLYJ42N56ZUEM5PNVVI4XE7EA5QFMLA2DHDCQX3GPY"));
+         Account* account = new Account(source, 1L);
+         Transaction *transaction =  Transaction::Builder(account)
+                 .addOperation(PaymentOperation::create(KeyPair::fromAccountId(DESTINATION_ACCOUNT_FETCH_ERROR), new AssetTypeNative(), "10"))
+                 .addOperation(PaymentOperation::create(KeyPair::fromAccountId(DESTINATION_ACCOUNT_MEMO_REQUIRED_A), new AssetTypeNative(), "10"))
+                 .addOperation(PaymentOperation::create(KeyPair::fromAccountId(DESTINATION_ACCOUNT_MEMO_REQUIRED_B), new AssetTypeNative(), "10"))
+                 .addOperation(PathPaymentStrictReceiveOperation::create(new AssetTypeNative(), "10", KeyPair::fromAccountId(DESTINATION_ACCOUNT_MEMO_REQUIRED_C), new AssetTypeCreditAlphaNum4("BTC", QString("GA7GYB3QGLTZNHNGXN3BMANS6TC7KJT3TCGTR763J4JOU4QHKL37RVV2")), "5"))
+                 .addOperation(PathPaymentStrictSendOperation::create(new AssetTypeNative(), "10", KeyPair::fromAccountId(DESTINATION_ACCOUNT_MEMO_REQUIRED_D), new AssetTypeCreditAlphaNum4("BTC", QString("GA7GYB3QGLTZNHNGXN3BMANS6TC7KJT3TCGTR763J4JOU4QHKL37RVV2")), "5"))
+                 .addOperation(AccountMergeOperation::create(KeyPair::fromAccountId(DESTINATION_ACCOUNT_MEMO_REQUIRED_D)))
+                 .setTimeout(Transaction::Builder::TIMEOUT_INFINITE)
+                 .setOperationFee(100)
+                 .build();
+
+         transaction->sign(source);
+
+         SubmitTransactionResponse *r=nullptr;
+
+         QMetaObject::Connection c = QObject::connect(m_server,&Server::transactionError,[&r](SubmitTransactionResponse *response){
+             r = response;
+         });
+         m_server->submitTransaction(transaction);
+
+         WAIT_FOR(!r)
+
+
+         QVERIFY(r);//r is set because we received an error
+     }
+
+
+
 
 };
 

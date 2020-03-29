@@ -6,6 +6,7 @@ CONFIG += c++11 testcase
 DEFINES += STELLAR_ALLOW_UNSECURE_RANDOM
 DEFINES += STELLAR_SKIP_LIVE_TESTS
 
+
 TARGET = StellarQtSDKTest
 CONFIG += console
 CONFIG -= app_bundle
@@ -17,6 +18,7 @@ include(StellarQtSDK.pri)
 
 
 HEADERS += \
+    test/fakeserver.h \
     test/keypairtest.h \
     test/responses/feestatsdeserializertest.h \
     test/strkeytest.h \

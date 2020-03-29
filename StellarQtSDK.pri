@@ -146,7 +146,8 @@ SOURCES += \
     $$PWD/src/requests/rootrequestbuilder.cpp \
     $$PWD/src/bumpsequenceoperation.cpp \
     $$PWD/src/timebounds.cpp \
-    $$PWD/src/slip10.cpp
+    $$PWD/src/slip10.cpp\
+    $$PWD/src/checkaccountrequiresmemo.cpp
 
 # The following define makes your compiler emit warnings if you use
 # any feature of Qt which as been marked deprecated (the exact warnings
@@ -290,7 +291,8 @@ HEADERS += \
     $$PWD/src/requests/rootrequestbuilder.h \
     $$PWD/src/bumpsequenceoperation.h \
     $$PWD/src/timebounds.h \
-    $$PWD/src/slip10.h
+    $$PWD/src/slip10.h \
+    $$PWD/src/checkaccountrequiresmemo.h
 
 #to maintain it easier, until we dont support more than read FEDERATION_SERVER address, we dont use CPPTOML
 #CPPTOML is not compiling in android caused by some problems in android NDK

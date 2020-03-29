@@ -2,6 +2,13 @@
 
 #include "transaction.h"
 #include "responses/submittransactionresponse.h"
+#include "paymentoperation.h"
+#include "pathpaymentstrictreceiveoperation.h"
+#include "pathpaymentstrictsendoperation.h"
+#include "accountmergeoperation.h"
+
+#include "checkaccountrequiresmemo.h"
+
 
 QString Server::escapeUri(QString uri)
 {
@@ -17,6 +24,47 @@ QNetworkRequest Server::prepareRequest()
     return request;
 }
 
+QList<QString> Server::checkMemoRequired(Transaction *transaction)
+{
+    if (Memo *memo = transaction->getMemo()){
+        if(MemoText * text = dynamic_cast<MemoText*>(memo))
+        {
+            if(!text->getText().isEmpty())
+                return QList<QString>();//if we have any text we accept it. We consider empty text as forgotten memo.
+        }
+        else if(MemoHashAbstract * hash = dynamic_cast<MemoHashAbstract*>(memo))
+        {
+            if(!hash->getHexValue().isEmpty())
+                    return QList<QString>();
+        }
+        else if(MemoId * id = dynamic_cast<MemoId*>(memo))
+        {
+            if(id->getId()!=0)//i am sorry for this case, but i don't know why a server will require id 0, SEP29 should define a regular expression to validate memo.
+                return QList<QString>();
+        }
+    }
+
+
+    QSet<QString> destinations;
+    QVector<Operation*> operations = transaction->getOperations();
+    for(Operation* op : operations){
+        KeyPair* destination=nullptr;
+        if (PaymentOperation * payment = dynamic_cast<PaymentOperation*>(op)) {
+            destination = payment->getDestination();
+        } else if (PathPaymentStrictReceiveOperation * payment = dynamic_cast<PathPaymentStrictReceiveOperation*>(op)) {
+            destination =  payment->getDestination();
+        } else if (PathPaymentStrictSendOperation * payment = dynamic_cast<PathPaymentStrictSendOperation*>(op)) {
+            destination =  payment->getDestination();
+        } else if (AccountMergeOperation * payment = dynamic_cast<AccountMergeOperation*>(op)) {
+            destination =  payment->getDestination();
+        } else {
+            continue;
+        }
+        destinations.insert(destination->getAccountId());
+    }
+    return destinations.values();
+}
+
 Server::Server(QString uri) {
     m_serverURI = QUrl(uri);
     if(!m_serverURI.isValid())
@@ -26,6 +74,11 @@ Server::Server(QString uri) {
 
 Server::~Server()
 {
+}
+
+QNetworkAccessManager &Server::manager()
+{
+    return *m_httpClient;
 }
 
 QUrl Server::serverURI()
@@ -94,24 +147,42 @@ TransactionsRequestBuilder Server::transactions() {
     return TransactionsRequestBuilder(this);
 }
 
-SubmitTransactionResponse *Server::submitTransaction(Transaction *transaction) {
+SubmitTransactionResponse *Server::submitTransaction(Transaction *transaction,bool skipMemoRequiredCheck) {
     QUrl transactionsURI(serverURI().toString().append("/transactions"));
     if(!transactionsURI.isValid())
     {
         throw std::runtime_error("invalid uri");
     }
 
+    QList<QString> pendingCheckAddressMemos;
+    if(!skipMemoRequiredCheck)
+        pendingCheckAddressMemos = checkMemoRequired(transaction);
+
+
+    SubmitTransactionResponse *response = nullptr;
     QUrlQuery query;
-
     query.addQueryItem("tx",transaction->toEnvelopeXdrBase64());
-
     QNetworkRequest submitTransactionRequest = prepareRequest();
     submitTransactionRequest.setUrl(transactionsURI);
+    QByteArray uri = escapeUri(query.toString()).toLatin1();
+    if(pendingCheckAddressMemos.isEmpty())
+    {
+        QNetworkReply * reply = this->m_httpClient->post(submitTransactionRequest,uri);
 
+        response = new SubmitTransactionResponse(reply,transaction);
+    }
+    else{
+        response = new SubmitTransactionResponse(nullptr,transaction);
+        //we will generate the request only after all the destination address are validated.
 
-    QNetworkReply * reply = this->m_httpClient->post(submitTransactionRequest,escapeUri(query.toString()).toLatin1());
+        CheckAccountRequiresMemo * check = new CheckAccountRequiresMemo(this,pendingCheckAddressMemos);
 
-    auto response = new SubmitTransactionResponse(reply,transaction);
+        connect(check, &CheckAccountRequiresMemo::error, response, &SubmitTransactionResponse::error);
+        connect(check, &CheckAccountRequiresMemo::validated, [this,response,submitTransactionRequest,uri](){
+            QNetworkReply * reply = this->m_httpClient->post(submitTransactionRequest,uri);
+            response->loadFromReply(reply);
+        });
+    }
 
     connect(response, &SubmitTransactionResponse::ready, this, &Server::processSubmitTransactionResponse);
     connect(response, &SubmitTransactionResponse::error, this, &Server::processTransactionError);

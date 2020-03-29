@@ -33,6 +33,11 @@ class Server : public QObject
     QString escapeUri(QString uri);
     QNetworkRequest prepareRequest();
 
+
+
+    QList<QString> checkMemoRequired(Transaction* transaction);
+
+
 public:
     template<class T>
     T* get(RequestBuilder * rb )
@@ -54,6 +59,8 @@ public:
     Server(QString uri);
 
     ~Server();
+
+    QNetworkAccessManager& manager();
 
     QUrl serverURI();
     /**
@@ -140,15 +147,12 @@ public:
      * You will have to delete the response returned by transactionResponse signal
      * @throws IOException
      */
-    SubmitTransactionResponse* submitTransaction(Transaction* transaction);
+    SubmitTransactionResponse* submitTransaction(Transaction* transaction, bool skipMemoRequiredCheck=false);
 
-    //        /**
-    //         * To support mocking a client
-    //         * @param httpClient
-    //         */
-    //        void setHttpClient(HttpClient httpClient) {
-    //            this.httpClient = httpClient;
-    //    }
+
+
+
+
 private slots:
     void processSubmitTransactionResponse();
     void processTransactionError();

@@ -8,7 +8,8 @@
 #define RECONNECT_DELAY 1000
 
 Response::Response(QNetworkReply *reply)    
-    :m_status(0)
+    :m_lastErrorCode(QNetworkReply::NetworkError::NoError)
+    ,m_status(0)
     ,m_timeoutTimerID(0)
     ,m_reconnectTimerID(0)
     ,m_retryTime(RECONNECT_DELAY)
@@ -25,6 +26,17 @@ void Response::clearReply(QObject* obj)
         this->m_reply=nullptr;
     }
 }
+
+QNetworkReply::NetworkError Response::lastErrorCode() const
+{
+    return m_lastErrorCode;
+}
+
+int Response::getStatus() const
+{
+    return m_status;
+}
+
 void Response::restartTimeoutTimer()
 {
     if(m_timeoutTimerID)
@@ -60,13 +72,14 @@ void Response::loadFromReply(QNetworkReply * reply)
 
 void Response::reset()
 {
+    m_lastErrorCode=QNetworkReply::NetworkError::NoError;
     const QMetaObject * mo = this->metaObject();
     for(int i=0;i<mo->propertyCount();i++)
     {
         if(mo->property(i).isWritable()){
             mo->property(i).write(this,QVariant());
         }
-    }
+    }    
 }
 
 bool Response::isStreamingResponse() const
@@ -170,15 +183,15 @@ void Response::reconnectStreamDelayed()
     loadFromReply(reply);
 }
 
-int Response::getRateLimitLimit() {
+int Response::getRateLimitLimit() const{
     return m_rateLimitLimit;
 }
 
-int Response::getRateLimitRemaining() {
+int Response::getRateLimitRemaining() const{
     return m_rateLimitRemaining;
 }
 
-int Response::getRateLimitReset() {
+int Response::getRateLimitReset() const{
     return m_rateLimitReset;
 }
 
@@ -204,12 +217,13 @@ void Response::timerEvent(QTimerEvent *event)
 bool Response::preprocessResponse(QNetworkReply *response)
 {
     QNetworkReply::NetworkError errorCode= response->error();
+    m_lastErrorCode=errorCode;
     m_rateLimitLimit  =response->rawHeader("X-Ratelimit-Limit").toInt();
     m_rateLimitRemaining =response->rawHeader("X-Ratelimit-Remaining").toInt();
     m_rateLimitReset =response->rawHeader("X-Ratelimit-Reset").toInt();
     emit rateLimitChanged();
     // Too Many Requests
-    if (errorCode == 429) {
+    if (errorCode == 429) {        
         int retryAfter = response->rawHeader("Retry-After").toInt();
         m_retryTime=qMax(retryAfter,m_retryTime);
         reconnectStream();
@@ -222,7 +236,7 @@ bool Response::preprocessResponse(QNetworkReply *response)
         return false;
     }
     // Other errors
-    if (errorCode >= 300) {
+    if (errorCode >= 300) {        
         //throw std::runtime_error(response->errorString().toStdString());
         //qDebug() << response->errorString();
         emit error();
@@ -323,8 +337,9 @@ void Response::processResponse()
     QByteArray entity;
     if(response->isOpen())
         entity= response->readAll();
-    //qDebug() << "QUERY : " <<  response->request().url();
-    //qDebug() << "RESPONSE : "<< QString::fromLatin1(entity);
+    qDebug() << "QUERY : " <<  response->request().url();
+    qDebug() << "RESPONSE : "<< QString::fromLatin1(entity);
+    qDebug() << "ERROR CODE : "<< response->error() << response->errorString();
 
     if(!preprocessResponse(response)){
         return;
