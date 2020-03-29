@@ -337,9 +337,9 @@ void Response::processResponse()
     QByteArray entity;
     if(response->isOpen())
         entity= response->readAll();
-    qDebug() << "QUERY : " <<  response->request().url();
-    qDebug() << "RESPONSE : "<< QString::fromLatin1(entity);
-    qDebug() << "ERROR CODE : "<< response->error() << response->errorString();
+//    qDebug() << "QUERY : " <<  response->request().url();
+//    qDebug() << "RESPONSE : "<< QString::fromLatin1(entity);
+//    qDebug() << "ERROR CODE : "<< response->error() << response->errorString();
 
     if(!preprocessResponse(response)){
         return;
