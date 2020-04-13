@@ -171,8 +171,7 @@ void Response::reconnectStream()
 }
 void Response::reconnectStreamDelayed()
 {
-    QNetworkAccessManager* manager = m_reply->manager();
-    //qDebug() << "RECONNECT TO "<<m_reply->request().url()<< m_reply->request().rawHeaderList()<< " POINTER "<< m_reply;
+    QNetworkAccessManager* manager = m_reply->manager();    
     QNetworkRequest request(m_reply->request());
     if(!m_lastID.isEmpty())
         request.setRawHeader("Last-Event-ID",m_lastID);
@@ -285,7 +284,7 @@ void Response::processPartialResponse()
                     int endLineId = data.indexOf('\n',idIndex);
                     if(endLineId>0)
                     {
-                        m_lastID = QByteArray::fromRawData(pendingData.data()+idIndex,endLineId - idIndex);
+                        m_lastID = QByteArray(pendingData.data()+idIndex,endLineId - idIndex);
                         //qDebug() << "ID: "<< m_lastID << m_lastID.toLongLong();
                     }
                 }
