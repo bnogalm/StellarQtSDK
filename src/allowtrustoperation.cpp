@@ -76,14 +76,8 @@ AllowTrustOperation *AllowTrustOperation::create(KeyPair *trustor, QString asset
     return new AllowTrustOperation(trustor, assetCode, authorize);
 }
 
-AllowTrustOperation *AllowTrustOperation::setSourceAccount(KeyPair *sourceAccount)
+AllowTrustOperation *AllowTrustOperation::setSourceAccount(QString sourceAccount)
 {
     Operation::setSourceAccount(sourceAccount);
-    return this;
-}
-
-AllowTrustOperation *AllowTrustOperation::setSourceAccount(KeyPair &sourceAccount)
-{
-    Operation::setSourceAccount(new KeyPair(sourceAccount));
     return this;
 }

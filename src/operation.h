@@ -10,7 +10,7 @@ class Operation
     static constexpr qint64 ONE = get_power_s<10,FRACTIONAL, qint64>::value;
 
 protected:
-    KeyPair *m_sourceAccount;
+    QString m_sourceAccount;
 public:
     Operation();
     virtual ~Operation();
@@ -38,20 +38,14 @@ public:
     /**
      * Returns operation source account.
      */
-    KeyPair* getSourceAccount();
+    QString getSourceAccount() const;
 
     /**
      * Sets operation source account.
-     * Operation takes ownership of the keypair and it will be deleted.
-     * @param keypair
+     * @param sourceAccount
      */
-    Operation* setSourceAccount(KeyPair *keypair);
-    /**
-     * Sets operation source account making a copy.
-     * Operation takes ownership of the keypair and it will be deleted.
-     * @param keypair
-     */
-    Operation* setSourceAccount(KeyPair &keypair);
+    Operation* setSourceAccount(QString sourceAccount);
+
 
     /**
      * Fills OperationBody XDR object

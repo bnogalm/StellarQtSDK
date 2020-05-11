@@ -1,23 +1,21 @@
 #include "paymentoperation.h"
 
 
-PaymentOperation::PaymentOperation(KeyPair *destination, Asset *asset, QString amount)
-    :m_destination(nullptr)
-    ,m_asset(nullptr)
+PaymentOperation::PaymentOperation(QString destination, Asset *asset, QString amount)
+    :m_asset(nullptr)
 {
-    checkNotNull(destination, "destination cannot be null");
+    m_destination = checkNotNull(destination, "destination cannot be null");
     checkNotNull(asset, "asset cannot be null");
     checkNotNull(amount, "amount cannot be null");
 
 
-    m_op.destination = destination->getXdrPublicKey();// recipient of the payment
+    //m_op.destination = destination->getXdrPublicKey();// recipient of the payment
     m_op.asset = asset->toXdr();  // what they end up with
     m_op.amount = Operation::toXdrAmount(amount);// amount they end up with
 }
 
 PaymentOperation::PaymentOperation(stellar::PaymentOp &op)
-    :m_destination(nullptr)
-    ,m_asset(nullptr)
+    :m_asset(nullptr)
     ,m_op(op)
 {
 
@@ -25,8 +23,6 @@ PaymentOperation::PaymentOperation(stellar::PaymentOp &op)
 
 PaymentOperation::~PaymentOperation()
 {
-    if(m_destination)
-        delete m_destination;
     if(m_asset)
         delete m_asset;
 }
@@ -38,15 +34,15 @@ PaymentOperation* PaymentOperation::build(stellar::PaymentOp &op)
 
 PaymentOperation *PaymentOperation::create(KeyPair *destination, Asset *asset, QString amount)
 {
+    return new PaymentOperation(destination->getAccountId(),asset,amount);
+}
+
+PaymentOperation *PaymentOperation::create(QString destination, Asset *asset, QString amount)
+{
     return new PaymentOperation(destination,asset,amount);
 }
 
-KeyPair *PaymentOperation::getDestination() {
-    if(!m_destination)
-    {
-        //stellar::PublicKey pk = stellar::PublicKey::from(m_op.destination.ed25519);
-        m_destination = KeyPair::fromXdrPublicKey(m_op.destination);
-    }
+QString PaymentOperation::getDestination() const {
     return m_destination;
 }
 
@@ -69,14 +65,8 @@ void PaymentOperation::fillOperationBody(stellar::Operation &op) {
 
 }
 
-PaymentOperation *PaymentOperation::setSourceAccount(KeyPair *sourceAccount)
+PaymentOperation *PaymentOperation::setSourceAccount(QString sourceAccount)
 {
     Operation::setSourceAccount(sourceAccount);
-    return this;
-}
-
-PaymentOperation *PaymentOperation::setSourceAccount(KeyPair &sourceAccount)
-{
-    Operation::setSourceAccount(new KeyPair(sourceAccount));
     return this;
 }

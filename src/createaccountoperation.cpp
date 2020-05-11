@@ -49,14 +49,8 @@ void CreateAccountOperation::fillOperationBody(stellar::Operation &operation)
     operation.operationCreateAccount = m_op;
 }
 
-CreateAccountOperation *CreateAccountOperation::setSourceAccount(KeyPair *sourceAccount)
+CreateAccountOperation *CreateAccountOperation::setSourceAccount(QString sourceAccount)
 {
     Operation::setSourceAccount(sourceAccount);
-    return this;
-}
-
-CreateAccountOperation *CreateAccountOperation::setSourceAccount(KeyPair &sourceAccount)
-{
-    Operation::setSourceAccount(new KeyPair(sourceAccount));
     return this;
 }

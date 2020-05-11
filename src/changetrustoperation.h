@@ -34,14 +34,8 @@ public:
          * @param sourceAccount The operation's source account.
          * @return ChangeTrustOperation object so you can chain methods.
          */
-    ChangeTrustOperation* setSourceAccount(KeyPair* sourceAccount);
+    ChangeTrustOperation* setSourceAccount(QString sourceAccount);
 
-    /**
-         * Sets the source account for this operation making a copy of keypair
-         * @param sourceAccount The operation's source account.
-         * @return ChangeTrustOperation object so you can chain methods.
-         */
-    ChangeTrustOperation* setSourceAccount(KeyPair& sourceAccount);
 };
 
 #endif // CHANGETRUSTOPERATION_H

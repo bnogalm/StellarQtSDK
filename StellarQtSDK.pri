@@ -18,6 +18,7 @@ INCLUDEPATH *=  $$PWD/src/
 
 
 SOURCES += \
+    $$PWD/src/abstracttransaction.cpp \
     $$PWD/src/account.cpp \
     $$PWD/src/accountmergeoperation.cpp \
     $$PWD/src/createpassivesellofferoperation.cpp \
@@ -161,6 +162,7 @@ DEFINES += QT_DEPRECATED_WARNINGS
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 HEADERS += \
+    $$PWD/src/abstracttransaction.h \
     $$PWD/src/createpassivesellofferoperation.h \
     $$PWD/src/managebuyofferoperation.h \
     $$PWD/src/managesellofferoperation.h \

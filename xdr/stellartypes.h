@@ -17,8 +17,16 @@ namespace stellar
     {
         KEY_TYPE_ED25519 = 0,
         KEY_TYPE_PRE_AUTH_TX = 1,
-        KEY_TYPE_HASH_X = 2
+        KEY_TYPE_HASH_X = 2,
+        // MUXED enum values for supported type are derived from the enum values
+        // above by ORing them with 0x100
+        KEY_TYPE_MUXED_ED25519 = 0x100
     };
+    inline bool isMuxed(CryptoKeyType type)
+    {
+
+        return static_cast<qint32>(type)&static_cast<qint32>(CryptoKeyType::KEY_TYPE_MUXED_ED25519);
+    }
 
     enum class PublicKeyType : qint32
     {

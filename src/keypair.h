@@ -118,9 +118,13 @@ public:
 
      stellar::PublicKey getXdrPublicKey();
 
+     stellar::MuxedAccount getXdrMutexPublicKey();
+
      stellar::SignerKey getXdrSignerKey();
 
      static KeyPair* fromXdrPublicKey(stellar::PublicKey& key);
+
+     static KeyPair* fromXdrMutexPublicKey(stellar::MuxedAccount& key);
 
      static KeyPair* fromXdrSignerKey(stellar::SignerKey key);
 

@@ -48,7 +48,7 @@ QList<QString> Server::checkMemoRequired(Transaction *transaction)
     QSet<QString> destinations;
     QVector<Operation*> operations = transaction->getOperations();
     for(Operation* op : operations){
-        KeyPair* destination=nullptr;
+        QString destination;
         if (PaymentOperation * payment = dynamic_cast<PaymentOperation*>(op)) {
             destination = payment->getDestination();
         } else if (PathPaymentStrictReceiveOperation * payment = dynamic_cast<PathPaymentStrictReceiveOperation*>(op)) {
@@ -60,7 +60,7 @@ QList<QString> Server::checkMemoRequired(Transaction *transaction)
         } else {
             continue;
         }
-        destinations.insert(destination->getAccountId());
+        destinations.insert(destination);
     }
     return destinations.values();
 }

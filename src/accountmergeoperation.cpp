@@ -2,57 +2,41 @@
 
 
 
-AccountMergeOperation::AccountMergeOperation(KeyPair *destination)
-    :m_destination(nullptr)
+AccountMergeOperation::AccountMergeOperation(QString destination)
 {
-    checkNotNull(destination, "destination cannot be null");
-
-    m_op= destination->getXdrPublicKey();
-}
-
-AccountMergeOperation::AccountMergeOperation(stellar::AccountID &op)
-    :m_destination(nullptr),m_op(op)
-{
-
+    m_destination = checkNotNull(destination, "destination cannot be null");
 }
 
 AccountMergeOperation::~AccountMergeOperation(){
-    if(m_destination)
-    {
-        delete m_destination;
-    }
 }
 
-KeyPair *AccountMergeOperation::getDestination() {
-    if(!m_destination){
-        m_destination = KeyPair::fromXdrPublicKey(m_op);
-    }
+QString AccountMergeOperation::getDestination() const {
     return m_destination;
 }
 
 void AccountMergeOperation::fillOperationBody(stellar::Operation &operation) {
     operation.type = stellar::OperationType::ACCOUNT_MERGE;
-    operation.operationAccountMerge = m_op;
+    operation.operationAccountMerge = StrKey::encodeToXDRMuxedAccount(m_destination);
 }
 
-AccountMergeOperation *AccountMergeOperation::build(stellar::AccountID &operationAccountMerge)
+AccountMergeOperation *AccountMergeOperation::build(stellar::MuxedAccount &operationAccountMerge)
 {
-    return new AccountMergeOperation(operationAccountMerge);
+
+    return new AccountMergeOperation(StrKey::encodeStellarMuxedAccount(operationAccountMerge));
 }
 
 AccountMergeOperation *AccountMergeOperation::create(KeyPair* destination)
 {
+    return new AccountMergeOperation(destination->getAccountId());
+}
+
+AccountMergeOperation *AccountMergeOperation::create(QString destination)
+{
     return new AccountMergeOperation(destination);
 }
 
-AccountMergeOperation *AccountMergeOperation::setSourceAccount(KeyPair *sourceAccount)
+AccountMergeOperation *AccountMergeOperation::setSourceAccount(QString sourceAccount)
 {
     Operation::setSourceAccount(sourceAccount);
-    return this;
-}
-
-AccountMergeOperation *AccountMergeOperation::setSourceAccount(KeyPair &sourceAccount)
-{
-    Operation::setSourceAccount(new KeyPair(sourceAccount));
     return this;
 }

@@ -10,24 +10,25 @@
  */
 class PaymentOperation : public Operation
 {
-    KeyPair* m_destination;
+    QString m_destination;
     Asset* m_asset;
     stellar::PaymentOp m_op;
 public:
 
 
-    PaymentOperation(KeyPair* destination, Asset* asset, QString amount);
+    PaymentOperation(QString destination, Asset* asset, QString amount);
     PaymentOperation(stellar::PaymentOp &op);
     virtual ~PaymentOperation();
 
     static PaymentOperation * build(stellar::PaymentOp &op);
 
     static PaymentOperation * create(KeyPair* destination, Asset* asset, QString amount);
+    static PaymentOperation * create(QString destination, Asset* asset, QString amount);
 
     /**
      * Account that receives the payment.
      */
-    KeyPair* getDestination();
+    QString getDestination() const;
 
     /**
      * Asset to send to the destination account.
@@ -47,14 +48,8 @@ public:
       * @param sourceAccount The operation's source account.
       * @return PaymentOperation object so you can chain methods.
       */
-    PaymentOperation* setSourceAccount(KeyPair* sourceAccount);
+    PaymentOperation* setSourceAccount(QString sourceAccount);
 
-    /**
-      * Sets the source account for this operation making a copy of keypair
-      * @param sourceAccount The operation's source account.
-      * @return PaymentOperation object so you can chain methods.
-      */
-    PaymentOperation* setSourceAccount(KeyPair& sourceAccount);
 };
 
 #endif // PAYMENTOPERATION_H

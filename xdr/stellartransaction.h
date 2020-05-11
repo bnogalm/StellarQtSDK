@@ -5,8 +5,56 @@
 #include "xdrhelper.h"
 namespace stellar
 {
-
     using namespace xdr;
+    // Source or destination of a payment operation
+    struct MuxedAccount
+    {
+        struct med25519_t{
+            quint64 id;
+            uint256 ed25519;
+        };
+        CryptoKeyType type;
+        union{
+            uint256 ed25519;
+            med25519_t med25519;
+        };
+    };
+    inline QDataStream &operator<<(QDataStream &out, const  MuxedAccount::med25519_t &obj) {
+        out << obj.id<< obj.ed25519;
+        return out;
+    }
+    inline QDataStream &operator>>(QDataStream &in,  MuxedAccount::med25519_t &obj) {
+        in >> obj.id>> obj.ed25519;
+        return in;
+    }
+
+    inline QDataStream &operator<<(QDataStream &out, const  MuxedAccount &obj) {
+        out << obj.type;
+        if(isMuxed(obj.type))
+        {
+            out << obj.med25519;
+        }
+        else
+        {
+            out << obj.ed25519;
+        }
+       return out;
+    }
+
+    inline QDataStream &operator>>(QDataStream &in,  MuxedAccount &obj) {
+        in >> obj.type;
+        if(isMuxed(obj.type))
+        {
+            in >> obj.med25519;
+        }
+        else
+        {
+            in >> obj.ed25519;
+        }
+       return in;
+    }
+
+
     struct DecoratedSignature
     {
         SignatureHint hint;  // last 4 bytes of the public key, used as a hint
@@ -69,7 +117,7 @@ namespace stellar
     */
     struct PaymentOp
     {
-        AccountID destination; // recipient of the payment
+        MuxedAccount destination; // recipient of the payment
         Asset asset;           // what they end up with
         qint64 amount;          // amount they end up with
     };
@@ -98,7 +146,7 @@ namespace stellar
                          // send (excluding fees).
                          // The operation will fail if can't be met
 
-        AccountID destination; // recipient of the payment
+        MuxedAccount destination; // recipient of the payment
         Asset destAsset;       // what they end up with
         qint64 destAmount;      // amount they end up with
 
@@ -128,7 +176,7 @@ namespace stellar
         Asset sendAsset; // asset we pay with
         qint64 sendAmount;   // amount of sendAsset to send (excluding fees)
 
-        AccountID destination; // recipient of the payment
+        MuxedAccount destination; // recipient of the payment
         Asset destAsset;       // what they end up with
         qint64 destMin;         // the minimum amount of dest asset to
                                 // be received
@@ -295,7 +343,7 @@ namespace stellar
     {
         AccountID trustor;
         Asset asset;
-        qint32 authorize;//bool, 4 bytes
+        quint32 authorize;//bool, 4 bytes
     };
     // ASSET_TYPE_NATIVE is not allowed
     inline QDataStream &operator<<(QDataStream &out, const  AllowTrustOp &obj) {
@@ -390,7 +438,7 @@ namespace stellar
         // sourceAccount is the account used to run the operation
         // if not set, the runtime defaults to "sourceAccount" specified at
         // the transaction level
-        Optional<AccountID> sourceAccount;
+        Optional<MuxedAccount> sourceAccount;
         OperationType type;
         union{
         CreateAccountOp operationCreateAccount;
@@ -399,8 +447,8 @@ namespace stellar
         CreatePassiveSellOfferOp operationCreatePassiveSellOffer;
         ChangeTrustOp operationChangeTrust;
         AllowTrustOp operationAllowTrust;
-        AccountID operationAccountMerge;
-        AccountID operationInflation;
+        MuxedAccount operationAccountMerge;
+        MuxedAccount operationInflation;
         BumpSequenceOp operationBumpSequence;
         ManageBuyOfferOp operationManageBuyOffer;
 
@@ -580,10 +628,64 @@ namespace stellar
               if any returns a failing code
     */
 
+    // TransactionV0 is a transaction with the AccountID discriminant stripped off,
+    // leaving a raw ed25519 public key to identify the source account. This is used
+    // for backwards compatibility starting from the protocol 12/13 boundary. If an
+    // "old-style" TransactionEnvelope containing a Transaction is parsed with this
+    // XDR definition, it will be parsed as a "new-style" TransactionEnvelope
+    // containing a TransactionV0.
+    struct TransactionV0
+    {
+        // account used to run the transaction
+        uint256 sourceAccountEd25519;
+
+        // the fee the sourceAccount will pay
+        quint32 fee;
+
+        // sequence number to consume in the account
+        SequenceNumber seqNum;
+
+        // validity range (inclusive) for the last ledger close time
+        Optional<TimeBounds> timeBounds;
+
+        Memo memo;
+
+        Array<Operation,MAX_OPS_PER_TX> operations; //max <100>;
+
+        // reserved for future use
+        Reserved ext;
+    };
+    inline QDataStream &operator<<(QDataStream &out, const  TransactionV0 &obj) {
+        out << obj.sourceAccountEd25519 << obj.fee << obj.seqNum << obj.timeBounds << obj.memo<< obj.operations<< obj.ext;
+       return out;
+    }
+
+    inline QDataStream &operator>>(QDataStream &in,  TransactionV0 &obj) {
+       in >> obj.sourceAccountEd25519 >> obj.fee >> obj.seqNum >> obj.timeBounds >> obj.memo>> obj.operations >> obj.ext;
+       return in;
+    }
+
+    struct TransactionV0Envelope
+    {
+        TransactionV0 tx;
+        /* Each decorated signature is a signature over the SHA256 hash of
+         * a TransactionSignaturePayload */
+        Array<DecoratedSignature,20> signatures; //max <20>;
+    };
+    inline QDataStream &operator<<(QDataStream &out, const  TransactionV0Envelope &obj) {
+        out << obj.tx << obj.signatures;
+       return out;
+    }
+
+    inline QDataStream &operator>>(QDataStream &in,  TransactionV0Envelope &obj) {
+       in >> obj.tx >> obj.signatures;
+       return in;
+    }
+
     struct Transaction
     {
         // account used to run the transaction
-        AccountID sourceAccount;
+        MuxedAccount sourceAccount;
 
         // the fee the sourceAccount will pay
         quint32 fee;
@@ -611,42 +713,225 @@ namespace stellar
        return in;
     }
 
-    struct TransactionSignaturePayload {
-        Hash networkId;
-        EnvelopeType type;
-         /* All other values of type are invalid */
-        TransactionSignaturePayload():type(EnvelopeType::ENVELOPE_TYPE_TX)
-        {
-        }
-        Transaction tx;
-    };
-    inline QDataStream &operator<<(QDataStream &out, const  TransactionSignaturePayload &obj) {
-        out << obj.networkId << obj.type <<obj.tx;
-       return out;
-    }
-
-   inline  QDataStream &operator>>(QDataStream &in,  TransactionSignaturePayload &obj) {
-       in >> obj.networkId >> obj.type >> obj.tx;
-       return in;
-    }
-
     /* A TransactionEnvelope wraps a transaction with signatures. */
-    struct TransactionEnvelope
+    struct TransactionV1Envelope
     {
         Transaction tx;
         /* Each decorated signature is a signature over the SHA256 hash of
          * a TransactionSignaturePayload */
         Array<DecoratedSignature,20> signatures; //max <20>;
     };
-    inline QDataStream &operator<<(QDataStream &out, const  TransactionEnvelope &obj) {
+    inline QDataStream &operator<<(QDataStream &out, const  TransactionV1Envelope &obj) {
         out << obj.tx << obj.signatures;
        return out;
     }
 
-    inline QDataStream &operator>>(QDataStream &in,  TransactionEnvelope &obj) {
+    inline QDataStream &operator>>(QDataStream &in,  TransactionV1Envelope &obj) {
        in >> obj.tx >> obj.signatures;
        return in;
     }
+
+
+    struct FeeBumpTransaction
+    {
+        MuxedAccount feeSource;
+        qint64 fee;
+        EnvelopeType type;
+        union{//innerTx
+            TransactionV1Envelope v1;   //ENVELOPE_TYPE_TX
+        };
+        qint32 v;
+        union{//ext
+
+        };
+
+        /**
+         * @brief FeeBumpTransaction
+         * builds an FeeBumpTransaction, it will not construct any of the non trivials members of the union
+         * as it is used internally, to fill any of the non trivials you have to call the according placement constructor
+         */
+        FeeBumpTransaction();
+
+        FeeBumpTransaction(const stellar::FeeBumpTransaction& fbt);
+        ~FeeBumpTransaction();
+        const FeeBumpTransaction& operator = (const FeeBumpTransaction& fbt);
+    };
+
+    inline QDataStream &operator<<(QDataStream &out, const  FeeBumpTransaction &obj) {
+        out << obj.feeSource << obj.fee <<obj.type;
+        switch(obj.type)
+        {
+         case EnvelopeType::ENVELOPE_TYPE_TX:
+        {
+            out << obj.v1;
+            break;
+        }
+        default:break;
+        }
+        out << obj.v;
+       return out;
+    }
+
+   inline  QDataStream &operator>>(QDataStream &in,  FeeBumpTransaction &obj) {
+       in >> obj.feeSource >> obj.fee >> obj.type;
+       switch(obj.type)
+       {
+        case EnvelopeType::ENVELOPE_TYPE_TX:
+       {
+           new (&obj.v1) TransactionV1Envelope();
+           in >> obj.v1;
+           break;
+       }
+       default:break;
+       }
+       in >> obj.v;
+
+       return in;
+    }
+
+    struct FeeBumpTransactionEnvelope
+    {
+        FeeBumpTransaction tx;
+        /* Each decorated signature is a signature over the SHA256 hash of
+         * a TransactionSignaturePayload */
+        Array<DecoratedSignature,20> signatures;
+
+        FeeBumpTransactionEnvelope(const FeeBumpTransactionEnvelope& te)
+            :tx(te.tx)
+            ,signatures(te.signatures)
+        {
+        }
+        const FeeBumpTransactionEnvelope& operator = (const FeeBumpTransactionEnvelope& te);
+    };
+
+    inline QDataStream &operator<<(QDataStream &out, const  FeeBumpTransactionEnvelope &obj) {
+        out << obj.tx << obj.signatures;
+       return out;
+    }
+
+    inline QDataStream &operator>>(QDataStream &in,  FeeBumpTransactionEnvelope &obj) {
+       in >> obj.tx >> obj.signatures;
+       return in;
+    }
+
+    /* A TransactionEnvelope wraps a transaction with signatures. */
+    struct TransactionEnvelope
+    {
+        EnvelopeType type;
+        union{
+            //non trivial
+            TransactionV0Envelope v0;           //ENVELOPE_TYPE_TX_V0
+            TransactionV1Envelope v1;           //ENVELOPE_TYPE_TX
+
+            //trivial
+            FeeBumpTransactionEnvelope feeBump; //ENVELOPE_TYPE_TX_FEE_BUMP
+        };
+
+        /**
+         * @brief TransactionEnvelope
+         * builds an TransactionEnvelope, it will not construct any of the non trivials members of the union
+         * as it is used internally, to fill any of the non trivials you have to call the according placement constructor
+         */
+        TransactionEnvelope();        
+        TransactionEnvelope(const TransactionV0Envelope& t);
+        TransactionEnvelope(const TransactionV1Envelope& t);
+        TransactionEnvelope(const FeeBumpTransactionEnvelope &t);
+
+        TransactionEnvelope(const stellar::TransactionEnvelope& te);
+        ~TransactionEnvelope();
+        const TransactionEnvelope& operator = (const TransactionEnvelope& te);
+    };
+
+    inline QDataStream &operator<<(QDataStream &out, const  TransactionEnvelope &obj) {
+        out << obj.type;
+        switch(obj.type)
+        {
+        case EnvelopeType::ENVELOPE_TYPE_TX_V0:
+            out << obj.v0; break;
+        case EnvelopeType::ENVELOPE_TYPE_TX:
+            out << obj.v1; break;
+        case EnvelopeType::ENVELOPE_TYPE_TX_FEE_BUMP:
+            out << obj.feeBump; break;
+        default:break;
+        }
+       return out;
+    }
+
+    inline QDataStream &operator>>(QDataStream &in,  TransactionEnvelope &obj) {
+        in >> obj.type;
+        switch(obj.type)
+        {
+        case EnvelopeType::ENVELOPE_TYPE_TX_V0:
+        {
+            new (&obj.v0) TransactionV0Envelope();
+            in >> obj.v0; break;
+        }
+        case EnvelopeType::ENVELOPE_TYPE_TX:
+        {
+            new (&obj.v1) TransactionV0Envelope();
+            in >> obj.v1; break;
+        }
+        case EnvelopeType::ENVELOPE_TYPE_TX_FEE_BUMP:
+        {
+            in >> obj.feeBump; break;
+        }
+        default:break;
+        }
+       return in;
+    }
+
+    struct TransactionSignaturePayload
+    {
+        Hash networkId;
+        EnvelopeType type;
+        // Backwards Compatibility: Use ENVELOPE_TYPE_TX to sign ENVELOPE_TYPE_TX_V0
+        union{//taggedTransaction
+            Transaction tx;             //ENVELOPE_TYPE_TX
+            FeeBumpTransaction feeBump; //ENVELOPE_TYPE_TX_FEE_BUMP
+        };
+
+    };
+
+    inline QDataStream &operator<<(QDataStream &out, const  TransactionSignaturePayload &obj) {
+        out << obj.networkId << obj.type;
+        switch(obj.type)
+        {
+            case EnvelopeType::ENVELOPE_TYPE_TX:
+            {
+                out <<obj.tx;
+                break;
+            }
+            case EnvelopeType::ENVELOPE_TYPE_TX_FEE_BUMP:
+            {
+                out <<obj.feeBump;
+                break;
+            }
+            default:break;
+        }
+
+       return out;
+    }
+
+   inline  QDataStream &operator>>(QDataStream &in,  TransactionSignaturePayload &obj) {
+       in >> obj.networkId >> obj.type;
+       switch(obj.type)
+       {
+           case EnvelopeType::ENVELOPE_TYPE_TX:
+           {
+               in >>obj.tx;
+               break;
+           }
+           case EnvelopeType::ENVELOPE_TYPE_TX_FEE_BUMP:
+           {
+               in >>obj.feeBump;
+               break;
+           }
+           default:break;
+       }
+       return in;
+    }
+
+
     /* Operation Results section */
 
     /* This result is used when offers are taken during an operation */
@@ -1358,10 +1643,63 @@ namespace stellar
         txNO_ACCOUNT = -8,           // source account not found
         txINSUFFICIENT_FEE = -9,     // fee is too small
         txBAD_AUTH_EXTRA = -10,      // unused signatures attached to transaction
-        txINTERNAL_ERROR = -11       // an unknown error occured
+        txINTERNAL_ERROR = -11,       // an unknown error occured
+        txNOT_SUPPORTED = -12,        // transaction type not supported
+        txFEE_BUMP_INNER_FAILED = -13 // fee bump inner transaction failed
     };
     XDR_SERIALIZER(TransactionResultCode)
 
+    // InnerTransactionResult must be binary compatible with TransactionResult
+    // because it is be used to represent the result of a Transaction.
+    struct InnerTransactionResult
+    {
+        // Always 0. Here for binary compatibility.
+        qint64 feeCharged;
+        TransactionResultCode code;
+
+        QVector<OperationResult> results;
+        // reserved for future use
+        qint32 v;
+    };
+
+    inline QDataStream &operator<<(QDataStream &out, const  InnerTransactionResult &obj) {
+        out << obj.feeCharged << obj.code;
+        switch(obj.code){
+        case TransactionResultCode::txSUCCESS:
+        case TransactionResultCode::txFAILED:
+            out << obj.results; break;
+        default: break;
+        }
+
+       return out;
+    }
+
+    inline QDataStream &operator>>(QDataStream &in,  InnerTransactionResult &obj) {
+        in >> obj.feeCharged >> obj.code;
+        switch(obj.code){
+        case TransactionResultCode::txSUCCESS:
+        case TransactionResultCode::txFAILED:
+            in << obj.results; break;
+        default: break;
+        }
+       return in;
+    }
+
+    struct InnerTransactionResultPair
+    {
+        Hash transactionHash;          // hash of the inner transaction
+        InnerTransactionResult result; // result for the inner transaction
+    };
+
+    inline QDataStream &operator<<(QDataStream &out, const  InnerTransactionResultPair &obj) {
+        out << obj.transactionHash << obj.result;
+       return out;
+    }
+
+    inline QDataStream &operator>>(QDataStream &in,  InnerTransactionResultPair &obj) {
+        in >> obj.transactionHash >> obj.result;
+       return in;
+    }
 
     struct TransactionResult
     {

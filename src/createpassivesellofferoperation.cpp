@@ -71,14 +71,8 @@ CreatePassiveSellOfferOperation *CreatePassiveSellOfferOperation::create(Asset* 
     return new CreatePassiveSellOfferOperation(selling, buying, amount, price);
 }
 
-CreatePassiveSellOfferOperation *CreatePassiveSellOfferOperation::setSourceAccount(KeyPair *sourceAccount)
+CreatePassiveSellOfferOperation *CreatePassiveSellOfferOperation::setSourceAccount(QString sourceAccount)
 {
     Operation::setSourceAccount(sourceAccount);
-    return this;
-}
-
-CreatePassiveSellOfferOperation *CreatePassiveSellOfferOperation::setSourceAccount(KeyPair &sourceAccount)
-{
-    Operation::setSourceAccount(new KeyPair(sourceAccount));
     return this;
 }

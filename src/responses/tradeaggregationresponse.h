@@ -2,6 +2,7 @@
 #define TRADEAGGREGATIONRESPONSE_H
 
 #include "response.h"
+#include <QDateTime>
 
 class TradeAggregationResponse : public Response
 {

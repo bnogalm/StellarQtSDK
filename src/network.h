@@ -33,6 +33,7 @@ class Network
     static const QString TESTNET;
     static Network *s_current;
     QString m_networkPassphrase;
+    friend Network* checkNotNull(Network* network, const char *error);
 public:
 
     /**
@@ -71,5 +72,8 @@ public:
      */
     static void useTestNetwork();
 };
+
+Network* checkNotNull(Network* network, const char *error);
+
 
 #endif // NETWORK_H

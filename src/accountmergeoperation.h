@@ -9,17 +9,16 @@
 
 class AccountMergeOperation : public Operation
 {
-    KeyPair *m_destination;
-    stellar::AccountID m_op;
+    QString m_destination;
 public:
 
-    AccountMergeOperation(KeyPair* destination);
-    AccountMergeOperation(stellar::AccountID& op);
+    AccountMergeOperation(QString destination);
+
     virtual ~AccountMergeOperation();
     /**
      * The account that receives the remaining XLM balance of the source account.
      */
-    KeyPair* getDestination();
+    QString getDestination() const;
     void fillOperationBody(stellar::Operation &operation);
 
     /**
@@ -27,23 +26,18 @@ public:
      * @param operationAccountMerge body of an xdr operation
      * @return AccountMergeOperation without source account setted
      */
-    static AccountMergeOperation * build(stellar::AccountID &operationAccountMerge);
+    static AccountMergeOperation * build(stellar::MuxedAccount &operationAccountMerge);
 
     static AccountMergeOperation *create(KeyPair* destination);
+    static AccountMergeOperation *create(QString destination);
 
     /**
          * Sets the source account for this operation.
          * @param sourceAccount The operation's source account.
          * @return AccountMergeOperation object so you can chain methods.
          */
-    AccountMergeOperation* setSourceAccount(KeyPair* sourceAccount);
+    AccountMergeOperation* setSourceAccount(QString sourceAccount);
 
-    /**
-         * Sets the source account for this operation making a copy of keypair
-         * @param sourceAccount The operation's source account.
-         * @return AccountMergeOperation object so you can chain methods.
-         */
-    AccountMergeOperation* setSourceAccount(KeyPair& sourceAccount);
 };
 
 #endif // ACCOUNTMERGEOPERATION_H

@@ -35,3 +35,11 @@ void Network::usePublicNetwork() {
 void Network::useTestNetwork() {
     Network::use(new Network(TESTNET));
 }
+
+Network* checkNotNull(Network* network, const char *error)
+{
+    if(!network|| network->m_networkPassphrase.isEmpty()){
+        throw std::runtime_error(error);
+    }
+    return network;
+}

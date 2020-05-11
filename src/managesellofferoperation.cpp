@@ -79,13 +79,7 @@ ManageSellOfferOperation *ManageSellOfferOperation::setOfferId(qint64 offerId) {
     return this;
 }
 
-ManageSellOfferOperation *ManageSellOfferOperation::setSourceAccount(KeyPair *sourceAccount) {
+ManageSellOfferOperation *ManageSellOfferOperation::setSourceAccount(QString sourceAccount) {
     Operation::setSourceAccount(sourceAccount);
-    return this;
-}
-
-ManageSellOfferOperation *ManageSellOfferOperation::setSourceAccount(KeyPair &sourceAccount)
-{
-    Operation::setSourceAccount(new KeyPair(sourceAccount));
     return this;
 }

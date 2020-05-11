@@ -55,14 +55,8 @@ public:
          * @param sourceAccount The operation's source account.
          * @return CreatePassiveSellOfferOperation object so you can chain methods.
          */
-    CreatePassiveSellOfferOperation* setSourceAccount(KeyPair* sourceAccount);
+    CreatePassiveSellOfferOperation* setSourceAccount(QString sourceAccount);
 
-    /**
-         * Sets the source account for this operation making a copy of keypair
-         * @param sourceAccount The operation's source account.
-         * @return CreatePassiveSellOfferOperation object so you can chain methods.
-         */
-    CreatePassiveSellOfferOperation* setSourceAccount(KeyPair& sourceAccount);
 };
 
 
