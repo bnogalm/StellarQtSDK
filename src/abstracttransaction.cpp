@@ -1,5 +1,6 @@
 #include "abstracttransaction.h"
 #include "transaction.h"
+#include "feebumptransaction.h"
 
 AbstractTransaction::AbstractTransaction(Network *network) : m_network(network)
 {
@@ -65,10 +66,10 @@ AbstractTransaction *AbstractTransaction::fromEnvelopeXdr(stellar::TransactionEn
     {
         return Transaction::fromV0EnvelopeXdr(xdr.v0,network);
     }
-//    case stellar::EnvelopeType::ENVELOPE_TYPE_TX_FEE_BUMP:
-//    {
-//        return FeeBumpTransaction::fromFeeBumpTransactionEnvelope(xdr.feeBump, network);
-//    }
+    case stellar::EnvelopeType::ENVELOPE_TYPE_TX_FEE_BUMP:
+    {
+        return FeeBumpTransaction::fromFeeBumpTransactionEnvelope(xdr.feeBump, network);
+    }
     default: throw std::runtime_error("transaction type is not supported");
     }
 

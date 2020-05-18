@@ -36,18 +36,18 @@ public:
         return QString::fromLatin1(encoded);
     }
 
-    static QString encodeStellarAccountId(stellar::AccountID& accountID) {
+    static QString encodeStellarAccountId(const stellar::AccountID& accountID) {
 
           QByteArray data = QByteArray::fromRawData((const char*)(accountID.ed25519),sizeof(accountID.ed25519));
           return encodeStellarAccountId(data);
     }
 
-    static QString encodeStellarAccountId(stellar::Key& key) {
+    static QString encodeStellarAccountId(const stellar::Key& key) {
           QByteArray data = QByteArray::fromRawData((const char*)(key),sizeof(key));
           return encodeStellarAccountId(data);
     }
 
-    static QString encodeStellarMuxedAccount(stellar::MuxedAccount& account) {
+    static QString encodeStellarMuxedAccount(const stellar::MuxedAccount& account) {
         switch(account.type)
         {
         case stellar::CryptoKeyType::KEY_TYPE_ED25519:

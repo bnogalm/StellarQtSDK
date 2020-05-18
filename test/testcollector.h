@@ -61,12 +61,14 @@ inline void compareBase64(QString a,QString b)
 	{\
     int wait=0;\
     while(EXP){\
-       QTest::qWait(500);\
+       QTest::qWait(25);\
        wait++;\
-       if(wait>20)\
+       if(wait>800)\
            break;\
     }\
 	}
+
+
 
 #define ADD_TEST(className) static TestCollector::UnitTestClass<className> \
     test(#className);

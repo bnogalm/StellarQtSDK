@@ -3,13 +3,10 @@
 
 PaymentOperation::PaymentOperation(QString destination, Asset *asset, QString amount)
     :m_asset(nullptr)
-{
-    m_destination = checkNotNull(destination, "destination cannot be null");
+{    
     checkNotNull(asset, "asset cannot be null");
     checkNotNull(amount, "amount cannot be null");
-
-
-    //m_op.destination = destination->getXdrPublicKey();// recipient of the payment
+    m_op.destination = StrKey::encodeToXDRMuxedAccount(checkNotNull(destination, "destination cannot be null"));// recipient of the payment
     m_op.asset = asset->toXdr();  // what they end up with
     m_op.amount = Operation::toXdrAmount(amount);// amount they end up with
 }
@@ -42,8 +39,9 @@ PaymentOperation *PaymentOperation::create(QString destination, Asset *asset, QS
     return new PaymentOperation(destination,asset,amount);
 }
 
-QString PaymentOperation::getDestination() const {
-    return m_destination;
+QString PaymentOperation::getDestination() const
+{
+    return StrKey::encodeStellarMuxedAccount(m_op.destination);
 }
 
 Asset *PaymentOperation::getAsset() {
@@ -62,6 +60,7 @@ void PaymentOperation::fillOperationBody(stellar::Operation &op) {
     op.type = stellar::OperationType::PAYMENT;
     //payment op is trivial so no need to call constructor
     op.operationPayment = m_op;
+
 
 }
 

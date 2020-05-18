@@ -23,6 +23,7 @@
 #include "../../src/responses/effects/trustlinedeauthorizedeffectresponse.h"
 #include "../../src/responses/effects/trustlineremovedeffectresponse.h"
 #include "../../src/responses/effects/trustlineupdatedeffectresponse.h"
+#include "../../src/responses/effects/trustlineauthorizedtomaintainliabilitieseffectresponse.h"
 #include "../../src/responses/effects/tradeeffectresponse.h"
 #include "../../src/responses/effects/accountinflationdestinationupdatedeffectresponse.h"
 #include "../../src/responses/effects/datacreatedeffectresponse.h"
@@ -78,6 +79,9 @@ void EffectsPage::processRecords(const QJsonArray &records)
           effect= new TrustlineAuthorizedEffectResponse();break;
         case 24:
           effect= new TrustlineDeauthorizedEffectResponse();break;
+        case 25:
+          effect= new TrustlineAuthorizedToMaintainLiabilitiesEffectResponse();break;
+
         // Trading effects
         case 30:
           effect= new OfferCreatedEffectResponse();break;

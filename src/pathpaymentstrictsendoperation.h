@@ -11,8 +11,7 @@
  */
 class PathPaymentStrictSendOperation : public Operation
 {
-    Asset* m_sendAsset;
-    QString m_destination;
+    Asset* m_sendAsset;    
     Asset* m_destAsset;
     QList<Asset*> m_path;
 

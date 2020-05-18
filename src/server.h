@@ -20,6 +20,7 @@
 #include <QTimer>
 #include <QHash>
 class Transaction;
+class FeeBumpTransaction;
 class SubmitTransactionResponse;
 /**
  * Main class used to connect to Horizon server.
@@ -35,7 +36,7 @@ class Server : public QObject
 
 
 
-    QList<QString> checkMemoRequired(Transaction* transaction);
+    QList<QString> checkMemoRequired(AbstractTransaction* transaction);
 
 
 public:
@@ -147,9 +148,7 @@ public:
      * You will have to delete the response returned by transactionResponse signal
      * @throws IOException
      */
-    SubmitTransactionResponse* submitTransaction(Transaction* transaction, bool skipMemoRequiredCheck=false);
-
-
+    SubmitTransactionResponse* submitTransaction(AbstractTransaction* transaction, bool skipMemoRequiredCheck=false);
 
 
 

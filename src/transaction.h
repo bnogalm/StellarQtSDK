@@ -41,6 +41,8 @@ public:
     qint64 getSequenceNumber() const;
     Memo* getMemo() const;
 
+    Network* getNetwork() const;
+
      /**
       * @return TimeBounds, or null (representing no time restrictions)
       */
@@ -94,7 +96,7 @@ public:
          QVector<Operation*> m_operations;
          bool m_timeoutSet;
 
-         quint32 m_operationFee;
+         quint32 m_baseFee;
          static quint32 s_defaultOperationFee;
         void clear();
      public:
@@ -155,7 +157,7 @@ public:
           */
          Builder& setTimeout(qint64 timeout);
 
-         Builder& setOperationFee(quint32 operationFee);
+         Builder& setBaseFee(quint32 baseFee);
 
          /**
         * Builds a transaction. It will increment sequence number of the source account.

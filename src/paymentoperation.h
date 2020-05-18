@@ -9,8 +9,7 @@
  * @see <a href="https://www.stellar.org/developers/learn/concepts/list-of-operations.html" target="_blank">List of Operations</a>
  */
 class PaymentOperation : public Operation
-{
-    QString m_destination;
+{    
     Asset* m_asset;
     stellar::PaymentOp m_op;
 public:

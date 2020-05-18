@@ -797,8 +797,11 @@ namespace stellar
         Array<DecoratedSignature,20> signatures;
 
         FeeBumpTransactionEnvelope(const FeeBumpTransactionEnvelope& te)
-            :tx(te.tx)
-            ,signatures(te.signatures)
+            :tx(te.tx)            
+        {
+            signatures.value = te.signatures.value;
+        }
+        FeeBumpTransactionEnvelope()
         {
         }
         const FeeBumpTransactionEnvelope& operator = (const FeeBumpTransactionEnvelope& te);
@@ -822,8 +825,6 @@ namespace stellar
             //non trivial
             TransactionV0Envelope v0;           //ENVELOPE_TYPE_TX_V0
             TransactionV1Envelope v1;           //ENVELOPE_TYPE_TX
-
-            //trivial
             FeeBumpTransactionEnvelope feeBump; //ENVELOPE_TYPE_TX_FEE_BUMP
         };
 
@@ -873,6 +874,7 @@ namespace stellar
         }
         case EnvelopeType::ENVELOPE_TYPE_TX_FEE_BUMP:
         {
+            new (&obj.feeBump) FeeBumpTransactionEnvelope();
             in >> obj.feeBump; break;
         }
         default:break;
@@ -889,6 +891,54 @@ namespace stellar
             Transaction tx;             //ENVELOPE_TYPE_TX
             FeeBumpTransaction feeBump; //ENVELOPE_TYPE_TX_FEE_BUMP
         };
+        TransactionSignaturePayload(EnvelopeType t):type(t)
+        {
+            switch(type)
+            {
+                case EnvelopeType::ENVELOPE_TYPE_TX:
+                {                    
+                    new (&tx) Transaction();
+                    break;
+                }
+                case EnvelopeType::ENVELOPE_TYPE_TX_FEE_BUMP:
+                {
+                    new (&feeBump) FeeBumpTransaction();
+                    break;
+                }
+                default:break;
+            }
+        }
+        TransactionSignaturePayload(FeeBumpTransaction t, QByteArray networkHash)
+        {
+            type = EnvelopeType::ENVELOPE_TYPE_TX_FEE_BUMP;            
+            memcpy(networkId,networkHash.data(),sizeof(networkId));
+            new (&feeBump) FeeBumpTransaction();
+            feeBump=t;
+        }
+        TransactionSignaturePayload(Transaction t, QByteArray networkHash)
+        {
+            type = EnvelopeType::ENVELOPE_TYPE_TX;
+            memcpy(networkId,networkHash.data(),sizeof(networkId));
+            new (&tx) Transaction();
+            tx=t;
+        }
+        ~TransactionSignaturePayload()
+        {
+            switch(type)
+            {
+                case EnvelopeType::ENVELOPE_TYPE_TX:
+                {
+                    tx.~Transaction();
+                    break;
+                }
+                case EnvelopeType::ENVELOPE_TYPE_TX_FEE_BUMP:
+                {
+                    feeBump.~FeeBumpTransaction();
+                    break;
+                }
+                default:break;
+            }
+        }
 
     };
 
@@ -918,11 +968,13 @@ namespace stellar
        {
            case EnvelopeType::ENVELOPE_TYPE_TX:
            {
+               new (&obj.tx) Transaction();
                in >>obj.tx;
                break;
            }
            case EnvelopeType::ENVELOPE_TYPE_TX_FEE_BUMP:
            {
+               new (&obj.feeBump) FeeBumpTransaction();
                in >>obj.feeBump;
                break;
            }

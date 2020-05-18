@@ -317,6 +317,7 @@ stellar::TransactionEnvelope::TransactionEnvelope(const stellar::TransactionEnve
         new (&v1) TransactionV1Envelope();
         v1 = te.v1; break;
     case EnvelopeType::ENVELOPE_TYPE_TX_FEE_BUMP:
+        new (&feeBump) FeeBumpTransactionEnvelope();
         feeBump = te.feeBump; break;
     default: break;
     }
@@ -329,6 +330,8 @@ stellar::TransactionEnvelope::~TransactionEnvelope()
         v0.~TransactionV0Envelope();break;
     case EnvelopeType::ENVELOPE_TYPE_TX:
         v1.~TransactionV1Envelope();break;
+    case EnvelopeType::ENVELOPE_TYPE_TX_FEE_BUMP:
+        feeBump.~FeeBumpTransactionEnvelope();break;
     default: break;
     }
 }
@@ -384,16 +387,19 @@ const stellar::FeeBumpTransaction &stellar::FeeBumpTransaction::operator =(const
     return *this;
 }
 
-stellar::FeeBumpTransaction::FeeBumpTransaction()
+stellar::FeeBumpTransaction::FeeBumpTransaction():v(0)
 {
     new (&v1) TransactionV1Envelope();
+
 }
 
 stellar::FeeBumpTransaction::FeeBumpTransaction(const stellar::FeeBumpTransaction &fbt)
     :feeSource(fbt.feeSource)
     ,fee(fbt.fee)
     ,type(fbt.type)
+    ,v(0)
 {
+    new (&v1) TransactionV1Envelope;
     v1=fbt.v1;
 }
 

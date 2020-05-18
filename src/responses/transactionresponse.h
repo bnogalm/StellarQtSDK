@@ -6,6 +6,8 @@
 #include "link.h"
 
 #include "../util.h"
+#include "../feebumptransaction.h"
+
 
 namespace TransactionResponseAttach
 {
@@ -52,9 +54,75 @@ public:
     }
     bool operator !=(Links& links)
     {
-        Q_UNUSED(links)
-        return true;
+        return m_account!= links.m_account
+                || m_effects!= links.m_effects
+                || m_ledger!= links.m_ledger
+                || m_operations!= links.m_operations
+                || m_precedes!= links.m_precedes
+                || m_self!= links.m_self
+                || m_succeeds!= links.m_succeeds;
     }
+};
+
+/**
+ * FeeBumpTransaction is only present in a TransactionResponse if the transaction is a fee bump transaction or is
+ * wrapped by a fee bump transaction. The object has two fields: the hash of the fee bump transaction and the
+ * signatures present in the fee bump transaction envelope.
+ */
+class FeeBumpTransaction {
+    Q_GADGET
+    Q_PROPERTY(QString hash MEMBER m_hash)
+    Q_PROPERTY(QList<QString> signatures MEMBER m_signatures)
+    QString m_hash;
+    QList<QString> m_signatures;
+public:
+    QString getHash() const
+    {
+        return m_hash;
+    }
+    QList<QString> getSignatures() const
+    {
+        return m_signatures;
+    }
+    bool operator !=(FeeBumpTransaction& obj)
+    {
+        return m_hash!=obj.m_hash || m_signatures != obj.m_signatures;
+    }
+};
+
+
+/**
+ * InnerTransaction is only present in a TransactionResponse if the transaction is a fee bump transaction or is
+ * wrapped by a fee bump transaction. The object has three fields: the hash of the inner transaction wrapped by the
+ * fee bump transaction, the max fee set in the inner transaction, and the signatures present in the inner
+ * transaction envelope.
+ */
+class InnerTransaction {
+    Q_GADGET
+    Q_PROPERTY(QString hash MEMBER m_hash)
+    Q_PROPERTY(QList<QString> signatures MEMBER m_signatures)
+    Q_PROPERTY(qint64 max_fee MEMBER m_maxFee)
+    QString m_hash;
+    QList<QString> m_signatures;
+    qint64 m_maxFee;
+public:
+    QString getHash() const
+    {
+        return m_hash;
+    }
+    QList<QString> getSignatures() const
+    {
+        return m_signatures;
+    }
+    qint64 getMaxFee() const
+    {
+        return m_maxFee;
+    }
+    bool operator !=(InnerTransaction& obj)
+    {
+        return m_hash!=obj.m_hash || m_signatures != obj.m_signatures || m_maxFee != obj.m_maxFee;
+    }
+
 };
 
 }
@@ -73,6 +141,7 @@ class TransactionResponse : public Response
     Q_PROPERTY(qint64 ledger MEMBER m_ledger)
     Q_PROPERTY(QString created_at MEMBER m_createdAt)
     Q_PROPERTY(QString source_account READ sourceAccount WRITE setSourceAccount)
+    Q_PROPERTY(QString fee_account MEMBER m_feeAccount)
 
     Q_PROPERTY(QVariant successful MEMBER m_successful WRITE setSuccessful) //we use a custom set method to filter non Bool types
 
@@ -85,6 +154,10 @@ class TransactionResponse : public Response
     Q_PROPERTY(QString result_xdr MEMBER m_resultXdr)
     Q_PROPERTY(QString result_meta_xdr MEMBER m_resultMetaXdr)
 
+    Q_PROPERTY(QList<QString> signatures MEMBER m_signatures)
+    Q_PROPERTY(TransactionResponseAttach::FeeBumpTransaction fee_bump_transaction MEMBER m_feeBumpTransaction)
+    Q_PROPERTY(TransactionResponseAttach::InnerTransaction  inner_transaction MEMBER m_innerTransaction)
+
     Q_PROPERTY(QString memo_type READ memoType WRITE setMemoType)
     Q_PROPERTY(QByteArray memo READ memo WRITE setMemo)
 
@@ -93,9 +166,7 @@ class TransactionResponse : public Response
 
     QString m_hash;
     qint64 m_ledger;
-    QString m_createdAt;
-
-    KeyPair* m_sourceAccountKeypair;
+    QString m_createdAt;    
     QVariant m_successful;
 
     QString m_pagingToken;
@@ -107,6 +178,9 @@ class TransactionResponse : public Response
     QString m_resultXdr;
     QString m_resultMetaXdr;
     TransactionResponseAttach::Links m_links;
+    QList<QString> m_signatures;
+    TransactionResponseAttach::FeeBumpTransaction m_feeBumpTransaction;
+    TransactionResponseAttach::InnerTransaction m_innerTransaction;
 
 
     QString m_sourceAccount;
@@ -114,6 +188,8 @@ class TransactionResponse : public Response
     QString m_memoType;
     QByteArray m_memoData;
     Memo * m_memo;
+
+    QString m_feeAccount;
 
 public:
     Q_INVOKABLE explicit TransactionResponse(QNetworkReply *reply=nullptr);
@@ -124,7 +200,7 @@ public:
 
       QString getCreatedAt() const;
 
-      KeyPair* getSourceAccount();
+      QString getSourceAccount() const;
 
       QString getPagingToken() const;
 
@@ -148,18 +224,27 @@ public:
 
       TransactionResponseAttach::Links& getLinks();
 
+      QString getFeeAccount() const;
+      QList<QString> getSignatures() const;
+
+      TransactionResponseAttach::FeeBumpTransaction& getFeeBump();
+      TransactionResponseAttach::InnerTransaction& getInner();
+
       QString sourceAccount() const;
       QString memoType() const;
 
       QByteArray memo() const;
 
-public slots:
+
       void setSourceAccount(QString sourceAccount);
       void setMemoType(QString memoType);
       void setMemo(QByteArray memoData);
       void setSuccessful(QVariant successful);
+      void setFeeAccount(QString feeAccount);
 };
 Q_DECLARE_METATYPE(TransactionResponseAttach::Links)
+Q_DECLARE_METATYPE(TransactionResponseAttach::FeeBumpTransaction)
+Q_DECLARE_METATYPE(TransactionResponseAttach::InnerTransaction )
 Q_DECLARE_METATYPE(TransactionResponse*)
 #endif // TRANSACTIONRESPONSE_H
 

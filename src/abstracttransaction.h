@@ -13,9 +13,10 @@ class AbstractTransaction : public QObject
 protected:
     Network* m_network;
     QVector<stellar::DecoratedSignature> m_signatures;
+
     explicit AbstractTransaction(Network* network);
 public:
-
+    static const int MIN_BASE_FEE = 100;
     /**
       * Adds a new signature ed25519PublicKey to this transaction.
       * @param signer {@link KeyPair} object representing a signer

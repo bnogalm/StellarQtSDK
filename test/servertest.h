@@ -198,7 +198,7 @@ private slots:
                  .addOperation(AccountMergeOperation::create(KeyPair::fromAccountId(DESTINATION_ACCOUNT_MEMO_REQUIRED_D)))
                  .setTimeout(Transaction::Builder::TIMEOUT_INFINITE)
                  .addMemo(new MemoText("Hello, Stellar."))
-                 .setOperationFee(100)
+                 .setBaseFee(100)
                  .build();
 
          transaction->sign(source);
@@ -212,7 +212,7 @@ private slots:
 
          WAIT_FOR(!r)
          WAIT_FOR(!r)
-
+         WAIT_FOR(!r)
 
         QVERIFY(r);
 
@@ -232,7 +232,7 @@ private slots:
                  .addOperation(PathPaymentStrictSendOperation::create(new AssetTypeNative(), "10", KeyPair::fromAccountId(DESTINATION_ACCOUNT_MEMO_REQUIRED_C), new AssetTypeCreditAlphaNum4("BTC", QString("GA7GYB3QGLTZNHNGXN3BMANS6TC7KJT3TCGTR763J4JOU4QHKL37RVV2")), "5"))
                  .addOperation(AccountMergeOperation::create(KeyPair::fromAccountId(DESTINATION_ACCOUNT_MEMO_REQUIRED_D)))
                  .setTimeout(Transaction::Builder::TIMEOUT_INFINITE)
-                 .setOperationFee(100)
+                 .setBaseFee(100)
                  .build();
 
          transaction->sign(source);
@@ -264,7 +264,7 @@ private slots:
                  .addOperation(PathPaymentStrictSendOperation::create(new AssetTypeNative(), "10", KeyPair::fromAccountId(DESTINATION_ACCOUNT_NO_MEMO_REQUIRED), new AssetTypeCreditAlphaNum4("BTC", QString("GA7GYB3QGLTZNHNGXN3BMANS6TC7KJT3TCGTR763J4JOU4QHKL37RVV2")), "5"))
                  .addOperation(AccountMergeOperation::create(KeyPair::fromAccountId(DESTINATION_ACCOUNT_NO_MEMO_REQUIRED)))
                  .setTimeout(Transaction::Builder::TIMEOUT_INFINITE)
-                 .setOperationFee(100)
+                 .setBaseFee(100)
                  .build();
 
          transaction->sign(source);
@@ -296,7 +296,7 @@ private slots:
                  .addOperation(PathPaymentStrictSendOperation::create(new AssetTypeNative(), "10", KeyPair::fromAccountId(DESTINATION_ACCOUNT_NO_MEMO_REQUIRED), new AssetTypeCreditAlphaNum4("BTC", QString("GA7GYB3QGLTZNHNGXN3BMANS6TC7KJT3TCGTR763J4JOU4QHKL37RVV2")), "5"))
                  .addOperation(AccountMergeOperation::create(KeyPair::fromAccountId(DESTINATION_ACCOUNT_NO_MEMO_REQUIRED)))
                  .setTimeout(Transaction::Builder::TIMEOUT_INFINITE)
-                 .setOperationFee(100)
+                 .setBaseFee(100)
                  .build();
 
          transaction->sign(source);
@@ -329,7 +329,7 @@ private slots:
                  .addOperation(PathPaymentStrictSendOperation::create(new AssetTypeNative(), "10", KeyPair::fromAccountId(DESTINATION_ACCOUNT_MEMO_REQUIRED_C), new AssetTypeCreditAlphaNum4("BTC", QString("GA7GYB3QGLTZNHNGXN3BMANS6TC7KJT3TCGTR763J4JOU4QHKL37RVV2")), "5"))
                  .addOperation(AccountMergeOperation::create(KeyPair::fromAccountId(DESTINATION_ACCOUNT_NO_MEMO_REQUIRED)))
                  .setTimeout(Transaction::Builder::TIMEOUT_INFINITE)
-                 .setOperationFee(100)
+                 .setBaseFee(100)
                  .build();
 
          transaction->sign(source);
@@ -361,7 +361,7 @@ private slots:
                  .addOperation(PathPaymentStrictSendOperation::create(new AssetTypeNative(), "10", KeyPair::fromAccountId(DESTINATION_ACCOUNT_NO_MEMO_REQUIRED), new AssetTypeCreditAlphaNum4("BTC", QString("GA7GYB3QGLTZNHNGXN3BMANS6TC7KJT3TCGTR763J4JOU4QHKL37RVV2")), "5"))
                  .addOperation(AccountMergeOperation::create(KeyPair::fromAccountId(DESTINATION_ACCOUNT_MEMO_REQUIRED_D)))
                  .setTimeout(Transaction::Builder::TIMEOUT_INFINITE)
-                 .setOperationFee(100)
+                 .setBaseFee(100)
                  .build();
 
          transaction->sign(source);
@@ -393,7 +393,7 @@ private slots:
                  .addOperation(PathPaymentStrictSendOperation::create(new AssetTypeNative(), "10", KeyPair::fromAccountId(DESTINATION_ACCOUNT_MEMO_REQUIRED_C), new AssetTypeCreditAlphaNum4("BTC", QString("GA7GYB3QGLTZNHNGXN3BMANS6TC7KJT3TCGTR763J4JOU4QHKL37RVV2")), "5"))
                  .addOperation(AccountMergeOperation::create(KeyPair::fromAccountId(DESTINATION_ACCOUNT_MEMO_REQUIRED_D)))
                  .setTimeout(Transaction::Builder::TIMEOUT_INFINITE)
-                 .setOperationFee(100)
+                 .setBaseFee(100)
                  .build();
 
          transaction->sign(source);
@@ -427,7 +427,7 @@ private slots:
                  .addOperation(PathPaymentStrictSendOperation::create(new AssetTypeNative(), "10", KeyPair::fromAccountId(DESTINATION_ACCOUNT_MEMO_REQUIRED_C), new AssetTypeCreditAlphaNum4("BTC", QString("GA7GYB3QGLTZNHNGXN3BMANS6TC7KJT3TCGTR763J4JOU4QHKL37RVV2")), "5"))
                  .addOperation(AccountMergeOperation::create(KeyPair::fromAccountId(DESTINATION_ACCOUNT_MEMO_REQUIRED_D)))
                  .setTimeout(Transaction::Builder::TIMEOUT_INFINITE)
-                 .setOperationFee(100)
+                 .setBaseFee(100)
                  .build();
 
          transaction->sign(source);
@@ -461,7 +461,7 @@ private slots:
                  .addOperation(PathPaymentStrictSendOperation::create(new AssetTypeNative(), "10", KeyPair::fromAccountId(DESTINATION_ACCOUNT_NO_FOUND), new AssetTypeCreditAlphaNum4("BTC", QString("GA7GYB3QGLTZNHNGXN3BMANS6TC7KJT3TCGTR763J4JOU4QHKL37RVV2")), "5"))
                  .addOperation(AccountMergeOperation::create(KeyPair::fromAccountId(DESTINATION_ACCOUNT_NO_FOUND)))
                  .setTimeout(Transaction::Builder::TIMEOUT_INFINITE)
-                 .setOperationFee(100)
+                 .setBaseFee(100)
                  .build();
 
          transaction->sign(source);
@@ -503,7 +503,7 @@ private slots:
                  .addOperation(PathPaymentStrictSendOperation::create(new AssetTypeNative(), "10", KeyPair::fromAccountId(DESTINATION_ACCOUNT_MEMO_REQUIRED_D), new AssetTypeCreditAlphaNum4("BTC", QString("GA7GYB3QGLTZNHNGXN3BMANS6TC7KJT3TCGTR763J4JOU4QHKL37RVV2")), "5"))
                  .addOperation(AccountMergeOperation::create(KeyPair::fromAccountId(DESTINATION_ACCOUNT_MEMO_REQUIRED_D)))
                  .setTimeout(Transaction::Builder::TIMEOUT_INFINITE)
-                 .setOperationFee(100)
+                 .setBaseFee(100)
                  .build();
 
          transaction->sign(source);

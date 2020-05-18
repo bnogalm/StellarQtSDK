@@ -3,7 +3,6 @@
 #include "../memo.h"
 TransactionResponse::TransactionResponse(QNetworkReply *reply)
     :Response(reply)
-    ,m_sourceAccountKeypair(nullptr)
     ,m_successful(QVariant::Bool)// we have to indicate the type or it will not be filled, it will stay returning isNull as true if it is not initialized
     ,m_sourceAccountSequence(0)
     ,m_maxFee(0)
@@ -15,8 +14,6 @@ TransactionResponse::TransactionResponse(QNetworkReply *reply)
 
 TransactionResponse::~TransactionResponse()
 {
-    if(m_sourceAccountKeypair)
-        delete m_sourceAccountKeypair;
     if(m_memo)
         delete m_memo;
 }
@@ -33,12 +30,8 @@ QString TransactionResponse::getCreatedAt() const{
     return m_createdAt;
 }
 
-KeyPair *TransactionResponse::getSourceAccount() {
-    if(!m_sourceAccountKeypair)
-    {
-        m_sourceAccountKeypair= KeyPair::fromAccountId(m_sourceAccount);
-    }
-    return m_sourceAccountKeypair;
+QString TransactionResponse::getSourceAccount() const{
+    return m_sourceAccount;
 }
 
 QString TransactionResponse::getPagingToken() const{
@@ -73,11 +66,13 @@ QString TransactionResponse::getResultXdr() const{
     return m_resultXdr;
 }
 
-QString TransactionResponse::getResultMetaXdr() const{
+QString TransactionResponse::getResultMetaXdr() const
+{
     return m_resultMetaXdr;
 }
 
-Memo *TransactionResponse::getMemo() {
+Memo *TransactionResponse::getMemo()
+{
     if(!m_memo)
     {
         m_memo = Memo::parse(m_memoType,m_memoData);
@@ -85,8 +80,24 @@ Memo *TransactionResponse::getMemo() {
     return m_memo;
 }
 
-TransactionResponseAttach::Links &TransactionResponse::getLinks() {
+TransactionResponseAttach::Links &TransactionResponse::getLinks()
+{
     return m_links;
+}
+
+QList<QString> TransactionResponse::getSignatures() const
+{
+    return m_signatures;
+}
+
+TransactionResponseAttach::FeeBumpTransaction &TransactionResponse::getFeeBump()
+{
+    return m_feeBumpTransaction;
+}
+
+TransactionResponseAttach::InnerTransaction &TransactionResponse::getInner()
+{
+    return m_innerTransaction;
 }
 
 QString TransactionResponse::sourceAccount() const
@@ -104,13 +115,13 @@ QByteArray TransactionResponse::memo() const
     return m_memoData;
 }
 
+QString TransactionResponse::getFeeAccount() const
+{
+    return m_feeAccount;
+}
+
 void TransactionResponse::setSourceAccount(QString sourceAccount)
 {
-    if(m_sourceAccountKeypair)
-    {
-        delete m_sourceAccountKeypair;
-        m_sourceAccountKeypair = nullptr;
-    }
     m_sourceAccount = sourceAccount;
 }
 
@@ -140,4 +151,9 @@ void TransactionResponse::setSuccessful(QVariant successful)
     {
         m_successful = successful;
     }
+}
+
+void TransactionResponse::setFeeAccount(QString feeAccount)
+{
+    m_feeAccount = feeAccount;
 }

@@ -20,13 +20,13 @@ private slots:
 
         transactionsPage.loadFromJson(json);
 
-        QCOMPARE(transactionsPage.at(0)->getSourceAccount()->getAccountId(), QString("GAAZI4TCR3TY5OJHCTJC2A4QSY6CJWJH5IAJTGKIN2ER7LBNVKOCCWN7"));
+        QCOMPARE(transactionsPage.at(0)->getSourceAccount(), QString("GAAZI4TCR3TY5OJHCTJC2A4QSY6CJWJH5IAJTGKIN2ER7LBNVKOCCWN7"));
         QCOMPARE(transactionsPage.at(0)->getPagingToken(), QString("12884905984"));
         QVERIFY(dynamic_cast<MemoText*>(transactionsPage.at(0)->getMemo()));
         MemoText * memotext =dynamic_cast<MemoText*>(transactionsPage.at(0)->getMemo());
         QCOMPARE(memotext->getText(),QString("hello world"));
         QCOMPARE(transactionsPage.at(0)->getLinks().getAccount().getHref(), QString("/accounts/GAAZI4TCR3TY5OJHCTJC2A4QSY6CJWJH5IAJTGKIN2ER7LBNVKOCCWN7"));
-        QCOMPARE(transactionsPage.at(9)->getSourceAccount()->getAccountId(), QString("GAENIE5LBJIXLMJIAJ7225IUPA6CX7EGHUXRX5FLCZFFAQSG2ZUYSWFK"));
+        QCOMPARE(transactionsPage.at(9)->getSourceAccount(), QString("GAENIE5LBJIXLMJIAJ7225IUPA6CX7EGHUXRX5FLCZFFAQSG2ZUYSWFK"));
 
         // Empty memo text
         QVERIFY(dynamic_cast<MemoText*>(transactionsPage.at(2)->getMemo()));

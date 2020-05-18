@@ -30,15 +30,14 @@ PathPaymentOperation::PathPaymentOperation(Asset *sendAsset, QString sendMax, QS
     :m_sendAsset(nullptr)
     ,m_destAsset(nullptr){
     checkNotNull(sendAsset, "sendAsset cannot be null");
-    checkNotNull(sendMax, "sendMax cannot be null");
-    m_destination= checkNotNull(destination, "destination cannot be null");
+    checkNotNull(sendMax, "sendMax cannot be null");    
     checkNotNull(destAsset, "destAsset cannot be null");
     checkNotNull(destAmount, "destAmount cannot be null");
     checkArgument(path.size() <= 5, "The maximum number of assets in the path is 5");
 
     m_op.sendAsset = sendAsset->toXdr();
     m_op.sendMax = Operation::toXdrAmount(sendMax);
-    //m_op.destination = destination->getXdrPublicKey();
+    m_op.destination = StrKey::encodeToXDRMuxedAccount(checkNotNull(destination, "destination cannot be null"));
 
     m_op.destAsset = destAsset->toXdr();
     m_op.destAmount = Operation::toXdrAmount(destAmount);
@@ -58,7 +57,7 @@ QString PathPaymentOperation::getSendMax() {
 }
 
 QString PathPaymentOperation::getDestination() const{
-    return m_destination;
+    return StrKey::encodeStellarMuxedAccount(m_op.destination);
 }
 
 Asset *PathPaymentOperation::getDestAsset() {

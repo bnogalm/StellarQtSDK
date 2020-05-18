@@ -119,7 +119,7 @@ private slots:
         QCOMPARE(transaction.getCreatedAt(), QString("2015-11-20T17:01:28Z"));
         QCOMPARE(transaction.getPagingToken(), QString("3933090531512320"));
         QCOMPARE(transaction.isSuccessful(), Boolean(true));
-        QCOMPARE(transaction.getSourceAccount()->getAccountId(), QString("GCUB7JL4APK7LKJ6MZF7Q2JTLHAGNBIUA7XIXD5SQTG52GQ2DAT6XZMK"));
+        QCOMPARE(transaction.getSourceAccount(), QString("GCUB7JL4APK7LKJ6MZF7Q2JTLHAGNBIUA7XIXD5SQTG52GQ2DAT6XZMK"));
         QCOMPARE(transaction.getSourceAccountSequence(), 2373051035426646L);
         QCOMPARE(transaction.getMaxFee(), 200);
         QCOMPARE(transaction.getFeeCharged(), 100);

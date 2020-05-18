@@ -79,7 +79,7 @@ QDataStream &operator>>(QDataStream &in,  char& c);
 
 template <class T, int max=std::numeric_limits<int>::max()>
 struct Array{
-    QVector<T> value;
+    QVector<T> value;    
     static int maxSize(){        
         return max;
     }

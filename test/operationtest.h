@@ -103,7 +103,8 @@ private slots:
 
          QVERIFY(10000000000L==xdr.operationPayment.amount);
          QVERIFY(source->getAccountId()==parsedOperation->getSourceAccount());
-         QVERIFY(destination->getAccountId()== parsedOperation->getDestination());
+         //QVERIFY(destination->getAccountId()== parsedOperation->getDestination());
+         QCOMPARE(parsedOperation->getDestination(),destination->getAccountId());
          QVERIFY(dynamic_cast<AssetTypeNative*>(parsedOperation->getAsset()));
          QVERIFY(amount == parsedOperation->getAmount());
          QString expected("AAAAAQAAAAC7JAuE3XvquOnbsgv2SRztjuk4RoBVefQ0rlrFMMQvfAAAAAEAAAAA7eBSYbzcL5UKo7oXO24y1ckX+XuCtkDsyNHOp1n1bxAAAAAAAAAAAlQL5AA=");
@@ -305,7 +306,7 @@ private slots:
        QString assetCode = "USDA";
        bool authorize = true;
 
-       AllowTrustOperation operation(trustor, assetCode, authorize);
+       AllowTrustOperation operation(trustor, assetCode, authorize, false);
        operation.setSourceAccount(source->getAccountId());
 
 

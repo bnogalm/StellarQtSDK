@@ -36,12 +36,8 @@ QByteArray Transaction::signatureBase() const{
 
         QByteArray output;
         QDataStream outputStream(&output,QIODevice::WriteOnly);
-        // Hashed NetworkID
-        outputStream.writeRawData(m_network->getNetworkId(),m_network->getNetworkId().length());
-        // Envelope Type - 4 bytes
-        outputStream << stellar::EnvelopeType::ENVELOPE_TYPE_TX;
-        // Transaction XDR bytes        
-        outputStream << this->toV1Xdr();
+        stellar::TransactionSignaturePayload payload(this->toV1Xdr(), m_network->getNetworkId());
+        outputStream << payload;
         return output;
     } catch (std::exception e) {
         return QByteArray();
@@ -59,6 +55,11 @@ qint64 Transaction::getSequenceNumber() const{
 Memo *Transaction::getMemo() const
 {
     return m_memo;
+}
+
+Network *Transaction::getNetwork() const
+{
+    return m_network;
 }
 
 TimeBounds *Transaction::getTimeBounds() const
@@ -152,7 +153,7 @@ stellar::TransactionEnvelope Transaction::toEnvelopeXdr(){
     {
     case stellar::EnvelopeType::ENVELOPE_TYPE_TX:
     {
-        stellar::TransactionV1Envelope envelope;
+        stellar::TransactionV1Envelope envelope;        
         envelope.tx=toV1Xdr();
         for(stellar::DecoratedSignature& signature : this->m_signatures){
             envelope.signatures.append(signature);
@@ -180,7 +181,7 @@ Transaction::Builder::Builder(TransactionBuilderAccount *sourceAccount, Network 
     m_sourceAccount = checkNotNull(sourceAccount, "sourceAccount cannot be null");
     m_memo=nullptr;
     m_timeBounds=nullptr;
-    m_operationFee = s_defaultOperationFee;
+    m_baseFee = s_defaultOperationFee;
     m_timeoutSet=false;
     m_network= network;
 }
@@ -256,12 +257,12 @@ Transaction::Builder &Transaction::Builder::setTimeout(qint64 timeout) {
     return *this;
 }
 
-Transaction::Builder &Transaction::Builder::setOperationFee(quint32 operationFee) {
-    if (operationFee < Builder::BASE_FEE) {
-        throw std::runtime_error(QString("OperationFee cannot be smaller than the BASE_FEE (\" %1 \"): %2").arg(Builder::BASE_FEE).arg(operationFee).toStdString());
+Transaction::Builder &Transaction::Builder::setBaseFee(quint32 baseFee) {
+    if (baseFee < Builder::BASE_FEE) {
+        throw std::runtime_error(QString("BaseFee cannot be smaller than the BASE_FEE (\" %1 \"): %2").arg(Builder::BASE_FEE).arg(baseFee).toStdString());
     }
 
-    m_operationFee = operationFee;
+    m_baseFee = baseFee;
     return *this;
 }
 
@@ -271,14 +272,14 @@ Transaction *Transaction::Builder::build() {
       throw std::runtime_error("TimeBounds has to be set or you must call setTimeout(TIMEOUT_INFINITE).");
     }
 
-    if (m_operationFee == 0) {
-        //throw std::runtime_error("The `operationFee` parameter of `TransactionBuilder` is required.");
-        qDebug()<< "[TransactionBuilder] The `operationFee` parameter of `TransactionBuilder` is required. Setting to BASE_FEE=" << Builder::BASE_FEE << ". Future versions of this library will error if not provided.";
-        m_operationFee = Builder::BASE_FEE;
+    if (m_baseFee == 0) {
+        //throw std::runtime_error("The `baseFee` parameter of `TransactionBuilder` is required.");
+        qDebug()<< "[TransactionBuilder] The `baseFee` parameter of `TransactionBuilder` is required. Setting to BASE_FEE=" << Builder::BASE_FEE << ". Future versions of this library will error if not provided.";
+        m_baseFee = Builder::BASE_FEE;
     }    
 
     Transaction *transaction = new Transaction(m_sourceAccount->getKeypair()->getAccountId()
-                                               , static_cast<quint32>(m_operations.length()) * m_operationFee
+                                               , static_cast<quint32>(m_operations.length()) * m_baseFee
                                                , m_sourceAccount->getIncrementedSequenceNumber()
                                                , m_operations, m_memo, m_timeBounds,m_network);
     // Increment sequence number when there were no exceptions when creating a transaction
