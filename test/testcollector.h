@@ -9,6 +9,7 @@
 #include <map>
 #include <string>
 
+
 namespace TestCollector{
 typedef std::map<std::string, std::shared_ptr<QObject> > TestList;
 inline TestList& GetTestList()
@@ -59,11 +60,11 @@ inline void compareBase64(QString a,QString b)
 }
 #define WAIT_FOR(EXP)\
 	{\
-    int wait=0;\
+    int wait=1;\
     while(EXP){\
-       QTest::qWait(25);\
+       QTest::qWait(100*wait);\
        wait++;\
-       if(wait>800)\
+       if(wait>10)\
            break;\
     }\
 	}
