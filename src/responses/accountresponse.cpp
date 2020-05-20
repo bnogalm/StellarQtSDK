@@ -152,13 +152,43 @@ QString Balance::getLimit() const{
     return m_limit;
 }
 
+QString Balance::getBuyingLiabilities() const
+{
+    return m_buyingLiabilities;
+}
+
+QString Balance::getSellingLiabilities() const
+{
+    return m_sellingLiabilities;
+}
+
+bool Balance::getAuthorized() const
+{
+    return m_isAuthorized;
+}
+
+bool Balance::getAuthorizedToMaintainLiabilities() const
+{
+    return m_isAuthorizedToMaintainLiabilities;
+}
+
+int Balance::getLastModifiedLedger() const
+{
+    return m_lastModifiedLedger;
+}
+
 bool Balance::operator !=(Balance &b)
 {
     return (this->m_assetType!=b.m_assetType)
             || (this->m_assetCode!=b.m_assetCode)
             || (this->m_assetIssuer!=b.m_assetIssuer)
             || (this->m_limit!=b.m_limit)
-            || (this->m_balance!=b.m_balance);
+            || (this->m_balance!=b.m_balance)
+            || (this->m_buyingLiabilities!=b.m_buyingLiabilities)
+            || (this->m_sellingLiabilities!=b.m_sellingLiabilities)
+            || (this->m_isAuthorized!=b.m_isAuthorized)
+            || (this->m_isAuthorizedToMaintainLiabilities!=b.m_isAuthorizedToMaintainLiabilities)
+            || (this->m_lastModifiedLedger!=b.m_lastModifiedLedger);
 }
 
 bool Balance::operator ==(Balance &b)
@@ -167,8 +197,15 @@ bool Balance::operator ==(Balance &b)
             && (this->m_assetCode==b.m_assetCode)
             && (this->m_assetIssuer==b.m_assetIssuer)
             && (this->m_limit==b.m_limit)
-            && (this->m_balance==b.m_balance);
+            && (this->m_balance==b.m_balance)
+            && (this->m_buyingLiabilities==b.m_buyingLiabilities)
+            && (this->m_sellingLiabilities==b.m_sellingLiabilities)
+            && (this->m_isAuthorized==b.m_isAuthorized)
+            && (this->m_isAuthorizedToMaintainLiabilities==b.m_isAuthorizedToMaintainLiabilities)
+            && (this->m_lastModifiedLedger==b.m_lastModifiedLedger);
 }
+
+
 
 Signer::Signer():m_weight(0)
 {

@@ -42,7 +42,7 @@ namespace stellar
     }
 
     inline QDataStream &operator>>(QDataStream &in,  MuxedAccount &obj) {
-        in >> obj.type;
+        in >> obj.type;        
         if(isMuxed(obj.type))
         {
             in >> obj.med25519;
@@ -620,6 +620,9 @@ namespace stellar
     // maximum number of operations per transaction
     const int MAX_OPS_PER_TX = 100;
 
+
+    const int MAX_SIGNATURES_PER_TX = 20;
+
     /* a transaction is a container for a set of operations
         - is executed by an account
         - fees are collected from the account
@@ -670,7 +673,7 @@ namespace stellar
         TransactionV0 tx;
         /* Each decorated signature is a signature over the SHA256 hash of
          * a TransactionSignaturePayload */
-        Array<DecoratedSignature,20> signatures; //max <20>;
+        Array<DecoratedSignature,MAX_SIGNATURES_PER_TX> signatures; //max <20>;
     };
     inline QDataStream &operator<<(QDataStream &out, const  TransactionV0Envelope &obj) {
         out << obj.tx << obj.signatures;
@@ -719,7 +722,7 @@ namespace stellar
         Transaction tx;
         /* Each decorated signature is a signature over the SHA256 hash of
          * a TransactionSignaturePayload */
-        Array<DecoratedSignature,20> signatures; //max <20>;
+        Array<DecoratedSignature,MAX_SIGNATURES_PER_TX> signatures; //max <20>;
     };
     inline QDataStream &operator<<(QDataStream &out, const  TransactionV1Envelope &obj) {
         out << obj.tx << obj.signatures;
@@ -727,6 +730,7 @@ namespace stellar
     }
 
     inline QDataStream &operator>>(QDataStream &in,  TransactionV1Envelope &obj) {
+        new (&obj.tx) Transaction;       
        in >> obj.tx >> obj.signatures;
        return in;
     }
@@ -740,11 +744,8 @@ namespace stellar
         union{//innerTx
             TransactionV1Envelope v1;   //ENVELOPE_TYPE_TX
         };
-        qint32 v;
-        union{//ext
 
-        };
-
+        Reserved ext;
         /**
          * @brief FeeBumpTransaction
          * builds an FeeBumpTransaction, it will not construct any of the non trivials members of the union
@@ -758,6 +759,7 @@ namespace stellar
     };
 
     inline QDataStream &operator<<(QDataStream &out, const  FeeBumpTransaction &obj) {
+
         out << obj.feeSource << obj.fee <<obj.type;
         switch(obj.type)
         {
@@ -768,7 +770,7 @@ namespace stellar
         }
         default:break;
         }
-        out << obj.v;
+        out << obj.ext;
        return out;
     }
 
@@ -784,7 +786,7 @@ namespace stellar
        }
        default:break;
        }
-       in >> obj.v;
+       in >> obj.ext;
 
        return in;
     }
@@ -794,12 +796,12 @@ namespace stellar
         FeeBumpTransaction tx;
         /* Each decorated signature is a signature over the SHA256 hash of
          * a TransactionSignaturePayload */
-        Array<DecoratedSignature,20> signatures;
+        Array<DecoratedSignature,MAX_SIGNATURES_PER_TX> signatures;
 
         FeeBumpTransactionEnvelope(const FeeBumpTransactionEnvelope& te)
-            :tx(te.tx)            
+            :tx(te.tx),signatures(te.signatures)
         {
-            signatures.value = te.signatures.value;
+
         }
         FeeBumpTransactionEnvelope()
         {
@@ -1681,6 +1683,7 @@ namespace stellar
 
     enum class TransactionResultCode : qint32
     {
+        txFEE_BUMP_INNER_SUCCESS = 1, // fee bump inner transaction succeeded
         txSUCCESS = 0, // all operations succeeded
 
         txFAILED = -1, // one of the operations failed (none were applied)
@@ -1757,14 +1760,21 @@ namespace stellar
     {
         qint64 feeCharged; // actual fee charged for the transaction
         TransactionResultCode code;
+
+        InnerTransactionResultPair innerResultPair;
         QVector<OperationResult> results;
 
         // reserved for future use
         Reserved ext;
+
+
     };
     inline QDataStream &operator<<(QDataStream &out, const  TransactionResult &obj) {
         out << obj.feeCharged << obj.code;
         switch(obj.code){
+        case TransactionResultCode::txFEE_BUMP_INNER_SUCCESS:
+        case TransactionResultCode::txFEE_BUMP_INNER_FAILED:
+               out << obj.innerResultPair;break;
         case TransactionResultCode::txSUCCESS:
         case TransactionResultCode::txFAILED:
             out << obj.results; break;
@@ -1777,8 +1787,13 @@ namespace stellar
     inline QDataStream &operator>>(QDataStream &in,  TransactionResult &obj) {
         in >> obj.feeCharged>> obj.code;
         switch(obj.code){
+        case TransactionResultCode::txFEE_BUMP_INNER_SUCCESS:
+        case TransactionResultCode::txFEE_BUMP_INNER_FAILED:
+               //new  (&obj.innerResultPair) InnerTransactionResultPair;
+               in >> obj.innerResultPair;break;
         case TransactionResultCode::txSUCCESS:
         case TransactionResultCode::txFAILED:
+            //new  (&obj.results) QVector<OperationResult>();
             in >> obj.results; break;
         default: break;
         }

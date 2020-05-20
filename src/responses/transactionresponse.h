@@ -72,15 +72,15 @@ public:
 class FeeBumpTransaction {
     Q_GADGET
     Q_PROPERTY(QString hash MEMBER m_hash)
-    Q_PROPERTY(QList<QString> signatures MEMBER m_signatures)
+    Q_PROPERTY(QStringList signatures MEMBER m_signatures)
     QString m_hash;
-    QList<QString> m_signatures;
+    QStringList m_signatures;
 public:
     QString getHash() const
     {
         return m_hash;
     }
-    QList<QString> getSignatures() const
+    QStringList getSignatures() const
     {
         return m_signatures;
     }
@@ -100,17 +100,17 @@ public:
 class InnerTransaction {
     Q_GADGET
     Q_PROPERTY(QString hash MEMBER m_hash)
-    Q_PROPERTY(QList<QString> signatures MEMBER m_signatures)
+    Q_PROPERTY(QStringList signatures MEMBER m_signatures)
     Q_PROPERTY(qint64 max_fee MEMBER m_maxFee)
     QString m_hash;
-    QList<QString> m_signatures;
+    QStringList m_signatures;
     qint64 m_maxFee;
 public:
     QString getHash() const
     {
         return m_hash;
     }
-    QList<QString> getSignatures() const
+    QStringList getSignatures() const
     {
         return m_signatures;
     }
@@ -154,7 +154,7 @@ class TransactionResponse : public Response
     Q_PROPERTY(QString result_xdr MEMBER m_resultXdr)
     Q_PROPERTY(QString result_meta_xdr MEMBER m_resultMetaXdr)
 
-    Q_PROPERTY(QList<QString> signatures MEMBER m_signatures)
+    Q_PROPERTY(QStringList signatures MEMBER m_signatures)
     Q_PROPERTY(TransactionResponseAttach::FeeBumpTransaction fee_bump_transaction MEMBER m_feeBumpTransaction)
     Q_PROPERTY(TransactionResponseAttach::InnerTransaction  inner_transaction MEMBER m_innerTransaction)
 
@@ -178,7 +178,7 @@ class TransactionResponse : public Response
     QString m_resultXdr;
     QString m_resultMetaXdr;
     TransactionResponseAttach::Links m_links;
-    QList<QString> m_signatures;
+    QStringList m_signatures;
     TransactionResponseAttach::FeeBumpTransaction m_feeBumpTransaction;
     TransactionResponseAttach::InnerTransaction m_innerTransaction;
 
@@ -225,7 +225,7 @@ public:
       TransactionResponseAttach::Links& getLinks();
 
       QString getFeeAccount() const;
-      QList<QString> getSignatures() const;
+      QStringList getSignatures() const;
 
       TransactionResponseAttach::FeeBumpTransaction& getFeeBump();
       TransactionResponseAttach::InnerTransaction& getInner();

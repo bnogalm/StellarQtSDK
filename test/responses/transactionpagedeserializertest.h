@@ -28,6 +28,11 @@ private slots:
         QCOMPARE(transactionsPage.at(0)->getLinks().getAccount().getHref(), QString("/accounts/GAAZI4TCR3TY5OJHCTJC2A4QSY6CJWJH5IAJTGKIN2ER7LBNVKOCCWN7"));
         QCOMPARE(transactionsPage.at(9)->getSourceAccount(), QString("GAENIE5LBJIXLMJIAJ7225IUPA6CX7EGHUXRX5FLCZFFAQSG2ZUYSWFK"));
 
+        // Transaction without memo_bytes field
+        QVERIFY(dynamic_cast<MemoText*>(transactionsPage.at(7)->getMemo()));
+        memotext = dynamic_cast<MemoText*>(transactionsPage.at(7)->getMemo());
+        QCOMPARE(memotext->getText(), QString("helpsdf"));
+
         // Empty memo text
         QVERIFY(dynamic_cast<MemoText*>(transactionsPage.at(2)->getMemo()));
         memotext =dynamic_cast<MemoText*>(transactionsPage.at(2)->getMemo());
@@ -80,6 +85,7 @@ private:
                          "        \"result_meta_xdr\": \"AAAAAAAAAAMAAAACAAAAAAAAAAMAAAAAAAAAABbxCy3mLg3hiTqX4VUEEp60pFOrJNxYM1JtxXTwXhY2AAAAAAvrwgAAAAADAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAQAAAAMAAAAAAAAAAAGUcmKO5465JxTSLQOQljwk2SfqAJmZSG6JH6wtqpwhDeC2s5t4PNQAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAgAAAAEAAAADAAAAAAAAAAABlHJijueOuScU0i0DkJY8JNkn6gCZmUhuiRsLaqcIQAAAAAL68IAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAEAAAADAAAAAAAAAAAW8Qst5i4N4Yk6lFVBBKetKRTqyTcWDNSbcV08F4WNg3gtrObeDzUAAAAAwAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAEAAAABAAAAAwAAAAAAAAAAAZRyYo7njrknFNItA5CWPCTZJoAmZlIbokfrC2qnCEAAAAACvCAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=\",\n"
                          "        \"memo_type\": \"text\",\n"
                          "        \"memo\": \"hello world\",\n"
+                         "        \"memo_bytes\": \"aGVsbG8gd29ybGQ=\",\n"
                          "        \"signatures\": [\n"
                          "          \"SsKlst02jsaBp35vXlI300Qbz39HbwwNDX/gfMMwaG/dFF7bgqpkKsDAsh/qJDiN3NOW695IZB9MjJAsHBA==\"\n"
                          "        ]\n"
@@ -124,6 +130,7 @@ private:
                          "        \"result_meta_xdr\": \"AAAAAAAAAAMAAAACAAAAAAAAHqEAAAAAAAAAABlHtRjj4h2/0Tj8iBQiaUDzLo4oRCLyUnytFHzAyIAAAAAAvrwgAAAB6hAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAQAAHqEAAAAAAAAAABbxCy3mLg3hiTqX4VUEEp60pFOrJNxYM1JtxXTwXhY2DeC2s4MeHwAAAADAAAAAgAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAgAAAAAAAB6hAAAAAAAAAACzMOD8iU8qoqbTYewT8lxKE/s1cE3FOCVWxsqJ74GwAAAAAL68IAAAAeoQAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAEAAB6hAAAAAAAAAAAW8Qst5i4N4Yk6lFVBBKetKRTqyTcWDNSbcV08F4WNg3gtrODoLZ8AAAAAwAAAAIAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAIAAAAAAAAeoQAAAAAAAAAASZcLtOTqfcdbsq8HmLMkeqU06LN94UTWXuSBem5Z88AAAAACvCAAAAHqEAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAABAAAeoQAAAAAAAAAAFvELLeYuDeGJOpfhVQQSnrSkU6sk3FgzUm3FdPBeFjYN4Lazd7T0fAAAAAMAAAACAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAA=\",\n"
                          "        \"memo_type\": \"text\",\n"
                          "        \"memo\": \"testpool,faucet,sdf\",\n"
+                         "        \"memo_bytes\": \"dGVzdHBvb2wsZmF1Y2V0LHNkZg==\",\n"
                          "        \"signatures\": [\n"
                          "          \"NIEHl40QqRYihBtnVhBpsm4TmZb8AqGsdPHD0febxqL3RhxpmWwB7e5472MTGNJkXbz1lxHi9zTAXDWn9bIBw==\"\n"
                          "        ]\n"
@@ -167,6 +174,7 @@ private:
                          "        \"result_xdr\": \"AAAAAAAAAGQAAAAAAAAAAQAAAAAAAAAFAAAAAAAAAAA=\",\n"
                          "        \"result_meta_xdr\": \"AAAAAAAAAAEAAAABAAAAAQAAHq8AAAAAAAAAABbxCy3mLg3hiTqX4VUEEp60pFOrJNxYM1JtxXTwXhY2DeC2s3e09BgAAAADAAAAAwAAAAAAAAABAAAAABlHtRjj4h2/0Tj8iBQiaUDzLo4oRCLyUnytFHzAyIAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAA\",\n"
                          "        \"memo_type\": \"text\",\n"
+                         "        \"memo_bytes\": \"\",\n"
                          "        \"signatures\": [\n"
                          "          \"1sNxaxHezfPxDOpq1x1zTYvgtdYkwDp5dpzx1teQB1zimkfbmKwYLk7C8bTpXC9zcJ7fvathwE/e/GHHXwDw==\"\n"
                          "        ]\n"
@@ -210,6 +218,7 @@ private:
                          "        \"result_xdr\": \"AAAAAAAAAGQAAAAAAAAAAQAAAAAAAAAJAAAAAAAAAAEAAAAAH6Ue1GOPj6Hb/ROPyIFCJpQPMujihEIvJSfK0UfMDIgAAK11sXJ6SgAAAAA=\",\n"
                          "        \"result_meta_xdr\": \"AAAAAAAAAAEAAAABAAAAAQAAHrcAAAAAAAAAABlHtRjj4h2/0Tj8iBQiaUDzLo4oRCLyUnytFHzAyIAACtdb1ePEoAAB6hAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAA\",\n"
                          "        \"memo_type\": \"text\",\n"
+                         "        \"memo_bytes\": \"\",\n"
                          "        \"signatures\": [\n"
                          "          \"UQc3yHhlEA5DbWt8xu8R9EqujHH2uSvHeErZdfWPqY3uooA0qbPA8yVxFxvnLOyQqhYKy6pf8yRRgt8Nl7tBg==\"\n"
                          "        ]\n"
@@ -253,6 +262,7 @@ private:
                          "        \"result_xdr\": \"AAAAAAAAAGQAAAAAAAAAAQAAAAAAAAAJAAAAAAAAAAEAAAAAH6Ue1GOPj6Hb/ROPyIFCJpQPMujihEIvJSfK0UfMDIgAAK11sXTKRwAAAAA=\",\n"
                          "        \"result_meta_xdr\": \"AAAAAAAAAAEAAAABAAAAAQAAHr8AAAAAAAAAABlHtRjj4h2/0Tj8iBQiaUDzLo4oRCLyUnytFHzAyIAAFa627TBpEAAB6hAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAA\",\n"
                          "        \"memo_type\": \"text\",\n"
+                         "        \"memo_bytes\": \"\",\n"
                          "        \"signatures\": [\n"
                          "          \"YLL32xpSbpqVchHKnQ02HY4VILJunUkY8M3alv/4XDTv9fvLiU8Sn8HpYhXXfRr7Z5j7lPe6NuIprpMhxRo3BA==\"\n"
                          "        ]\n"
@@ -296,6 +306,7 @@ private:
                          "        \"result_xdr\": \"AAAAAAAAAGQAAAAAAAAAAQAAAAAAAAAJAAAAAAAAAAEAAAAAH6Ue1GOPj6Hb/ROPyIFCJpQPMujihEIvJSfK0UfMDIgAAK1KLf6bgAAAAA=\",\n"
                          "        \"result_meta_xdr\": \"AAAAAAAAAAEAAAABAAAAAQAAHsIAAAAAAAAAABlHtRjj4h2/0Tj8iBQiaUDzLo4oRCLyUnytFHzAyIAAIIaZeLAP8AAB6hAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAA\",\n"
                          "        \"memo_type\": \"text\",\n"
+                         "        \"memo_bytes\": \"\",\n"
                          "        \"signatures\": [\n"
                          "          \"I8CjxDCxl70UDSzP914x2GW7r/OuTtKCQEbbYCm2kRMGGcaRfi2tIUPPyxWUqq/B6oZRWCNTIzQBwfHJdlDA==\"\n"
                          "        ]\n"
@@ -339,6 +350,7 @@ private:
                          "        \"result_xdr\": \"AAAAAAAAAGQAAAAAAAAAAQAAAAAAAAABAAAAAAAAAAA=\",\n"
                          "        \"result_meta_xdr\": \"AAAAAAAAAAEAAAACAAAAAQAAHzYAAAAAAAAAABbxCy3mLg3hiTqX4VUEEp60pFOrJNxYM1JtxXTwXhY2AAAABJwsBgAAAAADAAAABwAAAAAAAAABAAAAABlHtRjj4h2/0Tj8iBQiaUDzLo4oRCLyUnytFHzAyIAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAQAAHzYAAAAAAAAAAEmXC7Tk6n/nHW7KvB5izJHqlNOizfeFE1l7kgXpuWfPDeC2rud0rogAAB6hAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAA\",\n"
                          "        \"memo_type\": \"text\",\n"
+                         "        \"memo_bytes\": \"\",\n"
                          "        \"signatures\": [\n"
                          "          \"NkV853/bo6msX7/TKL1m14de4vhO7fp4Ci4ZwBLuIerqX5ozLbPf0il3/JEBBQd1HtpyS5ZMHhvbqEQTLXHAA==\"\n"
                          "        ]\n"

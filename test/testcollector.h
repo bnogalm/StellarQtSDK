@@ -47,6 +47,8 @@ inline void compareBase64(QString a,QString b)
     if(ab.length()!=bb.length()){
         qDebug() << "Wrong length "<<ab.length() <<" != " << bb.length();
     }
+    qDebug() << ab.toHex();
+    qDebug() << bb.toHex();
 
     for(int i=0;i<qMin(ab.length(),bb.length());i++)
     {

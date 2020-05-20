@@ -85,7 +85,7 @@ TransactionResponseAttach::Links &TransactionResponse::getLinks()
     return m_links;
 }
 
-QList<QString> TransactionResponse::getSignatures() const
+QStringList TransactionResponse::getSignatures() const
 {
     return m_signatures;
 }

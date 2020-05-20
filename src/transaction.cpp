@@ -181,7 +181,11 @@ Transaction::Builder::Builder(TransactionBuilderAccount *sourceAccount, Network 
     m_sourceAccount = checkNotNull(sourceAccount, "sourceAccount cannot be null");
     m_memo=nullptr;
     m_timeBounds=nullptr;
+#ifdef STELLAR_QT_AUTOSET_BASE_FEE
     m_baseFee = s_defaultOperationFee;
+#else
+    m_baseFee = 0;
+#endif
     m_timeoutSet=false;
     m_network= network;
 }
@@ -273,9 +277,12 @@ Transaction *Transaction::Builder::build() {
     }
 
     if (m_baseFee == 0) {
-        //throw std::runtime_error("The `baseFee` parameter of `TransactionBuilder` is required.");
+#ifdef STELLAR_QT_AUTOSET_BASE_FEE
         qDebug()<< "[TransactionBuilder] The `baseFee` parameter of `TransactionBuilder` is required. Setting to BASE_FEE=" << Builder::BASE_FEE << ". Future versions of this library will error if not provided.";
         m_baseFee = Builder::BASE_FEE;
+#else
+        throw std::runtime_error("The `baseFee` parameter of `TransactionBuilder` is required.");
+#endif
     }    
 
     Transaction *transaction = new Transaction(m_sourceAccount->getKeypair()->getAccountId()

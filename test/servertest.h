@@ -118,7 +118,8 @@ private slots:
         Transaction::Builder *builder = new Transaction::Builder(account);
         builder->addOperation(new CreateAccountOperation(destination, "2000"))
                 .addMemo(Memo::text("Hello world!"))
-                .setTimeout(Transaction::Builder::TIMEOUT_INFINITE);
+                .setTimeout(Transaction::Builder::TIMEOUT_INFINITE)
+                .setBaseFee(Transaction::Builder::BASE_FEE);
 
         QVERIFY(1 == builder->getOperationsCount());
         Transaction *transaction = builder->build();
@@ -160,7 +161,7 @@ private slots:
          Account* account = new Account(source, sequenceNumber);
          Transaction::Builder *builder = new Transaction::Builder(account);
          builder->addOperation(new CreateAccountOperation(destination, "2000"))
-                 .addMemo(Memo::text("Hello world!")).setTimeout(Transaction::Builder::TIMEOUT_INFINITE);
+                 .addMemo(Memo::text("Hello world!")).setTimeout(Transaction::Builder::TIMEOUT_INFINITE).setBaseFee(Transaction::Builder::BASE_FEE);
 
          QVERIFY(1 == builder->getOperationsCount());
          Transaction *transaction = builder->build();

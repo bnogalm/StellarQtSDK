@@ -3,7 +3,7 @@
 #include "../../asset.h"
 #include "../../assettypenative.h"
 AllowTrustOperationResponse::AllowTrustOperationResponse(QNetworkReply *reply)
-    :OperationResponse(reply),m_trustorKeypair(nullptr),m_trusteeKeypair(nullptr),m_asset(nullptr),m_authorize(false)
+    :OperationResponse(reply),m_trustorKeypair(nullptr),m_trusteeKeypair(nullptr),m_asset(nullptr),m_authorize(false),m_authorizeToMaintainLiabilities(false)
 {
 
 }
@@ -62,6 +62,11 @@ QString AllowTrustOperationResponse::assetIssuer() const
 bool AllowTrustOperationResponse::isAuthorize() const
 {
     return m_authorize;
+}
+
+bool AllowTrustOperationResponse::isAuthorizedToMaintainLiabilities() const
+{
+    return m_authorizeToMaintainLiabilities;
 }
 
 void AllowTrustOperationResponse::setTrustor(QString trustor)

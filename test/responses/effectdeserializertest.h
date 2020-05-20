@@ -28,6 +28,7 @@
 #include "../../src/responses/effects/trustlinedeauthorizedeffectresponse.h"
 #include "../../src/responses/effects/trustlineremovedeffectresponse.h"
 #include "../../src/responses/effects/trustlineupdatedeffectresponse.h"
+#include "../../src/responses/effects/trustlineauthorizedtomaintainliabilitieseffectresponse.h"
 #include "../../src/responses/effects/datacreatedeffectresponse.h"
 #include "../../src/responses/effects/dataremovedeffectresponse.h"
 #include "../../src/responses/effects/dataupdatedeffectresponse.h"
@@ -784,6 +785,42 @@ private slots:
         QCOMPARE(effect.getAccount().getAccountId(), QString("GDPFGP4IPE5DXG6XRXC4ZBUI43PAGRQ5VVNJ3LJTBXDBZ4ITO6HBHNSF"));
         QCOMPARE(effect.getCreatedAt(), QString("2018-06-06T10:23:57Z"));
     }
+
+      void testDeserializeTrustlineAuthorizedToMaintainLiabilitiesEffect() {
+        QByteArray json = "{\n"
+            "        \"_links\": {\n"
+            "          \"operation\": {\n"
+            "            \"href\": \"http://horizon-testnet.stellar.org/operations/33788507721730\"\n"
+            "          },\n"
+            "          \"succeeds\": {\n"
+            "            \"href\": \"http://horizon-testnet.stellar.org/effects?order=desc\\u0026cursor=33788507721730-2\"\n"
+            "          },\n"
+            "          \"precedes\": {\n"
+            "            \"href\": \"http://horizon-testnet.stellar.org/effects?order=asc\\u0026cursor=33788507721730-2\"\n"
+            "          }\n"
+            "        },\n"
+            "        \"id\": \"0000033788507721730-0000000002\",\n"
+            "        \"paging_token\": \"33788507721730-2\",\n"
+            "        \"account\": \"GA6U5X6WOPNKKDKQULBR7IDHDBAQKOWPHYEC7WSXHZBFEYFD3XVZAKOO\",\n"
+            "        \"type\": \"trustline_authorized_to_maintain_liabilities\",\n"
+            "        \"type_i\": 25,\n"
+            "        \"asset_type\": \"credit_alphanum12\",\n"
+            "        \"asset_code\": \"TESTTEST\",\n"
+            "        \"trustor\": \"GB3E4AB4VWXJDUVN4Z3CPBU5HTMWVEQXONZYVDFMHQD6333KHCOL3UBR\"\n"
+            "      }";
+
+        TrustlineAuthorizedToMaintainLiabilitiesEffectResponse effect;
+        effect.loadFromJson(json);
+
+        QCOMPARE(effect.getAccount().getAccountId(), "GA6U5X6WOPNKKDKQULBR7IDHDBAQKOWPHYEC7WSXHZBFEYFD3XVZAKOO");
+        QCOMPARE(effect.getAssetType(), "credit_alphanum12");
+        QCOMPARE(effect.getAssetCode(), "TESTTEST");
+        QCOMPARE(effect.getTrustor().getAccountId(), "GB3E4AB4VWXJDUVN4Z3CPBU5HTMWVEQXONZYVDFMHQD6333KHCOL3UBR");
+
+        QCOMPARE(effect.getLinks().getOperation().getHref(), "http://horizon-testnet.stellar.org/operations/33788507721730");
+        QCOMPARE(effect.getLinks().getSucceeds().getHref(), "http://horizon-testnet.stellar.org/effects?order=desc&cursor=33788507721730-2");
+        QCOMPARE(effect.getLinks().getPrecedes().getHref(), "http://horizon-testnet.stellar.org/effects?order=asc&cursor=33788507721730-2");
+      }
 
 };
 

@@ -72,7 +72,19 @@ private slots:
 //        // should succeed
 //        Transaction::Builder::setDefaultOperationFee(100);
 //    }
-
+    void testMissingOperationFee() {
+        Account* account = new Account(KeyPair::fromAccountId(QString("GDW6AUTBXTOC7FIKUO5BOO3OGLK4SF7ZPOBLMQHMZDI45J2Z6VXRB5NR")), 2908908335136768L);
+        try {
+            Transaction::Builder(account, Network::current())
+                    .addOperation(new CreateAccountOperation(KeyPair::fromAccountId(QString("GDW6AUTBXTOC7FIKUO5BOO3OGLK4SF7ZPOBLMQHMZDI45J2Z6VXRB5NR")), "2000"))
+                    .setTimeout(Transaction::Builder::TIMEOUT_INFINITE)
+                    .build();
+            QFAIL("missing exception");
+        }
+        catch (std::runtime_error e) {
+            // expected
+        }
+    }
     void testBuilderSuccessTestnet(){
         // GBPMKIRA2OQW2XZZQUCQILI5TMVZ6JNRKM423BSAISDM7ZFWQ6KWEBC4
         KeyPair *source = KeyPair::fromSecretSeed(QString("SCH27VUZZ6UAKB67BDNF6FA42YMBMQCBKXWGMFD5TZ6S5ZZCZFLRXKHS"));
@@ -83,6 +95,7 @@ private slots:
         Transaction* transaction = Transaction::Builder(account)
                 .addOperation(new CreateAccountOperation(destination, "2000"))
                 .setTimeout(Transaction::Builder::TIMEOUT_INFINITE)
+                .setBaseFee(Transaction::Builder::BASE_FEE)
                 .build();
 
         transaction->sign(source);
@@ -107,6 +120,7 @@ private slots:
                 .addOperation(new CreateAccountOperation(destination, "2000"))
                 .addMemo(Memo::text("Hello world!"))
                 .setTimeout(Transaction::Builder::TIMEOUT_INFINITE)
+                .setBaseFee(Transaction::Builder::BASE_FEE)
                 .build();
 
         transaction->sign(source);
@@ -126,6 +140,7 @@ private slots:
                 .addOperation(CreateAccountOperation::create(destination, "2000"))
                 .addTimeBounds(new TimeBounds(42, 1337))
                 .addMemo(Memo::hash(QString("abcdef")))
+                .setBaseFee(Transaction::Builder::BASE_FEE)
                 .build();
 
         transaction->sign(source);
@@ -166,6 +181,7 @@ private slots:
                     .addOperation(CreateAccountOperation::create(KeyPair::random(), "2000"))
                     .addTimeBounds(new TimeBounds(42, 1337))
                     .addMemo(Memo::hash(QString("abcdef")))
+                    .setBaseFee(Transaction::Builder::BASE_FEE)
                     .build();
         } catch (std::runtime_error exception) {
             // Should not throw as max_time is set
@@ -179,6 +195,7 @@ private slots:
             Transaction::Builder(account)
                     .addOperation(CreateAccountOperation::create(KeyPair::random(), "2000"))
                     .addMemo(Memo::hash(QString("abcdef")))
+                    .setBaseFee(Transaction::Builder::BASE_FEE)
                     .build();
             QFAIL("missing exception");
         } catch (std::runtime_error exception) {
@@ -193,6 +210,7 @@ private slots:
                     .addOperation(CreateAccountOperation::create(KeyPair::random(), "2000"))
                     .addMemo(Memo::hash(QString("abcdef")))
                     .setTimeout(-1)
+                    .setBaseFee(Transaction::Builder::BASE_FEE)
                     .build();
             QFAIL("missing exception");
         } catch (std::runtime_error exception) {
@@ -206,6 +224,7 @@ private slots:
         Transaction* transaction = Transaction::Builder(account)
                 .addOperation(CreateAccountOperation::create(KeyPair::random(), "2000"))
                 .setTimeout(10)
+                .setBaseFee(Transaction::Builder::BASE_FEE)
                 .build();
 
         QVERIFY(transaction->getTimeBounds());
@@ -221,6 +240,7 @@ private slots:
                     .addOperation(CreateAccountOperation::create(KeyPair::random(), "2000"))
                     .addTimeBounds(new TimeBounds(42, 1337))
                     .setTimeout(10)
+                    .setBaseFee(Transaction::Builder::BASE_FEE)
                     .build();
             QFAIL("missing exception");
         } catch (std::runtime_error exception) {
@@ -235,6 +255,7 @@ private slots:
                 .addOperation(CreateAccountOperation::create(KeyPair::random(), "2000"))
                 .addTimeBounds(new TimeBounds(42, 0))
                 .setTimeout(10)
+                .setBaseFee(Transaction::Builder::BASE_FEE)
                 .build();
 
         QCOMPARE(transaction->getTimeBounds()->getMinTime(),42);
@@ -255,6 +276,7 @@ private slots:
               .addTimeBounds(new TimeBounds(42, 0))
               .addMemo(Memo::hash(QString("abcdef")))
               .setTimeout(Transaction::Builder::TIMEOUT_INFINITE)
+              .setBaseFee(Transaction::Builder::BASE_FEE)
               .build();
       transaction->sign(source);
       // Convert transaction to binary XDR and back again to make sure timebounds are correctly de/serialized.
@@ -280,6 +302,7 @@ private slots:
         Transaction *transaction = Transaction::Builder(account)
                 .addOperation(new CreateAccountOperation(destination, "2000"))
                 .setTimeout(Transaction::Builder::TIMEOUT_INFINITE)
+                .setBaseFee(Transaction::Builder::BASE_FEE)
                 .build();
 
         transaction->sign(source);
@@ -297,6 +320,7 @@ private slots:
         Transaction *transaction = Transaction::Builder(account)
                 .addOperation(new PaymentOperation(destination->getAccountId(), new AssetTypeNative(), "2000"))
                 .setTimeout(Transaction::Builder::TIMEOUT_INFINITE)
+                .setBaseFee(Transaction::Builder::BASE_FEE)
                 .build();
 
         quint8 preimage[64];
@@ -324,6 +348,7 @@ private slots:
       Transaction *transaction = Transaction::Builder(account)
               .addOperation(new CreateAccountOperation(destination, "2000"))
               .setTimeout(Transaction::Builder::TIMEOUT_INFINITE)
+              .setBaseFee(Transaction::Builder::BASE_FEE)
               .build();
 
       QCOMPARE(transaction->toEnvelopeXdrBase64()
@@ -337,7 +362,7 @@ private slots:
 
       Account *account = new Account(source, 2908908335136768);
       try {
-        Transaction *transaction = Transaction::Builder(account).setTimeout(Transaction::Builder::TIMEOUT_INFINITE).build();
+        Transaction *transaction = Transaction::Builder(account).setTimeout(Transaction::Builder::TIMEOUT_INFINITE).setBaseFee(Transaction::Builder::BASE_FEE).build();
         Q_UNUSED(transaction);
         QFAIL("missing exception");
       } catch (std::runtime_error exception) {
@@ -374,6 +399,7 @@ private slots:
                 .addOperation(new CreateAccountOperation(destination, "2000"))
                 .addMemo(Memo::text("Hello world!"))
                 .setTimeout(Transaction::Builder::TIMEOUT_INFINITE)
+                .setBaseFee(Transaction::Builder::BASE_FEE)
                 .build();
 
         transaction->sign(source);
