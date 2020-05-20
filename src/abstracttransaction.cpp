@@ -50,7 +50,7 @@ Network *AbstractTransaction::getNetwork() const
     return m_network;
 }
 
-QVector<stellar::DecoratedSignature> AbstractTransaction::getSignatures() {
+QVector<stellar::DecoratedSignature> AbstractTransaction::getSignatures() const {
     return m_signatures;
 }
 

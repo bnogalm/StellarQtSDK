@@ -132,7 +132,12 @@ Transaction *Transaction::fromV0EnvelopeXdr(stellar::TransactionV0Envelope &enve
     {
         ops.append(Operation::fromXdr(op));
     }
-    return new Transaction(sourceAccount,envelope.tx.fee,envelope.tx.seqNum,ops,Memo::fromXdr(envelope.tx.memo), envelope.tx.timeBounds.filled ? TimeBounds::fromXdr(envelope.tx.timeBounds.value) : nullptr, network);
+    Transaction *t = new Transaction(sourceAccount,envelope.tx.fee,envelope.tx.seqNum,ops,Memo::fromXdr(envelope.tx.memo), envelope.tx.timeBounds.filled ? TimeBounds::fromXdr(envelope.tx.timeBounds.value) : nullptr, network);
+    t->m_envelopeType = stellar::EnvelopeType::ENVELOPE_TYPE_TX_V0;
+    for (stellar::DecoratedSignature& signature : envelope.signatures.value) {
+        t->m_signatures.append(signature);
+    }
+    return t;
 
 }
 
@@ -144,7 +149,12 @@ Transaction *Transaction::fromV1EnvelopeXdr(stellar::TransactionV1Envelope &enve
     {
         ops.append(Operation::fromXdr(op));
     }
-    return new Transaction(sourceAccount,envelope.tx.fee,envelope.tx.seqNum,ops,Memo::fromXdr(envelope.tx.memo), envelope.tx.timeBounds.filled ? TimeBounds::fromXdr(envelope.tx.timeBounds.value) : nullptr, network);
+    Transaction * t = new Transaction(sourceAccount,envelope.tx.fee,envelope.tx.seqNum,ops,Memo::fromXdr(envelope.tx.memo), envelope.tx.timeBounds.filled ? TimeBounds::fromXdr(envelope.tx.timeBounds.value) : nullptr, network);
+    t->m_envelopeType = stellar::EnvelopeType::ENVELOPE_TYPE_TX;
+    for (stellar::DecoratedSignature& signature : envelope.signatures.value) {
+        t->m_signatures.append(signature);
+    }
+    return t;
 }
 
 

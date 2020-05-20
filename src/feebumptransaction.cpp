@@ -50,10 +50,9 @@ stellar::FeeBumpTransaction FeeBumpTransaction::toXdr() const
     xdr.fee = m_fee;
     xdr.feeSource = StrKey::encodeToXDRMuxedAccount(m_feeAccount);
     xdr.type = stellar::EnvelopeType::ENVELOPE_TYPE_TX;
-    xdr.v1.tx= m_inner->toV1Xdr();    
-    for(const stellar::DecoratedSignature& signature : m_signatures){
-        xdr.v1.signatures.append(signature);
-    }
+    auto innerEnvelope= m_inner->toEnvelopeXdr();
+    xdr.v1.tx = innerEnvelope.v1.tx;
+    xdr.v1.signatures = innerEnvelope.v1.signatures;
     return xdr;
 }
 

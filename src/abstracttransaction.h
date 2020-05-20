@@ -49,7 +49,7 @@ public:
 
     Network* getNetwork() const;
 
-    QVector<stellar::DecoratedSignature> getSignatures();
+    QVector<stellar::DecoratedSignature> getSignatures() const;
 
     /**
      * Generates TransactionEnvelope XDR object.
