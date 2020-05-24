@@ -69,14 +69,16 @@ void Wallet::pay(QString destination, QString amount, QString memo)
 {
     try {
         //verify the destination account is valid, building a keypair object, exception will be rised if there is a problem with it.
-        KeyPair* destKeypair = KeyPair::fromAccountId(destination);
+        //KeyPair* destKeypair = KeyPair::fromAccountId(destination);
+        //since protocol 13, this check is performed inside operator constructors, it will rise a runtime exception
 
         Server *server= m_gateway->server();
 
         Transaction *t = Transaction::Builder(m_account)
-                .addOperation(new PaymentOperation(destKeypair,new AssetTypeNative(),amount))
+                .addOperation(new PaymentOperation(destination,new AssetTypeNative(),amount))
                 .addMemo(new MemoText(memo))
-                .setTimeout(10000)// we have to set a timeout                
+                .setTimeout(10000)// we have to set a timeout
+                .setBaseFee(100)
                 .build();
         t->sign(m_account->getKeypair());
         SubmitTransactionResponse* response = server->submitTransaction(t);
@@ -95,14 +97,16 @@ void Wallet::create(QString destination, QString amount, QString memo)
 {
     try {
         //verify the destination account is valid, building a keypair object, exception will be rised if there is a problem with it.
-        KeyPair* destKeypair = KeyPair::fromAccountId(destination);
+        //KeyPair* destKeypair = KeyPair::fromAccountId(destination);
+        //since protocol 13, this check is performed inside operator constructors, it will rise a runtime exception
 
         Server *server= m_gateway->server();
 
         Transaction *t = Transaction::Builder(m_account)
-                .addOperation(new CreateAccountOperation(destKeypair,amount))
+                .addOperation(new CreateAccountOperation(destination,amount))
                 .addMemo(new MemoText(memo))
                 .setTimeout(10000)// we have to set a timeout
+                .setBaseFee(100)
                 .build();
         t->sign(m_account->getKeypair());
         SubmitTransactionResponse* response = server->submitTransaction(t);

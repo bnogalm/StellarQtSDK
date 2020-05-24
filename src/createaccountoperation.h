@@ -13,6 +13,7 @@ class CreateAccountOperation : public Operation
 
 public:
     CreateAccountOperation(KeyPair* destination, QString startingBalance);
+    CreateAccountOperation(QString destination, QString startingBalance);
     CreateAccountOperation(stellar::CreateAccountOp &op);
     virtual ~CreateAccountOperation();
 

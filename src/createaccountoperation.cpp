@@ -11,6 +11,16 @@ CreateAccountOperation::CreateAccountOperation(KeyPair *destination, QString sta
     m_op.startingBalance = Operation::toXdrAmount(startingBalance);
 
 }
+CreateAccountOperation::CreateAccountOperation(QString destination, QString startingBalance)
+    :m_destination(nullptr)
+{
+    checkNotNull(destination, "destination cannot be null");
+    checkNotNull(startingBalance, "startingBalance cannot be null");
+
+    m_op.destination = StrKey::encodeToXDRAccountId(destination);
+    m_op.startingBalance = Operation::toXdrAmount(startingBalance);
+
+}
 
 CreateAccountOperation::CreateAccountOperation(stellar::CreateAccountOp &op):m_destination(nullptr),m_op(op)
 {
