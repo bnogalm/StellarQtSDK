@@ -32,7 +32,7 @@ FeeBumpTransaction *FeeBumpTransaction::fromFeeBumpTransactionEnvelope(stellar::
 {
 
     Transaction* inner = Transaction::fromV1EnvelopeXdr(envelope.tx.v1, network);
-    QString feeAccount = StrKey::encodeStellarMuxedAccount(envelope.tx.feeSource);
+    QString feeAccount = StrKey::encodeStellarAccountId(StrKey::muxedAccountToAccountId(envelope.tx.feeSource));
     qint64 fee = envelope.tx.fee;
 
     FeeBumpTransaction* feeBump = new FeeBumpTransaction(feeAccount, fee, inner);

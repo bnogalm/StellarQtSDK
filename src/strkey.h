@@ -20,11 +20,9 @@ public:
     StrKey();
 
     const static int ACCOUNT_ID_ADDRESS_LENGTH = 56;
-    const static int MUXED_ACCOUNT_ADDRESS_LENGTH  = 69;
 
     enum class VersionByte : quint8 {
         ACCOUNT_ID = (6 << 3), // G
-        MUXED_ACCOUNT = (12 << 3), //M
         SEED = (18 << 3), // S
         PRE_AUTH_TX = (19 << 3), // T
         SHA256_HASH = (23 << 3) // X
@@ -47,20 +45,24 @@ public:
           return encodeStellarAccountId(data);
     }
 
-    static QString encodeStellarMuxedAccount(const stellar::MuxedAccount& account) {
+    static stellar::AccountID muxedAccountToAccountId(const stellar::MuxedAccount& account) {
+        stellar::AccountID accountID;
+        accountID.type = stellar::PublicKeyType::PUBLIC_KEY_TYPE_ED25519;
         switch(account.type)
         {
         case stellar::CryptoKeyType::KEY_TYPE_ED25519:
         {
             QByteArray data = QByteArray::fromRawData((const char*)(account.ed25519),sizeof(account.ed25519));
-            return encodeStellarAccountId(data);
+            memcpy(accountID.ed25519,account.ed25519,sizeof(accountID.ed25519));
+            return accountID;
         }
         case stellar::CryptoKeyType::KEY_TYPE_MUXED_ED25519:
         {
             QByteArray data(sizeof(stellar::MuxedAccount::med25519_t),Qt::Uninitialized);
             QDataStream stream(&data,QIODevice::WriteOnly);
             stream << account.med25519;
-            return encodeCheck(VersionByte::MUXED_ACCOUNT, data);
+            memcpy(accountID.ed25519,account.med25519.ed25519,sizeof(accountID.ed25519));
+            return accountID;
         }
         default:
         {
@@ -89,14 +91,6 @@ public:
             memcpy(muxed.ed25519,decoded.data(),sizeof(muxed.ed25519));
             decoded.fill('\0',decoded.length());
             return muxed;
-        } else if (data.length() == MUXED_ACCOUNT_ADDRESS_LENGTH) {
-            muxed.type= stellar::CryptoKeyType::KEY_TYPE_MUXED_ED25519;
-            QByteArray decoded = decodeStellarMuxedAccount(data);
-            //memcpy(&(muxed.med25519),decoded.data(),sizeof(muxed.med25519));
-            muxed.med25519.id = qFromBigEndian<quint64>(decoded.data());
-            memcpy(muxed.med25519.ed25519,decoded.data()+sizeof(muxed.med25519.id),sizeof(muxed.med25519.ed25519));
-            decoded.fill('\0',decoded.length());
-            return muxed;
         }
         throw std::runtime_error("invalid address length");
     }
@@ -106,10 +100,6 @@ public:
 
     static QByteArray decodeStellarAccountId(QString data) {
         return decodeCheck(VersionByte::ACCOUNT_ID, data.toLatin1());
-    }
-
-    static QByteArray decodeStellarMuxedAccount(QString data) {
-        return decodeCheck(VersionByte::MUXED_ACCOUNT, data.toLatin1());
     }
 
     static QByteArray encodeStellarSecretSeed(QByteArray data) {

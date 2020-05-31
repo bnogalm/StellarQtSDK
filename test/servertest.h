@@ -240,40 +240,27 @@ private slots:
 
      void testCheckMemoRequiredWithMemoIdAddress()
      {         
-
-         FakeServer fakeServer;
-         fakeServer.addPost("/transactions",successTransactionResponse);
-
          m_server = new Server("http://localhost:8080");
 
          KeyPair* source = KeyPair::fromSecretSeed(QString("SDQXFKA32UVQHUTLYJ42N56ZUEM5PNVVI4XE7EA5QFMLA2DHDCQX3GPY"));
          Account* account = new Account(source, 1L);
-         Transaction* transaction = Transaction::Builder(account, Network::current())
-             .addOperation(new PaymentOperation(DESTINATION_ACCOUNT_MEMO_ID, new AssetTypeNative(), "10"))
-             .addOperation(new PathPaymentStrictReceiveOperation(new AssetTypeNative(), "10", DESTINATION_ACCOUNT_MEMO_ID, new AssetTypeCreditAlphaNum4("BTC", QString("GA7GYB3QGLTZNHNGXN3BMANS6TC7KJT3TCGTR763J4JOU4QHKL37RVV2")), "5"))
-             .addOperation(new PathPaymentStrictSendOperation(new AssetTypeNative(), "10", DESTINATION_ACCOUNT_MEMO_ID, new AssetTypeCreditAlphaNum4("BTC", QString("GA7GYB3QGLTZNHNGXN3BMANS6TC7KJT3TCGTR763J4JOU4QHKL37RVV2")), "5"))
-             .addOperation(new AccountMergeOperation(DESTINATION_ACCOUNT_MEMO_ID))
-             .setTimeout(Transaction::Builder::TIMEOUT_INFINITE)
-             .setBaseFee(100)
-             .build();
-         transaction->sign(source);
-         SubmitTransactionResponse *r=nullptr;
-         QMetaObject::Connection c = QObject::connect(m_server,&Server::transactionResponse,[&r](SubmitTransactionResponse *response){
-             r = response;
+         Transaction* transaction =nullptr;
+         try{
+             transaction = Transaction::Builder(account, Network::current())
+                     .addOperation(new PaymentOperation(DESTINATION_ACCOUNT_MEMO_ID, new AssetTypeNative(), "10"))
+                     .addOperation(new PathPaymentStrictReceiveOperation(new AssetTypeNative(), "10", DESTINATION_ACCOUNT_MEMO_ID, new AssetTypeCreditAlphaNum4("BTC", QString("GA7GYB3QGLTZNHNGXN3BMANS6TC7KJT3TCGTR763J4JOU4QHKL37RVV2")), "5"))
+                     .addOperation(new PathPaymentStrictSendOperation(new AssetTypeNative(), "10", DESTINATION_ACCOUNT_MEMO_ID, new AssetTypeCreditAlphaNum4("BTC", QString("GA7GYB3QGLTZNHNGXN3BMANS6TC7KJT3TCGTR763J4JOU4QHKL37RVV2")), "5"))
+                     .addOperation(new AccountMergeOperation(DESTINATION_ACCOUNT_MEMO_ID))
+                     .setTimeout(Transaction::Builder::TIMEOUT_INFINITE)
+                     .setBaseFee(100)
+                     .build();
+             QFAIL("Missing exception");
+         } catch (std::runtime_error e) {
+             qDebug() << "EXCEPTION "<< e.what();
+             QCOMPARE("invalid address length", QString(e.what()));
+         }
 
-         });
-         m_server->submitTransaction(transaction);
-
-         WAIT_FOR(!r)
-
-         QVERIFY(r);
-
-         r=nullptr;
-
-         m_server->submitTransaction(feeBump(transaction));
-         WAIT_FOR(!r)
-
-         QVERIFY(r);
+         QVERIFY(transaction==nullptr);//we dont even allow to build the transaction if destination is wrong.
 
      }
 

@@ -57,7 +57,7 @@ QString PathPaymentOperation::getSendMax() {
 }
 
 QString PathPaymentOperation::getDestination() const{
-    return StrKey::encodeStellarMuxedAccount(m_op.destination);
+    return StrKey::encodeStellarAccountId(StrKey::muxedAccountToAccountId(m_op.destination));
 }
 
 Asset *PathPaymentOperation::getDestAsset() {

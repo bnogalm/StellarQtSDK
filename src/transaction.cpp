@@ -143,7 +143,7 @@ Transaction *Transaction::fromV0EnvelopeXdr(stellar::TransactionV0Envelope &enve
 
 Transaction *Transaction::fromV1EnvelopeXdr(stellar::TransactionV1Envelope &envelope, Network *network)
 {
-    QString sourceAccount = StrKey::encodeStellarMuxedAccount(envelope.tx.sourceAccount);
+    QString sourceAccount = StrKey::encodeStellarAccountId(StrKey::muxedAccountToAccountId(envelope.tx.sourceAccount));
     QVector<Operation*> ops;
     for(auto op : envelope.tx.operations.value)
     {

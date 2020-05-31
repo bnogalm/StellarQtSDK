@@ -52,14 +52,20 @@ private slots:
     }
 
 
-    void testDecodedVersionByte() {
-        QCOMPARE( StrKey::VersionByte::MUXED_ACCOUNT,StrKey::decodeVersionByte("MBU2RRGLXH3E5CQHTD3ODLDF2BWDCYUSSBLLZ5GNW7JXHDIYKXZWGTOG"));
+    void testDecodedVersionByte() {        
         QCOMPARE( StrKey::VersionByte::ACCOUNT_ID,StrKey::decodeVersionByte("GDW6AUTBXTOC7FIKUO5BOO3OGLK4SF7ZPOBLMQHMZDI45J2Z6VXRB5NR"));
         QCOMPARE( StrKey::VersionByte::SEED,StrKey::decodeVersionByte("SDJHRQF4GCMIIKAAAQ6IHY42X73FQFLHUULAPSKKD4DFDM7UXWWCRHBE"));
         QCOMPARE( StrKey::VersionByte::PRE_AUTH_TX,StrKey::decodeVersionByte("TAQCSRX2RIDJNHFIFHWD63X7D7D6TRT5Y2S6E3TEMXTG5W3OECHZ2OG4"));
         QCOMPARE( StrKey::VersionByte::SHA256_HASH,StrKey::decodeVersionByte("XDRPF6NZRR7EEVO7ESIWUDXHAOMM2QSKIQQBJK6I2FB7YKDZES5UCLWD"));
     }
-
+    void testDecodedVersionByteMAddress() {
+        try {
+            StrKey::decodeVersionByte("MBU2RRGLXH3E5CQHTD3ODLDF2BWDCYUSSBLLZ5GNW7JXHDIYKXZWGTOG");
+            QFAIL("Missing exception");
+        } catch (std::runtime_error e){
+            QCOMPARE(QString("Version byte is invalid"), QString(e.what()));
+        }
+    }
 
     void testDecodedVersionByteThrows() {
       try {
@@ -123,23 +129,6 @@ private slots:
           QCOMPARE(QByteArray::fromRawData((const char*)data,sizeof(data)), StrKey::decodeCheck(StrKey::VersionByte::SHA256_HASH, hashX.toLatin1()));
       }
 
-
-      void testRoundTripMuxedFromBytes() {
-          unsigned char data[] = {
-                      0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                      0x3f, 0x0c, 0x34, 0xbf, 0x93, 0xad, 0x0d, 0x99,
-                      0x71, 0xd0, 0x4c, 0xcc, 0x90, 0xf7, 0x05, 0x51,
-                      0x1c, 0x83, 0x8a, 0xad, 0x97, 0x34, 0xa4, 0xa2,
-                      0xfb, 0x0d, 0x7a, 0x03, 0xfc, 0x7f, 0xe8, 0x9a
-                      };
-          QString muxed = "MCAAAAAAAAAAAAB7BQ2L7E5NBWMXDUCMZSIPOBKRDSBYVLMXGSSKF6YNPIB7Y77ITKNOG";
-          QCOMPARE(StrKey::encodeCheck(StrKey::VersionByte::MUXED_ACCOUNT, QByteArray::fromRawData((const char*)data,sizeof(data)))
-                      ,muxed);
-          QCOMPARE(QByteArray::fromRawData((const char*)data,sizeof(data)), StrKey::decodeCheck(StrKey::VersionByte::MUXED_ACCOUNT, muxed.toLatin1()));
-      }
-
-
-
       void testDecodeEmpty() {
           try {
               StrKey::decodeCheck(StrKey::VersionByte::ACCOUNT_ID, QByteArray(""));
@@ -165,138 +154,6 @@ private slots:
           }
       }
 
-
-      void testMuxedDecodeErrors() {
-          // non-canonical representation due to extra character
-          try {
-              StrKey::decodeCheck(
-                          StrKey::VersionByte::MUXED_ACCOUNT,
-                          QString("MCAAAAAAAAAAAAB7BQ2L7E5NBWMXDUCMZSIPOBKRDSBYVLMXGSSKF6YNPIB7Y77ITKNOGA").toLatin1()
-                          );
-              QFAIL("missing exception");
-          } catch (std::runtime_error e) {
-              QCOMPARE(QString(e.what()),QString("Encoded char array has leftover character."));
-          }
-
-          // non-canonical representation due to leftover bits set to 1 (some of the test strkeys are too short for a muxed account
-
-          // 1 unused bit (length 69)
-          try {
-              StrKey::decodeCheck(
-                          StrKey::VersionByte::MUXED_ACCOUNT,
-                          QString("MCAAAAAAAAAAAAB7BQ2L7E5NBWMXDUCMZSIPOBKRDSBYVLMXGSSKF6YNPIB7Y77ITKNOH").toLatin1()
-                          );
-              QFAIL("missing exception");
-          } catch (std::runtime_error e) {
-              QCOMPARE(QString(e.what()),QString("Unused bits should be set to 0."));
-          }
-
-
-          // 4 unused bits (length 68)
-
-          // 'B' is equivalent to 0b00001
-          try {
-              StrKey::decodeCheck(
-                          StrKey::VersionByte::MUXED_ACCOUNT,
-                          QString("MCAAAAAAAAAAAAB7BQ2L7E5NBWMXDUCMZSIPOBKRDSBYVLMXGSSKF6YNPIB7Y77ITKNB").toLatin1()
-                          );
-              QFAIL("missing exception");
-          } catch (std::runtime_error e) {
-              QCOMPARE(QString(e.what()),QString("Unused bits should be set to 0."));
-          }
-
-          // 'C' is equivalent to 0b00010
-          try {
-              StrKey::decodeCheck(
-                          StrKey::VersionByte::MUXED_ACCOUNT,
-                          QString("MCAAAAAAAAAAAAB7BQ2L7E5NBWMXDUCMZSIPOBKRDSBYVLMXGSSKF6YNPIB7Y77ITKNC").toLatin1()
-                          );
-              QFAIL("missing exception");
-          } catch (std::runtime_error e) {
-              QCOMPARE(QString(e.what()),QString("Unused bits should be set to 0."));
-          }
-
-          // 'E' is equivalent to 0b00100
-          try {
-              StrKey::decodeCheck(
-                          StrKey::VersionByte::MUXED_ACCOUNT,
-                          QString("MCAAAAAAAAAAAAB7BQ2L7E5NBWMXDUCMZSIPOBKRDSBYVLMXGSSKF6YNPIB7Y77ITKNE").toLatin1()
-                          );
-              QFAIL("missing exception");
-          } catch (std::runtime_error e) {
-              QCOMPARE(QString(e.what()),QString("Unused bits should be set to 0."));
-          }
-
-          // 'I' is equivalent to 0b01000
-          try {
-              StrKey::decodeCheck(
-                          StrKey::VersionByte::MUXED_ACCOUNT,
-                          QString("MCAAAAAAAAAAAAB7BQ2L7E5NBWMXDUCMZSIPOBKRDSBYVLMXGSSKF6YNPIB7Y77ITKNI").toLatin1()
-                          );
-              QFAIL("missing exception");
-          } catch (std::runtime_error e) {
-              QCOMPARE(QString(e.what()),QString("Unused bits should be set to 0."));
-
-          }
-          // '7' is equivalent to 0b11111
-          try {
-              StrKey::decodeCheck(
-                          StrKey::VersionByte::MUXED_ACCOUNT,
-                          QString("MCAAAAAAAAAAAAB7BQ2L7E5NBWMXDUCMZSIPOBKRDSBYVLMXGSSKF6YNPIB7Y77ITKN7").toLatin1()
-                          );
-              QFAIL("missing exception");
-          } catch (std::runtime_error e) {
-              QCOMPARE(QString(e.what()),QString("Unused bits should be set to 0."));
-
-          }
-          // '6' is equivalent to 0b11110
-          try {
-              StrKey::decodeCheck(
-                          StrKey::VersionByte::MUXED_ACCOUNT,
-                          QString("MCAAAAAAAAAAAAB7BQ2L7E5NBWMXDUCMZSIPOBKRDSBYVLMXGSSKF6YNPIB7Y77ITKN6").toLatin1()
-                          );
-              QFAIL("missing exception");
-          } catch (std::runtime_error e) {
-              QCOMPARE(QString(e.what()),QString("Unused bits should be set to 0."));
-
-          }
-          // '4' is equivalent to 0b11100
-          try {
-              StrKey::decodeCheck(
-                          StrKey::VersionByte::MUXED_ACCOUNT,
-                          QString("MCAAAAAAAAAAAAB7BQ2L7E5NBWMXDUCMZSIPOBKRDSBYVLMXGSSKF6YNPIB7Y77ITKN4").toLatin1()
-                          );
-              QFAIL("missing exception");
-          } catch (std::runtime_error e) {
-              QCOMPARE(QString(e.what()),QString("Unused bits should be set to 0."));
-
-          }
-
-          // 'Y' is equivalent to 0b11000
-          try {
-              StrKey::decodeCheck(
-                          StrKey::VersionByte::MUXED_ACCOUNT,
-                          QString("MCAAAAAAAAAAAAB7BQ2L7E5NBWMXDUCMZSIPOBKRDSBYVLMXGSSKF6YNPIB7Y77ITKNY").toLatin1()
-                          );
-              QFAIL("missing exception");
-          } catch (std::runtime_error e) {
-              QCOMPARE(QString(e.what()),QString("Unused bits should be set to 0."));
-
-          }
-          // 'Q' is equivalent to 0b10000, so there should be no unused bits error
-          // However, there will be a checksum error
-          try {
-              StrKey::decodeCheck(
-                          StrKey::VersionByte::MUXED_ACCOUNT,
-                          QString("MCAAAAAAAAAAAAB7BQ2L7E5NBWMXDUCMZSIPOBKRDSBYVLMXGSSKF6YNPIB7Y77ITKNQ").toLatin1()
-                          );
-              QFAIL("missing exception");
-          } catch (std::runtime_error e) {
-              QCOMPARE(QString(e.what()),QString("Checksum invalid"));
-          }
-      }
-
-
       void testEncodeToXdrRoundTrip() {
         QString address = "GA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJVSGZ";
         uchar ed25519[] = {
@@ -312,24 +169,17 @@ private slots:
         stellar::MuxedAccount muxedAccount = StrKey::encodeToXDRMuxedAccount(address);
         QVERIFY(stellar::CryptoKeyType::KEY_TYPE_ED25519 == muxedAccount.type);
         QVERIFY(memcmp(ed25519, muxedAccount.ed25519,sizeof(ed25519))==0);
-        QCOMPARE(StrKey::encodeStellarMuxedAccount(muxedAccount),address);
-
-        QString muxedAddress = "MCAAAAAAAAAAAAB7BQ2L7E5NBWMXDUCMZSIPOBKRDSBYVLMXGSSKF6YNPIB7Y77ITKNOG";
-        muxedAccount = StrKey::encodeToXDRMuxedAccount(muxedAddress);
-        QVERIFY(stellar::CryptoKeyType::KEY_TYPE_MUXED_ED25519== muxedAccount.type);
-        QVERIFY(memcmp(ed25519, muxedAccount.med25519.ed25519, sizeof(ed25519))==0);
-
-        QCOMPARE(muxedAccount.med25519.id,9223372036854775808UL);
-        QCOMPARE(StrKey::encodeStellarMuxedAccount(muxedAccount),muxedAddress);
-
-        muxedAddress = "MAAAAAAAAAAAAAB7BQ2L7E5NBWMXDUCMZSIPOBKRDSBYVLMXGSSKF6YNPIB7Y77ITLVL6";
-        muxedAccount = StrKey::encodeToXDRMuxedAccount(muxedAddress);
-        QVERIFY(stellar::CryptoKeyType::KEY_TYPE_MUXED_ED25519== muxedAccount.type);
-        QVERIFY(memcmp(ed25519, muxedAccount.med25519.ed25519,sizeof(ed25519))==0);
-        QVERIFY(muxedAccount.med25519.id==0UL);
-        QCOMPARE(StrKey::encodeStellarMuxedAccount(muxedAccount),muxedAddress);
+        QCOMPARE(StrKey::encodeStellarAccountId(StrKey::muxedAccountToAccountId(muxedAccount)),address);
       }
-
+      void testEncodeToXDRMuxedAccountMAddress() {
+        try {
+          QString muxedAddress = "MCAAAAAAAAAAAAB7BQ2L7E5NBWMXDUCMZSIPOBKRDSBYVLMXGSSKF6YNPIB7Y77ITKNOG";
+          StrKey::encodeToXDRMuxedAccount(muxedAddress);
+          QFAIL("Missing exception");
+        } catch (std::runtime_error e) {
+          QCOMPARE(QString("invalid address length"), QString(e.what()));
+        }
+      }
 };
 
 ADD_TEST(StrKeyTest)

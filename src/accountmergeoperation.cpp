@@ -22,7 +22,7 @@ void AccountMergeOperation::fillOperationBody(stellar::Operation &operation) {
 AccountMergeOperation *AccountMergeOperation::build(stellar::MuxedAccount &operationAccountMerge)
 {
 
-    return new AccountMergeOperation(StrKey::encodeStellarMuxedAccount(operationAccountMerge));
+    return new AccountMergeOperation(StrKey::encodeStellarAccountId(StrKey::muxedAccountToAccountId(operationAccountMerge)));
 }
 
 AccountMergeOperation *AccountMergeOperation::create(KeyPair* destination)

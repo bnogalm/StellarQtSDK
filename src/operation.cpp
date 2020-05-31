@@ -120,7 +120,7 @@ Operation *Operation::fromXdr(stellar::Operation &xdr) {
         throw std::runtime_error("Unknown operation body");
     }
     if (xdr.sourceAccount.filled) {        
-        operation->setSourceAccount(StrKey::encodeStellarMuxedAccount(xdr.sourceAccount.value));
+        operation->setSourceAccount(StrKey::encodeStellarAccountId(StrKey::muxedAccountToAccountId(xdr.sourceAccount.value)));
     }
     return operation;
 }
