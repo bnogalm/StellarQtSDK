@@ -56,14 +56,9 @@ ManageDataOperation *ManageDataOperation::create(QString name, QByteArray value)
     return new ManageDataOperation(name, value);
 }
 
-ManageDataOperation *ManageDataOperation::setSourceAccount(KeyPair *sourceAccount)
+ManageDataOperation *ManageDataOperation::setSourceAccount(QString sourceAccount)
 {
     Operation::setSourceAccount(sourceAccount);
     return this;
 }
 
-ManageDataOperation *ManageDataOperation::setSourceAccount(KeyPair &sourceAccount)
-{
-    Operation::setSourceAccount(new KeyPair(sourceAccount));
-    return this;
-}

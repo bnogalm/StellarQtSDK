@@ -3,15 +3,13 @@
 
 PathPaymentStrictReceiveOperation::PathPaymentStrictReceiveOperation()
 :m_sendAsset(nullptr)
-,m_destination(nullptr)
 ,m_destAsset(nullptr)
 {
 
 }
 
 PathPaymentStrictReceiveOperation::PathPaymentStrictReceiveOperation(stellar::PathPaymentStrictReceiveOp &op)
-    :m_sendAsset(nullptr)
-  ,m_destination(nullptr)
+    :m_sendAsset(nullptr)  
   ,m_destAsset(nullptr)
   ,m_op(op){
 
@@ -21,8 +19,6 @@ PathPaymentStrictReceiveOperation::~PathPaymentStrictReceiveOperation()
 {
     if(m_sendAsset)
         delete m_sendAsset;
-    if(m_destination)
-        delete m_destination;
     if(m_destAsset)
         delete m_destAsset;
     for(auto a : m_path)
@@ -31,20 +27,18 @@ PathPaymentStrictReceiveOperation::~PathPaymentStrictReceiveOperation()
     }
 }
 
-PathPaymentStrictReceiveOperation::PathPaymentStrictReceiveOperation(Asset *sendAsset, QString sendMax, KeyPair *destination, Asset *destAsset, QString destAmount, QList<Asset*> path)
-    :m_sendAsset(nullptr)
-    ,m_destination(nullptr)
+PathPaymentStrictReceiveOperation::PathPaymentStrictReceiveOperation(Asset *sendAsset, QString sendMax, QString destination, Asset *destAsset, QString destAmount, QList<Asset*> path)
+    :m_sendAsset(nullptr)    
     ,m_destAsset(nullptr){
     checkNotNull(sendAsset, "sendAsset cannot be null");
-    checkNotNull(sendMax, "sendMax cannot be null");
-    checkNotNull(destination, "destination cannot be null");
+    checkNotNull(sendMax, "sendMax cannot be null");    
     checkNotNull(destAsset, "destAsset cannot be null");
     checkNotNull(destAmount, "destAmount cannot be null");
     checkArgument(path.size() <= 5, "The maximum number of assets in the path is 5");
 
     m_op.sendAsset = sendAsset->toXdr();
-    m_op.sendMax = Operation::toXdrAmount(sendMax);
-    m_op.destination = destination->getXdrPublicKey();
+    m_op.sendMax = Operation::toXdrAmount(sendMax);    
+    m_op.destination = StrKey::encodeToXDRMuxedAccount(checkNotNull(destination, "destination cannot be null"));
 
     m_op.destAsset = destAsset->toXdr();
     m_op.destAmount = Operation::toXdrAmount(destAmount);
@@ -63,10 +57,8 @@ QString PathPaymentStrictReceiveOperation::getSendMax() {
     return Operation::fromXdrAmount(m_op.sendMax);
 }
 
-KeyPair *PathPaymentStrictReceiveOperation::getDestination() {
-    if(!m_destination)
-        m_destination = KeyPair::fromXdrPublicKey(m_op.destination);
-    return m_destination;
+QString PathPaymentStrictReceiveOperation::getDestination() const{
+    return StrKey::encodeStellarAccountId(StrKey::muxedAccountToAccountId(m_op.destination));
 }
 
 Asset *PathPaymentStrictReceiveOperation::getDestAsset() {
@@ -103,6 +95,11 @@ PathPaymentStrictReceiveOperation *PathPaymentStrictReceiveOperation::build(stel
 PathPaymentStrictReceiveOperation *PathPaymentStrictReceiveOperation::create(Asset* sendAsset, QString sendMax, KeyPair* destination,
                                                    Asset* destAsset, QString destAmount)
 {
+    return new PathPaymentStrictReceiveOperation(sendAsset,sendMax,destination->getAccountId(),destAsset,destAmount);
+}
+
+PathPaymentStrictReceiveOperation *PathPaymentStrictReceiveOperation::create(Asset *sendAsset, QString sendMax, QString destination, Asset *destAsset, QString destAmount)
+{
     return new PathPaymentStrictReceiveOperation(sendAsset,sendMax,destination,destAsset,destAmount);
 }
 
@@ -119,13 +116,7 @@ PathPaymentStrictReceiveOperation *PathPaymentStrictReceiveOperation::setPath(QL
     return this;
 }
 
-PathPaymentStrictReceiveOperation *PathPaymentStrictReceiveOperation::setSourceAccount(KeyPair *sourceAccount) {
+PathPaymentStrictReceiveOperation *PathPaymentStrictReceiveOperation::setSourceAccount(QString sourceAccount) {
     Operation::setSourceAccount(sourceAccount);
-    return this;
-}
-
-PathPaymentStrictReceiveOperation *PathPaymentStrictReceiveOperation::setSourceAccount(KeyPair &sourceAccount)
-{
-    Operation::setSourceAccount(new KeyPair(sourceAccount));
     return this;
 }

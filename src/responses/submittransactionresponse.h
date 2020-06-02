@@ -77,7 +77,7 @@ public:
 
 
 }
-class Transaction;
+class AbstractTransaction;
 class SubmitTransactionResponse : public Response
 {
     Q_OBJECT
@@ -96,11 +96,11 @@ class SubmitTransactionResponse : public Response
     SubmitTransactionResponseAttach::Extras m_extra;
 
     QString m_envelope_xdr;
-    Transaction *m_transactionRequest;
+    AbstractTransaction *m_transactionRequest;
 public:
-    explicit SubmitTransactionResponse(QNetworkReply* reply,Transaction * transactionRequest=nullptr);
+    explicit SubmitTransactionResponse(QNetworkReply* reply, AbstractTransaction *transactionRequest=nullptr);
     virtual ~SubmitTransactionResponse();
-    Transaction * transactionRequest() const;
+    AbstractTransaction * transactionRequest() const;
     QString getHash() const;
 
     qint64 getLedger() const;

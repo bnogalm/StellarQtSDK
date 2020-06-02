@@ -9,6 +9,7 @@
 #include <map>
 #include <string>
 
+
 namespace TestCollector{
 typedef std::map<std::string, std::shared_ptr<QObject> > TestList;
 inline TestList& GetTestList()
@@ -46,6 +47,8 @@ inline void compareBase64(QString a,QString b)
     if(ab.length()!=bb.length()){
         qDebug() << "Wrong length "<<ab.length() <<" != " << bb.length();
     }
+    qDebug() << ab.toHex();
+    qDebug() << bb.toHex();
 
     for(int i=0;i<qMin(ab.length(),bb.length());i++)
     {
@@ -59,14 +62,16 @@ inline void compareBase64(QString a,QString b)
 }
 #define WAIT_FOR(EXP)\
 	{\
-    int wait=0;\
+    int wait=1;\
     while(EXP){\
-       QTest::qWait(500);\
+       QTest::qWait(100*wait);\
        wait++;\
-       if(wait>20)\
+       if(wait>10)\
            break;\
     }\
 	}
+
+
 
 #define ADD_TEST(className) static TestCollector::UnitTestClass<className> \
     test(#className);

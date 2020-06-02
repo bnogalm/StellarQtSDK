@@ -1,6 +1,7 @@
 #include "price.h"
 #include "util.h"
 
+#include <numeric>
 
 
 Price::Price(qint32 n, qint32 d) {
@@ -25,11 +26,20 @@ Price::Price(stellar::Price &price):m_n(price.n),m_d(price.n)
 //    else
 //        return gcd(b, a % b);
 //}
-
+/*
 qint64 gcd(qint64 a, qint64 b)
-{
+{    
     while(b) b ^= a ^= b ^= a %= b;
     return a;
+}*/
+qint64 gcd(qint64 a,qint64 b) {
+  int R;
+  while ((a % b) > 0)  {
+    R = a % b;
+    a = b;
+    b = R;
+  }
+  return b;
 }
 
 Price::Price(QString price){

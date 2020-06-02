@@ -1,7 +1,7 @@
 #include "submittransactionresponse.h"
 #include "xdr/stellartransaction.h"
-#include "../transaction.h"
-SubmitTransactionResponse::SubmitTransactionResponse(QNetworkReply *reply,Transaction * transactionRequest):Response(reply)
+#include "../abstracttransaction.h"
+SubmitTransactionResponse::SubmitTransactionResponse(QNetworkReply *reply,AbstractTransaction * transactionRequest):Response(reply)
   ,m_ledger(0)
   ,m_transactionRequest(transactionRequest)
 {
@@ -14,7 +14,7 @@ SubmitTransactionResponse::~SubmitTransactionResponse()
         delete m_transactionRequest;
 }
 
-Transaction *SubmitTransactionResponse::transactionRequest() const
+AbstractTransaction *SubmitTransactionResponse::transactionRequest() const
 {
     return m_transactionRequest;
 }

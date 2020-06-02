@@ -37,14 +37,8 @@ BumpSequenceOperation *BumpSequenceOperation::create(qint64 bumpTo)
     return new BumpSequenceOperation(bumpTo);
 }
 
-BumpSequenceOperation *BumpSequenceOperation::setSourceAccount(KeyPair *sourceAccount)
+BumpSequenceOperation *BumpSequenceOperation::setSourceAccount(QString sourceAccount)
 {
     Operation::setSourceAccount(sourceAccount);
-    return this;
-}
-
-BumpSequenceOperation *BumpSequenceOperation::setSourceAccount(KeyPair &sourceAccount)
-{
-    Operation::setSourceAccount(new KeyPair(sourceAccount));
     return this;
 }

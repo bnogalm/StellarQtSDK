@@ -1,67 +1,47 @@
 #ifndef TRANSACTION_H
 #define TRANSACTION_H
-#include "keypair.h"
+
 #include <QtGlobal>
-#include "operation.h"
+
 #include "xdr/stellartransaction.h"
-#include "memo.h"
-#include "network.h"
+
 #include <exception>
 #include "transactionbuilderaccount.h"
 #include "timebounds.h"
-#include <QObject>
+#include "abstracttransaction.h"
 /**
  * Represents <a href="https://www.stellar.org/developers/learn/concepts/transactions.html" target="_blank">Transaction</a> in Stellar network.
  */
-class Transaction : public QObject
-{
-
-    Q_OBJECT
-
-    quint32 m_fee;
-    KeyPair* m_sourceAccount;
+class Transaction : public AbstractTransaction
+{    
+    qint64 m_fee;
+    QString m_sourceAccount;
     qint64 m_sequenceNumber;
     QVector<Operation*> m_operations;
     Memo *m_memo;
     TimeBounds *m_timeBounds;
-    QVector<stellar::DecoratedSignature> m_signatures;
 
+    stellar::EnvelopeType m_envelopeType;
     friend class Builder;
 
-    Transaction(KeyPair* sourceAccount, quint32 fee, qint64 sequenceNumber, QVector<Operation*> operations, Memo* memo, TimeBounds *timeBounds);
+    Transaction(QString sourceAccount, qint64 fee, qint64 sequenceNumber, QVector<Operation*> operations, Memo* memo, TimeBounds *timeBounds, Network* network);
 
 
 public:
     virtual ~Transaction();
-    /**
-      * Adds a new signature ed25519PublicKey to this transaction.
-      * @param signer {@link KeyPair} object representing a signer
-      */
-    void sign(KeyPair* signer);
 
-     /**
-      * Adds a new sha256Hash signature to this transaction by revealing preimage.
-      * @param preimage the sha256 hash of preimage should be equal to signer hash
-      */
-    void sign(QByteArray preimage);
+#ifdef STELLAR_ENABLE_TEST_METHODS
+    // setEnvelopeType is only used in tests which is why this method is package protected
+    void setEnvelopeType(stellar::EnvelopeType envelopeType) {
+        m_envelopeType = envelopeType;
+    }
+#endif
+    QByteArray signatureBase() const;
+    QString getSourceAccount() const;
+    qint64 getSequenceNumber() const;
+    Memo* getMemo() const;
 
-         /**
-      * Returns transaction hash.
-      */
-     QByteArray hash();
-
-     /**
-      * Returns signature base.
-      */
-     QByteArray signatureBase();
-
-     KeyPair* getSourceAccount();
-
-     qint64 getSequenceNumber();
-
-     QVector<stellar::DecoratedSignature> getSignatures();
-
-     Memo* getMemo() const;
+    Network* getNetwork() const;
 
      /**
       * @return TimeBounds, or null (representing no time restrictions)
@@ -76,34 +56,33 @@ public:
      /**
       * Returns fee paid for transaction in stroops (1 stroop = 0.0000001 XLM).
       */
-     quint32 getFee();
+     qint64 getFee() const;
 
      /**
-      * Generates Transaction XDR object.
+      * Generates Transaction XDR v0 object.
       */
-     stellar::Transaction toXdr();
+     stellar::TransactionV0 toV0Xdr() const;
+
+     /**
+      * Generates Transaction XDR v0 object.
+      */
+     stellar::Transaction toV1Xdr() const;
 
      /**
       * Returns new Transaction object from Transaction XDR object.
       * @param xdr XDR object
       */
-     static Transaction* fromXdr(stellar::Transaction& xdr);
+     //static Transaction* fromXdr(stellar::Transaction& xdr, Network* network);
+
+
+     static Transaction* fromV0EnvelopeXdr(stellar::TransactionV0Envelope& envelope, Network* network);
+     static Transaction* fromV1EnvelopeXdr(stellar::TransactionV1Envelope& envelope, Network* network);
+
      /**
       * Generates TransactionEnvelope XDR object.
       */
      stellar::TransactionEnvelope toEnvelopeXdr();
 
-     /**
-      * Returns new Transaction object from Transaction XDR object.
-      * @param xdr XDR object
-      */
-     Q_DECL_DEPRECATED static Transaction* fromXdrEnvelope(stellar::TransactionEnvelope& xdr);
-     static Transaction* fromEnvelopeXdr(stellar::TransactionEnvelope& xdr);//this is the correct name
-
-     /**
-      * Returns base64-encoded TransactionEnvelope XDR object. Transaction need to have at least one signature.
-      */
-     QString toEnvelopeXdrBase64();
 
      /**
       * Builds a new Transaction object.
@@ -111,12 +90,13 @@ public:
      class Builder {
 
          TransactionBuilderAccount *m_sourceAccount;
+         Network* m_network;
          Memo *m_memo;
          TimeBounds *m_timeBounds;
          QVector<Operation*> m_operations;
          bool m_timeoutSet;
 
-         quint32 m_operationFee;
+         quint32 m_baseFee;
          static quint32 s_defaultOperationFee;
         void clear();
      public:
@@ -128,7 +108,7 @@ public:
         * who will use a sequence number. When build() is called, the account object's sequence number
         * will be incremented.        
         */
-         Builder(TransactionBuilderAccount *sourceAccount);
+         Builder(TransactionBuilderAccount *sourceAccount, Network* network= Network::current());
         ~Builder();
 
          int getOperationsCount();
@@ -177,7 +157,7 @@ public:
           */
          Builder& setTimeout(qint64 timeout);
 
-         Builder& setOperationFee(quint32 operationFee);
+         Builder& setBaseFee(quint32 baseFee);
 
          /**
         * Builds a transaction. It will increment sequence number of the source account.

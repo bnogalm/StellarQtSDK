@@ -168,6 +168,14 @@ stellar::PublicKey KeyPair::getXdrPublicKey() {
     return publicKey;
 }
 
+stellar::MuxedAccount KeyPair::getXdrMutexPublicKey()
+{
+    stellar::MuxedAccount mutexPublicKey;
+    mutexPublicKey.type = stellar::CryptoKeyType::KEY_TYPE_ED25519;
+    memcpy(mutexPublicKey.ed25519,this->getPublicKey().data(),keyLength);
+    return mutexPublicKey;
+}
+
 stellar::SignerKey KeyPair::getXdrSignerKey() {
     stellar::SignerKey signerKey;
     signerKey.type = stellar::SignerKeyType::SIGNER_KEY_TYPE_ED25519;
@@ -176,6 +184,11 @@ stellar::SignerKey KeyPair::getXdrSignerKey() {
 }
 
 KeyPair *KeyPair::fromXdrPublicKey(stellar::PublicKey& key) {
+    return new KeyPair(key.ed25519);
+}
+
+KeyPair *KeyPair::fromXdrMutexPublicKey(stellar::MuxedAccount &key)
+{
     return new KeyPair(key.ed25519);
 }
 

@@ -10,8 +10,7 @@
  */
 class PathPaymentStrictReceiveOperation : public Operation
 {
-    Asset* m_sendAsset;
-    KeyPair* m_destination;
+    Asset* m_sendAsset;    
     Asset* m_destAsset;
     QList<Asset*> m_path;
 
@@ -22,7 +21,7 @@ public:
 
     virtual ~PathPaymentStrictReceiveOperation();
 
-    PathPaymentStrictReceiveOperation(Asset* sendAsset, QString sendMax, KeyPair* destination,
+    PathPaymentStrictReceiveOperation(Asset* sendAsset, QString sendMax, QString destination,
                          Asset* destAsset, QString destAmount, QList<Asset*> path = QList<Asset*>());
 
     /**
@@ -38,7 +37,7 @@ public:
     /**
      * Account that receives the payment.
      */
-    KeyPair* getDestination();
+    QString getDestination() const;
 
     /**
      * The asset the destination account receives.
@@ -59,7 +58,8 @@ public:
     static PathPaymentStrictReceiveOperation * build(stellar::PathPaymentStrictReceiveOp &op);
     static PathPaymentStrictReceiveOperation * create(Asset* sendAsset, QString sendMax, KeyPair* destination,
                                          Asset* destAsset, QString destAmount);
-
+    static PathPaymentStrictReceiveOperation * create(Asset* sendAsset, QString sendMax, QString destination,
+                                         Asset* destAsset, QString destAmount);
 
     /**
      * Sets path for this operation
@@ -73,14 +73,8 @@ public:
      * @param sourceAccount The operation's source account.
      * @return PathPaymentStrictReceiveOperation object so you can chain methods.
      */
-    PathPaymentStrictReceiveOperation* setSourceAccount(KeyPair* sourceAccount);
+    PathPaymentStrictReceiveOperation* setSourceAccount(QString sourceAccount);
 
-    /**
-     * Sets the source account for this operation making a copy of keypair
-     * @param sourceAccount The operation's source account.
-     * @return PathPaymentStrictReceiveOperation object so you can chain methods.
-     */
-    PathPaymentStrictReceiveOperation* setSourceAccount(KeyPair& sourceAccount);
 };
 
 #endif // PATHPAYMENTSTRICTRECEIVEOPERATION_H

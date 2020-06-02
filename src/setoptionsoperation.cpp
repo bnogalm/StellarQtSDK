@@ -168,13 +168,8 @@ SetOptionsOperation *SetOptionsOperation::setSigner(stellar::SignerKey signer, q
     return this;
 }
 
-SetOptionsOperation *SetOptionsOperation::setSourceAccount(KeyPair *sourceAccount) {
+SetOptionsOperation *SetOptionsOperation::setSourceAccount(QString sourceAccount) {
     Operation::setSourceAccount(sourceAccount);
     return this;
 }
 
-SetOptionsOperation *SetOptionsOperation::setSourceAccount(KeyPair &sourceAccount)
-{
-    Operation::setSourceAccount(new KeyPair(sourceAccount));
-    return this;
-}

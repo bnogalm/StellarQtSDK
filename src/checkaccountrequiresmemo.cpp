@@ -3,7 +3,7 @@
 #include <QTimer>
 
 
-#define MAX_CHECK_ACCOUNT_RETRY 3
+#define MAX_CHECK_ACCOUNT_RETRY 2
 /**
  * ACCOUNT_REQUIRES_MEMO_VALUE is the base64 encoding of "1".
  * SEP 29 uses this value to define transaction memo requirements for incoming payments.
@@ -69,7 +69,7 @@ void CheckAccountRequiresMemo::validateAccount()
         emit error();
         this->deleteLater();
     }
-    if(!processNotFound(accountResponse))//not found is considered valid destination, "valid" errors like 203 are reported, and content is "not found data".
+    else if(!processNotFound(accountResponse))//not found is considered valid destination, "valid" errors like 203 are reported, and content is "not found data".
     {
         if(m_pendingCheckAddressMemos.size()<=1)
         {
@@ -79,9 +79,11 @@ void CheckAccountRequiresMemo::validateAccount()
         else
         {
             m_pendingCheckAddressMemos.removeLast();
+
             checkNext();
         }
     }
+
 }
 
 void CheckAccountRequiresMemo::validateAccountError()

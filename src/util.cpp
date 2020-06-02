@@ -68,8 +68,8 @@ Transaction* Util::buildChallengeTx(KeyPair *serverSignerSecret, QString clientA
     else
         timeBounds= new TimeBounds(0,0);
     ManageDataOperation* dataOp = new ManageDataOperation(anchorName + " auth",randomNonce);
-    dataOp->setSourceAccount(KeyPair::fromAccountId(clientAccountID));
-    Transaction *tx = Transaction::Builder(sa).addOperation(dataOp).addTimeBounds(timeBounds).setOperationFee(Transaction::Builder::BASE_FEE).build();
+    dataOp->setSourceAccount(clientAccountID);
+    Transaction *tx = Transaction::Builder(sa).addOperation(dataOp).addTimeBounds(timeBounds).setBaseFee(Transaction::Builder::BASE_FEE).build();
     tx->sign(serverSignerSecret);
     return tx;
 }

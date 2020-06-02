@@ -23,14 +23,8 @@ public:
          * @param sourceAccount The operation's source account.
          * @return BumpSequenceOperation object so you can chain methods.
          */
-    BumpSequenceOperation* setSourceAccount(KeyPair* sourceAccount);
+    BumpSequenceOperation* setSourceAccount(QString sourceAccount);
 
-    /**
-         * Sets the source account for this operation making a copy of keypair
-         * @param sourceAccount The operation's source account.
-         * @return BumpSequenceOperation object so you can chain methods.
-         */
-    BumpSequenceOperation* setSourceAccount(KeyPair& sourceAccount);
 };
 
 #endif // BUMPSEQUENCEOPERATION_H

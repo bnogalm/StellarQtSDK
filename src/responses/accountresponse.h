@@ -62,11 +62,26 @@ class Balance {
     Q_PROPERTY(QString limit MEMBER m_limit)
     Q_PROPERTY(QString balance MEMBER m_balance)
 
+    Q_PROPERTY(QString buying_liabilities MEMBER m_buyingLiabilities)
+    Q_PROPERTY(QString selling_liabilities MEMBER m_sellingLiabilities)
+    Q_PROPERTY(bool is_authorized MEMBER m_isAuthorized)
+    Q_PROPERTY(bool is_authorized_to_maintain_liabilities MEMBER m_isAuthorizedToMaintainLiabilities)
+    Q_PROPERTY(int last_modified_ledger MEMBER m_lastModifiedLedger)
+
+
+
+
     QString m_assetType;
     QString m_assetCode;
     QString m_assetIssuer;
     QString m_limit;
     QString m_balance;
+
+    QString m_buyingLiabilities;
+    QString m_sellingLiabilities;
+    bool m_isAuthorized;
+    bool m_isAuthorizedToMaintainLiabilities;
+    int m_lastModifiedLedger;
 
     KeyPair *m_assetIssuerKeypair;
     Asset *m_asset;
@@ -80,6 +95,13 @@ public:
     KeyPair& getAssetIssuer();
     QString getBalance() const;
     QString getLimit() const;
+
+    QString getBuyingLiabilities() const;
+    QString getSellingLiabilities() const;
+    bool getAuthorized() const;
+    bool getAuthorizedToMaintainLiabilities() const;
+    int getLastModifiedLedger() const;
+
     bool operator !=(Balance& b);
     bool operator ==(Balance& b);
 

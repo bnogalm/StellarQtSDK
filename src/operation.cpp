@@ -15,14 +15,12 @@
 #include "bumpsequenceoperation.h"
 #include "managebuyofferoperation.h"
 
-Operation::Operation() : m_sourceAccount(nullptr)
+Operation::Operation()
 {
 }
 
 Operation::~Operation()
 {
-    if(m_sourceAccount)
-        delete m_sourceAccount;
 }
 
 qint64 Operation::toXdrAmount(QString value) {
@@ -54,8 +52,9 @@ QString Operation::fromXdrAmount(qint64 value) {
 
 stellar::Operation Operation::toXdr() {
     stellar::Operation xdr;
-    if(this->getSourceAccount()){
-        xdr.sourceAccount = stellar::Optional<stellar::AccountID>(stellar::PublicKey::from(this->getSourceAccount()->getPublicKey()));
+    if(!this->getSourceAccount().isEmpty()){
+        stellar::MuxedAccount& sourceAccount = xdr.sourceAccount.filler();
+        sourceAccount = StrKey::encodeToXDRMuxedAccount(m_sourceAccount);
     }
     this->fillOperationBody(xdr);
     return xdr;
@@ -120,21 +119,18 @@ Operation *Operation::fromXdr(stellar::Operation &xdr) {
     default:
         throw std::runtime_error("Unknown operation body");
     }
-    if (xdr.sourceAccount.filled) {
-        operation->setSourceAccount(KeyPair::fromXdrPublicKey(xdr.sourceAccount.value));
+    if (xdr.sourceAccount.filled) {        
+        operation->setSourceAccount(StrKey::encodeStellarAccountId(StrKey::muxedAccountToAccountId(xdr.sourceAccount.value)));
     }
     return operation;
 }
 
-KeyPair *Operation::getSourceAccount() {
-    return m_sourceAccount;
+Operation *Operation::setSourceAccount(QString sourceAccount)
+{
+    m_sourceAccount = sourceAccount;
+    return this;
 }
 
-Operation *Operation::setSourceAccount(KeyPair *keypair) {
-    m_sourceAccount = checkNotNull(keypair, "keypair cannot be null");
-    return this;
-}
-Operation *Operation::setSourceAccount(KeyPair &keypair) {
-    m_sourceAccount = new KeyPair(keypair);
-    return this;
+QString Operation::getSourceAccount() const{
+    return m_sourceAccount;
 }

@@ -69,16 +69,17 @@ ColumnLayout{
         text:qsTr("Pay");
         visible: fundedTarget;
         onClicked: {
-            sourceWallet.pay(destinationField.text,amountField.text,memoField.text);
-            paymentGui.enabled=false;
+            paymentGui.enabled=false;// pay and create if fails, it emit error and invokes onError synchronized, so we have to disable it before.
+            //signals and slots are invoked in the same moment if the objects live in the same thread and you don't defer the signal by using a timer.
+            sourceWallet.pay(destinationField.text,amountField.text,memoField.text);            
         }
     }
     Button{
         text:qsTr("Create");
         visible: validTarget && !fundedTarget;
         onClicked: {
-            sourceWallet.create(destinationField.text,amountField.text,memoField.text);
             paymentGui.enabled=false;
+            sourceWallet.create(destinationField.text,amountField.text,memoField.text);            
         }
     }
     //this is a way to connect signals to functions on the GUI
@@ -87,9 +88,14 @@ ColumnLayout{
         onSuccess:{
             targetWallet.update();
             paymentGui.enabled=true;
+            errorText.text = qsTr("Success!");
         }
         onError:{
             paymentGui.enabled=true;
+            errorText.text = lastError;
         }
+    }
+    Text{
+        id:errorText;
     }
 }

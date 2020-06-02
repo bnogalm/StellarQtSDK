@@ -22,7 +22,7 @@ public:
      * @param assetCode The asset of the trustline the source account is authorizing. For example, if a gateway wants to allow another account to hold its USD credit, the type is USD.
      * @param authorize Flag indicating whether the trustline is authorized.
      */
-    AllowTrustOperation(KeyPair* trustor, QString assetCode, bool authorize);
+    AllowTrustOperation(KeyPair* trustor, QString assetCode, bool authorize, bool authorizeToMaintainLiabilities);
 
     AllowTrustOperation(stellar::AllowTrustOp& op);
     virtual ~AllowTrustOperation();
@@ -39,28 +39,24 @@ public:
     /**
      * Flag indicating whether the trustline is authorized.
      */
-    bool getAuthorize();
+    bool getAuthorize() const;
+
+    bool getAuthorizeToMaintainLiabilities() const;
 
 
     void fillOperationBody(stellar::Operation &operation);
 
 
     static AllowTrustOperation* build(stellar::AllowTrustOp &op);
-    static AllowTrustOperation* create(KeyPair* trustor, QString assetCode, bool authorize);
+    static AllowTrustOperation* create(KeyPair* trustor, QString assetCode, bool authorize, bool authorizeToMaintainLiabilities = false);
 
     /**
          * Sets the source account for this operation.
          * @param sourceAccount The operation's source account.
          * @return AllowTrustOperation object so you can chain methods.
          */
-    AllowTrustOperation* setSourceAccount(KeyPair* sourceAccount);
+    AllowTrustOperation* setSourceAccount(QString sourceAccount);
 
-    /**
-         * Sets the source account for this operation making a copy of keypair
-         * @param sourceAccount The operation's source account.
-         * @return AllowTrustOperation object so you can chain methods.
-         */
-    AllowTrustOperation* setSourceAccount(KeyPair& sourceAccount);
 
 };
 

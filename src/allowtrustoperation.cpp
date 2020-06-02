@@ -2,7 +2,7 @@
 
 
 
-AllowTrustOperation::AllowTrustOperation(KeyPair *trustor, QString assetCode, bool authorize)
+AllowTrustOperation::AllowTrustOperation(KeyPair *trustor, QString assetCode, bool authorize, bool authorizeToMaintainLiabilities)
     :m_trustor(nullptr)
 {
     checkNotNull(trustor, "trustor cannot be null");
@@ -22,7 +22,11 @@ AllowTrustOperation::AllowTrustOperation(KeyPair *trustor, QString assetCode, bo
         memcpy(m_op.asset.alphaNum12.assetCode,padded.data(),12);
     }
     // authorize
-    m_op.authorize=authorize;
+    if(authorize)
+        m_op.authorize=static_cast<quint32>(stellar::TrustLineFlags::AUTHORIZED_FLAG);
+    else if(authorizeToMaintainLiabilities)
+        m_op.authorize=static_cast<quint32>(stellar::TrustLineFlags::AUTHORIZED_TO_MAINTAIN_LIABILITIES_FLAG);
+
 }
 
 AllowTrustOperation::AllowTrustOperation(stellar::AllowTrustOp &op)
@@ -57,8 +61,14 @@ QString AllowTrustOperation::getAssetCode() {
     return QString();
 }
 
-bool AllowTrustOperation::getAuthorize() {
-    return m_op.authorize;
+bool AllowTrustOperation::getAuthorize() const{
+    return m_op.authorize&static_cast<quint32>(stellar::TrustLineFlags::AUTHORIZED_FLAG);
+}
+
+
+bool AllowTrustOperation::getAuthorizeToMaintainLiabilities() const
+{
+    return m_op.authorize&static_cast<quint32>(stellar::TrustLineFlags::AUTHORIZED_TO_MAINTAIN_LIABILITIES_FLAG);
 }
 
 void AllowTrustOperation::fillOperationBody(stellar::Operation &operation) {
@@ -71,19 +81,13 @@ AllowTrustOperation *AllowTrustOperation::build(stellar::AllowTrustOp &op)
     return new AllowTrustOperation(op);
 }
 
-AllowTrustOperation *AllowTrustOperation::create(KeyPair *trustor, QString assetCode, bool authorize)
+AllowTrustOperation *AllowTrustOperation::create(KeyPair *trustor, QString assetCode, bool authorize, bool authorizeToMaintainLiabilities)
 {
-    return new AllowTrustOperation(trustor, assetCode, authorize);
+    return new AllowTrustOperation(trustor, assetCode, authorize,authorizeToMaintainLiabilities);
 }
 
-AllowTrustOperation *AllowTrustOperation::setSourceAccount(KeyPair *sourceAccount)
+AllowTrustOperation *AllowTrustOperation::setSourceAccount(QString sourceAccount)
 {
     Operation::setSourceAccount(sourceAccount);
-    return this;
-}
-
-AllowTrustOperation *AllowTrustOperation::setSourceAccount(KeyPair &sourceAccount)
-{
-    Operation::setSourceAccount(new KeyPair(sourceAccount));
     return this;
 }

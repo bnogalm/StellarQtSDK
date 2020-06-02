@@ -50,14 +50,8 @@ ChangeTrustOperation *ChangeTrustOperation::create(Asset* asset, QString limit)
     return new ChangeTrustOperation(asset, limit);
 }
 
-ChangeTrustOperation *ChangeTrustOperation::setSourceAccount(KeyPair *sourceAccount)
+ChangeTrustOperation *ChangeTrustOperation::setSourceAccount(QString sourceAccount)
 {
     Operation::setSourceAccount(sourceAccount);
-    return this;
-}
-
-ChangeTrustOperation *ChangeTrustOperation::setSourceAccount(KeyPair &sourceAccount)
-{
-    Operation::setSourceAccount(new KeyPair(sourceAccount));
     return this;
 }

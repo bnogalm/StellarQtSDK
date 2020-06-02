@@ -282,3 +282,127 @@ const stellar::OperationResult &stellar::OperationResult::operator =(const stell
     }
     return *this;
 }
+
+stellar::TransactionEnvelope::TransactionEnvelope():type(EnvelopeType::ENVELOPE_TYPE_TX_FEE_BUMP)
+{
+
+}
+
+stellar::TransactionEnvelope::TransactionEnvelope(const stellar::TransactionV0Envelope& t)
+    :type(EnvelopeType::ENVELOPE_TYPE_TX_V0)
+  ,v0(t)
+{
+}
+
+stellar::TransactionEnvelope::TransactionEnvelope(const stellar::TransactionV1Envelope& t)
+    :type(EnvelopeType::ENVELOPE_TYPE_TX)
+  ,v1(t)
+{
+}
+
+stellar::TransactionEnvelope::TransactionEnvelope(const stellar::FeeBumpTransactionEnvelope& t)
+    :type(EnvelopeType::ENVELOPE_TYPE_TX_FEE_BUMP)
+    ,feeBump(t)
+{
+}
+
+stellar::TransactionEnvelope::TransactionEnvelope(const stellar::TransactionEnvelope &te)
+{
+    type = te.type;
+    switch(te.type){
+    case EnvelopeType::ENVELOPE_TYPE_TX_V0:
+        new (&v0) TransactionV0Envelope();
+        v0 = te.v0; break;
+    case EnvelopeType::ENVELOPE_TYPE_TX:
+        new (&v1) TransactionV1Envelope();
+        v1 = te.v1; break;
+    case EnvelopeType::ENVELOPE_TYPE_TX_FEE_BUMP:
+        new (&feeBump) FeeBumpTransactionEnvelope();
+        feeBump = te.feeBump; break;
+    default: break;
+    }
+}
+
+stellar::TransactionEnvelope::~TransactionEnvelope()
+{
+    switch(type){
+    case EnvelopeType::ENVELOPE_TYPE_TX_V0:
+        v0.~TransactionV0Envelope();break;
+    case EnvelopeType::ENVELOPE_TYPE_TX:
+        v1.~TransactionV1Envelope();break;
+    case EnvelopeType::ENVELOPE_TYPE_TX_FEE_BUMP:
+        feeBump.~FeeBumpTransactionEnvelope();break;
+    default: break;
+    }
+}
+
+const stellar::TransactionEnvelope &stellar::TransactionEnvelope::operator =(const stellar::TransactionEnvelope &te)
+{
+    switch(type){
+    case EnvelopeType::ENVELOPE_TYPE_TX_V0:
+        v0.~TransactionV0Envelope();break;
+    case EnvelopeType::ENVELOPE_TYPE_TX:
+        v1.~TransactionV1Envelope();break;
+    default: break;
+    }
+    type = te.type;
+    switch(te.type){
+    case EnvelopeType::ENVELOPE_TYPE_TX_V0:
+        new (&v0) TransactionV0Envelope();
+        v0 = te.v0; break;
+    case EnvelopeType::ENVELOPE_TYPE_TX:
+        new (&v1) TransactionV1Envelope();
+        v1 = te.v1; break;
+    case EnvelopeType::ENVELOPE_TYPE_TX_FEE_BUMP:
+        feeBump = te.feeBump; break;
+    default: break;
+    }
+    return *this;
+}
+
+const stellar::FeeBumpTransactionEnvelope &stellar::FeeBumpTransactionEnvelope::operator =(const stellar::FeeBumpTransactionEnvelope &te)
+{
+    tx=te.tx;
+    signatures=te.signatures;
+    return *this;
+}
+
+
+const stellar::FeeBumpTransaction &stellar::FeeBumpTransaction::operator =(const stellar::FeeBumpTransaction &fbt)
+{
+    feeSource = fbt.feeSource;
+    fee = fbt.fee;
+    type = fbt.type;
+    switch(fbt.type)
+    {
+    case EnvelopeType::ENVELOPE_TYPE_TX:
+    {
+        new (&v1) TransactionV1Envelope();
+        v1 = fbt.v1;        
+        break;
+    }
+    default:break;
+    }
+    ext = fbt.ext;
+    return *this;
+}
+
+stellar::FeeBumpTransaction::FeeBumpTransaction()
+{
+    new (&v1) TransactionV1Envelope();
+
+}
+
+stellar::FeeBumpTransaction::FeeBumpTransaction(const stellar::FeeBumpTransaction &fbt)
+    :feeSource(fbt.feeSource)
+    ,fee(fbt.fee)
+    ,type(fbt.type)
+{
+    new (&v1) TransactionV1Envelope;
+    v1=fbt.v1;
+}
+
+stellar::FeeBumpTransaction::~FeeBumpTransaction()
+{
+    v1.~TransactionV1Envelope();
+}

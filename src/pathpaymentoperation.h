@@ -11,8 +11,7 @@
  */
 class PathPaymentOperation : public Operation
 {
-    Asset* m_sendAsset;
-    KeyPair* m_destination;
+    Asset* m_sendAsset;    
     Asset* m_destAsset;
     QList<Asset*> m_path;
 
@@ -23,7 +22,7 @@ public:
 
     virtual ~PathPaymentOperation();
 
-    PathPaymentOperation(Asset* sendAsset, QString sendMax, KeyPair* destination,
+    PathPaymentOperation(Asset* sendAsset, QString sendMax, QString destination,
                          Asset* destAsset, QString destAmount, QList<Asset*> path = QList<Asset*>());
 
     /**
@@ -39,7 +38,7 @@ public:
     /**
      * Account that receives the payment.
      */
-    KeyPair* getDestination();
+    QString getDestination() const;
 
     /**
      * The asset the destination account receives.
@@ -61,7 +60,8 @@ public:
     static PathPaymentOperation * create(Asset* sendAsset, QString sendMax, KeyPair* destination,
                                          Asset* destAsset, QString destAmount);
 
-
+    static PathPaymentOperation * create(Asset* sendAsset, QString sendMax, QString destination,
+                                         Asset* destAsset, QString destAmount);
     /**
      * Sets path for this operation
      * @param path The assets (other than send asset and destination asset) involved in the offers the path takes. For example, if you can only find a path from USD to EUR through XLM and BTC, the path would be USD -&raquo; XLM -&raquo; BTC -&raquo; EUR and the path field would contain XLM and BTC.
@@ -74,14 +74,8 @@ public:
      * @param sourceAccount The operation's source account.
      * @return PathPaymentOperation object so you can chain methods.
      */
-    PathPaymentOperation* setSourceAccount(KeyPair* sourceAccount);
+    PathPaymentOperation* setSourceAccount(QString sourceAccount);
 
-    /**
-     * Sets the source account for this operation making a copy of keypair
-     * @param sourceAccount The operation's source account.
-     * @return PathPaymentOperation object so you can chain methods.
-     */
-    PathPaymentOperation* setSourceAccount(KeyPair& sourceAccount);
 };
 
 #endif // PATHPAYMENTOPERATION_H

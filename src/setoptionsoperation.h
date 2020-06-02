@@ -163,14 +163,8 @@ public:
        * @param sourceAccount The operation's source account.
        * @return SetOptionsOperation object so you can chain methods.
        */
-    SetOptionsOperation* setSourceAccount(KeyPair* sourceAccount);
+    SetOptionsOperation* setSourceAccount(QString sourceAccount);
 
-    /**
-       * Sets the source account for this operation making a copy of keypair.
-       * @param sourceAccount The operation's source account.
-       * @return SetOptionsOperation object so you can chain methods.
-       */
-    SetOptionsOperation* setSourceAccount(KeyPair& sourceAccount);
 
 };
 

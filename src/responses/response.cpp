@@ -124,24 +124,36 @@ void Response::fillObject(const QMetaObject* mo, void* obj,const QJsonObject& js
             {
                 v=jsonObj.value(key).toVariant();
             }
+#ifdef STELLAR_QT_DEBUG_PARSER
             bool res;
+#endif
             if(v.isNull()&& mp.type()==QVariant::String){
                 v = QVariant::fromValue(QString());//null QString will fail if we dont do this
             }
             if(qobject){
-                res = mp.write(static_cast<QObject*>(obj),v);
+#ifdef STELLAR_QT_DEBUG_PARSER
+                res =
+#endif
+                mp.write(static_cast<QObject*>(obj),v);
             }
             else{
-                res = mp.writeOnGadget(obj,v);
+#ifdef STELLAR_QT_DEBUG_PARSER
+                res =
+#endif
+                mp.writeOnGadget(obj,v);
             }
+#ifdef STELLAR_QT_DEBUG_PARSER
             if(!res){
                 qWarning() <<"error writing to "<< rawkey<< v;
             }
+#endif
         }
+#ifdef STELLAR_QT_DEBUG_PARSER
         else
         {
             qWarning() << "invalid : "<< v.typeName()<< rawkey;// we dont allow QVariant Q_PROPERTIES without initializing the type. You should verify that type match.
         }
+#endif
     }
 }
 

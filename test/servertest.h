@@ -53,6 +53,8 @@ class ServerTest: public QObject
     QString DESTINATION_ACCOUNT_NO_MEMO_REQUIRED = "GDYC2D4P2SRC5DCEDDK2OUFESSPCTZYLDOEF6NYHR2T7X5GUTEABCQC2";
     QString DESTINATION_ACCOUNT_NO_FOUND = "GD2OVSQPGD5FBJPMW4YN3FGDJ7JDFKNOMJT35T4H52FLHXJK5MFSR5RA";
     QString DESTINATION_ACCOUNT_FETCH_ERROR = "GB7WNQUTDLD6YJ4MR3KQN3Y6ZIDIGTA7GRKNH47HOGMP2ETFGRSLD6OG";
+    QString DESTINATION_ACCOUNT_MEMO_ID = "MCAAAAAAAAAAAAB7BQ2L7E5NBWMXDUCMZSIPOBKRDSBYVLMXGSSKF6YNPIB7Y77ITKNOG";
+
     QString successTransactionResponse ="{\n"
                             "  \"_links\": {\n"
                             "    \"transaction\": {\n"
@@ -81,6 +83,17 @@ class ServerTest: public QObject
                                       " \"status\": 404,\n"
                                       " \"detail\": \"The resource at the url requested was not found.  This usually occurs for one of two reasons:  The url requested is not valid, or no data in our database could be found with the parameters provided.\"\n"
                                     "}";
+
+    FeeBumpTransaction* feeBump(Transaction* inner) {
+        inner->setEnvelopeType(stellar::EnvelopeType::ENVELOPE_TYPE_TX);
+        KeyPair* signer = KeyPair::fromSecretSeed(QString("SA5ZEFDVFZ52GRU7YUGR6EDPBNRU2WLA6IQFQ7S2IH2DG3VFV3DOMV2Q"));
+        FeeBumpTransaction* tx =  FeeBumpTransaction::Builder(inner)
+                .setFeeAccount(signer->getAccountId())
+                .setBaseFee(FeeBumpTransaction::MIN_BASE_FEE*10)
+                .build();
+        tx->sign(signer);
+        return tx;
+    }
 private slots:
 
     void initTestCase()
@@ -105,7 +118,8 @@ private slots:
         Transaction::Builder *builder = new Transaction::Builder(account);
         builder->addOperation(new CreateAccountOperation(destination, "2000"))
                 .addMemo(Memo::text("Hello world!"))
-                .setTimeout(Transaction::Builder::TIMEOUT_INFINITE);
+                .setTimeout(Transaction::Builder::TIMEOUT_INFINITE)
+                .setBaseFee(Transaction::Builder::BASE_FEE);
 
         QVERIFY(1 == builder->getOperationsCount());
         Transaction *transaction = builder->build();
@@ -147,7 +161,7 @@ private slots:
          Account* account = new Account(source, sequenceNumber);
          Transaction::Builder *builder = new Transaction::Builder(account);
          builder->addOperation(new CreateAccountOperation(destination, "2000"))
-                 .addMemo(Memo::text("Hello world!")).setTimeout(Transaction::Builder::TIMEOUT_INFINITE);
+                 .addMemo(Memo::text("Hello world!")).setTimeout(Transaction::Builder::TIMEOUT_INFINITE).setBaseFee(Transaction::Builder::BASE_FEE);
 
          QVERIFY(1 == builder->getOperationsCount());
          Transaction *transaction = builder->build();
@@ -198,7 +212,7 @@ private slots:
                  .addOperation(AccountMergeOperation::create(KeyPair::fromAccountId(DESTINATION_ACCOUNT_MEMO_REQUIRED_D)))
                  .setTimeout(Transaction::Builder::TIMEOUT_INFINITE)
                  .addMemo(new MemoText("Hello, Stellar."))
-                 .setOperationFee(100)
+                 .setBaseFee(100)
                  .build();
 
          transaction->sign(source);
@@ -211,10 +225,42 @@ private slots:
          m_server->submitTransaction(transaction);
 
          WAIT_FOR(!r)
+
+         QVERIFY(r);
+
+         r=nullptr;
+
+         m_server->submitTransaction(feeBump(transaction));
          WAIT_FOR(!r)
 
+         QVERIFY(r);
 
-        QVERIFY(r);
+     }
+
+
+     void testCheckMemoRequiredWithMemoIdAddress()
+     {         
+         m_server = new Server("http://localhost:8080");
+
+         KeyPair* source = KeyPair::fromSecretSeed(QString("SDQXFKA32UVQHUTLYJ42N56ZUEM5PNVVI4XE7EA5QFMLA2DHDCQX3GPY"));
+         Account* account = new Account(source, 1L);
+         Transaction* transaction =nullptr;
+         try{
+             transaction = Transaction::Builder(account, Network::current())
+                     .addOperation(new PaymentOperation(DESTINATION_ACCOUNT_MEMO_ID, new AssetTypeNative(), "10"))
+                     .addOperation(new PathPaymentStrictReceiveOperation(new AssetTypeNative(), "10", DESTINATION_ACCOUNT_MEMO_ID, new AssetTypeCreditAlphaNum4("BTC", QString("GA7GYB3QGLTZNHNGXN3BMANS6TC7KJT3TCGTR763J4JOU4QHKL37RVV2")), "5"))
+                     .addOperation(new PathPaymentStrictSendOperation(new AssetTypeNative(), "10", DESTINATION_ACCOUNT_MEMO_ID, new AssetTypeCreditAlphaNum4("BTC", QString("GA7GYB3QGLTZNHNGXN3BMANS6TC7KJT3TCGTR763J4JOU4QHKL37RVV2")), "5"))
+                     .addOperation(new AccountMergeOperation(DESTINATION_ACCOUNT_MEMO_ID))
+                     .setTimeout(Transaction::Builder::TIMEOUT_INFINITE)
+                     .setBaseFee(100)
+                     .build();
+             QFAIL("Missing exception");
+         } catch (std::runtime_error e) {
+             qDebug() << "EXCEPTION "<< e.what();
+             QCOMPARE("invalid address length", QString(e.what()));
+         }
+
+         QVERIFY(transaction==nullptr);//we dont even allow to build the transaction if destination is wrong.
 
      }
 
@@ -232,7 +278,7 @@ private slots:
                  .addOperation(PathPaymentStrictSendOperation::create(new AssetTypeNative(), "10", KeyPair::fromAccountId(DESTINATION_ACCOUNT_MEMO_REQUIRED_C), new AssetTypeCreditAlphaNum4("BTC", QString("GA7GYB3QGLTZNHNGXN3BMANS6TC7KJT3TCGTR763J4JOU4QHKL37RVV2")), "5"))
                  .addOperation(AccountMergeOperation::create(KeyPair::fromAccountId(DESTINATION_ACCOUNT_MEMO_REQUIRED_D)))
                  .setTimeout(Transaction::Builder::TIMEOUT_INFINITE)
-                 .setOperationFee(100)
+                 .setBaseFee(100)
                  .build();
 
          transaction->sign(source);
@@ -247,7 +293,13 @@ private slots:
          WAIT_FOR(!r)
 
 
-        QVERIFY(r);
+         QVERIFY(r);
+         r=nullptr;
+
+         m_server->submitTransaction(feeBump(transaction),true);
+         WAIT_FOR(!r)
+
+         QVERIFY(r);
      }
 
      void testCheckMemoRequiredWithPaymentOperationNoMemo() {
@@ -264,7 +316,7 @@ private slots:
                  .addOperation(PathPaymentStrictSendOperation::create(new AssetTypeNative(), "10", KeyPair::fromAccountId(DESTINATION_ACCOUNT_NO_MEMO_REQUIRED), new AssetTypeCreditAlphaNum4("BTC", QString("GA7GYB3QGLTZNHNGXN3BMANS6TC7KJT3TCGTR763J4JOU4QHKL37RVV2")), "5"))
                  .addOperation(AccountMergeOperation::create(KeyPair::fromAccountId(DESTINATION_ACCOUNT_NO_MEMO_REQUIRED)))
                  .setTimeout(Transaction::Builder::TIMEOUT_INFINITE)
-                 .setOperationFee(100)
+                 .setBaseFee(100)
                  .build();
 
          transaction->sign(source);
@@ -280,6 +332,13 @@ private slots:
 
 
          QVERIFY(r);//r is set because we received an error
+
+         r=nullptr;
+
+         m_server->submitTransaction(feeBump(transaction));
+         WAIT_FOR(!r)
+
+         QVERIFY(r);
 
      }
      void testCheckMemoRequiredWithPathPaymentStrictReceiveOperationNoMemo() {
@@ -296,7 +355,7 @@ private slots:
                  .addOperation(PathPaymentStrictSendOperation::create(new AssetTypeNative(), "10", KeyPair::fromAccountId(DESTINATION_ACCOUNT_NO_MEMO_REQUIRED), new AssetTypeCreditAlphaNum4("BTC", QString("GA7GYB3QGLTZNHNGXN3BMANS6TC7KJT3TCGTR763J4JOU4QHKL37RVV2")), "5"))
                  .addOperation(AccountMergeOperation::create(KeyPair::fromAccountId(DESTINATION_ACCOUNT_NO_MEMO_REQUIRED)))
                  .setTimeout(Transaction::Builder::TIMEOUT_INFINITE)
-                 .setOperationFee(100)
+                 .setBaseFee(100)
                  .build();
 
          transaction->sign(source);
@@ -312,6 +371,13 @@ private slots:
 
 
          QVERIFY(r);//r is set because we received an error
+
+         r=nullptr;
+
+         m_server->submitTransaction(feeBump(transaction));
+         WAIT_FOR(!r)
+
+         QVERIFY(r);
      }
 
 
@@ -329,7 +395,7 @@ private slots:
                  .addOperation(PathPaymentStrictSendOperation::create(new AssetTypeNative(), "10", KeyPair::fromAccountId(DESTINATION_ACCOUNT_MEMO_REQUIRED_C), new AssetTypeCreditAlphaNum4("BTC", QString("GA7GYB3QGLTZNHNGXN3BMANS6TC7KJT3TCGTR763J4JOU4QHKL37RVV2")), "5"))
                  .addOperation(AccountMergeOperation::create(KeyPair::fromAccountId(DESTINATION_ACCOUNT_NO_MEMO_REQUIRED)))
                  .setTimeout(Transaction::Builder::TIMEOUT_INFINITE)
-                 .setOperationFee(100)
+                 .setBaseFee(100)
                  .build();
 
          transaction->sign(source);
@@ -345,6 +411,13 @@ private slots:
 
 
          QVERIFY(r);//r is set because we received an error
+
+         r=nullptr;
+
+         m_server->submitTransaction(feeBump(transaction));
+         WAIT_FOR(!r)
+
+         QVERIFY(r);
      }
 
      void testCheckMemoRequiredWithAccountMergeOperationNoMemo() {
@@ -361,7 +434,7 @@ private slots:
                  .addOperation(PathPaymentStrictSendOperation::create(new AssetTypeNative(), "10", KeyPair::fromAccountId(DESTINATION_ACCOUNT_NO_MEMO_REQUIRED), new AssetTypeCreditAlphaNum4("BTC", QString("GA7GYB3QGLTZNHNGXN3BMANS6TC7KJT3TCGTR763J4JOU4QHKL37RVV2")), "5"))
                  .addOperation(AccountMergeOperation::create(KeyPair::fromAccountId(DESTINATION_ACCOUNT_MEMO_REQUIRED_D)))
                  .setTimeout(Transaction::Builder::TIMEOUT_INFINITE)
-                 .setOperationFee(100)
+                 .setBaseFee(100)
                  .build();
 
          transaction->sign(source);
@@ -377,6 +450,13 @@ private slots:
 
 
          QVERIFY(r);//r is set because we received an error
+
+         r=nullptr;
+
+         m_server->submitTransaction(feeBump(transaction));
+         WAIT_FOR(!r)
+
+         QVERIFY(r);
      }
 
      void testCheckMemoRequiredTwoOperationsWithSameDestination(){
@@ -393,7 +473,7 @@ private slots:
                  .addOperation(PathPaymentStrictSendOperation::create(new AssetTypeNative(), "10", KeyPair::fromAccountId(DESTINATION_ACCOUNT_MEMO_REQUIRED_C), new AssetTypeCreditAlphaNum4("BTC", QString("GA7GYB3QGLTZNHNGXN3BMANS6TC7KJT3TCGTR763J4JOU4QHKL37RVV2")), "5"))
                  .addOperation(AccountMergeOperation::create(KeyPair::fromAccountId(DESTINATION_ACCOUNT_MEMO_REQUIRED_D)))
                  .setTimeout(Transaction::Builder::TIMEOUT_INFINITE)
-                 .setOperationFee(100)
+                 .setBaseFee(100)
                  .build();
 
          transaction->sign(source);
@@ -409,6 +489,13 @@ private slots:
 
 
          QVERIFY(r);//r is set because we received an error
+
+         r=nullptr;
+
+         m_server->submitTransaction(feeBump(transaction));
+         WAIT_FOR(!r)
+
+         QVERIFY(r);
      }
 
 
@@ -427,7 +514,7 @@ private slots:
                  .addOperation(PathPaymentStrictSendOperation::create(new AssetTypeNative(), "10", KeyPair::fromAccountId(DESTINATION_ACCOUNT_MEMO_REQUIRED_C), new AssetTypeCreditAlphaNum4("BTC", QString("GA7GYB3QGLTZNHNGXN3BMANS6TC7KJT3TCGTR763J4JOU4QHKL37RVV2")), "5"))
                  .addOperation(AccountMergeOperation::create(KeyPair::fromAccountId(DESTINATION_ACCOUNT_MEMO_REQUIRED_D)))
                  .setTimeout(Transaction::Builder::TIMEOUT_INFINITE)
-                 .setOperationFee(100)
+                 .setBaseFee(100)
                  .build();
 
          transaction->sign(source);
@@ -443,6 +530,13 @@ private slots:
 
 
          QVERIFY(r);//r is set because we received an error
+
+         r=nullptr;
+
+         m_server->submitTransaction(feeBump(transaction));
+         WAIT_FOR(!r)
+
+         QVERIFY(r);
      }
 
 
@@ -461,7 +555,7 @@ private slots:
                  .addOperation(PathPaymentStrictSendOperation::create(new AssetTypeNative(), "10", KeyPair::fromAccountId(DESTINATION_ACCOUNT_NO_FOUND), new AssetTypeCreditAlphaNum4("BTC", QString("GA7GYB3QGLTZNHNGXN3BMANS6TC7KJT3TCGTR763J4JOU4QHKL37RVV2")), "5"))
                  .addOperation(AccountMergeOperation::create(KeyPair::fromAccountId(DESTINATION_ACCOUNT_NO_FOUND)))
                  .setTimeout(Transaction::Builder::TIMEOUT_INFINITE)
-                 .setOperationFee(100)
+                 .setBaseFee(100)
                  .build();
 
          transaction->sign(source);
@@ -476,6 +570,40 @@ private slots:
          WAIT_FOR(!r)
 
 
+
+         QVERIFY(r);
+
+     }
+
+     void testCheckMemoRequiredAccountNotFoundBump(){
+         FakeServer fakeServer;
+
+         fakeServer.addPost("/transactions",successTransactionResponse);
+         fakeServer.addGet("/accounts/"+DESTINATION_ACCOUNT_NO_FOUND,resourceMissingResponse,"404 Not Found");
+         m_server = new Server("http://localhost:8080");
+
+         KeyPair* source = KeyPair::fromSecretSeed(QString("SDQXFKA32UVQHUTLYJ42N56ZUEM5PNVVI4XE7EA5QFMLA2DHDCQX3GPY"));
+         Account* account = new Account(source, 1L);
+         Transaction *transaction =  Transaction::Builder(account)
+                 .addOperation(PaymentOperation::create(KeyPair::fromAccountId(DESTINATION_ACCOUNT_NO_FOUND), new AssetTypeNative(), "10"))
+                 .addOperation(PathPaymentStrictReceiveOperation::create(new AssetTypeNative(), "10", KeyPair::fromAccountId(DESTINATION_ACCOUNT_NO_FOUND), new AssetTypeCreditAlphaNum4("BTC", QString("GA7GYB3QGLTZNHNGXN3BMANS6TC7KJT3TCGTR763J4JOU4QHKL37RVV2")), "5"))
+                 .addOperation(PathPaymentStrictSendOperation::create(new AssetTypeNative(), "10", KeyPair::fromAccountId(DESTINATION_ACCOUNT_NO_FOUND), new AssetTypeCreditAlphaNum4("BTC", QString("GA7GYB3QGLTZNHNGXN3BMANS6TC7KJT3TCGTR763J4JOU4QHKL37RVV2")), "5"))
+                 .addOperation(AccountMergeOperation::create(KeyPair::fromAccountId(DESTINATION_ACCOUNT_NO_FOUND)))
+                 .setTimeout(Transaction::Builder::TIMEOUT_INFINITE)
+                 .setBaseFee(100)
+                 .build();
+
+         transaction->sign(source);
+
+         SubmitTransactionResponse *r=nullptr;
+
+         QMetaObject::Connection c = QObject::connect(m_server,&Server::transactionResponse,[&r](SubmitTransactionResponse *response){
+             r = response;
+         });
+
+         m_server->submitTransaction(feeBump(transaction));
+
+         WAIT_FOR(!r)
 
          QVERIFY(r);
      }
@@ -503,7 +631,7 @@ private slots:
                  .addOperation(PathPaymentStrictSendOperation::create(new AssetTypeNative(), "10", KeyPair::fromAccountId(DESTINATION_ACCOUNT_MEMO_REQUIRED_D), new AssetTypeCreditAlphaNum4("BTC", QString("GA7GYB3QGLTZNHNGXN3BMANS6TC7KJT3TCGTR763J4JOU4QHKL37RVV2")), "5"))
                  .addOperation(AccountMergeOperation::create(KeyPair::fromAccountId(DESTINATION_ACCOUNT_MEMO_REQUIRED_D)))
                  .setTimeout(Transaction::Builder::TIMEOUT_INFINITE)
-                 .setOperationFee(100)
+                 .setBaseFee(100)
                  .build();
 
          transaction->sign(source);
@@ -513,12 +641,18 @@ private slots:
          QMetaObject::Connection c = QObject::connect(m_server,&Server::transactionError,[&r](SubmitTransactionResponse *response){
              r = response;
          });
-         m_server->submitTransaction(transaction);
-
+         m_server->submitTransaction(transaction);         
          WAIT_FOR(!r)
 
 
          QVERIFY(r);//r is set because we received an error
+
+         r=nullptr;
+
+         m_server->submitTransaction(feeBump(transaction));        
+         WAIT_FOR(!r)
+
+         QVERIFY(r);
      }
 
 

@@ -45,14 +45,8 @@ public:
          * @param sourceAccount The operation's source account.
          * @return ManageDataOperation object so you can chain methods.
          */
-    ManageDataOperation* setSourceAccount(KeyPair* sourceAccount);
+    ManageDataOperation* setSourceAccount(QString sourceAccount);
 
-    /**
-         * Sets the source account for this operation making a copy of keypair
-         * @param sourceAccount The operation's source account.
-         * @return ManageDataOperation object so you can chain methods.
-         */
-    ManageDataOperation* setSourceAccount(KeyPair& sourceAccount);
 
 };
 

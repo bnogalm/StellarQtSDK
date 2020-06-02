@@ -223,10 +223,14 @@ namespace stellar
     enum class TrustLineFlags : qint32
     {
         // issuer has authorized account to perform transactions with its credit
-        AUTHORIZED_FLAG = 1
+        AUTHORIZED_FLAG = 1,
+        // issuer has authorized account to maintain and reduce liabilities for its
+        // credit
+        AUTHORIZED_TO_MAINTAIN_LIABILITIES_FLAG = 2
     };
     //mask for all trustline flags
     const qint32 MASK_TRUSTLINE_FLAGS = 1;
+    const qint32 MASK_TRUSTLINE_FLAGS_V13 = 3;
 
     struct TrustLineEntry
     {
@@ -388,10 +392,12 @@ namespace stellar
     // the respective envelopes
     enum class EnvelopeType : qint32
     {
+        ENVELOPE_TYPE_TX_V0 = 0,
         ENVELOPE_TYPE_SCP = 1,
         ENVELOPE_TYPE_TX = 2,
         ENVELOPE_TYPE_AUTH = 3,
-        ENVELOPE_TYPE_SCPVALUE = 4
+        ENVELOPE_TYPE_SCPVALUE = 4,
+        ENVELOPE_TYPE_TX_FEE_BUMP = 5
     };
 }
 

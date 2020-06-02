@@ -64,7 +64,7 @@ private slots:
 
        QString startingAmount("1000");
        CreateAccountOperation* operation = new CreateAccountOperation(destination, startingAmount);
-       operation->setSourceAccount(source);
+       operation->setSourceAccount(source->getAccountId());
 
 
        stellar::Operation xdr = operation->toXdr();
@@ -72,7 +72,7 @@ private slots:
 
        QVERIFY(10000000000L==xdr.operationCreateAccount.startingBalance);
 
-       QVERIFY(source->getAccountId()==parsedOperation->getSourceAccount()->getAccountId());
+       QVERIFY(source->getAccountId()==parsedOperation->getSourceAccount());
 
        QVERIFY(destination->getAccountId()==parsedOperation->getDestination()->getAccountId());
        QVERIFY(startingAmount==parsedOperation->getStartingBalance());
@@ -94,7 +94,7 @@ private slots:
          Asset* asset = new AssetTypeNative();
          QString amount = "1000";
 
-         Operation* operation = PaymentOperation::create(destination, asset, amount)->setSourceAccount(*source);
+         Operation* operation = PaymentOperation::create(destination, asset, amount)->setSourceAccount(source->getAccountId());
 
          stellar::Operation xdr = operation->toXdr();
 
@@ -102,8 +102,9 @@ private slots:
          PaymentOperation* parsedOperation = static_cast<PaymentOperation*>(Operation::fromXdr(xdr));
 
          QVERIFY(10000000000L==xdr.operationPayment.amount);
-         QVERIFY(source->getAccountId()==parsedOperation->getSourceAccount()->getAccountId());
-         QVERIFY(destination->getAccountId()== parsedOperation->getDestination()->getAccountId());
+         QVERIFY(source->getAccountId()==parsedOperation->getSourceAccount());
+         //QVERIFY(destination->getAccountId()== parsedOperation->getDestination());
+         QCOMPARE(parsedOperation->getDestination(),destination->getAccountId());
          QVERIFY(dynamic_cast<AssetTypeNative*>(parsedOperation->getAsset()));
          QVERIFY(amount == parsedOperation->getAmount());
          QString expected("AAAAAQAAAAC7JAuE3XvquOnbsgv2SRztjuk4RoBVefQ0rlrFMMQvfAAAAAEAAAAA7eBSYbzcL5UKo7oXO24y1ckX+XuCtkDsyNHOp1n1bxAAAAAAAAAAAlQL5AA=");
@@ -136,8 +137,8 @@ private slots:
 
 
        PathPaymentOperation* operation = new PathPaymentOperation(
-           sendAsset, sendMax, destination, destAsset, destAmount, path);
-       operation->setSourceAccount(source);
+           sendAsset, sendMax, destination->getAccountId(), destAsset, destAmount, path);
+       operation->setSourceAccount(source->getAccountId());
 
 
 
@@ -147,8 +148,8 @@ private slots:
        QVERIFY(1000L== xdr.operationPathPaymentStrictReceive.sendMax);
        QVERIFY(1000L== xdr.operationPathPaymentStrictReceive.destAmount);
        QVERIFY(dynamic_cast<AssetTypeNative*>(parsedOperation->getSendAsset()));
-       QCOMPARE(source->getAccountId(), parsedOperation->getSourceAccount()->getAccountId());
-       QCOMPARE(destination->getAccountId(), parsedOperation->getDestination()->getAccountId());
+       QCOMPARE(source->getAccountId(), parsedOperation->getSourceAccount());
+       QCOMPARE(destination->getAccountId(), parsedOperation->getDestination());
        QCOMPARE(sendMax, parsedOperation->getSendMax());
        QVERIFY(dynamic_cast<AssetTypeCreditAlphaNum4*>(parsedOperation->getDestAsset()));
        QCOMPARE(destAmount, parsedOperation->getDestAmount());
@@ -174,8 +175,8 @@ private slots:
        QString destAmount = "0.0001";
 
        PathPaymentOperation* operation = new PathPaymentOperation(
-               sendAsset, sendMax, destination, destAsset, destAmount);
-       operation->setSourceAccount(source);
+               sendAsset, sendMax, destination->getAccountId(), destAsset, destAmount);
+       operation->setSourceAccount(source->getAccountId());
 
        auto xdr = operation->toXdr();
        PathPaymentOperation* parsedOperation = static_cast<PathPaymentOperation*>(Operation::fromXdr(xdr));
@@ -184,8 +185,8 @@ private slots:
 
        QVERIFY(1000L== xdr.operationPathPaymentStrictReceive.destAmount);
        QVERIFY(dynamic_cast<AssetTypeNative*>(parsedOperation->getSendAsset()));
-       QCOMPARE(source->getAccountId(), parsedOperation->getSourceAccount()->getAccountId());
-       QCOMPARE(destination->getAccountId(), parsedOperation->getDestination()->getAccountId());
+       QCOMPARE(source->getAccountId(), parsedOperation->getSourceAccount());
+       QCOMPARE(destination->getAccountId(), parsedOperation->getDestination());
        QCOMPARE(sendMax, parsedOperation->getSendMax());
        QVERIFY(dynamic_cast<AssetTypeCreditAlphaNum4*>(parsedOperation->getDestAsset()));
        QCOMPARE(destAmount, parsedOperation->getDestAmount());
@@ -217,7 +218,7 @@ private slots:
          PathPaymentStrictSendOperation* operation = PathPaymentStrictSendOperation::create(
                      sendAsset, sendAmount, destination, destAsset, destMin)
                  ->setPath(path)
-                 ->setSourceAccount(source);
+                 ->setSourceAccount(source->getAccountId());
 
          auto xdr = operation->toXdr();
          PathPaymentStrictSendOperation* parsedOperation = static_cast<PathPaymentStrictSendOperation*>(Operation::fromXdr(xdr));
@@ -225,8 +226,8 @@ private slots:
          QCOMPARE(xdr.operationPathPaymentStrictSend.sendAmount,1000L);
          QCOMPARE(xdr.operationPathPaymentStrictSend.destMin,9000L);
          QVERIFY(dynamic_cast<AssetTypeNative*>(parsedOperation->getSendAsset()));
-         QCOMPARE(source->getAccountId(), parsedOperation->getSourceAccount()->getAccountId());
-         QCOMPARE(destination->getAccountId(), parsedOperation->getDestination()->getAccountId());
+         QCOMPARE(source->getAccountId(), parsedOperation->getSourceAccount());
+         QCOMPARE(destination->getAccountId(), parsedOperation->getDestination());
          QCOMPARE(sendAmount, parsedOperation->getSendAmount());
          QVERIFY(dynamic_cast<AssetTypeCreditAlphaNum4*>(parsedOperation->getDestAsset()));
          QCOMPARE(destMin, parsedOperation->getDestMin());
@@ -255,7 +256,7 @@ private slots:
          QString destMin = "0.0009";
 
          PathPaymentStrictSendOperation* operation = PathPaymentStrictSendOperation::create(
-                     sendAsset, sendAmount, destination, destAsset, destMin)->setSourceAccount(source);
+                     sendAsset, sendAmount, destination, destAsset, destMin)->setSourceAccount(source->getAccountId());
 
          auto xdr = operation->toXdr();
          PathPaymentStrictSendOperation* parsedOperation = static_cast<PathPaymentStrictSendOperation*>(Operation::fromXdr(xdr));
@@ -263,8 +264,8 @@ private slots:
          QCOMPARE(xdr.operationPathPaymentStrictSend.sendAmount,1000L);
          QCOMPARE(xdr.operationPathPaymentStrictSend.destMin,9000L);
          QVERIFY(dynamic_cast<AssetTypeNative*>(parsedOperation->getSendAsset()));
-         QCOMPARE(source->getAccountId(), parsedOperation->getSourceAccount()->getAccountId());
-         QCOMPARE(destination->getAccountId(), parsedOperation->getDestination()->getAccountId());
+         QCOMPARE(source->getAccountId(), parsedOperation->getSourceAccount());
+         QCOMPARE(destination->getAccountId(), parsedOperation->getDestination());
          QCOMPARE(sendAmount, parsedOperation->getSendAmount());
          QVERIFY(dynamic_cast<AssetTypeCreditAlphaNum4*>(parsedOperation->getDestAsset()));
          QCOMPARE(destMin, parsedOperation->getDestMin());
@@ -281,13 +282,13 @@ private slots:
        QString limit = "922337203685.4775807";
 
        ChangeTrustOperation* operation = new ChangeTrustOperation(asset, limit);
-       operation->setSourceAccount(source);
+       operation->setSourceAccount(source->getAccountId());
 
        auto xdr = operation->toXdr();
        ChangeTrustOperation* parsedOperation = static_cast<ChangeTrustOperation*>(Operation::fromXdr(xdr));
 
        QCOMPARE(9223372036854775807L, xdr.operationChangeTrust.limit);
-       QCOMPARE(source->getAccountId(), parsedOperation->getSourceAccount()->getAccountId());
+       QCOMPARE(source->getAccountId(), parsedOperation->getSourceAccount());
        QVERIFY(dynamic_cast<AssetTypeNative*>(parsedOperation->getAsset()));
        QCOMPARE(limit, parsedOperation->getLimit());
 
@@ -305,14 +306,14 @@ private slots:
        QString assetCode = "USDA";
        bool authorize = true;
 
-       AllowTrustOperation operation(trustor, assetCode, authorize);
-       operation.setSourceAccount(source);
+       AllowTrustOperation operation(trustor, assetCode, authorize, false);
+       operation.setSourceAccount(source->getAccountId());
 
 
        auto xdr = operation.toXdr();
        AllowTrustOperation* parsedOperation = static_cast<AllowTrustOperation*>(Operation::fromXdr(xdr));
 
-       QCOMPARE(source->getAccountId(), parsedOperation->getSourceAccount()->getAccountId());
+       QCOMPARE(source->getAccountId(), parsedOperation->getSourceAccount());
        QCOMPARE(trustor->getAccountId(), parsedOperation->getTrustor()->getAccountId());
        QCOMPARE(assetCode, parsedOperation->getAssetCode());
        QCOMPARE(authorize, parsedOperation->getAuthorize());
@@ -331,7 +332,7 @@ private slots:
        bool authorize = true;
 
        AllowTrustOperation* operation = AllowTrustOperation::create(trustor, assetCode, authorize)
-           ->setSourceAccount(source);
+           ->setSourceAccount(source->getAccountId());
 
        auto xdr = operation->toXdr();
        AllowTrustOperation* parsedOperation = static_cast<AllowTrustOperation*>(Operation::fromXdr(xdr));
@@ -366,7 +367,7 @@ private slots:
            ->setHighThreshold(highThreshold)
            ->setHomeDomain(homeDomain)
            ->setSigner(signer, signerWeight)
-           ->setSourceAccount(source);
+           ->setSourceAccount(source->getAccountId());
 
        auto xdr = operation->toXdr();
        SetOptionsOperation* parsedOperation = static_cast<SetOptionsOperation*>(SetOptionsOperation::fromXdr(xdr));
@@ -382,7 +383,7 @@ private slots:
        QCOMPARE(signer.type, parsedOperation->getSigner()->type);
        QVERIFY(memcmp(signer.ed25519, parsedOperation->getSigner()->ed25519,sizeof(signer.ed25519))==0);
        QCOMPARE(signerWeight, parsedOperation->getSignerWeight());
-       QCOMPARE(source->getAccountId(), parsedOperation->getSourceAccount()->getAccountId());
+       QCOMPARE(source->getAccountId(), parsedOperation->getSourceAccount());
 
        QCOMPARE(operation->toXdrBase64()
                 ,QString("AAAAAQAAAAC7JAuE3XvquOnbsgv2SRztjuk4RoBVefQ0rlrFMMQvfAAAAAUAAAABAAAAAO3gUmG83C+VCqO6FztuMtXJF/l7grZA7MjRzqdZ9W8QAAAAAQAAAAEAAAABAAAAAQAAAAEAAAABAAAAAQAAAAIAAAABAAAAAwAAAAEAAAAEAAAAAQAAAAtzdGVsbGFyLm9yZwAAAAABAAAAAET+21WXwEtXRyxb/GBe1tc5V/WUzIOW4yJp+XQgNUUiAAAAAQ=="));
@@ -397,7 +398,7 @@ private slots:
 
        SetOptionsOperation* operation = SetOptionsOperation::create()
            ->setHomeDomain(homeDomain)
-           ->setSourceAccount(source);
+           ->setSourceAccount(source->getAccountId());
 
        auto xdr = operation->toXdr();
        SetOptionsOperation* parsedOperation = static_cast<SetOptionsOperation*>(SetOptionsOperation::fromXdr(xdr));
@@ -412,7 +413,7 @@ private slots:
        QCOMPARE(homeDomain, parsedOperation->getHomeDomain());
        QVERIFY(parsedOperation->getSigner()==nullptr);
        QVERIFY(parsedOperation->getSignerWeight().isNull());
-       QCOMPARE(source->getAccountId(), parsedOperation->getSourceAccount()->getAccountId());
+       QCOMPARE(source->getAccountId(), parsedOperation->getSourceAccount());
 
        QCOMPARE(operation->toXdrBase64()
                 ,QString("AAAAAQAAAAC7JAuE3XvquOnbsgv2SRztjuk4RoBVefQ0rlrFMMQvfAAAAAUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAAtzdGVsbGFyLm9yZwAAAAAA"));
@@ -428,7 +429,7 @@ private slots:
 
        SetOptionsOperation* operation = SetOptionsOperation::create()
                ->setSigner(Signer::sha256Hash(hash), 10)
-               ->setSourceAccount(source);
+               ->setSourceAccount(source->getAccountId());
 
        auto xdr = operation->toXdr();
 
@@ -446,7 +447,7 @@ private slots:
        QVERIFY(parsedOperation->getHomeDomain().isNull());
        QVERIFY(memcmp(hash.data(), parsedOperation->getSigner()->hashX,static_cast<size_t>(hash.size()))==0);
        QCOMPARE(10, static_cast<int>(parsedOperation->getSignerWeight()));
-       QCOMPARE(source->getAccountId(), parsedOperation->getSourceAccount()->getAccountId());
+       QCOMPARE(source->getAccountId(), parsedOperation->getSourceAccount());
 
        QCOMPARE(operation->toXdrBase64()
                 ,QString("AAAAAQAAAAC7JAuE3XvquOnbsgv2SRztjuk4RoBVefQ0rlrFMMQvfAAAAAUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAACbpRqMkaQAfCYSk/n3xIl4fCoHfKqxF34ht2iuvSYEJQAAAAK"));
@@ -462,7 +463,10 @@ private slots:
        Account* account = new Account(source, sequenceNumber);
 
 
-       Transaction* transaction = Transaction::Builder(account).addOperation(new CreateAccountOperation(destination,"2000")).setTimeout(Transaction::Builder::TIMEOUT_INFINITE).build();
+       Transaction* transaction = Transaction::Builder(account).addOperation(new CreateAccountOperation(destination,"2000"))
+               .setTimeout(Transaction::Builder::TIMEOUT_INFINITE)
+               .setBaseFee(Transaction::Builder::BASE_FEE)
+               .build();
 
 
        // GC5SIC4E3V56VOHJ3OZAX5SJDTWY52JYI2AFK6PUGSXFVRJQYQXXZBZF
@@ -470,7 +474,7 @@ private slots:
 
        SetOptionsOperation* operation = SetOptionsOperation::create()
                ->setSigner(Signer::preAuthTx(transaction), 10)
-               ->setSourceAccount(opSource);
+               ->setSourceAccount(opSource->getAccountId());
 
        auto xdr = operation->toXdr();
        SetOptionsOperation* parsedOperation = static_cast<SetOptionsOperation*>(SetOptionsOperation::fromXdr(xdr));
@@ -485,7 +489,7 @@ private slots:
        QVERIFY(parsedOperation->getHomeDomain().isNull());
        QVERIFY(memcmp(transaction->hash().data(), parsedOperation->getSigner()->preAuthTx,sizeof(parsedOperation->getSigner()->preAuthTx))==0);
        QCOMPARE(Integer(10), parsedOperation->getSignerWeight());
-       QCOMPARE(opSource->getAccountId(), parsedOperation->getSourceAccount()->getAccountId());
+       QCOMPARE(opSource->getAccountId(), parsedOperation->getSourceAccount());
 
        QCOMPARE(operation->toXdrBase64()
                 ,QString("AAAAAQAAAAC7JAuE3XvquOnbsgv2SRztjuk4RoBVefQ0rlrFMMQvfAAAAAUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAAB1vRBIRC3w7ZH5rQa17hIBKUwZTvBP4kNmSP7jVyw1fQAAAAK"));
@@ -507,7 +511,7 @@ private slots:
 
        ManageSellOfferOperation* operation = ManageSellOfferOperation::create(selling, buying, amount, price)
            ->setOfferId(offerId)
-           ->setSourceAccount(source);
+           ->setSourceAccount(source->getAccountId());
 
        auto xdr = operation->toXdr();
        ManageSellOfferOperation* parsedOperation = (ManageSellOfferOperation*) ManageSellOfferOperation::fromXdr(xdr);
@@ -542,7 +546,7 @@ private slots:
 
        ManageBuyOfferOperation* operation = ManageBuyOfferOperation::create(selling, buying, amount, price)
            ->setOfferId(offerId)
-           ->setSourceAccount(source);
+           ->setSourceAccount(source->getAccountId());
 
        auto xdr = operation->toXdr();
        ManageBuyOfferOperation* parsedOperation = (ManageBuyOfferOperation*) ManageBuyOfferOperation::fromXdr(xdr);
@@ -570,9 +574,8 @@ private slots:
         stellar::TransactionEnvelope transactionEnvelope;
         QDataStream stream(&transactionEnvelopeToDecode,QIODevice::ReadOnly);
         stream >> transactionEnvelope;
-
-        QCOMPARE(transactionEnvelope.tx.operations.value.length(),1);
-        auto & opXdr = transactionEnvelope.tx.operations.value[0];
+        QCOMPARE(transactionEnvelope.v0.tx.operations.value.length(),1);
+        auto & opXdr = transactionEnvelope.v0.tx.operations.value[0];
         ManageSellOfferOperation* op = (ManageSellOfferOperation*)Operation::fromXdr(opXdr);
 
         QCOMPARE(op->getPrice(),"3397.893306099996");
@@ -587,9 +590,9 @@ private slots:
         QDataStream stream(&transactionEnvelopeToDecode,QIODevice::ReadOnly);
         stream >> transactionEnvelope;
 
-        QCOMPARE(transactionEnvelope.tx.operations.value.length(),1);
+        QCOMPARE(transactionEnvelope.v0.tx.operations.value.length(),1);
 
-        Transaction * t = Transaction::fromEnvelopeXdr(transactionEnvelope);
+        Transaction * t = dynamic_cast<Transaction*>(Transaction::fromEnvelopeXdr(transactionEnvelope));
 
         ManageBuyOfferOperation* op = (ManageBuyOfferOperation*)t->getOperations().first();//Operation::fromXdr(transactionEnvelope.tx.operations.value[0]);
 
@@ -609,7 +612,7 @@ private slots:
        Price* priceObj = Price::fromString(price);
 
        CreatePassiveSellOfferOperation* operation = new CreatePassiveSellOfferOperation(selling, buying, amount, price);
-       operation->setSourceAccount(source);
+       operation->setSourceAccount(source->getAccountId());
 
        auto xdr = operation->toXdr();
        CreatePassiveSellOfferOperation* parsedOperation = static_cast<CreatePassiveSellOfferOperation*>(CreatePassiveSellOfferOperation::fromXdr(xdr));
@@ -634,14 +637,14 @@ private slots:
        // GDW6AUTBXTOC7FIKUO5BOO3OGLK4SF7ZPOBLMQHMZDI45J2Z6VXRB5NR
        KeyPair* destination = KeyPair::fromSecretSeed(QString("SDHZGHURAYXKU2KMVHPOXI6JG2Q4BSQUQCEOY72O3QQTCLR2T455PMII"));
 
-       AccountMergeOperation* operation = new AccountMergeOperation(destination);
-       operation->setSourceAccount(source);
+       AccountMergeOperation* operation = new AccountMergeOperation(destination->getAccountId());
+       operation->setSourceAccount(source->getAccountId());
 
        stellar::Operation xdr = operation->toXdr();
 
        AccountMergeOperation* parsedOperation = (AccountMergeOperation*) Operation::fromXdr(xdr);
 
-       QCOMPARE(destination->getAccountId(), parsedOperation->getDestination()->getAccountId());
+       QCOMPARE(destination->getAccountId(), parsedOperation->getDestination());
 
        QCOMPARE(QString("AAAAAQAAAAC7JAuE3XvquOnbsgv2SRztjuk4RoBVefQ0rlrFMMQvfAAAAAgAAAAA7eBSYbzcL5UKo7oXO24y1ckX+XuCtkDsyNHOp1n1bxA="),
                operation->toXdrBase64());
@@ -654,7 +657,7 @@ private slots:
          QByteArray data = QByteArray::fromHex("0001020304");
 
          ManageDataOperation* operation = new ManageDataOperation("test", data);
-         operation->setSourceAccount(source);
+         operation->setSourceAccount(source->getAccountId());
 
 
          auto xdr = operation->toXdr();
@@ -673,7 +676,7 @@ private slots:
          KeyPair* source = KeyPair::fromSecretSeed(QString("SC4CGETADVYTCR5HEAVZRB3DZQY5Y4J7RFNJTRA6ESMHIPEZUSTE2QDK"));
 
          ManageDataOperation* operation = new ManageDataOperation("test");
-         operation->setSourceAccount(source);
+         operation->setSourceAccount(source->getAccountId());
 
          auto xdr = operation->toXdr();
 
@@ -690,7 +693,7 @@ private slots:
        // GC5SIC4E3V56VOHJ3OZAX5SJDTWY52JYI2AFK6PUGSXFVRJQYQXXZBZF
        KeyPair* source = KeyPair::fromSecretSeed(QString("SC4CGETADVYTCR5HEAVZRB3DZQY5Y4J7RFNJTRA6ESMHIPEZUSTE2QDK"));
        BumpSequenceOperation* operation = BumpSequenceOperation::create(156L)
-               ->setSourceAccount(source);
+               ->setSourceAccount(source->getAccountId());
         auto xdr = operation->toXdr();
         BumpSequenceOperation* parsedOperation = static_cast<BumpSequenceOperation*>(Operation::fromXdr(xdr));
         QCOMPARE(parsedOperation->getBumpTo(),156L);

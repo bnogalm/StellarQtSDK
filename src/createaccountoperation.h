@@ -13,6 +13,7 @@ class CreateAccountOperation : public Operation
 
 public:
     CreateAccountOperation(KeyPair* destination, QString startingBalance);
+    CreateAccountOperation(QString destination, QString startingBalance);
     CreateAccountOperation(stellar::CreateAccountOp &op);
     virtual ~CreateAccountOperation();
 
@@ -35,14 +36,8 @@ public:
          * @param sourceAccount The operation's source account.
          * @return CreateAccountOperation object so you can chain methods.
          */
-    CreateAccountOperation* setSourceAccount(KeyPair* sourceAccount);
+    CreateAccountOperation* setSourceAccount(QString sourceAccount);
 
-    /**
-         * Sets the source account for this operation making a copy of keypair
-         * @param sourceAccount The operation's source account.
-         * @return CreateAccountOperation object so you can chain methods.
-         */
-    CreateAccountOperation* setSourceAccount(KeyPair& sourceAccount);
 
 };
 

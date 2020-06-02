@@ -252,7 +252,8 @@ private slots:
                 "        \"asset_issuer\": \"GDIROJW2YHMSFZJJ4R5XWWNUVND5I45YEWS5DSFKXCHMADZ5V374U2LM\",\n"
                 "        \"trustee\": \"GDIROJW2YHMSFZJJ4R5XWWNUVND5I45YEWS5DSFKXCHMADZ5V374U2LM\",\n"
                 "        \"trustor\": \"GDZ55LVXECRTW4G36EZPTHI4XIYS5JUC33TUS22UOETVFVOQ77JXWY4F\",\n"
-                "        \"authorize\": true\n"
+                "        \"authorize\": true,\n"
+                "        \"authorize_to_maintain_liabilities\": false\n"
                 "      }";
 
         AllowTrustOperationResponse operation;
@@ -260,8 +261,54 @@ private slots:
         QCOMPARE(operation.getTrustee().getAccountId(), QString("GDIROJW2YHMSFZJJ4R5XWWNUVND5I45YEWS5DSFKXCHMADZ5V374U2LM"));
         QCOMPARE(operation.getTrustor().getAccountId(), QString("GDZ55LVXECRTW4G36EZPTHI4XIYS5JUC33TUS22UOETVFVOQ77JXWY4F"));
         QCOMPARE(operation.isAuthorize(), true);
+        QCOMPARE(operation.isAuthorizedToMaintainLiabilities(), false);
         QVERIFY(operation.getAsset()->equals(Asset::createNonNativeAsset("EUR", KeyPair::fromAccountId(QString("GDIROJW2YHMSFZJJ4R5XWWNUVND5I45YEWS5DSFKXCHMADZ5V374U2LM")))));
     }
+
+    void testDeserializeAllowTrustOperationAuthorizeToMaintainLiabilities()
+    {
+        QByteArray json = "{\n"
+            "        \"_links\": {\n"
+            "          \"self\": {\n"
+            "            \"href\": \"//horizon-testnet.stellar.org/operations/3602979345141761\"\n"
+            "          },\n"
+            "          \"transaction\": {\n"
+            "            \"href\": \"//horizon-testnet.stellar.org/transactions/1f265c075e8559ee4c21a32ae53337658e52d7504841adad4144c37143ea01a2\"\n"
+            "          },\n"
+            "          \"effects\": {\n"
+            "            \"href\": \"//horizon-testnet.stellar.org/operations/3602979345141761/effects\"\n"
+            "          },\n"
+            "          \"succeeds\": {\n"
+            "            \"href\": \"//horizon-testnet.stellar.org/effects?order=desc\\u0026cursor=3602979345141761\"\n"
+            "          },\n"
+            "          \"precedes\": {\n"
+            "            \"href\": \"//horizon-testnet.stellar.org/effects?order=asc\\u0026cursor=3602979345141761\"\n"
+            "          }\n"
+            "        },\n"
+            "        \"id\": \"3602979345141761\",\n"
+            "        \"paging_token\": \"3602979345141761\",\n"
+            "        \"source_account\": \"GDIROJW2YHMSFZJJ4R5XWWNUVND5I45YEWS5DSFKXCHMADZ5V374U2LM\",\n"
+            "        \"type\": \"allow_trust\",\n"
+            "        \"type_i\": 7,\n"
+            "        \"asset_type\": \"credit_alphanum4\",\n"
+            "        \"asset_code\": \"EUR\",\n"
+            "        \"asset_issuer\": \"GDIROJW2YHMSFZJJ4R5XWWNUVND5I45YEWS5DSFKXCHMADZ5V374U2LM\",\n"
+            "        \"trustee\": \"GDIROJW2YHMSFZJJ4R5XWWNUVND5I45YEWS5DSFKXCHMADZ5V374U2LM\",\n"
+            "        \"trustor\": \"GDZ55LVXECRTW4G36EZPTHI4XIYS5JUC33TUS22UOETVFVOQ77JXWY4F\",\n"
+            "        \"authorize\": false\n,"
+            "        \"authorize_to_maintain_liabilities\": true\n"
+            "      }";
+
+        AllowTrustOperationResponse operation;
+        operation.loadFromJson(json);
+
+        QCOMPARE(operation.getTrustee().getAccountId(), "GDIROJW2YHMSFZJJ4R5XWWNUVND5I45YEWS5DSFKXCHMADZ5V374U2LM");
+        QCOMPARE(operation.getTrustor().getAccountId(), "GDZ55LVXECRTW4G36EZPTHI4XIYS5JUC33TUS22UOETVFVOQ77JXWY4F");
+        QCOMPARE(operation.isAuthorize(), false);
+        QCOMPARE(operation.isAuthorizedToMaintainLiabilities(), true);
+        QVERIFY(operation.getAsset()->equals(Asset::createNonNativeAsset("EUR", "GDIROJW2YHMSFZJJ4R5XWWNUVND5I45YEWS5DSFKXCHMADZ5V374U2LM")));
+      }
+
     void testDeserializeChangeTrustOperation() {
         QByteArray json = "{\n"
                 "        \"_links\": {\n"
@@ -397,7 +444,7 @@ private slots:
 #pragma GCC diagnostic pop
 #endif
             QFAIL("not known key type signer");
-        } catch (FormatException e) {
+        } catch (std::runtime_error e) {
             //QCOMPARE(QString::fromLatin1(e.what()),QString("Version byte is invalid"));
         }
         QCOMPARE(operation.getSignerKey(), QString("TBGFYVCU76LJ7GZOCGR4X7DG2NV42JPG5CKRL42LA5FZOFI3U2WU7ZAL"));

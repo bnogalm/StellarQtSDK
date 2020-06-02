@@ -7,15 +7,37 @@ StrKey::StrKey()
 
 }
 
+StrKey::VersionByte StrKey::decodeVersionByte(QByteArray encoded) {
+    QByteArray decoded(CyoDecode::Base32::GetLength(encoded.length()),'\0');
+
+    if(decoded.isEmpty())
+        throw std::runtime_error("empty data");
+
+    CyoDecode::Base32::Decode((CyoEncode::byte_t*)decoded.data(),encoded.data(),encoded.length());
+
+    StrKey::VersionByte decodedVersionByte = static_cast<StrKey::VersionByte>(decoded.at(0));
+
+    switch(decodedVersionByte)
+    {
+    case StrKey::VersionByte::ACCOUNT_ID:    
+    case StrKey::VersionByte::SEED:
+    case StrKey::VersionByte::PRE_AUTH_TX:
+    case StrKey::VersionByte::SHA256_HASH:
+        return decodedVersionByte;
+    default:
+        throw std::runtime_error("Version byte is invalid");
+    }
+}
+
 QByteArray StrKey::encodeCheck(StrKey::VersionByte versionByte, QByteArray data) {
 
     QByteArray payload;
     QDataStream outputStream(&payload,QIODevice::WriteOnly);
     outputStream<< (quint8)versionByte;
-    //outputStream<< data;
+
     outputStream.writeRawData(data.data(),data.length());
     QByteArray checksum = StrKey::calculateChecksum(payload);
-    //outputStream<< checksum;
+
     outputStream.writeRawData(checksum.data(),checksum.length());
 
 
@@ -23,24 +45,59 @@ QByteArray StrKey::encodeCheck(StrKey::VersionByte versionByte, QByteArray data)
 
     CyoEncode::Base32::Encode(bytesEncoded.data(),(CyoEncode::byte_t*)payload.data(),payload.length());
 
+    //TODO remove CyoEncode encoding, we dont require padding and it just cause problems for just base32 encoding decoding
+    int requiresTrim= bytesEncoded.indexOf('=');
+    if(requiresTrim>=0)
+    {
+        bytesEncoded.resize(requiresTrim);
+    }
+
     if (VersionByte::SEED == versionByte) {
         payload.fill('\0',payload.length());
     }
 
     return bytesEncoded;
 }
+//is would be better to use a constexp to fill it
+uchar b32Table[] = {0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0x1a,0x1b,0x1c,0x1d,0x1e,0x1f,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0a,0x0b,0x0c,0x0d,0x0e,0x0f,0x10,0x11,0x12,0x13,0x14,0x15,0x16,0x17,0x18,0x19,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff};
 
 QByteArray StrKey::decodeCheck(StrKey::VersionByte versionByte, QByteArray encoded) {
 
+    // The minimal binary decoded length is 3 bytes (version byte and 2-byte CRC) which,
+    // in unpadded base32 (since each character provides 5 bits) corresponds to ceiling(8*3/5) = 5
+    if (encoded.length() < 5) {
+        throw std::runtime_error("Encoded char array must have a length of at least 5.");
+    }
+
+    int leftoverBits = (encoded.length() * 5) % 8;
+    // 1. Make sure there is no full unused leftover byte at the end
+    //   (i.e. there shouldn't be 5 or more leftover bits)
+    if (leftoverBits >= 5) {
+        throw std::runtime_error("Encoded char array has leftover character.");
+    }
+    if (leftoverBits > 0) {
+        uchar lastChar = encoded[encoded.length()-1];
+        uchar decodedLastChar = b32Table[lastChar];
+        uchar leftoverBitsMask = (uchar)(0x0f >> (4 - leftoverBits));
+        if ((decodedLastChar & leftoverBitsMask) != 0) {
+            throw std::runtime_error("Unused bits should be set to 0.");
+        }
+    }
     if(versionByte!= VersionByte::SEED && encoded.startsWith('S'))
     {
         throw std::runtime_error("decoding secret to wrong place");//this can be dangerous as it can expose a secret key on public application places
     }
     for(int i=0;i< encoded.length();i++){
-        if((quint8)encoded.at(i)>127){
-            //qDebug("Illegal characters in encoded char array.");
-            throw FormatException();
+        if((quint8)encoded.at(i)>127){            
+            throw std::runtime_error("Illegal characters in encoded char array.");
         }
+    }
+    //TODO delete Cyo dependency, we don't want padding and we only use base32 encoding decoding.
+    int cyoWorkaroundPaddingLength = encoded.size()%8;
+    if(cyoWorkaroundPaddingLength>0)
+    {
+        cyoWorkaroundPaddingLength = 8 - cyoWorkaroundPaddingLength;
+        encoded.append(cyoWorkaroundPaddingLength,'=');
     }
     QByteArray decoded(CyoDecode::Base32::GetLength(encoded.length()),'\0');
 
@@ -48,22 +105,28 @@ QByteArray StrKey::decodeCheck(StrKey::VersionByte versionByte, QByteArray encod
         throw FormatException();
 
     CyoDecode::Base32::Decode((CyoEncode::byte_t*)decoded.data(),encoded.data(),encoded.length());
+    //TODO delete Cyo dependency, we don't want padding and we only use base32 encoding decoding.
+    if(cyoWorkaroundPaddingLength>0)
+    {
+        int decodedPadLength= (cyoWorkaroundPaddingLength*5)/8 + ((cyoWorkaroundPaddingLength*5) % 8 !=0);
+        if(!decoded.endsWith(QByteArray(decodedPadLength,'\0')))
+        {
+            throw std::runtime_error("Unused bits should be set to 0.");
+        }
+        decoded.resize(decoded.size()-decodedPadLength);
+    }
 
     StrKey::VersionByte decodedVersionByte = (StrKey::VersionByte)decoded.at(0);
     QByteArray payload(decoded.data(),decoded.length()-2);
     QByteArray data(decoded.data()+1,decoded.length()-3);
     QByteArray checksum(decoded.data()+ decoded.length()-2,2);
     if(decodedVersionByte != versionByte){
-        //qDebug("Version byte is invalid");
-        throw FormatException();
+        throw std::runtime_error("Version byte is invalid");
     }
 
     QByteArray expectedChecksum= StrKey::calculateChecksum(payload);
     if(expectedChecksum!=checksum){
-        //qDebug() << expectedChecksum.toHex()<< " != "<< checksum.toHex();
-        //qDebug() << "data: "<< data.toHex();
-        //qDebug("Checksum invalid");
-        throw FormatException();
+        throw std::runtime_error("Checksum invalid");
     }
     if (VersionByte::SEED == decodedVersionByte) {
         decoded.fill('\0',decoded.length());
@@ -99,3 +162,5 @@ QByteArray StrKey::calculateChecksum(QByteArray bytes) {
     crc=qToLittleEndian(crc);
     return QByteArray((const char*)&crc,sizeof(qint16));
 }
+
+

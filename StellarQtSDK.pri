@@ -5,8 +5,9 @@ DEFINES += STELLAR_QT_REPLY_TIMEOUT=30000
 DEFINES *= ED25519_NO_SEED
 
 DEFINES += STELLAR_QT_SDK_CLIENT_NAME=\"\\\"qtcpp-stellar-sdk\\\"\"
-DEFINES += STELLAR_QT_SDK_CLIENT_VERSION=\"\\\"0.3.1\\\"\"
+DEFINES += STELLAR_QT_SDK_CLIENT_VERSION=\"\\\"0.3.2\\\"\"
 
+#DEFINES += STELLAR_QT_AUTOSET_BASE_FEE
 
 QT *= core network
 CONFIG *= c++11
@@ -18,9 +19,11 @@ INCLUDEPATH *=  $$PWD/src/
 
 
 SOURCES += \
+    $$PWD/src/abstracttransaction.cpp \
     $$PWD/src/account.cpp \
     $$PWD/src/accountmergeoperation.cpp \
     $$PWD/src/createpassivesellofferoperation.cpp \
+    $$PWD/src/feebumptransaction.cpp \
     $$PWD/src/managebuyofferoperation.cpp \
     $$PWD/src/managesellofferoperation.cpp \
     $$PWD/src/operation.cpp \
@@ -38,6 +41,7 @@ SOURCES += \
     $$PWD/src/requests/feestatsrequestbuilder.cpp \
     $$PWD/src/requests/strictreceivepathsrequestbuilder.cpp \
     $$PWD/src/requests/strictsendpathsrequestbuilder.cpp \
+    $$PWD/src/responses/effects/trustlineauthorizedtomaintainliabilitieseffectresponse.cpp \
     $$PWD/src/responses/feestatsresponse.cpp \
     $$PWD/src/responses/operations/bumpsequenceoperationresponse.cpp \
     $$PWD/src/responses/operations/managebuyofferoperationresponse.cpp \
@@ -161,7 +165,9 @@ DEFINES += QT_DEPRECATED_WARNINGS
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 HEADERS += \
+    $$PWD/src/abstracttransaction.h \
     $$PWD/src/createpassivesellofferoperation.h \
+    $$PWD/src/feebumptransaction.h \
     $$PWD/src/managebuyofferoperation.h \
     $$PWD/src/managesellofferoperation.h \
     $$PWD/src/pathpaymentstrictreceiveoperation.h \
@@ -169,6 +175,7 @@ HEADERS += \
     $$PWD/src/requests/feestatsrequestbuilder.h \
     $$PWD/src/requests/strictreceivepathsrequestbuilder.h \
     $$PWD/src/requests/strictsendpathsrequestbuilder.h \
+    $$PWD/src/responses/effects/trustlineauthorizedtomaintainliabilitieseffectresponse.h \
     $$PWD/src/responses/feestatsresponse.h \
     $$PWD/src/responses/operations/bumpsequenceoperationresponse.h \
     $$PWD/src/responses/operations/managebuyofferoperationresponse.h \

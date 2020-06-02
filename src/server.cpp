@@ -1,6 +1,7 @@
 #include "server.h"
 
 #include "transaction.h"
+#include "feebumptransaction.h"
 #include "responses/submittransactionresponse.h"
 #include "paymentoperation.h"
 #include "pathpaymentstrictreceiveoperation.h"
@@ -24,8 +25,16 @@ QNetworkRequest Server::prepareRequest()
     return request;
 }
 
-QList<QString> Server::checkMemoRequired(Transaction *transaction)
-{
+QList<QString> Server::checkMemoRequired(AbstractTransaction *abstractTransaction)
+{    
+    Transaction*  transaction = dynamic_cast<Transaction*>(abstractTransaction);
+    if(!transaction)
+    {
+        if(FeeBumpTransaction *feeBumpTransaction = dynamic_cast<FeeBumpTransaction*>(abstractTransaction))
+        {
+            transaction = feeBumpTransaction->getInnerTransaction();
+        }
+    }
     if (Memo *memo = transaction->getMemo()){
         if(MemoText * text = dynamic_cast<MemoText*>(memo))
         {
@@ -48,7 +57,7 @@ QList<QString> Server::checkMemoRequired(Transaction *transaction)
     QSet<QString> destinations;
     QVector<Operation*> operations = transaction->getOperations();
     for(Operation* op : operations){
-        KeyPair* destination=nullptr;
+        QString destination;
         if (PaymentOperation * payment = dynamic_cast<PaymentOperation*>(op)) {
             destination = payment->getDestination();
         } else if (PathPaymentStrictReceiveOperation * payment = dynamic_cast<PathPaymentStrictReceiveOperation*>(op)) {
@@ -59,8 +68,10 @@ QList<QString> Server::checkMemoRequired(Transaction *transaction)
             destination =  payment->getDestination();
         } else {
             continue;
-        }
-        destinations.insert(destination->getAccountId());
+        }        
+        if(StrKey::encodeToXDRMuxedAccount(destination).type==stellar::CryptoKeyType::KEY_TYPE_MUXED_ED25519)
+            continue;
+        destinations.insert(destination);
     }
     return destinations.values();
 }
@@ -147,7 +158,7 @@ TransactionsRequestBuilder Server::transactions() {
     return TransactionsRequestBuilder(this);
 }
 
-SubmitTransactionResponse *Server::submitTransaction(Transaction *transaction,bool skipMemoRequiredCheck) {
+SubmitTransactionResponse *Server::submitTransaction(AbstractTransaction *transaction, bool skipMemoRequiredCheck) {
     QUrl transactionsURI(serverURI().toString().append("/transactions"));
     if(!transactionsURI.isValid())
     {
