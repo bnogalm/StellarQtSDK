@@ -5,7 +5,7 @@
 quint32 Transaction::Builder::s_defaultOperationFee = Transaction::Builder::BASE_FEE;
 
 Transaction::Transaction(QString sourceAccount, qint64 fee, qint64 sequenceNumber, QVector<Operation *> operations, Memo *memo, TimeBounds *timeBounds, Network *network)
-    :AbstractTransaction(network),m_envelopeType(stellar::EnvelopeType::ENVELOPE_TYPE_TX_V0)
+    :AbstractTransaction(network),m_envelopeType(stellar::EnvelopeType::ENVELOPE_TYPE_TX)
 {
     m_sourceAccount = checkNotNull(sourceAccount, "sourceAccount cannot be null");
     m_sequenceNumber=sequenceNumber;//we cant check this, all the values are valid

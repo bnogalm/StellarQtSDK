@@ -33,12 +33,20 @@ private slots:
         delete tx;
 
 
-        QCOMPARE(xdr.v0.tx.seqNum,0);
-        QCOMPARE(xdr.v0.tx.fee,static_cast<quint32>(100));
-        QCOMPARE(xdr.v0.tx.operations.value.size(),1);
-        QCOMPARE(xdr.v0.tx.timeBounds.value.minTime,static_cast<quint64>(0));
-        QCOMPARE(xdr.v0.tx.timeBounds.value.maxTime,static_cast<quint64>(0));
-        auto op = xdr.v0.tx.operations.value.at(0);
+//        QCOMPARE(xdr.v0.tx.seqNum,0);
+//        QCOMPARE(xdr.v0.tx.fee,static_cast<quint32>(100));
+//        QCOMPARE(xdr.v0.tx.operations.value.size(),1);
+//        QCOMPARE(xdr.v0.tx.timeBounds.value.minTime,static_cast<quint64>(0));
+//        QCOMPARE(xdr.v0.tx.timeBounds.value.maxTime,static_cast<quint64>(0));
+//        auto op = xdr.v0.tx.operations.value.at(0);
+
+
+        QCOMPARE(xdr.v1.tx.seqNum,0);
+        QCOMPARE(xdr.v1.tx.fee,static_cast<quint32>(100));
+        QCOMPARE(xdr.v1.tx.operations.value.size(),1);
+        QCOMPARE(xdr.v1.tx.timeBounds.value.minTime,static_cast<quint64>(0));
+        QCOMPARE(xdr.v1.tx.timeBounds.value.maxTime,static_cast<quint64>(0));
+        auto op = xdr.v1.tx.operations.value.at(0);
 
         QCOMPARE(op.type,stellar::OperationType::MANAGE_DATA);
         QCOMPARE(op.operationManageData.dataName.binary(),QByteArray("SDF auth"));
@@ -52,11 +60,19 @@ private slots:
         tx = Util::buildChallengeTx(serverKeypair,clientKeypair->getAccountId(),"SDF1",5*60);
         xdr = tx->toEnvelopeXdr();
         delete tx;
-        QCOMPARE(xdr.v0.tx.seqNum,0);
-        QCOMPARE(xdr.v0.tx.fee,static_cast<quint32>(100));
-        QCOMPARE(xdr.v0.tx.operations.value.size(),1);
-        QCOMPARE(xdr.v0.tx.timeBounds.value.maxTime- xdr.v0.tx.timeBounds.value.minTime,static_cast<quint64>(300));
-        op = xdr.v0.tx.operations.value.at(0);
+//        QCOMPARE(xdr.v0.tx.seqNum,0);
+//        QCOMPARE(xdr.v0.tx.fee,static_cast<quint32>(100));
+//        QCOMPARE(xdr.v0.tx.operations.value.size(),1);
+//        QCOMPARE(xdr.v0.tx.timeBounds.value.maxTime- xdr.v0.tx.timeBounds.value.minTime,static_cast<quint64>(300));
+//        op = xdr.v0.tx.operations.value.at(0);
+
+
+        QCOMPARE(xdr.v1.tx.seqNum,0);
+        QCOMPARE(xdr.v1.tx.fee,static_cast<quint32>(100));
+        QCOMPARE(xdr.v1.tx.operations.value.size(),1);
+        QCOMPARE(xdr.v1.tx.timeBounds.value.maxTime- xdr.v1.tx.timeBounds.value.minTime,static_cast<quint64>(300));
+        op = xdr.v1.tx.operations.value.at(0);
+
         QCOMPARE(op.type,stellar::OperationType::MANAGE_DATA);
         QCOMPARE(op.operationManageData.dataName.binary(),QByteArray("SDF1 auth"));
         //48 random bytes enconded in base64

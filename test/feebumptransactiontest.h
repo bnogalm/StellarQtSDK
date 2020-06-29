@@ -209,6 +209,53 @@ private slots:
 
         QCOMPARE(1, feeBump->getSignatures().size());
         signer->verify(feeBump->hash(), feeBump->getSignatures()[0].signature.binary());
+
+
+        QCOMPARE(inner->hash(), fromXdr->getInnerTransaction()->hash());
+
+        QCOMPARE(feeBump->getSignatures().size(), 1);
+        signer->verify(feeBump->hash(), feeBump->getSignatures()[0].signature.binary());
+
+    }
+    void testFeeBumpUpgradesInnerToV1()
+    {
+      Transaction* innerV0 = createInnerTransaction();
+      innerV0->setEnvelopeType(stellar::EnvelopeType::ENVELOPE_TYPE_TX_V0);
+
+      FeeBumpTransaction* feeBump = FeeBumpTransaction::Builder(innerV0)
+          .setBaseFee(Transaction::MIN_BASE_FEE * 2)
+          .setFeeAccount("GDQNY3PBOJOKYZSRMK2S7LHHGWZIUISD4QORETLMXEWXBI7KFZZMKTL3")
+          .build();
+
+      QCOMPARE(Transaction::MIN_BASE_FEE * 4, feeBump->getFee());
+      QCOMPARE("GDQNY3PBOJOKYZSRMK2S7LHHGWZIUISD4QORETLMXEWXBI7KFZZMKTL3", feeBump->getFeeAccount());
+      QCOMPARE(0, feeBump->getSignatures().size());
+
+      QCOMPARE(stellar::EnvelopeType::ENVELOPE_TYPE_TX_V0, innerV0->toEnvelopeXdr().type);
+      //QVERIFY(innerV0->hash()!= feeBump->getInnerTransaction()->hash());
+      QVERIFY(innerV0->hash()== feeBump->getInnerTransaction()->hash());
+      QVERIFY(innerV0->envelopeType()!= feeBump->getInnerTransaction()->envelopeType());
+      innerV0->setEnvelopeType(stellar::EnvelopeType::ENVELOPE_TYPE_TX);
+      QCOMPARE(innerV0->hash(), feeBump->getInnerTransaction()->hash());
+      QVERIFY(innerV0->envelopeType()== feeBump->getInnerTransaction()->envelopeType());
+
+      FeeBumpTransaction* fromXdr = (FeeBumpTransaction*) AbstractTransaction::fromEnvelopeXdr(
+          feeBump->toEnvelopeXdrBase64(), Network::current()
+      );
+
+      QCOMPARE(feeBump->hash(), fromXdr->hash());
+
+
+      KeyPair* signer = KeyPair::random();
+      feeBump->sign(signer);
+      fromXdr = (FeeBumpTransaction*) AbstractTransaction::fromEnvelopeXdr(
+          feeBump->toEnvelopeXdrBase64(), Network::current()
+      );
+      QVERIFY(feeBump->hash()== fromXdr->hash());
+      QVERIFY(feeBump->getInnerTransaction()->hash()== fromXdr->getInnerTransaction()->hash());
+
+      QCOMPARE(feeBump->getSignatures().size(), 1);
+      signer->verify(feeBump->hash(), feeBump->getSignatures()[0].signature.binary());
     }
 };
 

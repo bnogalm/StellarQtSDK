@@ -83,8 +83,19 @@ stellar::TransactionEnvelope FeeBumpTransaction::toEnvelopeXdr()
 FeeBumpTransaction::Builder::Builder(Transaction *inner) {
     m_inner = checkNotNull(inner, "inner cannot be null");
     m_baseFee=0;
-    if (m_inner->toEnvelopeXdr().type != stellar::EnvelopeType::ENVELOPE_TYPE_TX) {
-        throw std::runtime_error("invalid transaction type");
+
+    stellar::EnvelopeType txType = inner->toEnvelopeXdr().type;
+    if (txType == stellar::EnvelopeType::ENVELOPE_TYPE_TX_V0) {
+        m_inner = new Transaction(
+                    inner->getSourceAccount(),
+                    inner->getFee(),
+                    inner->getSequenceNumber(),
+                    inner->getOperations(),
+                    inner->getMemo(),
+                    inner->getTimeBounds(),
+                    inner->getNetwork()
+                    );
+        m_inner->m_signatures = inner->getSignatures();
     }
 }
 

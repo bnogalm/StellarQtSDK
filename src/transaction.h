@@ -9,6 +9,8 @@
 #include "transactionbuilderaccount.h"
 #include "timebounds.h"
 #include "abstracttransaction.h"
+
+class FeeBumpTransaction;
 /**
  * Represents <a href="https://www.stellar.org/developers/learn/concepts/transactions.html" target="_blank">Transaction</a> in Stellar network.
  */
@@ -23,7 +25,7 @@ class Transaction : public AbstractTransaction
 
     stellar::EnvelopeType m_envelopeType;
     friend class Builder;
-
+    friend class FeeBumpTransaction;
     Transaction(QString sourceAccount, qint64 fee, qint64 sequenceNumber, QVector<Operation*> operations, Memo* memo, TimeBounds *timeBounds, Network* network);
 
 
@@ -34,6 +36,10 @@ public:
     // setEnvelopeType is only used in tests which is why this method is package protected
     void setEnvelopeType(stellar::EnvelopeType envelopeType) {
         m_envelopeType = envelopeType;
+    }
+    stellar::EnvelopeType envelopeType() const
+    {
+        return m_envelopeType;
     }
 #endif
     QByteArray signatureBase() const;

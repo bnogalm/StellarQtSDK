@@ -85,7 +85,6 @@ class ServerTest: public QObject
                                     "}";
 
     FeeBumpTransaction* feeBump(Transaction* inner) {
-        inner->setEnvelopeType(stellar::EnvelopeType::ENVELOPE_TYPE_TX);
         KeyPair* signer = KeyPair::fromSecretSeed(QString("SA5ZEFDVFZ52GRU7YUGR6EDPBNRU2WLA6IQFQ7S2IH2DG3VFV3DOMV2Q"));
         FeeBumpTransaction* tx =  FeeBumpTransaction::Builder(inner)
                 .setFeeAccount(signer->getAccountId())
