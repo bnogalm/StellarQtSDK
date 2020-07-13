@@ -871,7 +871,7 @@ namespace stellar
         }
         case EnvelopeType::ENVELOPE_TYPE_TX:
         {
-            new (&obj.v1) TransactionV0Envelope();
+            new (&obj.v1) TransactionV1Envelope();
             in >> obj.v1; break;
         }
         case EnvelopeType::ENVELOPE_TYPE_TX_FEE_BUMP:
