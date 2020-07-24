@@ -9,6 +9,9 @@ DEFINES += STELLAR_QT_SDK_CLIENT_VERSION=\"\\\"0.3.4\\\"\"
 
 #DEFINES += STELLAR_QT_AUTOSET_BASE_FEE
 
+#If you have problems with network connections, uncomment this define to print some traces that may help you.
+#DEFINES += STELLAR_QT_DEBUG_NETWORK_REQUESTS
+
 QT *= core network
 CONFIG *= c++11
 
