@@ -52,6 +52,7 @@ SOURCES += \
     $$PWD/src/responses/operations/pathpaymentbaseoperationresponse.cpp \
     $$PWD/src/responses/operations/pathpaymentstrictreceiveoperationresponse.cpp \
     $$PWD/src/responses/operations/pathpaymentstrictsendoperationresponse.cpp \
+    $$PWD/src/sep10challenge.cpp \
     $$PWD/src/strkey.cpp \
     $$PWD/src/inflationoperation.cpp \
     $$PWD/src/util.cpp \
@@ -186,6 +187,7 @@ HEADERS += \
     $$PWD/src/responses/operations/pathpaymentbaseoperationresponse.h \
     $$PWD/src/responses/operations/pathpaymentstrictreceiveoperationresponse.h \
     $$PWD/src/responses/operations/pathpaymentstrictsendoperationresponse.h \
+    $$PWD/src/sep10challenge.h \
     $$PWD/xdr/stellartypes.h \
     $$PWD/src/account.h \
     $$PWD/src/transactionbuilderaccount.h \

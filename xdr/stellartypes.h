@@ -123,7 +123,21 @@ namespace stellar
     //typedef quint8 SignatureHint[4];
     struct SignatureHint{
         quint8 signatureHint[4];
+        bool operator==(const SignatureHint& other) const
+        {
+            return getInt()  ==  other.getInt();
+        }
+        bool operator<(const SignatureHint& other) const
+        {
+            return getInt() < other.getInt();
+        }
+        qint32 getInt() const
+        {
+            return *((qint32*)signatureHint);
+        }
     };
+
+
 
     XDR_SERIALIZER(SignatureHint)
     typedef PublicKey NodeID;
