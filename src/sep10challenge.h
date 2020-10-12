@@ -48,6 +48,7 @@ public:
       int getWeight() const;
       int hashCode() const;
       bool equals(const Signer* other) const;
+      bool operator==(const Signer& other) const;
     };
 
 
@@ -124,5 +125,10 @@ public:
 
 
 };
+inline uint qHash(const Sep10Challenge::Signer &t, uint seed)
+{
+    return t.hashCode() ^ seed;
+}
+
 
 #endif // SEP10CHALLENGE_H

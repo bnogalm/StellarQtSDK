@@ -61,7 +61,7 @@ qint64 SubmitTransactionResponse::getOfferIdFromResult(int position) {
         return 0;
     }
 
-    QByteArray data = QByteArray::fromBase64(this->getResultXdr().toLatin1());
+    QByteArray data = QByteArray::fromBase64(this->getResultXdr().toLatin1(),XDR_BASE64ENCODING);
     QDataStream stream(&data,QIODevice::ReadOnly);
     stellar::TransactionResult result;
     stream >> result;

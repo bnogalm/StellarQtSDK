@@ -105,7 +105,7 @@ struct Array{
         memcpy(value.data(),v,allowed);
     }
     //returns continuos data
-    QByteArray binary()
+    QByteArray binary() const
     {
         QByteArray ba(sizeof (T)*value.size(),Qt::Uninitialized);
         QDataStream stream(&ba,QIODevice::WriteOnly);

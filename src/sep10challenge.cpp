@@ -8,9 +8,10 @@
 
 Transaction* Sep10Challenge::buildChallengeTx(KeyPair *serverSignerSecret, QString clientAccountID, QString domainName, qint64 timebound,Network* network)
 {
+    if(StrKey::decodeVersionByte(clientAccountID)!=StrKey::VersionByte::ACCOUNT_ID)
+        throw std::runtime_error("Version byte is invalid");
     QByteArray randomNonce = Util::generateRandomNonce(NONCE_SIZE);//48 random bytes converted to base64 is 64 bytes
-    randomNonce = randomNonce.toBase64(QByteArray::Base64Option::Base64UrlEncoding| QByteArray::OmitTrailingEquals);
-
+    randomNonce = randomNonce.toBase64(QByteArray::Base64Option::Base64UrlEncoding| QByteArray::OmitTrailingEquals);    
     // represent server signing account
     Account *sa = new Account(new KeyPair(*serverSignerSecret),-1);//as is a temporal account, we use a keypair copy.
     TimeBounds *timeBounds;
@@ -26,6 +27,7 @@ Transaction* Sep10Challenge::buildChallengeTx(KeyPair *serverSignerSecret, QStri
     dataOp->setSourceAccount(clientAccountID);
     Transaction *tx = Transaction::Builder(sa,network).addOperation(dataOp).addTimeBounds(timeBounds).setBaseFee(Transaction::Builder::BASE_FEE).build();
     tx->sign(serverSignerSecret);
+    delete sa;
     return tx;
 }
 
@@ -75,7 +77,7 @@ Sep10Challenge::ChallengeTransaction * Sep10Challenge::readChallengeTransaction(
     Operation* operation = transaction->getOperations()[0];
     ManageDataOperation* manageDataOperation = dynamic_cast<ManageDataOperation*>(operation);
 
-    if (!operation) {
+    if (!manageDataOperation) {
         throw std::runtime_error("Operation type should be ManageData.");
     }
 
@@ -94,11 +96,12 @@ Sep10Challenge::ChallengeTransaction * Sep10Challenge::readChallengeTransaction(
     }
 
     // verify manage data value
-    if (manageDataOperation->getValue().length() != 64) {
+    QByteArray nonce = manageDataOperation->getValue();
+    if (nonce.length() != 64) {
         throw std::runtime_error("Random nonce encoded as base64 should be 64 bytes long.");
     }
 
-    QByteArray nonce= QByteArray::fromBase64(manageDataOperation->getValue());
+    nonce= QByteArray::fromBase64(nonce,QByteArray::Base64Option::Base64UrlEncoding| QByteArray::OmitTrailingEquals);
     if(nonce.isEmpty())
     {
         throw std::runtime_error("Failed to decode random nonce provided in ManageData operation.");
@@ -205,8 +208,8 @@ QSet<QString> Sep10Challenge::verifyChallengeTransactionThreshold(QString challe
     int sum = 0;
     for (QString signer : signersFound) {
         Integer weight = weightsForSigner.value(signer);
-        if (!weight) {
-            sum += weight;
+        if (weight.filled) {
+            sum += weight.value;
         }
     }
 
@@ -297,4 +300,9 @@ int Sep10Challenge::Signer::hashCode() const {
 
 bool Sep10Challenge::Signer::equals(const Sep10Challenge::Signer *other) const {
     return m_key==other->m_key && m_weight == other->m_weight;
+}
+
+bool Sep10Challenge::Signer::operator==(const Sep10Challenge::Signer &other) const
+{
+    return m_key==other.m_key && m_weight == other.m_weight;
 }
