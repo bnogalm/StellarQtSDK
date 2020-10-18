@@ -428,9 +428,9 @@ private slots:
                     .addOperation(operation)
                     .build();
             Q_UNUSED(transaction)
-//            transaction->sign(server);
-//            QString challenge = transaction->toEnvelopeXdrBase64();
-//            Sep10Challenge::readChallengeTransaction(challenge, server->getAccountId(), domainName);
+            //            transaction->sign(server);
+            //            QString challenge = transaction->toEnvelopeXdrBase64();
+            //            Sep10Challenge::readChallengeTransaction(challenge, server->getAccountId(), domainName);
             QFAIL("Missing exception");
         } catch (std::runtime_error) {
             //"Transaction requires timebounds."
@@ -736,45 +736,45 @@ private slots:
     }
 
 
-      void testReadChallengeTransactionInvalidDomainNameMismatch() {
-          KeyPair* server = KeyPair::random();
-          KeyPair* client = KeyPair::random();
-          qint64 now = QDateTime::currentMSecsSinceEpoch() / 1000L;
-          qint64 end = now + 300;
-          QString domainName = "example.com";
-          QString mismatchDomainName = "mismatch_example.com";
-          TimeBounds* timeBounds = new TimeBounds(now, end);
+    void testReadChallengeTransactionInvalidDomainNameMismatch() {
+        KeyPair* server = KeyPair::random();
+        KeyPair* client = KeyPair::random();
+        qint64 now = QDateTime::currentMSecsSinceEpoch() / 1000L;
+        qint64 end = now + 300;
+        QString domainName = "example.com";
+        QString mismatchDomainName = "mismatch_example.com";
+        TimeBounds* timeBounds = new TimeBounds(now, end);
 
-          QByteArray nonce(48,'\0');
+        QByteArray nonce(48,'\0');
 
-          QRandomGenerator *r = QRandomGenerator::global();
-          r->fillRange(reinterpret_cast<quint32*>(nonce.data()),48/static_cast<int>(sizeof(quint32)));
+        QRandomGenerator *r = QRandomGenerator::global();
+        r->fillRange(reinterpret_cast<quint32*>(nonce.data()),48/static_cast<int>(sizeof(quint32)));
 
-          QByteArray encodedNonce = nonce.toBase64();
+        QByteArray encodedNonce = nonce.toBase64();
 
-          Account* sourceAccount = new Account(server, -1L);
-          ManageDataOperation* manageDataOperation1 = ManageDataOperation::create(domainName + " auth", encodedNonce);
-          manageDataOperation1->setSourceAccount(client->getAccountId());
+        Account* sourceAccount = new Account(server, -1L);
+        ManageDataOperation* manageDataOperation1 = ManageDataOperation::create(domainName + " auth", encodedNonce);
+        manageDataOperation1->setSourceAccount(client->getAccountId());
 
-          Transaction* transaction = Transaction::Builder(sourceAccount)
-                  .setBaseFee(100)
-                  .addMemo(Memo::none())
-                  .addTimeBounds(timeBounds)
-                  .addOperation(manageDataOperation1)
-                  .build();
-          transaction->sign(server);
-          QString challenge = transaction->toEnvelopeXdrBase64();
+        Transaction* transaction = Transaction::Builder(sourceAccount)
+                .setBaseFee(100)
+                .addMemo(Memo::none())
+                .addTimeBounds(timeBounds)
+                .addOperation(manageDataOperation1)
+                .build();
+        transaction->sign(server);
+        QString challenge = transaction->toEnvelopeXdrBase64();
 
-          try {
-              Sep10Challenge::readChallengeTransaction(challenge, server->getAccountId(), mismatchDomainName);
-              QFAIL("Missing exception");
-          } catch (std::runtime_error e) {
-              //The transaction's operation key name does not include the expected home domain.
-          }
+        try {
+            Sep10Challenge::readChallengeTransaction(challenge, server->getAccountId(), mismatchDomainName);
+            QFAIL("Missing exception");
+        } catch (std::runtime_error e) {
+            //The transaction's operation key name does not include the expected home domain.
+        }
 
-      }
+    }
 
-      void testVerifyChallengeTransactionThresholdInvalidNotSignedByServer(){
+    void testVerifyChallengeTransactionThresholdInvalidNotSignedByServer(){
 
         KeyPair* server = KeyPair::random();
         KeyPair* masterClient = KeyPair::random();
@@ -811,32 +811,713 @@ private slots:
 
         int threshold = 6;
         try {
-          Sep10Challenge::verifyChallengeTransactionThreshold(transaction->toEnvelopeXdrBase64(), server->getAccountId(), domainName, threshold, signers);
-          QFAIL("Missing exception");
+            Sep10Challenge::verifyChallengeTransactionThreshold(transaction->toEnvelopeXdrBase64(), server->getAccountId(), domainName, threshold, signers);
+            QFAIL("Missing exception");
         } catch (std::runtime_error e) {
-          //"Transaction not signed by server
+            //"Transaction not signed by server
         }
-      }
+    }
 
-      void testVerifyChallengeTransactionThresholdValidServerAndClientKeyMeetingThreshold() {
+    void testVerifyChallengeTransactionThresholdValidServerAndClientKeyMeetingThreshold() {
 
-          KeyPair* server = KeyPair::random();
-          KeyPair* masterClient = KeyPair::random();
+        KeyPair* server = KeyPair::random();
+        KeyPair* masterClient = KeyPair::random();
 
-          QString domainName = "example.com";
+        QString domainName = "example.com";
 
-          Transaction* transaction = Sep10Challenge::buildChallengeTx(server,masterClient->getAccountId(),domainName,300);
-          transaction->sign(masterClient);
+        Transaction* transaction = Sep10Challenge::buildChallengeTx(server,masterClient->getAccountId(),domainName,300);
+        transaction->sign(masterClient);
 
-          QSet<Sep10Challenge::Signer> signers;
-          signers.insert(Sep10Challenge::Signer(masterClient->getAccountId(), 255));
-          int threshold=255;
-          QSet<QString> signersFound = Sep10Challenge::verifyChallengeTransactionThreshold(transaction->toEnvelopeXdrBase64(), server->getAccountId(), domainName, threshold, signers);
-          QSet<QString> expected;
-          expected.insert(masterClient->getAccountId());
-          QCOMPARE(signersFound,expected);
-      }
+        QSet<Sep10Challenge::Signer> signers;
+        signers.insert(Sep10Challenge::Signer(masterClient->getAccountId(), 255));
+        int threshold=255;
+        QSet<QString> signersFound = Sep10Challenge::verifyChallengeTransactionThreshold(transaction->toEnvelopeXdrBase64(), server->getAccountId(), domainName, threshold, signers);
+        QSet<QString> expected;
+        expected.insert(masterClient->getAccountId());
+        QCOMPARE(signersFound,expected);
+    }
 
+
+    void testVerifyChallengeTransactionThresholdValidServerAndMultipleClientKeyMeetingThreshold(){
+        KeyPair* server = KeyPair::random();
+        KeyPair* masterClient = KeyPair::random();
+        KeyPair* signerClient1 = KeyPair::random();
+        KeyPair* signerClient2 = KeyPair::random();
+        QString domainName = "example.com";
+
+
+        Transaction* transaction = Sep10Challenge::buildChallengeTx(
+                    server,
+                    masterClient->getAccountId(),
+                    domainName,
+                    300
+                    );
+
+        transaction->sign(masterClient);
+        transaction->sign(signerClient1);
+        transaction->sign(signerClient2);
+
+        QSet<Sep10Challenge::Signer> signers;
+        signers.insert(Sep10Challenge::Signer(masterClient->getAccountId(),1));
+        signers.insert(Sep10Challenge::Signer(signerClient1->getAccountId(),2));
+        signers.insert(Sep10Challenge::Signer(signerClient2->getAccountId(),4));
+
+        int threshold = 7;
+        QSet<QString> signersFound = Sep10Challenge::verifyChallengeTransactionThreshold(transaction->toEnvelopeXdrBase64(), server->getAccountId(), domainName, threshold, signers);
+        QSet<QString> expected;
+        expected.insert(masterClient->getAccountId());
+        expected.insert(signerClient1->getAccountId());
+        expected.insert(signerClient2->getAccountId());
+        QCOMPARE(signersFound,expected);
+    }
+
+
+    void testVerifyChallengeTransactionThresholdValidServerAndMultipleClientKeyMeetingThresholdSomeUnused(){
+        KeyPair* server = KeyPair::random();
+        KeyPair* masterClient = KeyPair::random();
+        KeyPair* signerClient1 = KeyPair::random();
+        KeyPair* signerClient2 = KeyPair::random();
+        QString domainName = "example.com";
+        Transaction* transaction = Sep10Challenge::buildChallengeTx(
+                    server,
+                    masterClient->getAccountId(),
+                    domainName,
+                    300
+                    );
+
+
+        transaction->sign(masterClient);
+        transaction->sign(signerClient1);
+        QSet<Sep10Challenge::Signer> signers;
+        signers.insert(Sep10Challenge::Signer(masterClient->getAccountId(),1));
+        signers.insert(Sep10Challenge::Signer(signerClient1->getAccountId(),2));
+        signers.insert(Sep10Challenge::Signer(signerClient2->getAccountId(),4));
+
+        int threshold = 3;
+        QSet<QString> signersFound = Sep10Challenge::verifyChallengeTransactionThreshold(transaction->toEnvelopeXdrBase64(), server->getAccountId(), domainName, threshold, signers);
+        QSet<QString> expected;
+        expected.insert(masterClient->getAccountId());
+        expected.insert(signerClient1->getAccountId());
+        QCOMPARE(signersFound,expected);
+    }
+
+
+    void testVerifyChallengeTransactionThresholdValidServerAndMultipleClientKeyMeetingThresholdSomeUnusedIgnorePreauthTxHashAndXHash() {
+
+        KeyPair* server = KeyPair::random();
+        KeyPair* masterClient = KeyPair::random();
+        KeyPair* signerClient1 = KeyPair::random();
+        KeyPair* signerClient2 = KeyPair::random();
+        QString domainName = "example.com";
+        Transaction* transaction = Sep10Challenge::buildChallengeTx(
+                    server,
+                    masterClient->getAccountId(),
+                    domainName,
+                    300
+                    );
+
+
+        transaction->sign(masterClient);
+        transaction->sign(signerClient1);
+
+        QString preauthTxHash = "TAQCSRX2RIDJNHFIFHWD63X7D7D6TRT5Y2S6E3TEMXTG5W3OECHZ2OG4";
+        QString xHash = "XDRPF6NZRR7EEVO7ESIWUDXHAOMM2QSKIQQBJK6I2FB7YKDZES5UCLWD";
+        QString unknownSignerType = "?ARPF6NZRR7EEVO7ESIWUDXHAOMM2QSKIQQBJK6I2FB7YKDZES5UCLWD";
+
+        QSet<Sep10Challenge::Signer> signers;
+        signers.insert(Sep10Challenge::Signer(masterClient->getAccountId(),1));
+        signers.insert(Sep10Challenge::Signer(signerClient1->getAccountId(),2));
+        signers.insert(Sep10Challenge::Signer(signerClient2->getAccountId(),4));
+        signers.insert(Sep10Challenge::Signer(preauthTxHash,10));
+        signers.insert(Sep10Challenge::Signer(xHash,10));
+        signers.insert(Sep10Challenge::Signer(unknownSignerType,10));
+
+
+        int threshold = 3;
+        QSet<QString> signersFound = Sep10Challenge::verifyChallengeTransactionThreshold(transaction->toEnvelopeXdrBase64(), server->getAccountId(), domainName, threshold, signers);
+        QSet<QString> expected;
+        expected.insert(masterClient->getAccountId());
+        expected.insert(signerClient1->getAccountId());
+        QCOMPARE(signersFound,expected);
+    }
+
+
+    void testVerifyChallengeTransactionThresholdInvalidServerAndMultipleClientKeyNotMeetingThreshold(){
+        KeyPair* server = KeyPair::random();
+        KeyPair* masterClient = KeyPair::random();
+        KeyPair* signerClient1 = KeyPair::random();
+        KeyPair* signerClient2 = KeyPair::random();
+        QString domainName = "example.com";
+        Transaction* transaction = Sep10Challenge::buildChallengeTx(
+                    server,
+                    masterClient->getAccountId(),
+                    domainName,
+                    300
+                    );
+
+        transaction->sign(masterClient);
+        transaction->sign(signerClient1);
+        QSet<Sep10Challenge::Signer> signers;
+        signers.insert(Sep10Challenge::Signer(masterClient->getAccountId(),1));
+        signers.insert(Sep10Challenge::Signer(signerClient1->getAccountId(),2));
+        signers.insert(Sep10Challenge::Signer(signerClient2->getAccountId(),4));
+
+        int threshold = 7;
+
+        try {
+            Sep10Challenge::verifyChallengeTransactionThreshold(transaction->toEnvelopeXdrBase64(), server->getAccountId(), domainName, threshold, signers);
+            QFAIL("Missing exception");
+        } catch (std::runtime_error e) {
+            //"Signers with weight 3 do not meet threshold 7."
+        }
+    }
+
+
+    void testVerifyChallengeTransactionThresholdInvalidClientKeyUnrecognized() {
+        KeyPair* server = KeyPair::random();
+        KeyPair* masterClient = KeyPair::random();
+        KeyPair* signerClient1 = KeyPair::random();
+        KeyPair* signerClient2 = KeyPair::random();
+        QString domainName = "example.com";
+        Transaction* transaction = Sep10Challenge::buildChallengeTx(
+                    server,
+                    masterClient->getAccountId(),
+                    domainName,
+                    300
+                    );
+
+        transaction->sign(masterClient);
+        transaction->sign(signerClient1);
+        transaction->sign(signerClient2);
+        transaction->sign(KeyPair::random());
+        QSet<Sep10Challenge::Signer> signers;
+        signers.insert(Sep10Challenge::Signer(masterClient->getAccountId(),1));
+        signers.insert(Sep10Challenge::Signer(signerClient1->getAccountId(),2));
+        signers.insert(Sep10Challenge::Signer(signerClient2->getAccountId(),4));
+
+        int threshold = 7;
+
+        try {
+            Sep10Challenge::verifyChallengeTransactionThreshold(transaction->toEnvelopeXdrBase64(), server->getAccountId(), domainName, threshold, signers);
+            QFAIL("Missing exception");
+        } catch (std::runtime_error e) {
+            //"Transaction has unrecognized signatures."
+        }
+
+    }
+
+    void testVerifyChallengeTransactionThresholdInvalidNoSigners() {
+        KeyPair* server = KeyPair::random();
+        KeyPair* masterClient = KeyPair::random();
+        KeyPair* signerClient1 = KeyPair::random();
+        KeyPair* signerClient2 = KeyPair::random();
+        QString domainName = "example.com";
+        Transaction* transaction = Sep10Challenge::buildChallengeTx(
+                    server,
+                    masterClient->getAccountId(),
+                    domainName,
+                    300
+                    );
+
+        transaction->sign(masterClient);
+        transaction->sign(signerClient1);
+        transaction->sign(signerClient2);
+        QSet<Sep10Challenge::Signer> signers;
+
+        int threshold = 7;
+
+        try {
+            Sep10Challenge::verifyChallengeTransactionThreshold(transaction->toEnvelopeXdrBase64(), server->getAccountId(), domainName, threshold, signers);
+            QFAIL("Missing exception");
+        } catch (std::runtime_error e) {
+            //"No verifiable signers provided, at least one G... address must be provided."
+        }
+    }
+
+
+    void testVerifyChallengeTransactionThresholdInvalidNoPublicKeySigners() {
+        KeyPair* server = KeyPair::random();
+        KeyPair* masterClient = KeyPair::random();
+        KeyPair* signerClient1 = KeyPair::random();
+        KeyPair* signerClient2 = KeyPair::random();
+        QString domainName = "example.com";
+        Transaction* transaction = Sep10Challenge::buildChallengeTx(
+                    server,
+                    masterClient->getAccountId(),
+                    domainName,
+                    300
+                    );
+
+        transaction->sign(masterClient);
+        transaction->sign(signerClient1);
+        transaction->sign(signerClient2);
+
+
+
+        QString preauthTxHash = "TAQCSRX2RIDJNHFIFHWD63X7D7D6TRT5Y2S6E3TEMXTG5W3OECHZ2OG4";
+        QString xHash = "XDRPF6NZRR7EEVO7ESIWUDXHAOMM2QSKIQQBJK6I2FB7YKDZES5UCLWD";
+        QString unknownSignerType = "?ARPF6NZRR7EEVO7ESIWUDXHAOMM2QSKIQQBJK6I2FB7YKDZES5UCLWD";
+        QSet<Sep10Challenge::Signer> signers;
+        signers.insert(Sep10Challenge::Signer(preauthTxHash, 1));
+        signers.insert(Sep10Challenge::Signer(xHash, 2));
+        signers.insert(Sep10Challenge::Signer(unknownSignerType, 2));
+
+        int threshold = 3;
+
+        try {
+            Sep10Challenge::verifyChallengeTransactionThreshold(transaction->toEnvelopeXdrBase64(), server->getAccountId(), domainName, threshold, signers);
+            QFAIL("Missing exception");
+        } catch (std::runtime_error e) {
+            //"No verifiable signers provided, at least one G... address must be provided."
+        }
+    }
+
+
+    void testVerifyChallengeTransactionThresholdWeightsAddToMoreThan8Bits() {
+        KeyPair* server = KeyPair::random();
+        KeyPair* masterClient = KeyPair::random();
+        KeyPair* signerClient1 = KeyPair::random();
+
+        QString domainName = "example.com";
+        Transaction* transaction = Sep10Challenge::buildChallengeTx(
+                    server,
+                    masterClient->getAccountId(),
+                    domainName,
+                    300
+                    );
+
+        transaction->sign(masterClient);
+        transaction->sign(signerClient1);
+        QSet<Sep10Challenge::Signer> signers;
+        signers.insert(Sep10Challenge::Signer(masterClient->getAccountId(),255));
+        signers.insert(Sep10Challenge::Signer(signerClient1->getAccountId(),1));
+
+
+        int threshold = 1;
+        QSet<QString> signersFound = Sep10Challenge::verifyChallengeTransactionThreshold(transaction->toEnvelopeXdrBase64(), server->getAccountId(), domainName, threshold, signers);
+
+        QSet<QString> expected;
+        expected.insert(masterClient->getAccountId());
+        expected.insert(signerClient1->getAccountId());
+        QCOMPARE(signersFound,expected);
+    }
+
+    void testVerifyChallengeTransactionSignersInvalidServer() {
+        KeyPair* server = KeyPair::random();
+        KeyPair* masterClient = KeyPair::random();
+        KeyPair* signerClient1 = KeyPair::random();
+        KeyPair* signerClient2 = KeyPair::random();
+        qint64 now = QDateTime::currentMSecsSinceEpoch() / 1000L;
+        qint64 end = now + 300;
+        QString domainName = "example.com";
+        TimeBounds* timeBounds = new TimeBounds(now, end);
+
+        QByteArray nonce(48,'\0');
+
+        QRandomGenerator *r = QRandomGenerator::global();
+        r->fillRange(reinterpret_cast<quint32*>(nonce.data()),48/static_cast<int>(sizeof(quint32)));
+
+        QByteArray encodedNonce = nonce.toBase64();
+
+        Account* sourceAccount = new Account(server, -1L);
+        ManageDataOperation* manageDataOperation1 = ManageDataOperation::create(domainName + " auth", encodedNonce);
+        manageDataOperation1->setSourceAccount(masterClient->getAccountId());
+
+        Transaction* transaction = Transaction::Builder(sourceAccount)
+                .setBaseFee(100)
+                .addMemo(Memo::none())
+                .addTimeBounds(timeBounds)
+                .addOperation(manageDataOperation1)
+                .build();
+
+        transaction->sign(masterClient);
+        transaction->sign(signerClient1);
+        transaction->sign(signerClient2);
+
+        QSet<QString> signers;
+
+        signers.insert(masterClient->getAccountId());
+        signers.insert(signerClient1->getAccountId());
+        signers.insert(signerClient2->getAccountId());
+        signers.insert(KeyPair::random()->getAccountId());
+
+        try {
+            Sep10Challenge::verifyChallengeTransactionSigners(transaction->toEnvelopeXdrBase64(), server->getAccountId(), domainName, signers);
+            QFAIL("Missing exception");
+        } catch (std::runtime_error e) {
+            //"Transaction not signed by server
+        }
+    }
+
+    void testVerifyChallengeTransactionSignersValidServerAndClientMasterKey() {
+        KeyPair* server = KeyPair::random();
+        KeyPair* masterClient = KeyPair::random();
+
+        QString domainName = "example.com";
+
+        Transaction* transaction = Sep10Challenge::buildChallengeTx(
+                    server,
+                    masterClient->getAccountId(),
+                    domainName,
+                    300
+                    );
+
+        transaction->sign(masterClient);
+
+        QSet<QString> signers;
+        signers.insert(masterClient->getAccountId());
+        QSet<QString> signersFound = Sep10Challenge::verifyChallengeTransactionSigners(transaction->toEnvelopeXdrBase64(), server->getAccountId(), domainName, signers);
+        QCOMPARE(signers, signersFound);
+    }
+
+    void testVerifyChallengeTransactionSignersInvalidServerAndNoClient() {
+        KeyPair* server = KeyPair::random();
+        KeyPair* masterClient = KeyPair::random();
+        KeyPair* signerClient1 = KeyPair::random();
+        KeyPair* signerClient2 = KeyPair::random();
+
+
+        QString domainName = "example.com";
+
+        Transaction* transaction = Sep10Challenge::buildChallengeTx(
+                    server,
+                    masterClient->getAccountId(),
+                    domainName,
+                    300
+                    );
+
+        QSet<QString> signers;
+        signers.insert(masterClient->getAccountId());
+        signers.insert(signerClient1->getAccountId());
+        signers.insert(signerClient2->getAccountId());
+        signers.insert(KeyPair::random()->getAccountId());
+
+        try {
+            Sep10Challenge::verifyChallengeTransactionSigners(transaction->toEnvelopeXdrBase64(), server->getAccountId(), domainName, signers);
+            QFAIL("Missing exception");
+        } catch (std::runtime_error e) {
+            //"Transaction not signed by any client signer."
+        }
+    }
+
+    void testVerifyChallengeTransactionSignersInvalidServerAndClientKeyUnrecognized(){
+        KeyPair* server = KeyPair::random();
+        KeyPair* masterClient = KeyPair::random();
+        KeyPair* signerClient1 = KeyPair::random();
+        KeyPair* signerClient2 = KeyPair::random();
+        QString domainName = "example.com";
+
+        Transaction* transaction = Sep10Challenge::buildChallengeTx(
+                    server,
+                    masterClient->getAccountId(),
+                    domainName,
+                    300
+                    );
+
+        transaction->sign(masterClient);
+        transaction->sign(signerClient1);
+        transaction->sign(signerClient2);
+        transaction->sign(KeyPair::random());
+
+        QSet<QString> signers;
+        signers.insert(masterClient->getAccountId());
+        signers.insert(signerClient1->getAccountId());
+        signers.insert(signerClient2->getAccountId());
+        signers.insert(KeyPair::random()->getAccountId());
+        try {
+            Sep10Challenge::verifyChallengeTransactionSigners(transaction->toEnvelopeXdrBase64(), server->getAccountId(), domainName, signers);
+            QFAIL("Missing exception");
+        } catch (std::runtime_error e) {
+            //"Transaction has unrecognized signatures."
+        }
+    }
+
+    void testVerifyChallengeTransactionSignersValidServerAndMultipleClientSigners() {
+        KeyPair* server = KeyPair::random();
+        KeyPair* masterClient = KeyPair::random();
+        KeyPair* signerClient1 = KeyPair::random();
+        KeyPair* signerClient2 = KeyPair::random();
+        QString domainName = "example.com";
+
+        Transaction* transaction = Sep10Challenge::buildChallengeTx(
+                    server,
+                    masterClient->getAccountId(),
+                    domainName,
+                    300
+                    );
+
+        transaction->sign(signerClient1);
+        transaction->sign(signerClient2);
+
+        QSet<QString> signers;
+        signers.insert(masterClient->getAccountId());
+        signers.insert(signerClient1->getAccountId());
+        signers.insert(signerClient2->getAccountId());
+        signers.insert(KeyPair::random()->getAccountId());
+
+
+        QSet<QString> signersFound = Sep10Challenge::verifyChallengeTransactionSigners(transaction->toEnvelopeXdrBase64(), server->getAccountId(), domainName, signers);
+
+        QSet<QString> expected;
+        expected.insert(signerClient1->getAccountId());
+        expected.insert(signerClient2->getAccountId());
+        QCOMPARE(signersFound,expected);
+
+    }
+
+
+
+    void testVerifyChallengeTransactionSignersValidServerAndMultipleClientSignersReverseOrder() {
+        KeyPair* server = KeyPair::random();
+        KeyPair* masterClient = KeyPair::random();
+        KeyPair* signerClient1 = KeyPair::random();
+        KeyPair* signerClient2 = KeyPair::random();
+        QString domainName = "example.com";
+
+        Transaction* transaction = Sep10Challenge::buildChallengeTx(
+                    server,
+                    masterClient->getAccountId(),
+                    domainName,
+                    300
+                    );
+        transaction->sign(signerClient2);
+        transaction->sign(signerClient1);
+
+
+        QSet<QString> signers;
+        signers.insert(masterClient->getAccountId());
+        signers.insert(signerClient1->getAccountId());
+        signers.insert(signerClient2->getAccountId());
+        signers.insert(KeyPair::random()->getAccountId());
+
+
+        QSet<QString> signersFound = Sep10Challenge::verifyChallengeTransactionSigners(transaction->toEnvelopeXdrBase64(), server->getAccountId(), domainName, signers);
+
+        QSet<QString> expected;
+        expected.insert(signerClient1->getAccountId());
+        expected.insert(signerClient2->getAccountId());
+        QCOMPARE(signersFound,expected);
+    }
+
+
+    void testVerifyChallengeTransactionSignersValidServerAndClientSignersNotMasterKey(){
+        KeyPair* server = KeyPair::random();
+        KeyPair* masterClient = KeyPair::random();
+        KeyPair* signerClient1 = KeyPair::random();
+        QString domainName = "example.com";
+
+        Transaction* transaction = Sep10Challenge::buildChallengeTx(
+                    server,
+                    masterClient->getAccountId(),
+                    domainName,
+                    300
+                    );
+        transaction->sign(signerClient1);
+
+        QSet<QString> signers;
+        signers.insert(masterClient->getAccountId());
+        signers.insert(signerClient1->getAccountId());
+
+        QSet<QString> signersFound = Sep10Challenge::verifyChallengeTransactionSigners(transaction->toEnvelopeXdrBase64(), server->getAccountId(), domainName, signers);
+
+        QSet<QString> expected;
+        expected.insert(signerClient1->getAccountId());
+        QCOMPARE(signersFound,expected);
+    }
+
+
+    void testVerifyChallengeTransactionSignersValidServerAndClientSignersIgnoresServerSigner() {
+        KeyPair* server = KeyPair::random();
+        KeyPair* masterClient = KeyPair::random();
+        KeyPair* signerClient1 = KeyPair::random();
+        QString domainName = "example.com";
+
+        Transaction* transaction = Sep10Challenge::buildChallengeTx(
+                    server,
+                    masterClient->getAccountId(),
+                    domainName,
+                    300
+                    );
+        transaction->sign(signerClient1);
+
+        QSet<QString> signers;
+        signers.insert(signerClient1->getAccountId());
+
+        QSet<QString> signersFound = Sep10Challenge::verifyChallengeTransactionSigners(transaction->toEnvelopeXdrBase64(), server->getAccountId(), domainName, signers);
+
+        QSet<QString> expected;
+        expected.insert(signerClient1->getAccountId());
+        QCOMPARE(signersFound,expected);
+    }
+
+
+    void testVerifyChallengeTransactionSignersInvalidServerNoClientSignersIgnoresServerSigner() {
+
+        KeyPair* server = KeyPair::random();
+        KeyPair* masterClient = KeyPair::random();
+        KeyPair* signerClient1 = KeyPair::random();
+        QString domainName = "example.com";
+
+        Transaction* transaction = Sep10Challenge::buildChallengeTx(
+                    server,
+                    masterClient->getAccountId(),
+                    domainName,
+                    300
+                    );
+
+
+        QSet<QString> signers;
+        signers.insert(masterClient->getAccountId());
+        signers.insert(signerClient1->getAccountId());
+        signers.insert(server->getAccountId());
+
+        try{
+            Sep10Challenge::verifyChallengeTransactionSigners(transaction->toEnvelopeXdrBase64(), server->getAccountId(), domainName, signers);
+            QFAIL("Missing exception");
+        }
+        catch(std::runtime_error)
+        {
+            //"Transaction not signed by any client signer."
+        }
+    }
+
+
+
+    void testVerifyChallengeTransactionSignersValidIgnorePreauthTxHashAndXHash() {
+        KeyPair* server = KeyPair::random();
+        KeyPair* masterClient = KeyPair::random();
+        KeyPair* signerClient1 = KeyPair::random();
+        QString domainName = "example.com";
+
+        Transaction* transaction = Sep10Challenge::buildChallengeTx(
+                    server,
+                    masterClient->getAccountId(),
+                    domainName,
+                    300
+                    );
+        transaction->sign(signerClient1);
+
+        QString preauthTxHash = "TAQCSRX2RIDJNHFIFHWD63X7D7D6TRT5Y2S6E3TEMXTG5W3OECHZ2OG4";
+        QString xHash = "XDRPF6NZRR7EEVO7ESIWUDXHAOMM2QSKIQQBJK6I2FB7YKDZES5UCLWD";
+        QString unknownSignerType = "?ARPF6NZRR7EEVO7ESIWUDXHAOMM2QSKIQQBJK6I2FB7YKDZES5UCLWD";
+
+        QSet<QString> signers;
+        signers.insert(masterClient->getAccountId());
+        signers.insert(signerClient1->getAccountId());
+        signers.insert(preauthTxHash);
+        signers.insert(xHash);
+        signers.insert(unknownSignerType);
+
+        QSet<QString> signersFound = Sep10Challenge::verifyChallengeTransactionSigners(transaction->toEnvelopeXdrBase64(), server->getAccountId(), domainName, signers);
+
+        QSet<QString> expected;
+        expected.insert(signerClient1->getAccountId());
+        QCOMPARE(signersFound,expected);
+    }
+
+    void testVerifyChallengeTransactionSignersInvalidServerAndClientSignersFailsDuplicateSignatures() {
+        KeyPair* server = KeyPair::random();
+        KeyPair* masterClient = KeyPair::random();
+        KeyPair* signerClient1 = KeyPair::random();
+        QString domainName = "example.com";
+
+        Transaction* transaction = Sep10Challenge::buildChallengeTx(
+                    server,
+                    masterClient->getAccountId(),
+                    domainName,
+                    300
+                    );
+        transaction->sign(signerClient1);
+        transaction->sign(signerClient1);
+
+        QSet<QString> signers;
+        signers.insert(masterClient->getAccountId());
+        signers.insert(signerClient1->getAccountId());
+
+
+        try {
+            Sep10Challenge::verifyChallengeTransactionSigners(transaction->toEnvelopeXdrBase64(), server->getAccountId(), domainName, signers);
+            QFAIL("Missing exception");
+        } catch (std::runtime_error) {
+            //"Transaction has unrecognized signatures."
+        }
+    }
+
+    void testVerifyChallengeTransactionSignersInvalidServerAndClientSignersFailsSignerSeed(){
+
+        KeyPair* server = KeyPair::random();
+        KeyPair* masterClient = KeyPair::random();
+        KeyPair* signerClient1 = KeyPair::random();
+        QString domainName = "example.com";
+
+        Transaction* transaction = Sep10Challenge::buildChallengeTx(
+                    server,
+                    masterClient->getAccountId(),
+                    domainName,
+                    300
+                    );
+        transaction->sign(signerClient1);
+
+        QSet<QString> signers;
+        signers.insert(signerClient1->getSecretSeed());
+
+
+        try {
+            Sep10Challenge::verifyChallengeTransactionSigners(transaction->toEnvelopeXdrBase64(), server->getAccountId(), domainName, signers);
+            QFAIL("Missing exception");
+        } catch (std::runtime_error) {
+            //"No verifiable signers provided, at least one G... address must be provided."
+        }
+    }
+
+
+    void testVerifyChallengeTransactionSignersInvalidNoSignersNull(){
+        KeyPair* server = KeyPair::random();
+        KeyPair* masterClient = KeyPair::random();
+        KeyPair* signerClient1 = KeyPair::random();
+        QString domainName = "example.com";
+
+        Transaction* transaction = Sep10Challenge::buildChallengeTx(
+                    server,
+                    masterClient->getAccountId(),
+                    domainName,
+                    300
+                    );
+        transaction->sign(signerClient1);
+
+        QSet<QString> signers;
+        try {
+            Sep10Challenge::verifyChallengeTransactionSigners(transaction->toEnvelopeXdrBase64(), server->getAccountId(), domainName, signers);
+            QFAIL("Missing exception");
+        } catch (std::runtime_error) {
+            //"No verifiable signers provided, at least one G... address must be provided."
+        }
+    }
+
+
+    void testVerifyChallengeTransactionSignersInvalidNoSignersEmptyString(){
+        KeyPair* server = KeyPair::random();
+        KeyPair* masterClient = KeyPair::random();
+        KeyPair* signerClient1 = KeyPair::random();
+        QString domainName = "example.com";
+
+        Transaction* transaction = Sep10Challenge::buildChallengeTx(
+                    server,
+                    masterClient->getAccountId(),
+                    domainName,
+                    300
+                    );
+        transaction->sign(signerClient1);
+
+        QSet<QString> signers;
+        signers.insert(QString());
+        try {
+            Sep10Challenge::verifyChallengeTransactionSigners(transaction->toEnvelopeXdrBase64(), server->getAccountId(), domainName, signers);
+            QFAIL("Missing exception");
+        } catch (std::runtime_error) {
+            //"No verifiable signers provided, at least one G... address must be provided."
+        }
+    }
 };
 ADD_TEST(Sep10ChallengeTest)
 #endif // SEP10CHALLENGETEST_H
