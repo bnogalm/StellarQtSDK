@@ -70,9 +70,9 @@ Sep10Challenge::ChallengeTransaction * Sep10Challenge::readChallengeTransaction(
         throw std::runtime_error("Transaction is not within range of the specified timebounds.");
     }
 
-    // verify that transaction contains a single Manage Data operation and its source account is not null
-    if (transaction->getOperations().length() != 1) {
-        throw std::runtime_error("Transaction requires a single ManageData operation.");
+    // verify that transaction contains  at least one Manage Data operation and its source account is not null
+    if (transaction->getOperations().length() < 1) {
+        throw std::runtime_error("Transaction requires at least one ManageData operation.");
     }
     Operation* operation = transaction->getOperations()[0];
     ManageDataOperation* manageDataOperation = dynamic_cast<ManageDataOperation*>(operation);
@@ -87,9 +87,9 @@ Sep10Challenge::ChallengeTransaction * Sep10Challenge::readChallengeTransaction(
         throw std::runtime_error("Operation should have a source account.");
     }
 
-    if (QString("%1 auth").arg(domainName) !=  manageDataOperation->getName()){
-        throw std::runtime_error("The transaction's operation key name does not include the expected home domain.");
-    }
+//    if (QString("%1 auth").arg(domainName) !=  manageDataOperation->getName()){
+//        throw std::runtime_error("The transaction's operation key name does not include the expected home domain.");
+//    }
 
     if (StrKey::decodeVersionByte(clientAccountId) != StrKey::VersionByte::ACCOUNT_ID) {
         throw std::runtime_error("clientAccountId is not a valid account id");
@@ -109,6 +109,22 @@ Sep10Challenge::ChallengeTransaction * Sep10Challenge::readChallengeTransaction(
 
     if (nonce.length() != 48) {
         throw std::runtime_error("Random nonce before encoding as base64 should be 48 bytes long.");
+    }
+
+
+    // verify subsequent operations are manage data ops with source account set to server account
+    for(int i=1;i<transaction->getOperations().length();i++)
+    {
+        auto subsequentOp = transaction->getOperations()[i];
+        ManageDataOperation* subsequentManageDataOperation = dynamic_cast<ManageDataOperation*>(subsequentOp);
+        if (!subsequentManageDataOperation)
+            throw std::runtime_error("Operation type should be ManageData.");
+        // verify that transaction envelope has a correct signature by server's signing key
+        QString subsequentClientAccountId = subsequentManageDataOperation->getSourceAccount();
+        if (subsequentClientAccountId.isEmpty())
+            throw std::runtime_error("Operation should have a source account.");
+        if (subsequentClientAccountId != serverAccountId)
+            throw std::runtime_error("subsequent operations are unrecognized");
     }
 
     if (!verifyTransactionSignature(transaction, serverAccountId, domainName)) {

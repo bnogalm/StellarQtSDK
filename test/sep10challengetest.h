@@ -11,6 +11,7 @@
 #include "sep10challenge.h"
 #include "account.h"
 #include "setoptionsoperation.h"
+#include "bumpsequenceoperation.h"
 #include <QDateTime>
 
 class Sep10ChallengeTest: public QObject
@@ -256,7 +257,7 @@ private slots:
         QRandomGenerator *r = QRandomGenerator::global();
         r->fillRange(reinterpret_cast<quint32*>(nonce.data()),48/static_cast<int>(sizeof(quint32)));
 
-        QByteArray encodedNonce = nonce.toBase64();
+        QByteArray encodedNonce = nonce.toBase64(QByteArray::Base64Option::Base64UrlEncoding| QByteArray::OmitTrailingEquals);
 
         Account* sourceAccount = new Account(KeyPair::fromAccountId(server->getAccountId()), -1L);
         ManageDataOperation* manageDataOperation1 = ManageDataOperation::create(domainName + " auth", encodedNonce);
@@ -341,7 +342,7 @@ private slots:
         QRandomGenerator *r = QRandomGenerator::global();
         r->fillRange(reinterpret_cast<quint32*>(nonce.data()),48/static_cast<int>(sizeof(quint32)));
 
-        QByteArray encodedNonce = nonce.toBase64();
+        QByteArray encodedNonce = nonce.toBase64(QByteArray::Base64Option::Base64UrlEncoding| QByteArray::OmitTrailingEquals);
 
         Account* sourceAccount = new Account(KeyPair::fromAccountId(server->getAccountId()), 100L);
         ManageDataOperation* manageDataOperation1 = ManageDataOperation::create(domainName + " auth", encodedNonce);
@@ -377,7 +378,7 @@ private slots:
         QRandomGenerator *r = QRandomGenerator::global();
         r->fillRange(reinterpret_cast<quint32*>(nonce.data()),48/static_cast<int>(sizeof(quint32)));
 
-        QByteArray encodedNonce = nonce.toBase64();
+        QByteArray encodedNonce = nonce.toBase64(QByteArray::Base64Option::Base64UrlEncoding| QByteArray::OmitTrailingEquals);
 
         Account* sourceAccount = new Account(server, -1L);
         ManageDataOperation* operation = ManageDataOperation::create(domainName + " auth", encodedNonce);
@@ -416,7 +417,7 @@ private slots:
         QRandomGenerator *r = QRandomGenerator::global();
         r->fillRange(reinterpret_cast<quint32*>(nonce.data()),48/static_cast<int>(sizeof(quint32)));
 
-        QByteArray encodedNonce = nonce.toBase64();
+        QByteArray encodedNonce = nonce.toBase64(QByteArray::Base64Option::Base64UrlEncoding| QByteArray::OmitTrailingEquals);
 
         Account* sourceAccount = new Account(server, -1L);
         ManageDataOperation* operation = ManageDataOperation::create(domainName + " auth", encodedNonce);
@@ -451,7 +452,7 @@ private slots:
         QRandomGenerator *r = QRandomGenerator::global();
         r->fillRange(reinterpret_cast<quint32*>(nonce.data()),48/static_cast<int>(sizeof(quint32)));
 
-        QByteArray encodedNonce = nonce.toBase64();
+        QByteArray encodedNonce = nonce.toBase64(QByteArray::Base64Option::Base64UrlEncoding| QByteArray::OmitTrailingEquals);
 
         Account* sourceAccount = new Account(server, -1L);
         ManageDataOperation* operation = ManageDataOperation::create(domainName + " auth", encodedNonce);
@@ -491,7 +492,7 @@ private slots:
         QRandomGenerator *r = QRandomGenerator::global();
         r->fillRange(reinterpret_cast<quint32*>(nonce.data()),48/static_cast<int>(sizeof(quint32)));
 
-        QByteArray encodedNonce = nonce.toBase64();
+        QByteArray encodedNonce = nonce.toBase64(QByteArray::Base64Option::Base64UrlEncoding| QByteArray::OmitTrailingEquals);
 
         Account* sourceAccount = new Account(server, -1L);
         ManageDataOperation* operation = ManageDataOperation::create(domainName + " auth", encodedNonce);
@@ -517,9 +518,9 @@ private slots:
         }
     }
 
-    void testReadChallengeTransactionInvalidTooManyOperations(){
+    void testReadChallengeTransactionOperationShouldHaveASourceAcount(){
         KeyPair* server = KeyPair::random();
-        KeyPair* client = KeyPair::random();
+
         qint64 now = QDateTime::currentMSecsSinceEpoch() / 1000L;
         qint64 end = now + 300;
 
@@ -530,20 +531,16 @@ private slots:
         QRandomGenerator *r = QRandomGenerator::global();
         r->fillRange(reinterpret_cast<quint32*>(nonce.data()),48/static_cast<int>(sizeof(quint32)));
 
-        QByteArray encodedNonce = nonce.toBase64();
+        QByteArray encodedNonce = nonce.toBase64(QByteArray::Base64Option::Base64UrlEncoding| QByteArray::OmitTrailingEquals);
 
         Account* sourceAccount = new Account(server, -1L);
         ManageDataOperation* operation1 = ManageDataOperation::create(domainName + " auth", encodedNonce);
-        operation1->setSourceAccount(client->getAccountId());
-        ManageDataOperation* operation2 = ManageDataOperation::create(domainName + " auth", encodedNonce);
-        operation2->setSourceAccount(client->getAccountId());
 
         Transaction* transaction = Transaction::Builder(sourceAccount)
                 .setBaseFee(100)
                 .addMemo(Memo::none())
                 .addTimeBounds(new TimeBounds(now,end))
                 .addOperation(operation1)
-                .addOperation(operation2)
                 .build();
         transaction->sign(server);
         QString challenge = transaction->toEnvelopeXdrBase64();
@@ -552,7 +549,7 @@ private slots:
             Sep10Challenge::readChallengeTransaction(challenge, server->getAccountId(), domainName);
             QFAIL("Missing exception");
         } catch (std::runtime_error) {
-            //"Transaction requires a single ManageData operation."
+            //"Operation should have a source account."
         }
     }
 
@@ -599,7 +596,7 @@ private slots:
         QRandomGenerator *r = QRandomGenerator::global();
         r->fillRange(reinterpret_cast<quint32*>(nonce.data()),48/static_cast<int>(sizeof(quint32)));
 
-        QByteArray encodedNonce = nonce.toBase64();
+        QByteArray encodedNonce = nonce.toBase64(QByteArray::Base64Option::Base64UrlEncoding| QByteArray::OmitTrailingEquals);
 
         Account* sourceAccount = new Account(server, -1L);
         ManageDataOperation* manageDataOperation1 = ManageDataOperation::create(domainName + " auth", encodedNonce);
@@ -635,7 +632,7 @@ private slots:
         QRandomGenerator *r = QRandomGenerator::global();
         r->fillRange(reinterpret_cast<quint32*>(nonce.data()),32/static_cast<int>(sizeof(quint32)));
 
-        QByteArray encodedNonce = nonce.toBase64();
+        QByteArray encodedNonce = nonce.toBase64(QByteArray::Base64Option::Base64UrlEncoding| QByteArray::OmitTrailingEquals);
 
         Account* sourceAccount = new Account(server, -1L);
         ManageDataOperation* manageDataOperation1 = ManageDataOperation::create(domainName + " auth", encodedNonce);
@@ -673,7 +670,7 @@ private slots:
         QRandomGenerator *r = QRandomGenerator::global();
         r->fillRange(reinterpret_cast<quint32*>(nonce.data()),48/static_cast<int>(sizeof(quint32)));
 
-        QByteArray encodedNonce = nonce.toBase64();
+        QByteArray encodedNonce = nonce.toBase64(QByteArray::Base64Option::Base64UrlEncoding| QByteArray::OmitTrailingEquals);
         encodedNonce[10]='?';
 
         Account* sourceAccount = new Account(server, -1L);
@@ -711,7 +708,7 @@ private slots:
         QRandomGenerator *r = QRandomGenerator::global();
         r->fillRange(reinterpret_cast<quint32*>(nonce.data()),47/static_cast<int>(sizeof(quint32)));
 
-        QByteArray encodedNonce = nonce.toBase64();
+        QByteArray encodedNonce = nonce.toBase64(QByteArray::Base64Option::Base64UrlEncoding| QByteArray::OmitTrailingEquals);
 
         Account* sourceAccount = new Account(server, -1L);
         ManageDataOperation* manageDataOperation1 = ManageDataOperation::create(domainName + " auth", encodedNonce);
@@ -736,42 +733,408 @@ private slots:
     }
 
 
-    void testReadChallengeTransactionInvalidDomainNameMismatch() {
+    void testReadChallengeTransactionValidDoesNotVerifyHomeDomainWithHomeDomainSetToNull() {
         KeyPair* server = KeyPair::random();
         KeyPair* client = KeyPair::random();
-        qint64 now = QDateTime::currentMSecsSinceEpoch() / 1000L;
-        qint64 end = now + 300;
         QString domainName = "example.com";
-        QString mismatchDomainName = "mismatch_example.com";
-        TimeBounds* timeBounds = new TimeBounds(now, end);
+        QString mismatchDomainName;
 
+        auto challenge = Sep10Challenge::buildChallengeTx(server,client->getAccountId(),domainName,300);
+
+        auto challengeTransaction = Sep10Challenge::readChallengeTransaction(challenge->toEnvelopeXdrBase64(), server->getAccountId(), mismatchDomainName);
+        QVERIFY(Sep10Challenge::ChallengeTransaction(challenge,client->getAccountId()).equals(challengeTransaction));
+
+    }
+    void testReadChallengeTransactionValidDoesNotVerifyHomeDomainWithHomeDomainSetToInvalidValue() {
+        KeyPair* server = KeyPair::random();
+        KeyPair* client = KeyPair::random();
+        QString domainName = "example.com";
+        QString mismatchDomainName = "invalid.domain.com";
+
+        auto challenge = Sep10Challenge::buildChallengeTx(server,client->getAccountId(),domainName,300);
+
+        auto challengeTransaction = Sep10Challenge::readChallengeTransaction(challenge->toEnvelopeXdrBase64(), server->getAccountId(), mismatchDomainName);
+        QVERIFY(Sep10Challenge::ChallengeTransaction(challenge,client->getAccountId()).equals(challengeTransaction));
+
+    }
+
+
+    void testReadChallengeTransactionValidAdditionalManageDataOpsWithSourceAccountSetToServerAccount()  {
+        KeyPair* server = KeyPair::random();
+        KeyPair* client = KeyPair::random();
+        QString domainName = "example.com";
+
+        qint64 now = QDateTime::currentMSecsSinceEpoch()  / 1000L;
+        qint64 end = now + 300;
+        TimeBounds* timeBounds = new TimeBounds(now, end);
         QByteArray nonce(48,'\0');
 
         QRandomGenerator *r = QRandomGenerator::global();
         r->fillRange(reinterpret_cast<quint32*>(nonce.data()),48/static_cast<int>(sizeof(quint32)));
 
-        QByteArray encodedNonce = nonce.toBase64();
+        QByteArray encodedNonce = nonce.toBase64(QByteArray::Base64Option::Base64UrlEncoding| QByteArray::OmitTrailingEquals);
 
         Account* sourceAccount = new Account(server, -1L);
         ManageDataOperation* manageDataOperation1 = ManageDataOperation::create(domainName + " auth", encodedNonce);
         manageDataOperation1->setSourceAccount(client->getAccountId());
+
+        ManageDataOperation* manageDataOperation2 = ManageDataOperation::create("key", "value");
+        manageDataOperation2->setSourceAccount(server->getAccountId());
+
 
         Transaction* transaction = Transaction::Builder(sourceAccount)
                 .setBaseFee(100)
                 .addMemo(Memo::none())
                 .addTimeBounds(timeBounds)
                 .addOperation(manageDataOperation1)
+                .addOperation(manageDataOperation2)
                 .build();
         transaction->sign(server);
+
         QString challenge = transaction->toEnvelopeXdrBase64();
 
+        Sep10Challenge::ChallengeTransaction* challengeTransaction = Sep10Challenge::readChallengeTransaction(challenge, server->getAccountId(), domainName);
+        QVERIFY(Sep10Challenge::ChallengeTransaction(transaction, client->getAccountId()).equals(challengeTransaction));
+    }
+
+
+    void testReadChallengeTransactionInvalidAdditionalManageDataOpsWithoutSourceAccountSetToServerAccount()  {
+        KeyPair* server = KeyPair::random();
+        KeyPair* client = KeyPair::random();
+        QString domainName = "example.com";
+
+        qint64 now = QDateTime::currentMSecsSinceEpoch()  / 1000L;
+        qint64 end = now + 300;
+        TimeBounds* timeBounds = new TimeBounds(now, end);
+        QByteArray nonce(48,'\0');
+
+        QRandomGenerator *r = QRandomGenerator::global();
+        r->fillRange(reinterpret_cast<quint32*>(nonce.data()),48/static_cast<int>(sizeof(quint32)));
+
+        QByteArray encodedNonce = nonce.toBase64(QByteArray::Base64Option::Base64UrlEncoding| QByteArray::OmitTrailingEquals);
+
+        Account* sourceAccount = new Account(server, -1L);
+        ManageDataOperation* manageDataOperation1 = ManageDataOperation::create(domainName + " auth", encodedNonce);
+        manageDataOperation1->setSourceAccount(client->getAccountId());
+
+        ManageDataOperation* manageDataOperation2 = ManageDataOperation::create("key", "value");
+        manageDataOperation2->setSourceAccount(client->getAccountId());//<--
+
+
+        Transaction* transaction = Transaction::Builder(sourceAccount)
+                .setBaseFee(100)
+                .addMemo(Memo::none())
+                .addTimeBounds(timeBounds)
+                .addOperation(manageDataOperation1)
+                .addOperation(manageDataOperation2)
+                .build();
+        transaction->sign(server);
+
+        QString challenge = transaction->toEnvelopeXdrBase64();
         try {
-            Sep10Challenge::readChallengeTransaction(challenge, server->getAccountId(), mismatchDomainName);
+            Sep10Challenge::readChallengeTransaction(challenge, server->getAccountId(), domainName);
             QFAIL("Missing exception");
-        } catch (std::runtime_error e) {
-            //The transaction's operation key name does not include the expected home domain.
+        }
+        catch(std::runtime_error)
+        {
+            //Subsequent operations are unrecognized
+        }
+    }
+
+    void testReadChallengeTransactionInvalidAdditionalManageDataOpsWithSourceAccountSetToNull() {
+        KeyPair* server = KeyPair::random();
+        KeyPair* client = KeyPair::random();
+        QString domainName = "example.com";
+
+        qint64 now = QDateTime::currentMSecsSinceEpoch()  / 1000L;
+        qint64 end = now + 300;
+        TimeBounds* timeBounds = new TimeBounds(now, end);
+        QByteArray nonce(48,'\0');
+
+        QRandomGenerator *r = QRandomGenerator::global();
+        r->fillRange(reinterpret_cast<quint32*>(nonce.data()),48/static_cast<int>(sizeof(quint32)));
+
+        QByteArray encodedNonce = nonce.toBase64(QByteArray::Base64Option::Base64UrlEncoding| QByteArray::OmitTrailingEquals);
+
+        Account* sourceAccount = new Account(server, -1L);
+        ManageDataOperation* manageDataOperation1 = ManageDataOperation::create(domainName + " auth", encodedNonce);
+        manageDataOperation1->setSourceAccount(client->getAccountId());
+
+        ManageDataOperation* manageDataOperation2 = ManageDataOperation::create("key", "value");
+
+
+        Transaction* transaction = Transaction::Builder(sourceAccount)
+                .setBaseFee(100)
+                .addMemo(Memo::none())
+                .addTimeBounds(timeBounds)
+                .addOperation(manageDataOperation1)
+                .addOperation(manageDataOperation2)
+                .build();
+        transaction->sign(server);
+
+        QString challenge = transaction->toEnvelopeXdrBase64();
+        try {
+            Sep10Challenge::readChallengeTransaction(challenge, server->getAccountId(), domainName);
+            QFAIL("Missing exception");
+        }
+        catch(std::runtime_error)
+        {
+            //"Operation should have a source account."
+        }
+    }
+    void testReadChallengeTransactionInvalidAdditionalOpsOfOtherTypes(){
+        KeyPair* server = KeyPair::random();
+        KeyPair* client = KeyPair::random();
+        QString domainName = "example.com";
+
+        qint64 now = QDateTime::currentMSecsSinceEpoch()  / 1000L;
+        qint64 end = now + 300;
+        TimeBounds* timeBounds = new TimeBounds(now, end);
+        QByteArray nonce(48,'\0');
+
+        QRandomGenerator *r = QRandomGenerator::global();
+        r->fillRange(reinterpret_cast<quint32*>(nonce.data()),48/static_cast<int>(sizeof(quint32)));
+
+        QByteArray encodedNonce = nonce.toBase64(QByteArray::Base64Option::Base64UrlEncoding| QByteArray::OmitTrailingEquals);
+
+        Account* sourceAccount = new Account(server, -1L);
+        ManageDataOperation* manageDataOperation1 = ManageDataOperation::create(domainName + " auth", encodedNonce);
+        manageDataOperation1->setSourceAccount(client->getAccountId());
+
+        BumpSequenceOperation* operation2 = BumpSequenceOperation::create(0L);
+        operation2->setSourceAccount(server->getAccountId());
+
+        Transaction* transaction = Transaction::Builder(sourceAccount)
+                .setBaseFee(100)
+                .addMemo(Memo::none())
+                .addTimeBounds(timeBounds)
+                .addOperation(manageDataOperation1)
+                .addOperation(operation2)
+                .build();
+        transaction->sign(server);
+
+        QString challenge = transaction->toEnvelopeXdrBase64();
+        try {
+            Sep10Challenge::readChallengeTransaction(challenge, server->getAccountId(), domainName);
+            QFAIL("Missing exception");
+        }
+        catch(std::runtime_error)
+        {
+            //"Operation type should be ManageData."
+        }
+    }
+
+    void testVerifyChallengeTransactionValidDoesNotVerifyHomeDomainHomeDomainSetToNull() {
+        KeyPair* server = KeyPair::random();
+        KeyPair* masterClient = KeyPair::random();
+
+        QString domainName = "example.com";
+
+
+        Transaction* transaction = Sep10Challenge::buildChallengeTx(
+                    server,
+                    masterClient->getAccountId(),
+                    domainName,
+                    300
+                    );
+        transaction->sign(masterClient);
+
+        QSet<QString> signers;
+        signers.insert(masterClient->getAccountId());
+        QSet<QString> signersFound = Sep10Challenge::verifyChallengeTransactionSigners(transaction->toEnvelopeXdrBase64(), server->getAccountId(), QString(), signers);
+        QCOMPARE(signers, signersFound);
+    }
+
+    void testVerifyChallengeTransactionValidDoesNotVerifyHomeDomainWithHomeDomainSetToInvalidValue() {
+        KeyPair* server = KeyPair::random();
+        KeyPair* masterClient = KeyPair::random();
+
+        QString domainName = "example.com";
+
+
+        Transaction* transaction = Sep10Challenge::buildChallengeTx(
+                    server,
+                    masterClient->getAccountId(),
+                    domainName,
+                    300
+                    );
+        transaction->sign(masterClient);
+
+        QSet<QString> signers;
+        signers.insert(masterClient->getAccountId());
+        QSet<QString> signersFound = Sep10Challenge::verifyChallengeTransactionSigners(transaction->toEnvelopeXdrBase64(), server->getAccountId(), "invalid.domain", signers);
+        QCOMPARE(signers, signersFound);
+    }
+    void testVerifyChallengeTransactionValidAdditionalManageDataOpsWithSourceAccountSetToServerAccount() {
+        KeyPair* server = KeyPair::random();
+        KeyPair* client = KeyPair::random();
+        QString domainName = "example.com";
+
+        qint64 now = QDateTime::currentMSecsSinceEpoch()  / 1000L;
+        qint64 end = now + 300;
+        TimeBounds* timeBounds = new TimeBounds(now, end);
+        QByteArray nonce(48,'\0');
+
+        QRandomGenerator *r = QRandomGenerator::global();
+        r->fillRange(reinterpret_cast<quint32*>(nonce.data()),48/static_cast<int>(sizeof(quint32)));
+
+        QByteArray encodedNonce = nonce.toBase64(QByteArray::Base64Option::Base64UrlEncoding| QByteArray::OmitTrailingEquals);
+
+        Account* sourceAccount = new Account(server, -1L);
+        ManageDataOperation* manageDataOperation1 = ManageDataOperation::create(domainName + " auth", encodedNonce);
+        manageDataOperation1->setSourceAccount(client->getAccountId());
+
+        ManageDataOperation* manageDataOperation2 = ManageDataOperation::create("key", "value");
+        manageDataOperation2->setSourceAccount(server->getAccountId());
+
+
+        Transaction* transaction = Transaction::Builder(sourceAccount)
+                .setBaseFee(100)
+                .addMemo(Memo::none())
+                .addTimeBounds(timeBounds)
+                .addOperation(manageDataOperation1)
+                .addOperation(manageDataOperation2)
+                .build();
+        transaction->sign(server);
+        transaction->sign(client);
+
+        QString challenge = transaction->toEnvelopeXdrBase64();
+        QSet<QString> signers;
+        signers.insert(client->getAccountId());
+        QSet<QString> signersFound = Sep10Challenge::verifyChallengeTransactionSigners(transaction->toEnvelopeXdrBase64(), server->getAccountId(), domainName, signers);
+        QCOMPARE(signers, signersFound);
+    }
+
+    void testVerifyChallengeTransactionInvalidAdditionalManageDataOpsWithoutSourceAccountSetToServerAccount() {
+        KeyPair* server = KeyPair::random();
+        KeyPair* client = KeyPair::random();
+        QString domainName = "example.com";
+
+        qint64 now = QDateTime::currentMSecsSinceEpoch()  / 1000L;
+        qint64 end = now + 300;
+        TimeBounds* timeBounds = new TimeBounds(now, end);
+        QByteArray nonce(48,'\0');
+
+        QRandomGenerator *r = QRandomGenerator::global();
+        r->fillRange(reinterpret_cast<quint32*>(nonce.data()),48/static_cast<int>(sizeof(quint32)));
+
+        QByteArray encodedNonce = nonce.toBase64(QByteArray::Base64Option::Base64UrlEncoding| QByteArray::OmitTrailingEquals);
+
+        Account* sourceAccount = new Account(server, -1L);
+        ManageDataOperation* manageDataOperation1 = ManageDataOperation::create(domainName + " auth", encodedNonce);
+        manageDataOperation1->setSourceAccount(client->getAccountId());
+
+        ManageDataOperation* manageDataOperation2 = ManageDataOperation::create("key", "value");
+        manageDataOperation2->setSourceAccount(client->getAccountId());
+
+
+        Transaction* transaction = Transaction::Builder(sourceAccount)
+                .setBaseFee(100)
+                .addMemo(Memo::none())
+                .addTimeBounds(timeBounds)
+                .addOperation(manageDataOperation1)
+                .addOperation(manageDataOperation2)
+                .build();
+        transaction->sign(server);
+        transaction->sign(client);
+
+        QString challenge = transaction->toEnvelopeXdrBase64();
+        QSet<QString> signers;
+        signers.insert(client->getAccountId());
+        try {
+            Sep10Challenge::verifyChallengeTransactionSigners(transaction->toEnvelopeXdrBase64(), server->getAccountId(), domainName, signers);
+            QFAIL("Missing exception");
+        } catch (std::runtime_error) {
+            //"Subsequent operations are unrecognized."
+        }
+    }
+
+    void testVerifyChallengeTransactionInvalidAdditionalManageDataOpsWithSourceAccountSetToNull() {
+        KeyPair* server = KeyPair::random();
+        KeyPair* client = KeyPair::random();
+        QString domainName = "example.com";
+
+        qint64 now = QDateTime::currentMSecsSinceEpoch()  / 1000L;
+        qint64 end = now + 300;
+        TimeBounds* timeBounds = new TimeBounds(now, end);
+        QByteArray nonce(48,'\0');
+
+        QRandomGenerator *r = QRandomGenerator::global();
+        r->fillRange(reinterpret_cast<quint32*>(nonce.data()),48/static_cast<int>(sizeof(quint32)));
+
+        QByteArray encodedNonce = nonce.toBase64(QByteArray::Base64Option::Base64UrlEncoding| QByteArray::OmitTrailingEquals);
+
+        Account* sourceAccount = new Account(server, -1L);
+        ManageDataOperation* manageDataOperation1 = ManageDataOperation::create(domainName + " auth", encodedNonce);
+        manageDataOperation1->setSourceAccount(client->getAccountId());
+
+        ManageDataOperation* manageDataOperation2 = ManageDataOperation::create("key", "value");
+
+        Transaction* transaction = Transaction::Builder(sourceAccount)
+                .setBaseFee(100)
+                .addMemo(Memo::none())
+                .addTimeBounds(timeBounds)
+                .addOperation(manageDataOperation1)
+                .addOperation(manageDataOperation2)
+                .build();
+        transaction->sign(server);
+        transaction->sign(client);
+
+        QString challenge = transaction->toEnvelopeXdrBase64();
+        QSet<QString> signers;
+        signers.insert(client->getAccountId());
+        try {
+            Sep10Challenge::verifyChallengeTransactionSigners(transaction->toEnvelopeXdrBase64(), server->getAccountId(), domainName, signers);
+            QFAIL("Missing exception");
+        } catch (std::runtime_error) {
+            //"Operation should have a source account."
         }
 
+    }
+
+
+    void testVerifyChallengeTransactionInvalidAdditionalOpsOfOtherTypes() {
+        KeyPair* server = KeyPair::random();
+        KeyPair* client = KeyPair::random();
+        QString domainName = "example.com";
+
+        qint64 now = QDateTime::currentMSecsSinceEpoch()  / 1000L;
+        qint64 end = now + 300;
+        TimeBounds* timeBounds = new TimeBounds(now, end);
+        QByteArray nonce(48,'\0');
+
+        QRandomGenerator *r = QRandomGenerator::global();
+        r->fillRange(reinterpret_cast<quint32*>(nonce.data()),48/static_cast<int>(sizeof(quint32)));
+
+        QByteArray encodedNonce = nonce.toBase64(QByteArray::Base64Option::Base64UrlEncoding| QByteArray::OmitTrailingEquals);
+
+        Account* sourceAccount = new Account(server, -1L);
+        ManageDataOperation* manageDataOperation1 = ManageDataOperation::create(domainName + " auth", encodedNonce);
+        manageDataOperation1->setSourceAccount(client->getAccountId());
+
+        BumpSequenceOperation* op2 = BumpSequenceOperation::create(0L);
+        op2->setSourceAccount(server->getAccountId());
+
+
+        Transaction* transaction = Transaction::Builder(sourceAccount)
+                .setBaseFee(100)
+                .addMemo(Memo::none())
+                .addTimeBounds(timeBounds)
+                .addOperation(manageDataOperation1)
+                .addOperation(op2)
+                .build();
+        transaction->sign(server);
+        transaction->sign(client);
+
+        QString challenge = transaction->toEnvelopeXdrBase64();
+        QSet<QString> signers;
+        signers.insert(client->getAccountId());
+        try {
+            Sep10Challenge::verifyChallengeTransactionSigners(transaction->toEnvelopeXdrBase64(), server->getAccountId(), domainName, signers);
+            QFAIL("Missing exception");
+        } catch (std::runtime_error) {
+            //"Operation type should be ManageData."
+        }
     }
 
     void testVerifyChallengeTransactionThresholdInvalidNotSignedByServer(){
@@ -790,7 +1153,7 @@ private slots:
         QRandomGenerator *r = QRandomGenerator::global();
         r->fillRange(reinterpret_cast<quint32*>(nonce.data()),48/static_cast<int>(sizeof(quint32)));
 
-        QByteArray encodedNonce = nonce.toBase64();
+        QByteArray encodedNonce = nonce.toBase64(QByteArray::Base64Option::Base64UrlEncoding| QByteArray::OmitTrailingEquals);
 
         Account* sourceAccount = new Account(server, -1L);
         ManageDataOperation* manageDataOperation1 = ManageDataOperation::create(domainName + " auth", encodedNonce);
@@ -1117,7 +1480,7 @@ private slots:
         QRandomGenerator *r = QRandomGenerator::global();
         r->fillRange(reinterpret_cast<quint32*>(nonce.data()),48/static_cast<int>(sizeof(quint32)));
 
-        QByteArray encodedNonce = nonce.toBase64();
+        QByteArray encodedNonce = nonce.toBase64(QByteArray::Base64Option::Base64UrlEncoding| QByteArray::OmitTrailingEquals);
 
         Account* sourceAccount = new Account(server, -1L);
         ManageDataOperation* manageDataOperation1 = ManageDataOperation::create(domainName + " auth", encodedNonce);

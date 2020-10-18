@@ -17,6 +17,7 @@ class Sep10Challenge
       * @param network          The Stellar network used by the server.
       * @param clientAccountId  The stellar account belonging to the client.
       * @param domainName       The <a href="https://en.wikipedia.org/wiki/Fully_qualified_domain_name" target="_blank">fully qualified domain name</a> of the service requiring authentication.
+      *                        The domainName field is reserved for future use and not used.
       * @param timebounds       The lifetime of the challenge token.
       */
 public:
@@ -72,6 +73,7 @@ public:
        * @param serverAccountId Account ID for server's account.
        * @param network         The network to connect to for verifying and retrieving.
        * @param domainName      The <a href="https://en.wikipedia.org/wiki/Fully_qualified_domain_name" target="_blank">fully qualified domain name</a> of the service requiring authentication.
+       *                        The domainName field is reserved for future use and not used.
        * @return {@link ChallengeTransaction}, the decoded transaction envelope and client account ID contained within.
        * @throws InvalidSep10ChallengeException If the SEP-0010 validation fails, the exception will be thrown.
        * @throws IOException                    If read XDR string fails, the exception will be thrown.
@@ -91,6 +93,7 @@ public:
        * @param serverAccountId Account ID for server's account.
        * @param network         The network to connect to for verifying and retrieving.
        * @param domainName      The <a href="https://en.wikipedia.org/wiki/Fully_qualified_domain_name" target="_blank">fully qualified domain name</a> of the service requiring authentication.
+       *                        The domainName field is reserved for future use and not used.*
        * @param signers         The signers of client account.
        * @return a list of signers that were found is returned, excluding the server account ID.
        * @throws InvalidSep10ChallengeException If the SEP-0010 validation fails, the exception will be thrown.
@@ -110,6 +113,7 @@ public:
        * @param serverAccountId Account ID for server's account.
        * @param network         The network to connect to for verifying and retrieving.
        * @param domainName      The <a href="https://en.wikipedia.org/wiki/Fully_qualified_domain_name" target="_blank">fully qualified domain name</a> of the service requiring authentication.
+       *                        The domainName field is reserved for future use and not used.
        * @param threshold       The threshold on the client account.
        * @param signers         The signers of client account.
        * @return a list of signers that were found is returned, excluding the server account ID.
