@@ -51,29 +51,6 @@ QString Util::removeTailChars(QString string, QChar c)
     return string.left(i+1);
 }
 
-Transaction* Util::buildChallengeTx(KeyPair *serverSignerSecret, QString clientAccountID, QString anchorName, qint64 timebound)
-{
-    QByteArray randomNonce = generateRandomNonce(48);//48 random bytes converted to base64 is 64 bytes
-    randomNonce = randomNonce.toBase64(QByteArray::Base64Option::Base64UrlEncoding| QByteArray::OmitTrailingEquals);
-
-    // represent server signing account
-    Account *sa = new Account(new KeyPair(*serverSignerSecret),-1);//as is a temporal account, we use a keypair copy.
-    TimeBounds *timeBounds;
-    if(timebound>0)
-    {
-        qint64 now = QDateTime::currentMSecsSinceEpoch()/ 1000L;
-        qint64 timeoutTimestamp = now + timebound;
-        timeBounds = new TimeBounds(now,timeoutTimestamp);
-    }
-    else
-        timeBounds= new TimeBounds(0,0);
-    ManageDataOperation* dataOp = new ManageDataOperation(anchorName + " auth",randomNonce);
-    dataOp->setSourceAccount(clientAccountID);
-    Transaction *tx = Transaction::Builder(sa).addOperation(dataOp).addTimeBounds(timeBounds).setBaseFee(Transaction::Builder::BASE_FEE).build();
-    tx->sign(serverSignerSecret);
-    return tx;
-}
-
 QByteArray Util::generateRandomNonce(int n)
 {
     QByteArray array(n,Qt::Initialization::Uninitialized);

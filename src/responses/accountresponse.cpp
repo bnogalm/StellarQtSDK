@@ -1,6 +1,6 @@
 #include "accountresponse.h"
 #include "../keypair.h"
-
+#include "../util.h"
 #include <QCoreApplication>
 static void registerTypes()
 {
@@ -370,7 +370,7 @@ QString Data::get(QString key) const{
 }
 
 QByteArray Data::getDecoded(QString key) const{
-    return QByteArray::fromBase64(m_data.value(key));
+    return QByteArray::fromBase64(m_data.value(key),XDR_BASE64ENCODING);
 }
 
 QByteArray Data::getRaw(QString key) const{

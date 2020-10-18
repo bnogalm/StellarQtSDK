@@ -23,63 +23,63 @@ private slots:
     {
 
     }
-    void testBuildChallengeTx() {
-        auto serverKeypair = KeyPair::random();
-        auto clientKeypair = KeyPair::random();
+//    void testBuildChallengeTx() {
+//        auto serverKeypair = KeyPair::random();
+//        auto clientKeypair = KeyPair::random();
 
-        // infinite timebound
-        auto tx = Util::buildChallengeTx(serverKeypair,clientKeypair->getAccountId(),"SDF",0);
-        auto xdr = tx->toEnvelopeXdr();
-        delete tx;
-
-
-//        QCOMPARE(xdr.v0.tx.seqNum,0);
-//        QCOMPARE(xdr.v0.tx.fee,static_cast<quint32>(100));
-//        QCOMPARE(xdr.v0.tx.operations.value.size(),1);
-//        QCOMPARE(xdr.v0.tx.timeBounds.value.minTime,static_cast<quint64>(0));
-//        QCOMPARE(xdr.v0.tx.timeBounds.value.maxTime,static_cast<quint64>(0));
-//        auto op = xdr.v0.tx.operations.value.at(0);
+//        // infinite timebound
+//        auto tx = Util::buildChallengeTx(serverKeypair,clientKeypair->getAccountId(),"SDF",0);
+//        auto xdr = tx->toEnvelopeXdr();
+//        delete tx;
 
 
-        QCOMPARE(xdr.v1.tx.seqNum,0);
-        QCOMPARE(xdr.v1.tx.fee,static_cast<quint32>(100));
-        QCOMPARE(xdr.v1.tx.operations.value.size(),1);
-        QCOMPARE(xdr.v1.tx.timeBounds.value.minTime,static_cast<quint64>(0));
-        QCOMPARE(xdr.v1.tx.timeBounds.value.maxTime,static_cast<quint64>(0));
-        auto op = xdr.v1.tx.operations.value.at(0);
-
-        QCOMPARE(op.type,stellar::OperationType::MANAGE_DATA);
-        QCOMPARE(op.operationManageData.dataName.binary(),QByteArray("SDF auth"));
-        //48 random bytes enconded in base64
-        QCOMPARE(QByteArray::fromBase64(op.operationManageData.dataValue.value.binary()
-                                        ,QByteArray::Base64Option::Base64UrlEncoding|QByteArray::Base64Option::OmitTrailingEquals).size(),48);
+////        QCOMPARE(xdr.v0.tx.seqNum,0);
+////        QCOMPARE(xdr.v0.tx.fee,static_cast<quint32>(100));
+////        QCOMPARE(xdr.v0.tx.operations.value.size(),1);
+////        QCOMPARE(xdr.v0.tx.timeBounds.value.minTime,static_cast<quint64>(0));
+////        QCOMPARE(xdr.v0.tx.timeBounds.value.maxTime,static_cast<quint64>(0));
+////        auto op = xdr.v0.tx.operations.value.at(0);
 
 
-        // 5 minutes timebound
+//        QCOMPARE(xdr.v1.tx.seqNum,0);
+//        QCOMPARE(xdr.v1.tx.fee,static_cast<quint32>(100));
+//        QCOMPARE(xdr.v1.tx.operations.value.size(),1);
+//        QCOMPARE(xdr.v1.tx.timeBounds.value.minTime,static_cast<quint64>(0));
+//        QCOMPARE(xdr.v1.tx.timeBounds.value.maxTime,static_cast<quint64>(0));
+//        auto op = xdr.v1.tx.operations.value.at(0);
 
-        tx = Util::buildChallengeTx(serverKeypair,clientKeypair->getAccountId(),"SDF1",5*60);
-        xdr = tx->toEnvelopeXdr();
-        delete tx;
-//        QCOMPARE(xdr.v0.tx.seqNum,0);
-//        QCOMPARE(xdr.v0.tx.fee,static_cast<quint32>(100));
-//        QCOMPARE(xdr.v0.tx.operations.value.size(),1);
-//        QCOMPARE(xdr.v0.tx.timeBounds.value.maxTime- xdr.v0.tx.timeBounds.value.minTime,static_cast<quint64>(300));
-//        op = xdr.v0.tx.operations.value.at(0);
+//        QCOMPARE(op.type,stellar::OperationType::MANAGE_DATA);
+//        QCOMPARE(op.operationManageData.dataName.binary(),QByteArray("SDF auth"));
+//        //48 random bytes enconded in base64
+//        QCOMPARE(QByteArray::fromBase64(op.operationManageData.dataValue.value.binary()
+//                                        ,QByteArray::Base64Option::Base64UrlEncoding|QByteArray::Base64Option::OmitTrailingEquals).size(),48);
 
 
-        QCOMPARE(xdr.v1.tx.seqNum,0);
-        QCOMPARE(xdr.v1.tx.fee,static_cast<quint32>(100));
-        QCOMPARE(xdr.v1.tx.operations.value.size(),1);
-        QCOMPARE(xdr.v1.tx.timeBounds.value.maxTime- xdr.v1.tx.timeBounds.value.minTime,static_cast<quint64>(300));
-        op = xdr.v1.tx.operations.value.at(0);
+//        // 5 minutes timebound
 
-        QCOMPARE(op.type,stellar::OperationType::MANAGE_DATA);
-        QCOMPARE(op.operationManageData.dataName.binary(),QByteArray("SDF1 auth"));
-        //48 random bytes enconded in base64
-        QCOMPARE(QByteArray::fromBase64(op.operationManageData.dataValue.value.binary()
-                                        ,QByteArray::Base64Option::Base64UrlEncoding|QByteArray::Base64Option::OmitTrailingEquals).size(),48);
+//        tx = Util::buildChallengeTx(serverKeypair,clientKeypair->getAccountId(),"SDF1",5*60);
+//        xdr = tx->toEnvelopeXdr();
+//        delete tx;
+////        QCOMPARE(xdr.v0.tx.seqNum,0);
+////        QCOMPARE(xdr.v0.tx.fee,static_cast<quint32>(100));
+////        QCOMPARE(xdr.v0.tx.operations.value.size(),1);
+////        QCOMPARE(xdr.v0.tx.timeBounds.value.maxTime- xdr.v0.tx.timeBounds.value.minTime,static_cast<quint64>(300));
+////        op = xdr.v0.tx.operations.value.at(0);
 
-    }
+
+//        QCOMPARE(xdr.v1.tx.seqNum,0);
+//        QCOMPARE(xdr.v1.tx.fee,static_cast<quint32>(100));
+//        QCOMPARE(xdr.v1.tx.operations.value.size(),1);
+//        QCOMPARE(xdr.v1.tx.timeBounds.value.maxTime- xdr.v1.tx.timeBounds.value.minTime,static_cast<quint64>(300));
+//        op = xdr.v1.tx.operations.value.at(0);
+
+//        QCOMPARE(op.type,stellar::OperationType::MANAGE_DATA);
+//        QCOMPARE(op.operationManageData.dataName.binary(),QByteArray("SDF1 auth"));
+//        //48 random bytes enconded in base64
+//        QCOMPARE(QByteArray::fromBase64(op.operationManageData.dataValue.value.binary()
+//                                        ,QByteArray::Base64Option::Base64UrlEncoding|QByteArray::Base64Option::OmitTrailingEquals).size(),48);
+
+//    }
 
     void testMnemonicToBIP39Seed()
     {

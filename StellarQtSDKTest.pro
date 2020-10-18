@@ -24,6 +24,7 @@ HEADERS += \
     test/feebumptransactiontest.h \
     test/keypairtest.h \
     test/responses/feestatsdeserializertest.h \
+    test/sep10challengetest.h \
     test/strkeytest.h \
     test/testcollector.h \
     test/operationtest.h \
@@ -70,7 +71,7 @@ HEADERS += \
     test/requests/rootrequestbuildtest.h \
     test/requests/operationfeerequestbuildertest.h \
     test/sep0005keypairforaccountfrombip39seedtest.h \
-    test/slip0010ed25519privatekeytest.h \
+    test/slip0010ed25519privatekeytest.h \    
     test/utiltest.h
 
 SOURCES += \

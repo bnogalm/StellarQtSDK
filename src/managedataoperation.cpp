@@ -35,7 +35,11 @@ QString ManageDataOperation::getName() {
 }
 
 QByteArray ManageDataOperation::getValue() {
-    return QByteArray((char*)m_op.dataValue.value.value.data(),m_op.dataValue.value.value.size());
+    if(m_op.dataValue.filled)
+    {
+        return QByteArray((char*)m_op.dataValue.value.value.data(),m_op.dataValue.value.value.size());
+    }
+    return QByteArray();
 }
 
 void ManageDataOperation::fillOperationBody(stellar::Operation &operation)

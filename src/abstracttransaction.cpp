@@ -78,7 +78,7 @@ AbstractTransaction *AbstractTransaction::fromEnvelopeXdr(stellar::TransactionEn
 
 AbstractTransaction *AbstractTransaction::fromEnvelopeXdr(QString envelope, Network *network)
 {
-    QByteArray data = QByteArray::fromBase64(envelope.toLatin1());
+    QByteArray data = QByteArray::fromBase64(envelope.toLatin1(),XDR_BASE64ENCODING);
     QDataStream stream(&data, QIODevice::ReadOnly);
     stellar::TransactionEnvelope xdr;
     stream >> xdr;

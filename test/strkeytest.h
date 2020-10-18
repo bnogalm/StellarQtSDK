@@ -53,14 +53,14 @@ private slots:
 
 
     void testDecodedVersionByte() {        
-        QCOMPARE( StrKey::VersionByte::ACCOUNT_ID,StrKey::decodeVersionByte("GDW6AUTBXTOC7FIKUO5BOO3OGLK4SF7ZPOBLMQHMZDI45J2Z6VXRB5NR"));
-        QCOMPARE( StrKey::VersionByte::SEED,StrKey::decodeVersionByte("SDJHRQF4GCMIIKAAAQ6IHY42X73FQFLHUULAPSKKD4DFDM7UXWWCRHBE"));
-        QCOMPARE( StrKey::VersionByte::PRE_AUTH_TX,StrKey::decodeVersionByte("TAQCSRX2RIDJNHFIFHWD63X7D7D6TRT5Y2S6E3TEMXTG5W3OECHZ2OG4"));
-        QCOMPARE( StrKey::VersionByte::SHA256_HASH,StrKey::decodeVersionByte("XDRPF6NZRR7EEVO7ESIWUDXHAOMM2QSKIQQBJK6I2FB7YKDZES5UCLWD"));
+        QCOMPARE( StrKey::VersionByte::ACCOUNT_ID,StrKey::decodeVersionByte(QString("GDW6AUTBXTOC7FIKUO5BOO3OGLK4SF7ZPOBLMQHMZDI45J2Z6VXRB5NR")));
+        QCOMPARE( StrKey::VersionByte::SEED,StrKey::decodeVersionByte(QString("SDJHRQF4GCMIIKAAAQ6IHY42X73FQFLHUULAPSKKD4DFDM7UXWWCRHBE")));
+        QCOMPARE( StrKey::VersionByte::PRE_AUTH_TX,StrKey::decodeVersionByte(QString("TAQCSRX2RIDJNHFIFHWD63X7D7D6TRT5Y2S6E3TEMXTG5W3OECHZ2OG4")));
+        QCOMPARE( StrKey::VersionByte::SHA256_HASH,StrKey::decodeVersionByte(QString("XDRPF6NZRR7EEVO7ESIWUDXHAOMM2QSKIQQBJK6I2FB7YKDZES5UCLWD")));
     }
     void testDecodedVersionByteMAddress() {
         try {
-            StrKey::decodeVersionByte("MBU2RRGLXH3E5CQHTD3ODLDF2BWDCYUSSBLLZ5GNW7JXHDIYKXZWGTOG");
+            StrKey::decodeVersionByte(QString("MBU2RRGLXH3E5CQHTD3ODLDF2BWDCYUSSBLLZ5GNW7JXHDIYKXZWGTOG"));
             QFAIL("Missing exception");
         } catch (std::runtime_error e){
             QCOMPARE(QString("Version byte is invalid"), QString(e.what()));
@@ -69,7 +69,7 @@ private slots:
 
     void testDecodedVersionByteThrows() {
       try {
-        StrKey::decodeVersionByte("INVALIDBXTOC7FIKUO5BOO3OGLK4SF7ZPOBLMQHMZDI45J2Z6INVALID");
+        StrKey::decodeVersionByte(QString("INVALIDBXTOC7FIKUO5BOO3OGLK4SF7ZPOBLMQHMZDI45J2Z6INVALID"));
         QFAIL("missing exception");
       } catch (std::runtime_error e) {
             QVERIFY(QString(e.what())=="Version byte is invalid");

@@ -29,6 +29,11 @@ StrKey::VersionByte StrKey::decodeVersionByte(QByteArray encoded) {
     }
 }
 
+StrKey::VersionByte StrKey::decodeVersionByte(QString encoded)
+{
+    return StrKey::decodeVersionByte(encoded.toLocal8Bit());
+}
+
 QByteArray StrKey::encodeCheck(StrKey::VersionByte versionByte, QByteArray data) {
 
     QByteArray payload;

@@ -95,7 +95,9 @@ public:
         throw std::runtime_error("invalid address length");
     }
 
+    //encoded here is the ASCII encoded address, not the binary format
     static VersionByte decodeVersionByte(QByteArray encoded);
+    static VersionByte decodeVersionByte(QString encoded);
 
 
     static QByteArray decodeStellarAccountId(QString data) {

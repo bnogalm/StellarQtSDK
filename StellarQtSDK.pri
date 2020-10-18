@@ -5,7 +5,7 @@ DEFINES += STELLAR_QT_REPLY_TIMEOUT=30000
 DEFINES *= ED25519_NO_SEED
 
 DEFINES += STELLAR_QT_SDK_CLIENT_NAME=\"\\\"qtcpp-stellar-sdk\\\"\"
-DEFINES += STELLAR_QT_SDK_CLIENT_VERSION=\"\\\"0.3.4\\\"\"
+DEFINES += STELLAR_QT_SDK_CLIENT_VERSION=\"\\\"0.3.5\\\"\"
 
 #DEFINES += STELLAR_QT_AUTOSET_BASE_FEE
 
@@ -52,6 +52,7 @@ SOURCES += \
     $$PWD/src/responses/operations/pathpaymentbaseoperationresponse.cpp \
     $$PWD/src/responses/operations/pathpaymentstrictreceiveoperationresponse.cpp \
     $$PWD/src/responses/operations/pathpaymentstrictsendoperationresponse.cpp \
+    $$PWD/src/sep10challenge.cpp \
     $$PWD/src/strkey.cpp \
     $$PWD/src/inflationoperation.cpp \
     $$PWD/src/util.cpp \
@@ -186,6 +187,7 @@ HEADERS += \
     $$PWD/src/responses/operations/pathpaymentbaseoperationresponse.h \
     $$PWD/src/responses/operations/pathpaymentstrictreceiveoperationresponse.h \
     $$PWD/src/responses/operations/pathpaymentstrictsendoperationresponse.h \
+    $$PWD/src/sep10challenge.h \
     $$PWD/xdr/stellartypes.h \
     $$PWD/src/account.h \
     $$PWD/src/transactionbuilderaccount.h \
