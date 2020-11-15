@@ -31,7 +31,7 @@ Transaction* Sep10Challenge::buildChallengeTx(KeyPair *serverSignerSecret, QStri
     return tx;
 }
 
-Sep10Challenge::ChallengeTransaction * Sep10Challenge::readChallengeTransaction(QString challengeXdr, QString serverAccountId, QString domainName, Network *network)  {
+Sep10Challenge::ChallengeTransaction * Sep10Challenge::readChallengeTransaction(QString challengeXdr, QString serverAccountId, QStringList domainNames, Network *network)  {
     // decode the received input as a base64-urlencoded XDR representation of Stellar transaction envelope
     AbstractTransaction* parsed = Transaction::fromEnvelopeXdr(challengeXdr, network);
     Transaction* transaction = dynamic_cast<Transaction*>(parsed);
@@ -86,10 +86,16 @@ Sep10Challenge::ChallengeTransaction * Sep10Challenge::readChallengeTransaction(
     if (clientAccountId == nullptr) {
         throw std::runtime_error("Operation should have a source account.");
     }
-
-//    if (QString("%1 auth").arg(domainName) !=  manageDataOperation->getName()){
-//        throw std::runtime_error("The transaction's operation key name does not include the expected home domain.");
-//    }
+    QString matchedDomainName;
+    for (QString homeDomain : domainNames) {
+        if ((homeDomain + " auth")==manageDataOperation->getName()) {
+            matchedDomainName = homeDomain;
+            break;
+        }
+    }
+    if (matchedDomainName.isNull()){
+        throw std::runtime_error("The transaction's operation key name does not include one of the expected home domains.");
+    }
 
     if (StrKey::decodeVersionByte(clientAccountId) != StrKey::VersionByte::ACCOUNT_ID) {
         throw std::runtime_error("clientAccountId is not a valid account id");
@@ -127,20 +133,25 @@ Sep10Challenge::ChallengeTransaction * Sep10Challenge::readChallengeTransaction(
             throw std::runtime_error("subsequent operations are unrecognized");
     }
 
-    if (!verifyTransactionSignature(transaction, serverAccountId, domainName)) {
+    if (!verifyTransactionSignature(transaction, serverAccountId)) {
         throw std::runtime_error("Transaction not signed by server");
     }
 
-    return new ChallengeTransaction(transaction, clientAccountId);
+    return new ChallengeTransaction(transaction, clientAccountId, matchedDomainName);
 }
 
-QSet<QString> Sep10Challenge::verifyChallengeTransactionSigners(QString challengeXdr, QString serverAccountId, QString domainName, QSet<QString> signers, Network *network) {
+Sep10Challenge::ChallengeTransaction *Sep10Challenge::readChallengeTransaction(QString challengeXdr, QString serverAccountId, QString domainName, Network *network)
+{
+    return readChallengeTransaction(challengeXdr, serverAccountId, QStringList()<< domainName, network);
+}
+
+QSet<QString> Sep10Challenge::verifyChallengeTransactionSigners(QString challengeXdr, QString serverAccountId, QStringList domainNames, QSet<QString> signers, Network *network) {
     if (signers.isEmpty()) {
         throw std::runtime_error("No verifiable signers provided, at least one G... address must be provided.");
     }
 
     // Read the transaction which validates its structure.
-    ChallengeTransaction* parsedChallengeTransaction = readChallengeTransaction(challengeXdr, serverAccountId, domainName, network);
+    ChallengeTransaction* parsedChallengeTransaction = readChallengeTransaction(challengeXdr, serverAccountId, domainNames, network);
     Transaction* transaction = parsedChallengeTransaction->getTransaction();
 
     // Ensure the server account ID is an address and not a seed.
@@ -184,7 +195,7 @@ QSet<QString> Sep10Challenge::verifyChallengeTransactionSigners(QString challeng
     // are consumed only once on the transaction.
     QSet<QString> allSigners = QSet<QString>(clientSigners);
     allSigners.insert(serverKeyPair->getAccountId());
-    QSet<QString> signersFound = verifyTransactionSignatures(transaction, domainName, allSigners);
+    QSet<QString> signersFound = verifyTransactionSignatures(transaction, allSigners);
 
     // Confirm the server is in the list of signers found and remove it.
     bool serverSignerFound = signersFound.remove(serverKeyPair->getAccountId());
@@ -207,7 +218,7 @@ QSet<QString> Sep10Challenge::verifyChallengeTransactionSigners(QString challeng
     return signersFound;
 }
 
-QSet<QString> Sep10Challenge::verifyChallengeTransactionThreshold(QString challengeXdr, QString serverAccountId, QString domainName, int threshold, QSet<Sep10Challenge::Signer> signers, Network *network)
+QSet<QString> Sep10Challenge::verifyChallengeTransactionThreshold(QString challengeXdr, QString serverAccountId, QStringList domainNames, int threshold, QSet<Sep10Challenge::Signer> signers, Network *network)
 {
     if (signers.isEmpty()) {
         throw std::runtime_error("No verifiable signers provided, at least one G... address must be provided.");
@@ -219,7 +230,7 @@ QSet<QString> Sep10Challenge::verifyChallengeTransactionThreshold(QString challe
         weightsForSigner.insert(signer.getKey(), signer.getWeight());
         signersSet.insert(signer.getKey());
     }
-    QSet<QString> signersFound = verifyChallengeTransactionSigners(challengeXdr, serverAccountId, domainName, signersSet, network);
+    QSet<QString> signersFound = verifyChallengeTransactionSigners(challengeXdr, serverAccountId, domainNames, signersSet, network);
 
     int sum = 0;
     for (QString signer : signersFound) {
@@ -236,8 +247,12 @@ QSet<QString> Sep10Challenge::verifyChallengeTransactionThreshold(QString challe
     return signersFound;
 }
 
-QSet<QString> Sep10Challenge::verifyTransactionSignatures(Transaction *transaction, QString domainName, QSet<QString> signers){
-    Q_UNUSED(domainName)
+QSet<QString> Sep10Challenge::verifyChallengeTransactionThreshold(QString challengeXdr, QString serverAccountId, QString domainName, int threshold, QSet<Sep10Challenge::Signer> signers, Network *network)
+{
+    return verifyChallengeTransactionThreshold(challengeXdr,serverAccountId,QStringList() << domainName, threshold,signers,network);
+}
+
+QSet<QString> Sep10Challenge::verifyTransactionSignatures(Transaction *transaction, QSet<QString> signers){
     if (transaction->getSignatures().isEmpty()) {
         throw std::runtime_error("Transaction has no signatures.");
     }
@@ -270,11 +285,12 @@ QSet<QString> Sep10Challenge::verifyTransactionSignatures(Transaction *transacti
     return signersFound;
 }
 
-bool Sep10Challenge::verifyTransactionSignature(Transaction *transaction, QString accountId, QString domainName) {
-    return !verifyTransactionSignatures(transaction, domainName, QSet<QString>() << accountId).isEmpty();
+bool Sep10Challenge::verifyTransactionSignature(Transaction *transaction, QString accountId) {
+    return !verifyTransactionSignatures(transaction, QSet<QString>() << accountId).isEmpty();
 }
 
-Sep10Challenge::ChallengeTransaction::ChallengeTransaction(Transaction *transaction, QString clientAccountId):m_transaction(transaction),m_clientAccountId(clientAccountId)
+Sep10Challenge::ChallengeTransaction::ChallengeTransaction(Transaction *transaction, QString clientAccountId, QString matchedHomeDomain)
+    :m_transaction(transaction),m_clientAccountId(clientAccountId),m_matchedHomeDomain(matchedHomeDomain)
 {
 }
 
@@ -288,15 +304,21 @@ QString Sep10Challenge::ChallengeTransaction::getClientAccountId() const
     return m_clientAccountId;
 }
 
+QString Sep10Challenge::ChallengeTransaction::getMatchedHomeDomain() const
+{
+    return m_matchedHomeDomain;
+}
+
 int Sep10Challenge::ChallengeTransaction::hashCode() const
 {
-    return qHash(m_transaction->hash()) ^qHash(m_clientAccountId);
+    return qHash(m_transaction->hash()) ^qHash(m_clientAccountId) ^qHash(m_matchedHomeDomain);
 }
 
 bool Sep10Challenge::ChallengeTransaction::equals(const Sep10Challenge::ChallengeTransaction *other) const
 {
     return m_transaction->hash()==other->m_transaction->hash()
-            && m_clientAccountId == other->m_clientAccountId;
+            && m_clientAccountId == other->m_clientAccountId
+            && m_matchedHomeDomain == other->m_matchedHomeDomain;
 }
 
 Sep10Challenge::Signer::Signer(QString key, int weight):m_key(key),m_weight(weight) {

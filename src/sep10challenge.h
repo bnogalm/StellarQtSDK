@@ -25,14 +25,17 @@ public:
      * Used to store the results produced by {@link Sep10Challenge#readChallengeTransaction(String, String, Network, String)}.
      */
     class ChallengeTransaction {
-      Transaction* m_transaction;
-      QString m_clientAccountId;
-      public:
-      ChallengeTransaction(Transaction* transaction, QString clientAccountId);
-      Transaction* getTransaction() const;
-      QString getClientAccountId() const;
-      int hashCode() const;
-      bool equals(const ChallengeTransaction* other) const;
+        Transaction* m_transaction;
+        QString m_clientAccountId;
+        QString m_matchedHomeDomain;
+    public:
+        ChallengeTransaction(Transaction* transaction, QString clientAccountId, QString matchedHomeDomain);
+        Transaction* getTransaction() const;
+        QString getClientAccountId() const;
+        QString getMatchedHomeDomain() const;
+        int hashCode() const;
+        bool equals(const ChallengeTransaction* other) const;
+
     };
 
     /**
@@ -72,14 +75,34 @@ public:
        * @param challengeXdr    SEP-0010 transaction challenge transaction in base64.
        * @param serverAccountId Account ID for server's account.
        * @param network         The network to connect to for verifying and retrieving.
-       * @param domainName      The <a href="https://en.wikipedia.org/wiki/Fully_qualified_domain_name" target="_blank">fully qualified domain name</a> of the service requiring authentication.
-       *                        The domainName field is reserved for future use and not used.
+       * @param domainNames     One of the home domains that is expected to be included in the first Manage Data operation's string key.
+       * @return {@link ChallengeTransaction}, the decoded transaction envelope and client account ID contained within.
+       * @throws InvalidSep10ChallengeException If the SEP-0010 validation fails, the exception will be thrown.
+       * @throws IOException                    If read XDR string fails, the exception will be thrown.
+       */
+      static ChallengeTransaction* readChallengeTransaction(QString challengeXdr, QString serverAccountId, QStringList domainNames, Network* network= Network::current());
+      /**
+       * Reads a SEP 10 challenge transaction and returns the decoded transaction envelope and client account ID contained within.
+       * <p>
+       * It also verifies that transaction is signed by the server.
+       * <p>
+       * It does not verify that the transaction has been signed by the client or
+       * that any signatures other than the servers on the transaction are valid. Use
+       * one of the following functions to completely verify the transaction:
+       * {@link Sep10Challenge#verifyChallengeTransactionSigners(String, String, Network, String, Set)} or
+       * {@link Sep10Challenge#verifyChallengeTransactionThreshold(String, String, Network, String, int, Set)} or
+       * {@link Sep10Challenge#verifyChallengeTransactionSigners(String, String, Network, String[], Set)} or
+       * {@link Sep10Challenge#verifyChallengeTransactionThreshold(String, String, Network, String[], int, Set)} or
+       *
+       * @param challengeXdr    SEP-0010 transaction challenge transaction in base64.
+       * @param serverAccountId Account ID for server's account.
+       * @param network         The network to connect to for verifying and retrieving.
+       * @param domainName      The home domains that is expected to be included in the first Manage Data operation's string key.
        * @return {@link ChallengeTransaction}, the decoded transaction envelope and client account ID contained within.
        * @throws InvalidSep10ChallengeException If the SEP-0010 validation fails, the exception will be thrown.
        * @throws IOException                    If read XDR string fails, the exception will be thrown.
        */
       static ChallengeTransaction* readChallengeTransaction(QString challengeXdr, QString serverAccountId, QString domainName, Network* network= Network::current());
-
       /**
        * Verifies that for a SEP 10 challenge transaction
        * all signatures on the transaction are accounted for. A transaction is
@@ -92,15 +115,35 @@ public:
        * @param challengeXdr    SEP-0010 transaction challenge transaction in base64.
        * @param serverAccountId Account ID for server's account.
        * @param network         The network to connect to for verifying and retrieving.
-       * @param domainName      The <a href="https://en.wikipedia.org/wiki/Fully_qualified_domain_name" target="_blank">fully qualified domain name</a> of the service requiring authentication.
-       *                        The domainName field is reserved for future use and not used.*
+       * @param domainName      The home domains that is expected to be included in the first Manage Data operation's string key.
        * @param signers         The signers of client account.
        * @return a list of signers that were found is returned, excluding the server account ID.
        * @throws InvalidSep10ChallengeException If the SEP-0010 validation fails, the exception will be thrown.
        * @throws IOException                    If read XDR string fails, the exception will be thrown.
        */
-      static QSet<QString> verifyChallengeTransactionSigners(QString challengeXdr, QString serverAccountId, QString domainName, QSet<QString> signers, Network* network= Network::current());
-
+      static QSet<QString> verifyChallengeTransactionSigners(QString challengeXdr, QString serverAccountId, QString domainName, QSet<QString> signers, Network* network= Network::current())
+      {
+          return verifyChallengeTransactionSigners(challengeXdr,serverAccountId,QStringList() << domainName,signers,network);
+      }
+      /**
+         * Verifies that for a SEP 10 challenge transaction
+         * all signatures on the transaction are accounted for. A transaction is
+         * verified if it is signed by the server account, and all other signatures
+         * match a signer that has been provided as an argument. Additional signers can
+         * be provided that do not have a signature, but all signatures must be matched
+         * to a signer for verification to succeed. If verification succeeds a list of
+         * signers that were found is returned, excluding the server account ID.
+         *
+         * @param challengeXdr    SEP-0010 transaction challenge transaction in base64.
+         * @param serverAccountId Account ID for server's account.
+         * @param network         The network to connect to for verifying and retrieving.
+         * @param domainNames     One of the home domains that is expected to be included in the first Manage Data operation's string key.
+         * @param signers         The signers of client account.
+         * @return a list of signers that were found is returned, excluding the server account ID.
+         * @throws InvalidSep10ChallengeException If the SEP-0010 validation fails, the exception will be thrown.
+         * @throws IOException                    If read XDR string fails, the exception will be thrown.
+         */
+        static QSet<QString> verifyChallengeTransactionSigners(QString challengeXdr, QString serverAccountId, QStringList domainNames, QSet<QString> signers, Network* network= Network::current());
       /**
        * Verifies that for a SEP-0010 challenge transaction
        * all signatures on the transaction are accounted for and that the signatures
@@ -112,8 +155,26 @@ public:
        * @param challengeXdr    SEP-0010 transaction challenge transaction in base64.
        * @param serverAccountId Account ID for server's account.
        * @param network         The network to connect to for verifying and retrieving.
-       * @param domainName      The <a href="https://en.wikipedia.org/wiki/Fully_qualified_domain_name" target="_blank">fully qualified domain name</a> of the service requiring authentication.
-       *                        The domainName field is reserved for future use and not used.
+       * @param domainName      One of the home domains that is expected to be included in the first Manage Data operation's string key.
+       * @param threshold       The threshold on the client account.
+       * @param signers         The signers of client account.
+       * @return a list of signers that were found is returned, excluding the server account ID.
+       * @throws InvalidSep10ChallengeException If the SEP-0010 validation fails, the exception will be thrown.
+       * @throws IOException                    If read XDR string fails, the exception will be thrown.
+       */
+      static QSet<QString> verifyChallengeTransactionThreshold(QString challengeXdr, QString serverAccountId, QStringList domainNames, int threshold, QSet<Signer> signers,  Network* network=Network::current());
+      /**
+       * Verifies that for a SEP-0010 challenge transaction
+       * all signatures on the transaction are accounted for and that the signatures
+       * meet a threshold on an account. A transaction is verified if it is signed by
+       * the server account, and all other signatures match a signer that has been
+       * provided as an argument, and those signatures meet a threshold on the
+       * account.
+       *
+       * @param challengeXdr    SEP-0010 transaction challenge transaction in base64.
+       * @param serverAccountId Account ID for server's account.
+       * @param network         The network to connect to for verifying and retrieving.
+       * @param domainName      The home domain that is expected to be included in the first Manage Data operation's string key.
        * @param threshold       The threshold on the client account.
        * @param signers         The signers of client account.
        * @return a list of signers that were found is returned, excluding the server account ID.
@@ -122,9 +183,9 @@ public:
        */
       static QSet<QString> verifyChallengeTransactionThreshold(QString challengeXdr, QString serverAccountId, QString domainName, int threshold, QSet<Signer> signers,  Network* network=Network::current());
 private:
-      static QSet<QString> verifyTransactionSignatures(Transaction* transaction, QString domainName, QSet<QString> signers);
+      static QSet<QString> verifyTransactionSignatures(Transaction* transaction, QSet<QString> signers);
 public:
-      static bool verifyTransactionSignature(Transaction* transaction, QString accountId, QString domainName);
+      static bool verifyTransactionSignature(Transaction* transaction, QString accountId);
 
 
 
