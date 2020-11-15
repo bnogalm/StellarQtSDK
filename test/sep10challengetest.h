@@ -105,7 +105,7 @@ private slots:
                     );
 
         Sep10Challenge::ChallengeTransaction* challengeTransaction = Sep10Challenge::readChallengeTransaction(transaction->toEnvelopeXdrBase64(), server->getAccountId(), domainName);
-        QVERIFY(challengeTransaction->equals(new Sep10Challenge::ChallengeTransaction(transaction, client->getAccountId())));
+        QVERIFY(challengeTransaction->equals(new Sep10Challenge::ChallengeTransaction(transaction, client->getAccountId(), domainName)));
     }
 
 
@@ -150,13 +150,13 @@ private slots:
                     server->getAccountId(),
                     domainName
                     );
-        QVERIFY(challengeTransactionV0->equals(new Sep10Challenge::ChallengeTransaction(transaction, client->getAccountId())));
+        QVERIFY(challengeTransactionV0->equals(new Sep10Challenge::ChallengeTransaction(transaction, client->getAccountId(), domainName)));
         Sep10Challenge::ChallengeTransaction* challengeTransactionV1 = Sep10Challenge::readChallengeTransaction(
                     v1Base64,
                     server->getAccountId(),
                     domainName
                     );
-        QVERIFY(challengeTransactionV1->equals(new Sep10Challenge::ChallengeTransaction(transaction, client->getAccountId())));
+        QVERIFY(challengeTransactionV1->equals(new Sep10Challenge::ChallengeTransaction(transaction, client->getAccountId(), domainName)));
     }
 
 
@@ -241,7 +241,7 @@ private slots:
         transaction->sign(client);
 
         Sep10Challenge::ChallengeTransaction* challengeTransaction = Sep10Challenge::readChallengeTransaction(transaction->toEnvelopeXdrBase64(), server->getAccountId(), domainName);
-        QVERIFY(challengeTransaction->equals(new Sep10Challenge::ChallengeTransaction(transaction, client->getAccountId())));
+        QVERIFY(challengeTransaction->equals(new Sep10Challenge::ChallengeTransaction(transaction, client->getAccountId(), domainName)));
     }
 
     void testReadChallengeTransactionInvalidNotSignedByServer() {
@@ -733,31 +733,33 @@ private slots:
     }
 
 
-    void testReadChallengeTransactionValidDoesNotVerifyHomeDomainWithHomeDomainSetToNull() {
+    void testReadChallengeTransactionInvalidDataValueIsNull() {
         KeyPair* server = KeyPair::random();
         KeyPair* client = KeyPair::random();
+        qint64 now = QDateTime::currentMSecsSinceEpoch() / 1000L;
+        qint64 end = now + 300;
         QString domainName = "example.com";
-        QString mismatchDomainName;
+        TimeBounds* timeBounds = new TimeBounds(now, end);
 
-        auto challenge = Sep10Challenge::buildChallengeTx(server,client->getAccountId(),domainName,300);
+        Account* sourceAccount = new Account(server, -1L);
+        ManageDataOperation* manageDataOperation1 = ManageDataOperation::create(domainName + " auth");
+        manageDataOperation1->setSourceAccount(client->getAccountId());
 
-        auto challengeTransaction = Sep10Challenge::readChallengeTransaction(challenge->toEnvelopeXdrBase64(), server->getAccountId(), mismatchDomainName);
-        QVERIFY(Sep10Challenge::ChallengeTransaction(challenge,client->getAccountId()).equals(challengeTransaction));
-
+        Transaction* transaction = Transaction::Builder(sourceAccount)
+                .setBaseFee(100)
+                .addMemo(Memo::none())
+                .addTimeBounds(timeBounds)
+                .addOperation(manageDataOperation1)
+                .build();
+        transaction->sign(server);
+        QString challenge = transaction->toEnvelopeXdrBase64();
+        try {
+            Sep10Challenge::readChallengeTransaction(challenge, server->getAccountId(), domainName);
+            QFAIL("Missing exception");
+        } catch (std::runtime_error) {
+            //"The transaction's operation value should not be null."
+        }
     }
-    void testReadChallengeTransactionValidDoesNotVerifyHomeDomainWithHomeDomainSetToInvalidValue() {
-        KeyPair* server = KeyPair::random();
-        KeyPair* client = KeyPair::random();
-        QString domainName = "example.com";
-        QString mismatchDomainName = "invalid.domain.com";
-
-        auto challenge = Sep10Challenge::buildChallengeTx(server,client->getAccountId(),domainName,300);
-
-        auto challengeTransaction = Sep10Challenge::readChallengeTransaction(challenge->toEnvelopeXdrBase64(), server->getAccountId(), mismatchDomainName);
-        QVERIFY(Sep10Challenge::ChallengeTransaction(challenge,client->getAccountId()).equals(challengeTransaction));
-
-    }
-
 
     void testReadChallengeTransactionValidAdditionalManageDataOpsWithSourceAccountSetToServerAccount()  {
         KeyPair* server = KeyPair::random();
@@ -794,7 +796,7 @@ private slots:
         QString challenge = transaction->toEnvelopeXdrBase64();
 
         Sep10Challenge::ChallengeTransaction* challengeTransaction = Sep10Challenge::readChallengeTransaction(challenge, server->getAccountId(), domainName);
-        QVERIFY(Sep10Challenge::ChallengeTransaction(transaction, client->getAccountId()).equals(challengeTransaction));
+        QVERIFY(Sep10Challenge::ChallengeTransaction(transaction, client->getAccountId(), domainName).equals(challengeTransaction));
     }
 
 
@@ -924,7 +926,79 @@ private slots:
         }
     }
 
-    void testVerifyChallengeTransactionValidDoesNotVerifyHomeDomainHomeDomainSetToNull() {
+
+     void testReadChallengeTransactionValidMultipleDomainNames() {
+       KeyPair* server = KeyPair::random();
+       KeyPair* client = KeyPair::random();
+       QString domainName = "example.com";
+
+       Transaction* transaction;
+       try {
+         transaction = Sep10Challenge::buildChallengeTx(
+           server,
+           client->getAccountId(),
+           domainName,
+           300
+         );
+       } catch (std::runtime_error e) {
+         QFAIL("Should not have thrown any exception.");
+       }
+
+       Sep10Challenge::ChallengeTransaction* challengeTransaction = Sep10Challenge::readChallengeTransaction(transaction->toEnvelopeXdrBase64(), server->getAccountId(), QStringList()<< "example3.com"<< "example2.com"<< "example.com");
+       QCOMPARE(challengeTransaction, new Sep10Challenge::ChallengeTransaction(transaction, client->getAccountId(), domainName));
+     }
+
+
+     void testReadChallengeTransactionInvalidDomainNamesMismatch() {
+         KeyPair* server = KeyPair::random();
+         KeyPair* client = KeyPair::random();
+         QString domainName = "example.com";
+
+         Transaction* transaction;
+         try {
+             transaction = Sep10Challenge::buildChallengeTx(
+                         server,
+                         client->getAccountId(),
+                         domainName,
+                         300
+                         );
+         } catch (std::runtime_error e) {
+             QFAIL("Should not have thrown any exception.");
+         }
+         try {
+             Sep10Challenge::readChallengeTransaction(transaction->toEnvelopeXdrBase64(), server->getAccountId(), QStringList()<< "example3.com"<< "example2.com");
+             QFAIL("Missing exception");
+         } catch (std::runtime_error) {
+             //"The transaction's operation key name does not include one of the expected home domains.";
+         }
+     }
+
+     void testReadChallengeTransactionInvalidDomainNamesEmpty(){
+         KeyPair* server = KeyPair::random();
+         KeyPair* client = KeyPair::random();
+         QString domainName = "example.com";
+
+         Transaction* transaction;
+         try {
+             transaction = Sep10Challenge::buildChallengeTx(
+                         server,
+                         client->getAccountId(),
+                         domainName,
+                         300
+                         );
+         } catch (std::runtime_error e) {
+             QFAIL("Should not have thrown any exception.");
+         }
+         try {
+             Sep10Challenge::readChallengeTransaction(transaction->toEnvelopeXdrBase64(), server->getAccountId(), QStringList());
+             QFAIL("Missing exception");
+         } catch (std::runtime_error) {
+             //"The transaction's operation key name does not include one of the expected home domains."
+         }
+     }
+
+
+    void testVerifyChallengeTransactionThresholdValidMultipleDomainNames() {
         KeyPair* server = KeyPair::random();
         KeyPair* masterClient = KeyPair::random();
 
@@ -939,32 +1013,35 @@ private slots:
                     );
         transaction->sign(masterClient);
 
-        QSet<QString> signers;
-        signers.insert(masterClient->getAccountId());
-        QSet<QString> signersFound = Sep10Challenge::verifyChallengeTransactionSigners(transaction->toEnvelopeXdrBase64(), server->getAccountId(), QString(), signers);
-        QCOMPARE(signers, signersFound);
+        QSet<Sep10Challenge::Signer> signers;
+        signers.insert(Sep10Challenge::Signer(masterClient->getAccountId(),255));
+        int threshold = 255;
+        QSet<QString> signersFound = Sep10Challenge::verifyChallengeTransactionThreshold(transaction->toEnvelopeXdrBase64(), server->getAccountId(), QStringList()<<"example3.com"<< "example2.com"<< "example.com", threshold, signers);
+        QSet<QString> expected;
+        expected.insert(masterClient->getAccountId());
+        QCOMPARE(signersFound, expected);
     }
+      void testVerifyChallengeTransactionSignersValidMultipleDomainNames() {
+          KeyPair* server = KeyPair::random();
+          KeyPair* masterClient = KeyPair::random();
 
-    void testVerifyChallengeTransactionValidDoesNotVerifyHomeDomainWithHomeDomainSetToInvalidValue() {
-        KeyPair* server = KeyPair::random();
-        KeyPair* masterClient = KeyPair::random();
-
-        QString domainName = "example.com";
+          QString domainName = "example.com";
 
 
-        Transaction* transaction = Sep10Challenge::buildChallengeTx(
-                    server,
-                    masterClient->getAccountId(),
-                    domainName,
-                    300
-                    );
-        transaction->sign(masterClient);
+          Transaction* transaction = Sep10Challenge::buildChallengeTx(
+                      server,
+                      masterClient->getAccountId(),
+                      domainName,
+                      300
+                      );
+          transaction->sign(masterClient);
 
-        QSet<QString> signers;
-        signers.insert(masterClient->getAccountId());
-        QSet<QString> signersFound = Sep10Challenge::verifyChallengeTransactionSigners(transaction->toEnvelopeXdrBase64(), server->getAccountId(), "invalid.domain", signers);
-        QCOMPARE(signers, signersFound);
-    }
+          QSet<QString> signers;
+          signers.insert(masterClient->getAccountId());
+          QSet<QString> signersFound = Sep10Challenge::verifyChallengeTransactionSigners(transaction->toEnvelopeXdrBase64(), server->getAccountId(), QStringList()<<"example3.com"<< "example2.com"<< "example.com", signers);
+          QCOMPARE(signers, signersFound);
+      }
+
     void testVerifyChallengeTransactionValidAdditionalManageDataOpsWithSourceAccountSetToServerAccount() {
         KeyPair* server = KeyPair::random();
         KeyPair* client = KeyPair::random();
