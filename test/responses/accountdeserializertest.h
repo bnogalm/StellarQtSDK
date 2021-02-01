@@ -159,6 +159,81 @@ class AccountDeserializerTest: public QObject
           "    \"entry2\": \"dGVzdDI=\"\n"
           "  }"
           "}";
+    const QByteArray withSponsor = "{\n"
+          "  \"_links\": {\n"
+          "    \"self\": {\n"
+          "      \"href\": \"https://horizon-protocol14.stellar.org/accounts/GB56OJGSA6VHEUFZDX6AL2YDVG2TS5JDZYQJHDYHBDH7PCD5NIQKLSDO\"\n"
+          "    },\n"
+          "    \"transactions\": {\n"
+          "      \"href\": \"https://horizon-protocol14.stellar.org/accounts/GB56OJGSA6VHEUFZDX6AL2YDVG2TS5JDZYQJHDYHBDH7PCD5NIQKLSDO/transactions{?cursor,limit,order}\",\n"
+          "      \"templated\": true\n"
+          "    },\n"
+          "    \"operations\": {\n"
+          "      \"href\": \"https://horizon-protocol14.stellar.org/accounts/GB56OJGSA6VHEUFZDX6AL2YDVG2TS5JDZYQJHDYHBDH7PCD5NIQKLSDO/operations{?cursor,limit,order}\",\n"
+          "      \"templated\": true\n"
+          "    },\n"
+          "    \"payments\": {\n"
+          "      \"href\": \"https://horizon-protocol14.stellar.org/accounts/GB56OJGSA6VHEUFZDX6AL2YDVG2TS5JDZYQJHDYHBDH7PCD5NIQKLSDO/payments{?cursor,limit,order}\",\n"
+          "      \"templated\": true\n"
+          "    },\n"
+          "    \"effects\": {\n"
+          "      \"href\": \"https://horizon-protocol14.stellar.org/accounts/GB56OJGSA6VHEUFZDX6AL2YDVG2TS5JDZYQJHDYHBDH7PCD5NIQKLSDO/effects{?cursor,limit,order}\",\n"
+          "      \"templated\": true\n"
+          "    },\n"
+          "    \"offers\": {\n"
+          "      \"href\": \"https://horizon-protocol14.stellar.org/accounts/GB56OJGSA6VHEUFZDX6AL2YDVG2TS5JDZYQJHDYHBDH7PCD5NIQKLSDO/offers{?cursor,limit,order}\",\n"
+          "      \"templated\": true\n"
+          "    },\n"
+          "    \"trades\": {\n"
+          "      \"href\": \"https://horizon-protocol14.stellar.org/accounts/GB56OJGSA6VHEUFZDX6AL2YDVG2TS5JDZYQJHDYHBDH7PCD5NIQKLSDO/trades{?cursor,limit,order}\",\n"
+          "      \"templated\": true\n"
+          "    },\n"
+          "    \"data\": {\n"
+          "      \"href\": \"https://horizon-protocol14.stellar.org/accounts/GB56OJGSA6VHEUFZDX6AL2YDVG2TS5JDZYQJHDYHBDH7PCD5NIQKLSDO/data/{key}\",\n"
+          "      \"templated\": true\n"
+          "    }\n"
+          "  },\n"
+          "  \"id\": \"GB56OJGSA6VHEUFZDX6AL2YDVG2TS5JDZYQJHDYHBDH7PCD5NIQKLSDO\",\n"
+          "  \"account_id\": \"GB56OJGSA6VHEUFZDX6AL2YDVG2TS5JDZYQJHDYHBDH7PCD5NIQKLSDO\",\n"
+          "  \"sequence\": \"504211980681218\",\n"
+          "  \"subentry_count\": 1,\n"
+          "  \"last_modified_ledger\": 117663,\n"
+          "  \"last_modified_time\": \"2020-09-28T17:56:04Z\",\n"
+          "  \"thresholds\": {\n"
+          "    \"low_threshold\": 0,\n"
+          "    \"med_threshold\": 0,\n"
+          "    \"high_threshold\": 0\n"
+          "  },\n"
+          "  \"flags\": {\n"
+          "    \"auth_required\": false,\n"
+          "    \"auth_revocable\": false,\n"
+          "    \"auth_immutable\": false\n"
+          "  },\n"
+          "  \"balances\": [\n"
+          "    {\n"
+          "      \"sponsor\": \"GAAZI4TCR3TY5OJHCTJC2A4QSY6CJWJH5IAJTGKIN2ER7LBNVKOCCWN7\",\n"
+          "      \"balance\": \"9999.9999800\",\n"
+          "      \"buying_liabilities\": \"0.0000000\",\n"
+          "      \"selling_liabilities\": \"0.0000000\",\n"
+          "      \"asset_type\": \"native\"\n"
+          "    }\n"
+          "  ],\n"
+          "  \"signers\": [\n"
+          "    {\n"
+          "      \"sponsor\": \"GCR2KBCIU6KQXSQY5F5GZYC4WLNHCHCKW4NEGXNEZRYWLTNZIRJJY7D2\",\n"
+          "      \"weight\": 1,\n"
+          "      \"key\": \"GB56OJGSA6VHEUFZDX6AL2YDVG2TS5JDZYQJHDYHBDH7PCD5NIQKLSDO\",\n"
+          "      \"type\": \"ed25519_public_key\"\n"
+          "    }\n"
+          "  ],\n"
+          "  \"data\": {\n"
+          "    \"welcome-friend\": \"aHR0cHM6Ly93d3cueW91dHViZS5jb20vd2F0Y2g/dj1kUXc0dzlXZ1hjUQ==\"\n"
+          "  },\n"
+          "  \"num_sponsoring\": 2,\n"
+          "  \"num_sponsored\": 3,\n"
+          "  \"sponsor\": \"GCA7RXNKN7FGBLJVETJCUUXGXTCR6L2SJQFXDGMQCDET5YUE6KFNHQHO\",\n"
+          "  \"paging_token\": \"GB56OJGSA6VHEUFZDX6AL2YDVG2TS5JDZYQJHDYHBDH7PCD5NIQKLSDO\"\n"
+          "}";
 public:
 
 
@@ -180,6 +255,7 @@ private slots:
       QCOMPARE(account.getSubentryCount(), 0);
       QCOMPARE(account.getInflationDestination(), QString("GAGRSA6QNQJN2OQYCBNQGMFLO4QLZFNEHIFXOMTQVSUTWVTWT66TOFSC"));
       QCOMPARE(account.getHomeDomain(), QString("stellar.org"));
+      QVERIFY(account.getSponsor().isNull());
 
       QCOMPARE(account.getThresholds().getLowThreshold(), 10);
       QCOMPARE(account.getThresholds().getMedThreshold(), 20);
@@ -194,17 +270,21 @@ private slots:
       QCOMPARE(account.getBalances()[0].getAssetIssuer().getAccountId(), QString("GCRA6COW27CY5MTKIA7POQ2326C5ABYCXODBN4TFF5VL4FMBRHOT3YHU"));
       QCOMPARE(account.getBalances()[0].getBalance(), QString("1001.0000000"));
       QCOMPARE(account.getBalances()[0].getLimit(), QString("12000.4775807"));
+      QVERIFY(account.getBalances()[0].getSponsor().isNull());
 
       QCOMPARE(account.getBalances()[1].getAssetType(), QString("native"));
       QCOMPARE(account.getBalances()[1].getBalance(), QString("20.0000300"));
       QCOMPARE(account.getBalances()[1].getLimit(), QString());
+      QVERIFY(account.getBalances()[1].getSponsor().isNull());
 
       QCOMPARE(account.getSigners()[0].getType(), QString("ed25519_public_key"));
       QCOMPARE(account.getSigners()[0].getKey(), QString("GAAZI4TCR3TY5OJHCTJC2A4QSY6CJWJH5IAJTGKIN2ER7LBNVKOCCWN7"));
       QCOMPARE(account.getSigners()[0].getWeight(), 0);
+      QVERIFY(account.getSigners()[0].getSponsor().isNull());
       QCOMPARE(account.getSigners()[1].getType(), QString("ed25519_public_key"));
       QCOMPARE(account.getSigners()[1].getKey(), QString("GCR2KBCIU6KQXSQY5F5GZYC4WLNHCHCKW4NEGXNEZRYWLTNZIRJJY7D2"));
       QCOMPARE(account.getSigners()[1].getWeight(), 1);
+      QVERIFY(account.getSigners()[1].getSponsor().isNull());
 
 
       QCOMPARE(account.getData().size(), 2);
@@ -242,6 +322,16 @@ private slots:
     }
 
 
+
+    void testDeserializeSponsor() {
+      AccountResponse account(0);
+      account.loadFromJson(withSponsor);
+      QCOMPARE(account.getSponsor(), "GCA7RXNKN7FGBLJVETJCUUXGXTCR6L2SJQFXDGMQCDET5YUE6KFNHQHO");
+      QCOMPARE(account.getBalances()[0].getSponsor(), "GAAZI4TCR3TY5OJHCTJC2A4QSY6CJWJH5IAJTGKIN2ER7LBNVKOCCWN7");
+      QCOMPARE(account.getSigners()[0].getSponsor(), "GCR2KBCIU6KQXSQY5F5GZYC4WLNHCHCKW4NEGXNEZRYWLTNZIRJJY7D2");
+      QCOMPARE(account.getNumSponsored(), 3);
+      QCOMPARE(account.getNumSponsoring(), 2);
+    }
 };
 
 ADD_TEST(AccountDeserializerTest)

@@ -29,6 +29,7 @@
 #include "../../src/responses/effects/datacreatedeffectresponse.h"
 #include "../../src/responses/effects/dataremovedeffectresponse.h"
 #include "../../src/responses/effects/dataupdatedeffectresponse.h"
+#include "../../src/responses/effects/sequencebumpedeffectresponse.h"
 
 EffectsPage::EffectsPage(QNetworkReply *reply)
     :Page<EffectResponse>(reply)
@@ -98,6 +99,8 @@ void EffectsPage::processRecords(const QJsonArray &records)
           effect= new DataRemovedEffectResponse();break;
         case 42:
           effect= new DataUpdatedEffectResponse();break;
+        case 43:
+          effect= new SequenceBumpedEffectResponse();break;
         default:
             throw std::runtime_error("Invalid operation type");
         }

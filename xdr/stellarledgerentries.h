@@ -124,7 +124,8 @@ namespace stellar
         ACCOUNT = 0,
         TRUSTLINE = 1,
         OFFER = 2,
-        DATA = 3
+        DATA = 3,
+        CLAIMABLE_BALANCE = 4
     };
 
 
@@ -160,6 +161,67 @@ namespace stellar
     //mask for all valid flags
     const qint32 MASK_ACCOUNT_FLAGS = 0x7;
 
+    // maximum number of signers
+    const qint32 MAX_SIGNERS = 20;
+
+    typedef AccountID SponsorshipDescriptor;
+
+    struct AccountEntryExtensionV2
+    {
+        quint32 numSponsored;
+        quint32 numSponsoring;
+        Array<SponsorshipDescriptor,MAX_SIGNERS> signerSponsoringIDs;
+
+        // reserved for future use
+        Reserved ext;
+    };
+
+    inline QDataStream &operator<<(QDataStream &out, const  AccountEntryExtensionV2 &obj) {
+        out << obj.numSponsored<< obj.numSponsoring<< obj.signerSponsoringIDs<< obj.ext;
+
+       return out;
+    }
+
+    inline QDataStream &operator>>(QDataStream &in,  AccountEntryExtensionV2 &obj) {
+       in >> obj.numSponsored>> obj.numSponsoring>> obj.signerSponsoringIDs<< obj.ext;
+
+       return in;
+    }
+
+    struct AccountEntryExtensionV1
+    {
+        Liabilities liabilities;
+        Reserved ext;
+        union{
+            AccountEntryExtensionV2 v2;//case 2 (ext)
+        };
+    };
+
+    inline QDataStream &operator<<(QDataStream &out, const  AccountEntryExtensionV1 &obj) {
+        out << obj.liabilities<< obj.ext;
+
+        switch(obj.ext.reserved){
+        case 2:
+            out << obj.v2; break;
+        default: break;
+        }
+
+
+       return out;
+    }
+
+    inline QDataStream &operator>>(QDataStream &in,  AccountEntryExtensionV1 &obj) {
+       in >> obj.liabilities>> obj.ext;
+
+       switch(obj.ext.reserved){
+       case 2:
+           in >> obj.v2 ; break;
+       default: break;
+       }
+
+       return in;
+    }
+
     /* AccountEntry
         Main entry representing a user in Stellar. All transactions are
         performed using an account.
@@ -182,15 +244,11 @@ namespace stellar
         // thresholds stores unsigned bytes: [weight of master|low|medium|high]
         Thresholds thresholds;
 
-        Array<Signer,20> signers; //max : <20>; // possible signers for this account
-        // reserved for future use
-        Reserved ext;
-        struct V1{
-            Liabilities liabilities;
-            Reserved ext;
-        };
+        Array<Signer,MAX_SIGNERS> signers; //max : <20>; // possible signers for this account
+
+        Reserved ext;      
         union{
-            V1 v1;
+            AccountEntryExtensionV1 v1;//case 1 (ext)
         };
 
     };
@@ -217,6 +275,329 @@ namespace stellar
        default: break;
        }
 
+       return in;
+    }
+
+    enum class ClaimPredicateType : qint32
+    {
+        CLAIM_PREDICATE_UNCONDITIONAL = 0,
+        CLAIM_PREDICATE_AND = 1,
+        CLAIM_PREDICATE_OR = 2,
+        CLAIM_PREDICATE_NOT = 3,
+        CLAIM_PREDICATE_BEFORE_ABSOLUTE_TIME = 4,
+        CLAIM_PREDICATE_BEFORE_RELATIVE_TIME = 5
+    };
+
+    struct ClaimPredicate
+    {
+        ClaimPredicateType type;
+        union
+        {
+            //case CLAIM_PREDICATE_UNCONDITIONAL:
+              //  void;
+            //case CLAIM_PREDICATE_AND:
+                Array<ClaimPredicate,2> andPredicates;
+            //case CLAIM_PREDICATE_OR:
+                Array<ClaimPredicate,2> orPredicates;
+            //case CLAIM_PREDICATE_NOT:
+                Array<ClaimPredicate,1> notPredicate;//this should be optional but it is serialized the same way than an array of 1, i should improve Optional so it works with a pointer or subclass Array<T,1>
+            //case CLAIM_PREDICATE_BEFORE_ABSOLUTE_TIME:
+                qint64 absBefore; // Predicate will be true if closeTime < absBefore
+            //case CLAIM_PREDICATE_BEFORE_RELATIVE_TIME:
+                qint64 relBefore; // Seconds since closeTime of the ledger in which the
+                                 // ClaimableBalanceEntry was created
+        };
+        ClaimPredicate():type(ClaimPredicateType::CLAIM_PREDICATE_UNCONDITIONAL)
+        {
+        }
+    private:
+        void clear()
+        {
+            switch(type){
+            case ClaimPredicateType::CLAIM_PREDICATE_AND:
+                andPredicates.~Array<ClaimPredicate,2>(); break;
+            case ClaimPredicateType::CLAIM_PREDICATE_OR:
+                orPredicates.~Array<ClaimPredicate,2>(); break;
+            case ClaimPredicateType::CLAIM_PREDICATE_NOT:
+                notPredicate.~Array<ClaimPredicate,1>(); break;
+            default: break;
+            }
+        }
+    public:
+        void setUnconditional()
+        {
+            clear();
+            type = ClaimPredicateType::CLAIM_PREDICATE_UNCONDITIONAL;
+        }
+        void setAndPredicates(Array<ClaimPredicate,2> predicates)
+        {
+            clear();
+            type = ClaimPredicateType::CLAIM_PREDICATE_AND;
+            andPredicates = predicates;
+        }
+        void setOrPredicates(Array<ClaimPredicate,2> predicates)
+        {
+            clear();
+            type = ClaimPredicateType::CLAIM_PREDICATE_OR;
+            orPredicates = predicates;
+        }
+        void setNotPredicate(Array<ClaimPredicate,1> predicate)
+        {
+            clear();
+            type = ClaimPredicateType::CLAIM_PREDICATE_NOT;
+            notPredicate = predicate;
+        }
+        void setAbsBefore(qint64 ab)
+        {
+            clear();
+            type = ClaimPredicateType::CLAIM_PREDICATE_BEFORE_ABSOLUTE_TIME;
+            absBefore= ab;
+        }
+        void setRelBefore(qint64 rb)
+        {
+            clear();
+            type = ClaimPredicateType::CLAIM_PREDICATE_BEFORE_ABSOLUTE_TIME;
+            relBefore= rb;
+        }
+        ClaimPredicate(const stellar::ClaimPredicate &obj){
+            type = obj.type;
+            switch(obj.type){
+            case ClaimPredicateType::CLAIM_PREDICATE_UNCONDITIONAL:
+                break;
+            case ClaimPredicateType::CLAIM_PREDICATE_AND:
+                new (&andPredicates) Array<ClaimPredicate,2>();
+                andPredicates= obj.andPredicates; break;
+            case ClaimPredicateType::CLAIM_PREDICATE_OR:
+                new (&orPredicates) Array<ClaimPredicate,2>();
+                orPredicates= obj.orPredicates; break;
+            case ClaimPredicateType::CLAIM_PREDICATE_NOT:
+                new (&notPredicate) Array<ClaimPredicate,1>();
+                notPredicate= obj.notPredicate; break;
+            case ClaimPredicateType::CLAIM_PREDICATE_BEFORE_ABSOLUTE_TIME:
+                absBefore= obj.absBefore; break;// Predicate will be true if closeTime < absBefore
+            case ClaimPredicateType::CLAIM_PREDICATE_BEFORE_RELATIVE_TIME:
+                relBefore= obj.relBefore; break;// Seconds since closeTime of the ledger in which the
+            default: break;
+            }
+        }
+        ~ClaimPredicate()
+        {
+            clear();
+        }
+        const ClaimPredicate& operator = (const ClaimPredicate& op);
+
+    };
+
+    inline const stellar::ClaimPredicate &stellar::ClaimPredicate::operator =(const stellar::ClaimPredicate &obj) {
+        switch(type){
+        case ClaimPredicateType::CLAIM_PREDICATE_AND:
+            andPredicates.~Array<ClaimPredicate,2>(); break;
+        case ClaimPredicateType::CLAIM_PREDICATE_OR:
+            orPredicates.~Array<ClaimPredicate,2>(); break;
+        case ClaimPredicateType::CLAIM_PREDICATE_NOT:
+            notPredicate.~Array<ClaimPredicate,1>(); break;
+        default: break;
+        }
+        type = obj.type;
+        switch(obj.type){
+        case ClaimPredicateType::CLAIM_PREDICATE_UNCONDITIONAL:
+            break;
+        case ClaimPredicateType::CLAIM_PREDICATE_AND:
+            new (&andPredicates) Array<ClaimPredicate,2>();
+            andPredicates= obj.andPredicates; break;
+        case ClaimPredicateType::CLAIM_PREDICATE_OR:
+            new (&orPredicates) Array<ClaimPredicate,2>();
+            orPredicates= obj.orPredicates; break;
+        case ClaimPredicateType::CLAIM_PREDICATE_NOT:
+            new (&notPredicate) Array<ClaimPredicate,1>();
+            notPredicate= obj.notPredicate; break;
+        case ClaimPredicateType::CLAIM_PREDICATE_BEFORE_ABSOLUTE_TIME:
+            absBefore= obj.absBefore; break;// Predicate will be true if closeTime < absBefore
+        case ClaimPredicateType::CLAIM_PREDICATE_BEFORE_RELATIVE_TIME:
+            relBefore= obj.relBefore; break;// Seconds since closeTime of the ledger in which the
+        default: break;
+        }
+        return *this;
+    }
+
+
+    inline QDataStream &operator<<(QDataStream &out, const  ClaimPredicate &obj) {
+        out << obj.type;
+
+        switch(obj.type){
+        case ClaimPredicateType::CLAIM_PREDICATE_UNCONDITIONAL:
+            break;
+        case ClaimPredicateType::CLAIM_PREDICATE_AND:
+            out<< obj.andPredicates; break;
+        case ClaimPredicateType::CLAIM_PREDICATE_OR:
+            out<< obj.orPredicates; break;
+        case ClaimPredicateType::CLAIM_PREDICATE_NOT:
+            out<< obj.notPredicate; break;
+        case ClaimPredicateType::CLAIM_PREDICATE_BEFORE_ABSOLUTE_TIME:
+            out<< obj.absBefore; break;// Predicate will be true if closeTime < absBefore
+        case ClaimPredicateType::CLAIM_PREDICATE_BEFORE_RELATIVE_TIME:
+            out<< obj.relBefore; break;// Seconds since closeTime of the ledger in which the
+        default: break;
+        }
+
+
+       return out;
+    }
+
+    inline QDataStream &operator>>(QDataStream &in,  ClaimPredicate &obj) {
+        in >> obj.type;
+
+        switch(obj.type){
+        case ClaimPredicateType::CLAIM_PREDICATE_UNCONDITIONAL:
+            break;
+        case ClaimPredicateType::CLAIM_PREDICATE_AND:
+            new (&obj.andPredicates) Array<ClaimPredicate,2>();
+            in>> obj.andPredicates; break;
+        case ClaimPredicateType::CLAIM_PREDICATE_OR:
+            new (&obj.orPredicates) Array<ClaimPredicate,2>();
+            in>> obj.orPredicates; break;
+        case ClaimPredicateType::CLAIM_PREDICATE_NOT:
+            new (&obj.notPredicate) Array<ClaimPredicate,1>();
+            in>> obj.notPredicate; break;
+        case ClaimPredicateType::CLAIM_PREDICATE_BEFORE_ABSOLUTE_TIME:
+            in>> obj.absBefore; break;// Predicate will be true if closeTime < absBefore
+        case ClaimPredicateType::CLAIM_PREDICATE_BEFORE_RELATIVE_TIME:
+            in>> obj.relBefore; break;// Seconds since closeTime of the ledger in which the
+        default: break;
+        }
+
+
+       return in;
+    }
+
+    enum class ClaimantType : qint32
+    {
+        CLAIMANT_TYPE_V0 = 0
+    };
+
+    struct Claimant
+    {
+        ClaimantType type;
+        struct V0
+        {
+            AccountID destination;    // The account that can use this condition
+            ClaimPredicate predicate; // Claimable if predicate is true
+        };
+
+        //union{
+            //case CLAIMANT_TYPE_V0
+            V0 v0;
+        //};
+    };
+
+    inline QDataStream &operator<<(QDataStream &out, const  Claimant &obj) {
+        out << obj.type;
+
+        switch(obj.type){
+        case ClaimantType::CLAIMANT_TYPE_V0:
+            out<< obj.v0.destination << obj.v0.predicate; break;
+        default: break;
+        }
+       return out;
+    }
+
+    inline QDataStream &operator>>(QDataStream &in,  Claimant &obj) {
+        in >> obj.type;
+
+        switch(obj.type){
+        case ClaimantType::CLAIMANT_TYPE_V0:
+            in>> obj.v0.destination >> obj.v0.predicate; break;
+        default: break;
+        }
+
+
+       return in;
+    }
+
+    enum class ClaimableBalanceIDType : qint32
+    {
+        CLAIMABLE_BALANCE_ID_TYPE_V0 = 0
+    };
+
+    struct ClaimableBalanceID
+    {
+        ClaimableBalanceIDType type;
+        union
+        {
+            //case CLAIMABLE_BALANCE_ID_TYPE_V0:
+            Hash v0;
+        };
+    };
+
+    inline QDataStream &operator<<(QDataStream &out, const  ClaimableBalanceID &obj) {
+        out << obj.type;
+
+        switch(obj.type){
+        case ClaimableBalanceIDType::CLAIMABLE_BALANCE_ID_TYPE_V0:
+            out<< obj.v0; break;
+        default: break;
+        }
+       return out;
+    }
+
+    inline QDataStream &operator>>(QDataStream &in,  ClaimableBalanceID &obj) {
+        in >> obj.type;
+
+        switch(obj.type){
+        case ClaimableBalanceIDType::CLAIMABLE_BALANCE_ID_TYPE_V0:
+            in>> obj.v0 ; break;
+        default: break;
+        }
+
+
+       return in;
+    }
+
+    struct ClaimableBalanceEntry
+    {
+        // Unique identifier for this ClaimableBalanceEntry
+        ClaimableBalanceID balanceID;
+
+        // List of claimants with associated predicate
+        Array<Claimant,10> claimants;
+
+        // Any asset including native
+        Asset asset;
+
+        // Amount of asset
+        qint64 amount;
+
+        // reserved for future use
+        Reserved ext;
+    };
+
+    inline QDataStream &operator<<(QDataStream &out, const  ClaimableBalanceEntry &obj) {
+        out << obj.balanceID<< obj.claimants<< obj.asset<< obj.amount<< obj.ext;
+       return out;
+    }
+
+    inline QDataStream &operator>>(QDataStream &in,  ClaimableBalanceEntry &obj) {
+        in >> obj.balanceID>> obj.claimants>> obj.asset>> obj.amount>> obj.ext;
+       return in;
+    }
+
+
+
+    struct LedgerEntryExtensionV1
+    {
+        SponsorshipDescriptor sponsoringID;
+
+        // reserved for future use
+        Reserved ext;
+    };
+
+    inline QDataStream &operator<<(QDataStream &out, const  LedgerEntryExtensionV1 &obj) {
+        out << obj.sponsoringID<<obj.ext;
+       return out;
+    }
+
+    inline QDataStream &operator>>(QDataStream &in,  LedgerEntryExtensionV1 &obj) {
+        in >> obj.sponsoringID>> obj.ext;
        return in;
     }
 
@@ -350,6 +731,7 @@ namespace stellar
             TrustLineEntry trustLine;
             OfferEntry offer;
             DataEntry data;
+            ClaimableBalanceEntry claimableBalance;
         };
         ~LedgerEntry(){}
     };
@@ -365,6 +747,8 @@ namespace stellar
             out << obj.offer; break;
         case LedgerEntryType::DATA:
             out << obj.data; break;
+       case LedgerEntryType::CLAIMABLE_BALANCE:
+            out << obj.claimableBalance; break;
         //default: break;
         }
 
@@ -382,6 +766,139 @@ namespace stellar
             in >> obj.offer; break;
         case LedgerEntryType::DATA:
             in >> obj.data; break;
+        case LedgerEntryType::CLAIMABLE_BALANCE:
+             in >> obj.claimableBalance; break;
+        //default: break;
+        }
+       return in;
+    }
+
+
+    struct LedgerKey
+    {
+        LedgerEntryType type;
+        union
+        {
+            struct //case ACCOUNT:
+            {
+                AccountID accountID;
+            } account;
+            struct //case TRUSTLINE:
+            {
+                AccountID accountID;
+                Asset asset;
+            } trustLine;
+            struct //case OFFER:
+            {
+                AccountID sellerID;
+                qint64 offerID;
+            } offer;
+            struct //case DATA:
+            {
+                AccountID accountID;
+                string64 dataName;
+            } data;
+
+            struct //case CLAIMABLE_BALANCE:
+            {
+                ClaimableBalanceID balanceID;
+            } claimableBalance;
+        };
+        LedgerKey():type(LedgerEntryType::ACCOUNT)
+        {
+
+        }
+        LedgerKey(const LedgerKey &obj)
+        {
+            type = obj.type;
+            switch(obj.type){
+            case LedgerEntryType::ACCOUNT:
+                account.accountID= obj.account.accountID; break;
+            case LedgerEntryType::TRUSTLINE:
+                trustLine.accountID= obj.trustLine.accountID;
+                trustLine.asset= obj.trustLine.asset; break;
+            case LedgerEntryType::OFFER:
+                offer.sellerID= obj.offer.sellerID;
+                offer.offerID=obj.offer.offerID; break;
+            case LedgerEntryType::DATA:
+                data.accountID= obj.data.accountID;
+                data.dataName=obj.data.dataName; break;
+           case LedgerEntryType::CLAIMABLE_BALANCE:
+                claimableBalance.balanceID= obj.claimableBalance.balanceID; break;
+            //default: break;
+            }
+        }
+        ~LedgerKey()
+        {
+            switch(type){
+            case LedgerEntryType::DATA:
+                data.dataName.~string64();
+                break;
+            default: break;
+            }
+        }
+        const LedgerKey& operator=(const LedgerKey &obj)
+        {
+            switch(type){
+            case LedgerEntryType::DATA:
+                data.dataName.~string64();
+                break;
+            default: break;
+            }
+            type = obj.type;
+            switch(type){
+            case LedgerEntryType::ACCOUNT:
+                account.accountID= obj.account.accountID; break;
+            case LedgerEntryType::TRUSTLINE:
+                trustLine.accountID= obj.trustLine.accountID;
+                trustLine.asset= obj.trustLine.asset; break;
+            case LedgerEntryType::OFFER:
+                offer.sellerID= obj.offer.sellerID;
+                offer.offerID= obj.offer.offerID; break;
+            case LedgerEntryType::DATA:
+                data.accountID= obj.data.accountID;
+                new (&(data.dataName)) string64();
+                data.dataName= obj.data.dataName; break;
+            case LedgerEntryType::CLAIMABLE_BALANCE:
+                claimableBalance.balanceID= obj.claimableBalance.balanceID; break;
+            }
+            return *this;
+        }
+
+    };
+    inline QDataStream &operator<<(QDataStream &out, const  LedgerKey &obj) {
+        out  << obj.type;
+        switch(obj.type){
+        case LedgerEntryType::ACCOUNT:
+            out << obj.account.accountID; break;
+        case LedgerEntryType::TRUSTLINE:
+            out << obj.trustLine.accountID << obj.trustLine.asset; break;
+        case LedgerEntryType::OFFER:
+            out << obj.offer.sellerID << obj.offer.offerID; break;
+        case LedgerEntryType::DATA:             
+            out << obj.data.accountID<<obj.data.dataName; break;
+       case LedgerEntryType::CLAIMABLE_BALANCE:
+            out << obj.claimableBalance.balanceID; break;
+        //default: break;
+        }
+
+       return out;
+    }
+
+    inline QDataStream &operator>>(QDataStream &in,  LedgerKey &obj) {
+        in >> obj.type;
+        switch(obj.type){
+        case LedgerEntryType::ACCOUNT:
+            in >> obj.account.accountID; break;
+        case LedgerEntryType::TRUSTLINE:
+            in >> obj.trustLine.accountID >> obj.trustLine.asset; break;
+        case LedgerEntryType::OFFER:
+            in >> obj.offer.sellerID >> obj.offer.offerID; break;
+        case LedgerEntryType::DATA:
+            new (&(obj.data.dataName)) string64();
+            in >> obj.data.accountID  >> obj.data.dataName; break;
+       case LedgerEntryType::CLAIMABLE_BALANCE:
+            in >> obj.claimableBalance.balanceID; break;
         //default: break;
         }
        return in;
@@ -397,7 +914,8 @@ namespace stellar
         ENVELOPE_TYPE_TX = 2,
         ENVELOPE_TYPE_AUTH = 3,
         ENVELOPE_TYPE_SCPVALUE = 4,
-        ENVELOPE_TYPE_TX_FEE_BUMP = 5
+        ENVELOPE_TYPE_TX_FEE_BUMP = 5,
+        ENVELOPE_TYPE_OP_ID = 6
     };
 }
 

@@ -40,6 +40,16 @@ stellar::Operation::Operation(const stellar::Operation &op){
     case OperationType::PATH_PAYMENT_STRICT_SEND:
         new (&operationPathPaymentStrictSend) PathPaymentStrictSendOp();
         operationPathPaymentStrictSend = op.operationPathPaymentStrictSend; break;
+    case OperationType::CREATE_CLAIMABLE_BALANCE:
+        createClaimableBalanceOp = op.createClaimableBalanceOp; break;
+    case OperationType::CLAIM_CLAIMABLE_BALANCE:
+        claimClaimableBalanceOp = op.claimClaimableBalanceOp; break;
+    case OperationType::BEGIN_SPONSORING_FUTURE_RESERVES:
+        beginSponsoringFutureReservesOp = op.beginSponsoringFutureReservesOp; break;
+//    case OperationType::END_SPONSORING_FUTURE_RESERVES:
+//        break;
+    case OperationType::REVOKE_SPONSORSHIP:
+        revokeSponsorshipOp = op.revokeSponsorshipOp; break;
     default: break;
     }
 }
@@ -117,6 +127,16 @@ const stellar::Operation &stellar::Operation::operator =(const stellar::Operatio
     case OperationType::PATH_PAYMENT_STRICT_SEND:
         new (&operationPathPaymentStrictSend) PathPaymentStrictSendOp();
         operationPathPaymentStrictSend = op.operationPathPaymentStrictSend; break;
+    case OperationType::CREATE_CLAIMABLE_BALANCE:
+        createClaimableBalanceOp = op.createClaimableBalanceOp; break;
+    case OperationType::CLAIM_CLAIMABLE_BALANCE:
+        claimClaimableBalanceOp = op.claimClaimableBalanceOp; break;
+    case OperationType::BEGIN_SPONSORING_FUTURE_RESERVES:
+        beginSponsoringFutureReservesOp = op.beginSponsoringFutureReservesOp; break;
+//    case OperationType::END_SPONSORING_FUTURE_RESERVES:
+//        break;
+    case OperationType::REVOKE_SPONSORSHIP:
+        revokeSponsorshipOp = op.revokeSponsorshipOp; break;
     default: break;
     }
     return *this;

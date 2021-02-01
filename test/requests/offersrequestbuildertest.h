@@ -41,6 +41,13 @@ private slots:
                 .buildUri();
         QCOMPARE(uri.toString(),QString("https://horizon-testnet.stellar.org/offers?seller=GA2HGBJIJKI6O4XEM7CZWY5PS6GKSXL6D34ERAJYQSPYA6X6AI7HYW36&limit=200&order=desc"));
     }
+
+    void testForSponsor() {
+      Server server("https://horizon-testnet.stellar.org");
+      auto sponsor = KeyPair::fromAccountId("GBRPYHIL2CI3FNQ4BXLFMNDLFJUNPU2HY3ZMFSHONUCEOASW7QC7OX2H");
+      QUrl uri = server.offers().forSponsor(sponsor).buildUri();
+      QCOMPARE(uri.toString(),"https://horizon-testnet.stellar.org/offers?sponsor=GBRPYHIL2CI3FNQ4BXLFMNDLFJUNPU2HY3ZMFSHONUCEOASW7QC7OX2H");
+    }
     void testSellingNative(){
         Server server("https://horizon-testnet.stellar.org");
         auto native = new AssetTypeNative();

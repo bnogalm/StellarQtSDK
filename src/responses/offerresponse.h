@@ -48,6 +48,7 @@ class OfferResponse : public Response
     Q_PROPERTY(qint32 last_modified_ledger MEMBER m_lastModifiedLedger)
     Q_PROPERTY(QString last_modified_time MEMBER m_lastModifiedTime)
     Q_PROPERTY(OfferResponseAttach::Links _links MEMBER m_links)
+    Q_PROPERTY(QString sponsor MEMBER m_sponsor READ getSponsor)
 
     qint64 m_id;
     QString m_pagingToken;
@@ -62,7 +63,7 @@ class OfferResponse : public Response
     qint32 m_lastModifiedLedger;
     QString m_lastModifiedTime;
     OfferResponseAttach::Links m_links;
-
+    QString m_sponsor;
 
 public:
     Q_INVOKABLE explicit OfferResponse(QNetworkReply* reply=nullptr);
@@ -81,6 +82,7 @@ public:
     QString seller() const;
     QVariantMap buying() const;
     QVariantMap selling() const;
+    QString getSponsor() const;
 
 public slots:
     void setSeller(QString seller);

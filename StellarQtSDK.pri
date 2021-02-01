@@ -25,6 +25,7 @@ SOURCES += \
     $$PWD/src/abstracttransaction.cpp \
     $$PWD/src/account.cpp \
     $$PWD/src/accountmergeoperation.cpp \
+    $$PWD/src/claimant.cpp \
     $$PWD/src/createpassivesellofferoperation.cpp \
     $$PWD/src/feebumptransaction.cpp \
     $$PWD/src/managebuyofferoperation.cpp \
@@ -41,9 +42,12 @@ SOURCES += \
     $$PWD/src/createaccountoperation.cpp \
     $$PWD/src/pathpaymentstrictreceiveoperation.cpp \
     $$PWD/src/pathpaymentstrictsendoperation.cpp \
+    $$PWD/src/predicate.cpp \
     $$PWD/src/requests/feestatsrequestbuilder.cpp \
     $$PWD/src/requests/strictreceivepathsrequestbuilder.cpp \
     $$PWD/src/requests/strictsendpathsrequestbuilder.cpp \
+    $$PWD/src/responses/claimablebalanceresponse.cpp \
+    $$PWD/src/responses/effects/sequencebumpedeffectresponse.cpp \
     $$PWD/src/responses/effects/trustlineauthorizedtomaintainliabilitieseffectresponse.cpp \
     $$PWD/src/responses/feestatsresponse.cpp \
     $$PWD/src/responses/operations/bumpsequenceoperationresponse.cpp \
@@ -170,15 +174,19 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 HEADERS += \
     $$PWD/src/abstracttransaction.h \
+    $$PWD/src/claimant.h \
     $$PWD/src/createpassivesellofferoperation.h \
     $$PWD/src/feebumptransaction.h \
     $$PWD/src/managebuyofferoperation.h \
     $$PWD/src/managesellofferoperation.h \
     $$PWD/src/pathpaymentstrictreceiveoperation.h \
     $$PWD/src/pathpaymentstrictsendoperation.h \
+    $$PWD/src/predicate.h \
     $$PWD/src/requests/feestatsrequestbuilder.h \
     $$PWD/src/requests/strictreceivepathsrequestbuilder.h \
     $$PWD/src/requests/strictsendpathsrequestbuilder.h \
+    $$PWD/src/responses/claimablebalanceresponse.h \
+    $$PWD/src/responses/effects/sequencebumpedeffectresponse.h \
     $$PWD/src/responses/effects/trustlineauthorizedtomaintainliabilitieseffectresponse.h \
     $$PWD/src/responses/feestatsresponse.h \
     $$PWD/src/responses/operations/bumpsequenceoperationresponse.h \

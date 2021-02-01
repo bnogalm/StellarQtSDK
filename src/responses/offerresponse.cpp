@@ -88,6 +88,11 @@ QVariantMap OfferResponse::selling() const
     return m_selling;
 }
 
+QString OfferResponse::getSponsor() const
+{
+    return m_sponsor;
+}
+
 void OfferResponse::setSeller(QString seller)
 {
     if(m_sellerKeypair)
