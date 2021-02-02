@@ -19,9 +19,10 @@ protected:
       * @param xdr XDR object
       */
     static Predicate* fromXdr(stellar::ClaimPredicate& xdr);
-    virtual ~Predicate(){};
+
 
 public:
+    virtual ~Predicate(){};
     virtual bool equals(Predicate* object) const =0;
 
     virtual int hashCode() const = 0;
@@ -45,7 +46,7 @@ class Predicate::Unconditional :  public Predicate {
 
 public:
     Unconditional(){};
-    ~Unconditional(){};
+    virtual ~Unconditional(){};
     bool equals(Predicate* o) const
     {
         if (this == o) {
@@ -74,7 +75,7 @@ public:
     Not(Predicate* inner): m_inner(inner)
     {
     }
-    ~Not(){delete m_inner;};
+    virtual ~Not(){delete m_inner;};
 
     Predicate* getInner() const
     {
@@ -115,7 +116,7 @@ public:
     {
 
     }
-    ~Or(){
+    virtual ~Or(){
         for(auto i :m_inner)
             delete i;
     };
@@ -174,7 +175,7 @@ public:
     And(QList<Predicate*> inner):m_inner(inner)
     {
     }
-    ~And(){
+    virtual ~And(){
         for(auto i :m_inner)
             delete i;
     };
@@ -232,6 +233,7 @@ public:
     AbsBefore(qint64 epochSeconds):m_epochSeconds(epochSeconds)
     {
     }
+    virtual ~AbsBefore(){}
 
     qint64 getTimestampSeconds()
     {
@@ -273,6 +275,7 @@ public:
     RelBefore(qint64 secondsSinceClose):m_secondsSinceClose(secondsSinceClose)
     {
     }
+    virtual ~RelBefore(){}
 
     qint64 getSecondsSinceClose() {
         return m_secondsSinceClose;

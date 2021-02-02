@@ -47,6 +47,11 @@ SOURCES += \
     $$PWD/src/requests/strictreceivepathsrequestbuilder.cpp \
     $$PWD/src/requests/strictsendpathsrequestbuilder.cpp \
     $$PWD/src/responses/claimablebalanceresponse.cpp \
+    $$PWD/src/responses/effects/accountsponsorshipcreatedeffectresponse.cpp \
+    $$PWD/src/responses/effects/accountsponsorshipremovedeffectresponse.cpp \
+    $$PWD/src/responses/effects/accountsponsorshipupdatedeffectresponse.cpp \
+    $$PWD/src/responses/effects/claimablebalanceclaimantcreatedeffectresponse.cpp \
+    $$PWD/src/responses/effects/claimablebalanceclaimedeffectresponse.cpp \
     $$PWD/src/responses/effects/sequencebumpedeffectresponse.cpp \
     $$PWD/src/responses/effects/trustlineauthorizedtomaintainliabilitieseffectresponse.cpp \
     $$PWD/src/responses/feestatsresponse.cpp \
@@ -186,6 +191,11 @@ HEADERS += \
     $$PWD/src/requests/strictreceivepathsrequestbuilder.h \
     $$PWD/src/requests/strictsendpathsrequestbuilder.h \
     $$PWD/src/responses/claimablebalanceresponse.h \
+    $$PWD/src/responses/effects/accountsponsorshipcreatedeffectresponse.h \
+    $$PWD/src/responses/effects/accountsponsorshipremovedeffectresponse.h \
+    $$PWD/src/responses/effects/accountsponsorshipupdatedeffectresponse.h \
+    $$PWD/src/responses/effects/claimablebalanceclaimantcreatedeffectresponse.h \
+    $$PWD/src/responses/effects/claimablebalanceclaimedeffectresponse.h \
     $$PWD/src/responses/effects/sequencebumpedeffectresponse.h \
     $$PWD/src/responses/effects/trustlineauthorizedtomaintainliabilitieseffectresponse.h \
     $$PWD/src/responses/feestatsresponse.h \

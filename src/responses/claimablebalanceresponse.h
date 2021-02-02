@@ -25,7 +25,11 @@ public:
 };
 }
 
-
+/**
+ * Represents a claimable balance response.
+ * @see org.stellar.sdk.requests.ClaimableBalancesRequestBuilder
+ * @see org.stellar.sdk.Server#claimableBalances()
+ */
 
 class ClaimableBalanceResponse : public Response
 {
