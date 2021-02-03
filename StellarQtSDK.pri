@@ -52,8 +52,19 @@ SOURCES += \
     $$PWD/src/responses/effects/accountsponsorshipupdatedeffectresponse.cpp \
     $$PWD/src/responses/effects/claimablebalanceclaimantcreatedeffectresponse.cpp \
     $$PWD/src/responses/effects/claimablebalanceclaimedeffectresponse.cpp \
+    $$PWD/src/responses/effects/claimablebalancecreatedeffectresponse.cpp \
+    $$PWD/src/responses/effects/claimablebalancesponsorshipcreatedeffectresponse.cpp \
+    $$PWD/src/responses/effects/claimablebalancesponsorshipremovedeffectresponse.cpp \
+    $$PWD/src/responses/effects/claimablebalancesponsorshipupdatedeffectresponse.cpp \
+    $$PWD/src/responses/effects/datasponsorshipcreatedeffectresponse.cpp \
+    $$PWD/src/responses/effects/datasponsorshipremovedeffectresponse.cpp \
+    $$PWD/src/responses/effects/datasponsorshipupdatedeffectresponse.cpp \
     $$PWD/src/responses/effects/sequencebumpedeffectresponse.cpp \
+    $$PWD/src/responses/effects/signersponsorshipcreatedeffectresponse.cpp \
+    $$PWD/src/responses/effects/signersponsorshipremovedeffectresponse.cpp \
+    $$PWD/src/responses/effects/signersponsorshipupdatedeffectresponse.cpp \
     $$PWD/src/responses/effects/trustlineauthorizedtomaintainliabilitieseffectresponse.cpp \
+    $$PWD/src/responses/effects/trustlinesponsorshipcreatedeffectresponse.cpp \
     $$PWD/src/responses/feestatsresponse.cpp \
     $$PWD/src/responses/operations/bumpsequenceoperationresponse.cpp \
     $$PWD/src/responses/operations/managebuyofferoperationresponse.cpp \
@@ -196,8 +207,19 @@ HEADERS += \
     $$PWD/src/responses/effects/accountsponsorshipupdatedeffectresponse.h \
     $$PWD/src/responses/effects/claimablebalanceclaimantcreatedeffectresponse.h \
     $$PWD/src/responses/effects/claimablebalanceclaimedeffectresponse.h \
+    $$PWD/src/responses/effects/claimablebalancecreatedeffectresponse.h \
+    $$PWD/src/responses/effects/claimablebalancesponsorshipcreatedeffectresponse.h \
+    $$PWD/src/responses/effects/claimablebalancesponsorshipremovedeffectresponse.h \
+    $$PWD/src/responses/effects/claimablebalancesponsorshipupdatedeffectresponse.h \
+    $$PWD/src/responses/effects/datasponsorshipcreatedeffectresponse.h \
+    $$PWD/src/responses/effects/datasponsorshipremovedeffectresponse.h \
+    $$PWD/src/responses/effects/datasponsorshipupdatedeffectresponse.h \
     $$PWD/src/responses/effects/sequencebumpedeffectresponse.h \
+    $$PWD/src/responses/effects/signersponsorshipcreatedeffectresponse.h \
+    $$PWD/src/responses/effects/signersponsorshipremovedeffectresponse.h \
+    $$PWD/src/responses/effects/signersponsorshipupdatedeffectresponse.h \
     $$PWD/src/responses/effects/trustlineauthorizedtomaintainliabilitieseffectresponse.h \
+    $$PWD/src/responses/effects/trustlinesponsorshipcreatedeffectresponse.h \
     $$PWD/src/responses/feestatsresponse.h \
     $$PWD/src/responses/operations/bumpsequenceoperationresponse.h \
     $$PWD/src/responses/operations/managebuyofferoperationresponse.h \

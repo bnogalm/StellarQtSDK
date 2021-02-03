@@ -45,8 +45,10 @@ void ClaimableBalanceClaimantCreatedEffectResponse::setAsset(QString asset)
 {
     if (m_assetString == asset)
         return;
-    if(m_asset)
+    if(m_asset){
         delete m_asset;
+        m_asset=nullptr;
+    }
     m_assetString = asset;
     emit assetChanged();
 }
