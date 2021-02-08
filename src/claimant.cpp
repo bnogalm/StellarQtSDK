@@ -5,6 +5,11 @@ Claimant::Claimant(QString destination, Predicate *predicate): m_destination(des
 
 }
 
+Claimant::~Claimant(){
+    if(m_predicate)
+        delete m_predicate;
+}
+
 QString Claimant::destination() const
 {
     return m_destination;

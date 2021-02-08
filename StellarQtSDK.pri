@@ -65,13 +65,20 @@ SOURCES += \
     $$PWD/src/responses/effects/signersponsorshipupdatedeffectresponse.cpp \
     $$PWD/src/responses/effects/trustlineauthorizedtomaintainliabilitieseffectresponse.cpp \
     $$PWD/src/responses/effects/trustlinesponsorshipcreatedeffectresponse.cpp \
+    $$PWD/src/responses/effects/trustlinesponsorshipremovedeffectresponse.cpp \
+    $$PWD/src/responses/effects/trustlinesponsorshipupdatedeffectresponse.cpp \
     $$PWD/src/responses/feestatsresponse.cpp \
+    $$PWD/src/responses/operations/beginsponsoringfuturereservesoperationresponse.cpp \
     $$PWD/src/responses/operations/bumpsequenceoperationresponse.cpp \
+    $$PWD/src/responses/operations/claimclaimablebalanceoperationresponse.cpp \
+    $$PWD/src/responses/operations/createclaimablebalanceoperationresponse.cpp \
+    $$PWD/src/responses/operations/endsponsoringfuturereservesoperationresponse.cpp \
     $$PWD/src/responses/operations/managebuyofferoperationresponse.cpp \
     $$PWD/src/responses/operations/managesellofferoperationresponse.cpp \
     $$PWD/src/responses/operations/pathpaymentbaseoperationresponse.cpp \
     $$PWD/src/responses/operations/pathpaymentstrictreceiveoperationresponse.cpp \
     $$PWD/src/responses/operations/pathpaymentstrictsendoperationresponse.cpp \
+    $$PWD/src/responses/operations/revokesponsorshipoperationresponse.cpp \
     $$PWD/src/sep10challenge.cpp \
     $$PWD/src/strkey.cpp \
     $$PWD/src/inflationoperation.cpp \
@@ -220,13 +227,20 @@ HEADERS += \
     $$PWD/src/responses/effects/signersponsorshipupdatedeffectresponse.h \
     $$PWD/src/responses/effects/trustlineauthorizedtomaintainliabilitieseffectresponse.h \
     $$PWD/src/responses/effects/trustlinesponsorshipcreatedeffectresponse.h \
+    $$PWD/src/responses/effects/trustlinesponsorshipremovedeffectresponse.h \
+    $$PWD/src/responses/effects/trustlinesponsorshipupdatedeffectresponse.h \
     $$PWD/src/responses/feestatsresponse.h \
+    $$PWD/src/responses/operations/beginsponsoringfuturereservesoperationresponse.h \
     $$PWD/src/responses/operations/bumpsequenceoperationresponse.h \
+    $$PWD/src/responses/operations/claimclaimablebalanceoperationresponse.h \
+    $$PWD/src/responses/operations/createclaimablebalanceoperationresponse.h \
+    $$PWD/src/responses/operations/endsponsoringfuturereservesoperationresponse.h \
     $$PWD/src/responses/operations/managebuyofferoperationresponse.h \
     $$PWD/src/responses/operations/managesellofferoperationresponse.h \
     $$PWD/src/responses/operations/pathpaymentbaseoperationresponse.h \
     $$PWD/src/responses/operations/pathpaymentstrictreceiveoperationresponse.h \
     $$PWD/src/responses/operations/pathpaymentstrictsendoperationresponse.h \
+    $$PWD/src/responses/operations/revokesponsorshipoperationresponse.h \
     $$PWD/src/sep10challenge.h \
     $$PWD/xdr/stellartypes.h \
     $$PWD/src/account.h \

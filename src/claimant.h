@@ -11,6 +11,7 @@ public:
     Q_PROPERTY(Predicate* predicate READ predicate WRITE setPredicate )
 
     Claimant(QString destination, Predicate* predicate);
+    ~Claimant();
     QString destination() const;
     Predicate* predicate() const;
 
