@@ -16,6 +16,11 @@
 #include "operations/bumpsequenceoperationresponse.h"
 #include "operations/managesellofferoperationresponse.h"
 #include "operations/managebuyofferoperationresponse.h"
+#include "operations/createclaimablebalanceoperationresponse.h"
+#include "operations/claimclaimablebalanceoperationresponse.h"
+#include "operations/beginsponsoringfuturereservesoperationresponse.h"
+#include "operations/endsponsoringfuturereservesoperationresponse.h"
+#include "operations/revokesponsorshipoperationresponse.h"
 
 OperationPage::OperationPage(QNetworkReply *reply):Page<OperationResponse>(reply)
 {
@@ -58,6 +63,16 @@ void OperationPage::processRecords(const QJsonArray &records)
             op = new ManageBuyOfferOperationResponse();break;
           case stellar::OperationType::PATH_PAYMENT_STRICT_SEND:
             op = new PathPaymentStrictSendOperationResponse();break;
+        case stellar::OperationType::CREATE_CLAIMABLE_BALANCE:
+            op = new CreateClaimableBalanceOperationResponse();break;
+        case stellar::OperationType::CLAIM_CLAIMABLE_BALANCE:
+            op = new ClaimClaimableBalanceOperationResponse();break;
+        case stellar::OperationType::BEGIN_SPONSORING_FUTURE_RESERVES:
+            op = new BeginSponsoringFutureReservesOperationResponse();break;
+        case stellar::OperationType::END_SPONSORING_FUTURE_RESERVES:
+            op = new EndSponsoringFutureReservesOperationResponse();break;
+        case stellar::OperationType::REVOKE_SPONSORSHIP:
+            op = new RevokeSponsorshipOperationResponse();break;
           default:
             throw std::runtime_error("Invalid operation type");
         }

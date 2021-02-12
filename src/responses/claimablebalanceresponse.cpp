@@ -5,7 +5,7 @@ ClaimableBalanceResponse::ClaimableBalanceResponse(QNetworkReply *reply):Respons
 
 }
 
-QString ClaimableBalanceResponse::id() const
+QString ClaimableBalanceResponse::getID() const
 {
     return m_id;
 }

@@ -26,7 +26,7 @@ class ClaimableBalanceClaimantCreatedEffectResponse : public EffectResponse
     Predicate* m_predicate;
 
 public:
-    ClaimableBalanceClaimantCreatedEffectResponse(QNetworkReply* reply);
+    ClaimableBalanceClaimantCreatedEffectResponse(QNetworkReply* reply=nullptr);
     virtual ~ClaimableBalanceClaimantCreatedEffectResponse();
     QString asset() const;
     Asset* getAsset();

@@ -24,7 +24,7 @@ class ClaimableBalanceCreatedEffectResponse : public EffectResponse
     QString m_balanceID;
 
 public:
-    ClaimableBalanceCreatedEffectResponse(QNetworkReply* reply);
+    ClaimableBalanceCreatedEffectResponse(QNetworkReply* reply=nullptr);
     virtual ~ClaimableBalanceCreatedEffectResponse();
     QString asset() const;
     Asset* getAsset();

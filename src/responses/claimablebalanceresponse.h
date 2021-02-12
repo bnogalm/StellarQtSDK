@@ -34,7 +34,7 @@ public:
 class ClaimableBalanceResponse : public Response
 {
     Q_OBJECT
-    Q_PROPERTY(QString id READ id WRITE setId NOTIFY idChanged)
+    Q_PROPERTY(QString id READ getID WRITE setId NOTIFY idChanged)
     Q_PROPERTY(QString asset READ getAsset WRITE setAsset NOTIFY assetChanged)
     Q_PROPERTY(QString amount READ getAmount WRITE setAmount NOTIFY amountChanged)
     Q_PROPERTY(QString sponsor READ getSponsor WRITE setSponsor NOTIFY sponsorChanged)
@@ -47,7 +47,7 @@ class ClaimableBalanceResponse : public Response
 
 public:
     Q_INVOKABLE explicit ClaimableBalanceResponse(QNetworkReply* reply=nullptr);
-    QString id() const;
+    QString getID() const;
     QString getAsset() const;
 
     QString getAmount() const;

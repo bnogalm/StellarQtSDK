@@ -1,36 +1,53 @@
 #include "effectspage.h"
 #include <QJsonObject>
 #include <QJsonArray>
-#include "../../src/responses/effects/effectresponse.h"
-#include "../../src/responses/effects/accountcreatedeffectresponse.h"
-#include "../../src/responses/effects/accountcreditedeffectresponse.h"
-#include "../../src/responses/effects/accountdebitedeffectresponse.h"
-#include "../../src/responses/effects/accountflagsupdatedeffectresponse.h"
-#include "../../src/responses/effects/accounthomedomainupdatedeffectresponse.h"
-#include "../../src/responses/effects/accountremovedeffectresponse.h"
-#include "../../src/responses/effects/accountthresholdsupdatedeffectresponse.h"
-#include "../../src/responses/effects/offercreatedeffectresponse.h"
-#include "../../src/responses/effects/offerremovedeffectresponse.h"
-#include "../../src/responses/effects/offerupdatedeffectresponse.h"
-#include "../../src/responses/effects/signercreatedeffectresponse.h"
-#include "../../src/responses/effects/signereffectresponse.h"
-#include "../../src/responses/effects/signerremovedeffectresponse.h"
-#include "../../src/responses/effects/signerupdatedeffectresponse.h"
-#include "../../src/responses/effects/trustlineauthorizationresponse.h"
-#include "../../src/responses/effects/trustlineauthorizedeffectresponse.h"
-#include "../../src/responses/effects/trustlinecreatedeffectresponse.h"
-#include "../../src/responses/effects/trustlinecudresponse.h"
-#include "../../src/responses/effects/trustlinedeauthorizedeffectresponse.h"
-#include "../../src/responses/effects/trustlineremovedeffectresponse.h"
-#include "../../src/responses/effects/trustlineupdatedeffectresponse.h"
-#include "../../src/responses/effects/trustlineauthorizedtomaintainliabilitieseffectresponse.h"
-#include "../../src/responses/effects/tradeeffectresponse.h"
-#include "../../src/responses/effects/accountinflationdestinationupdatedeffectresponse.h"
-#include "../../src/responses/effects/datacreatedeffectresponse.h"
-#include "../../src/responses/effects/dataremovedeffectresponse.h"
-#include "../../src/responses/effects/dataupdatedeffectresponse.h"
-#include "../../src/responses/effects/sequencebumpedeffectresponse.h"
-
+#include "effects/effectresponse.h"
+#include "effects/accountcreatedeffectresponse.h"
+#include "effects/accountcreditedeffectresponse.h"
+#include "effects/accountdebitedeffectresponse.h"
+#include "effects/accountflagsupdatedeffectresponse.h"
+#include "effects/accounthomedomainupdatedeffectresponse.h"
+#include "effects/accountremovedeffectresponse.h"
+#include "effects/accountthresholdsupdatedeffectresponse.h"
+#include "effects/offercreatedeffectresponse.h"
+#include "effects/offerremovedeffectresponse.h"
+#include "effects/offerupdatedeffectresponse.h"
+#include "effects/signercreatedeffectresponse.h"
+#include "effects/signereffectresponse.h"
+#include "effects/signerremovedeffectresponse.h"
+#include "effects/signerupdatedeffectresponse.h"
+#include "effects/trustlineauthorizationresponse.h"
+#include "effects/trustlineauthorizedeffectresponse.h"
+#include "effects/trustlinecreatedeffectresponse.h"
+#include "effects/trustlinecudresponse.h"
+#include "effects/trustlinedeauthorizedeffectresponse.h"
+#include "effects/trustlineremovedeffectresponse.h"
+#include "effects/trustlineupdatedeffectresponse.h"
+#include "effects/trustlineauthorizedtomaintainliabilitieseffectresponse.h"
+#include "effects/tradeeffectresponse.h"
+#include "effects/accountinflationdestinationupdatedeffectresponse.h"
+#include "effects/datacreatedeffectresponse.h"
+#include "effects/dataremovedeffectresponse.h"
+#include "effects/dataupdatedeffectresponse.h"
+#include "effects/sequencebumpedeffectresponse.h"
+#include "effects/claimablebalanceclaimantcreatedeffectresponse.h"
+#include "effects/claimablebalanceclaimedeffectresponse.h"
+#include "effects/claimablebalancecreatedeffectresponse.h"
+#include "effects/claimablebalancesponsorshipcreatedeffectresponse.h"
+#include "effects/claimablebalancesponsorshipremovedeffectresponse.h"
+#include "effects/claimablebalancesponsorshipupdatedeffectresponse.h"
+#include "effects/accountsponsorshipcreatedeffectresponse.h"
+#include "effects/accountsponsorshipremovedeffectresponse.h"
+#include "effects/accountsponsorshipupdatedeffectresponse.h"
+#include "effects/trustlinesponsorshipcreatedeffectresponse.h"
+#include "effects/trustlinesponsorshipremovedeffectresponse.h"
+#include "effects/trustlinesponsorshipupdatedeffectresponse.h"
+#include "effects/datasponsorshipcreatedeffectresponse.h"
+#include "effects/datasponsorshipremovedeffectresponse.h"
+#include "effects/datasponsorshipupdatedeffectresponse.h"
+#include "effects/signersponsorshipcreatedeffectresponse.h"
+#include "effects/signersponsorshipremovedeffectresponse.h"
+#include "effects/signersponsorshipupdatedeffectresponse.h"
 EffectsPage::EffectsPage(QNetworkReply *reply)
     :Page<EffectResponse>(reply)
 {
@@ -101,8 +118,46 @@ void EffectsPage::processRecords(const QJsonArray &records)
           effect= new DataUpdatedEffectResponse();break;
         case 43:
           effect= new SequenceBumpedEffectResponse();break;
+          // claimable balance effects
+        case 50:
+          effect= new ClaimableBalanceCreatedEffectResponse();break;
+        case 51:
+          effect= new ClaimableBalanceClaimantCreatedEffectResponse();break;
+        case 52:
+          effect= new ClaimableBalanceClaimedEffectResponse();break;
+        // sponsorship effects
+        case 60:
+          effect= new AccountSponsorshipCreatedEffectResponse();break;
+        case 61:
+          effect= new AccountSponsorshipUpdatedEffectResponse();break;
+        case 62:
+          effect= new AccountSponsorshipRemovedEffectResponse();break;
+        case 63:
+          effect= new TrustlineSponsorshipCreatedEffectResponse();break;
+        case 64:
+          effect= new TrustlineSponsorshipUpdatedEffectResponse();break;
+        case 65:
+          effect= new TrustlineSponsorshipRemovedEffectResponse();break;
+        case 66:
+          effect= new DataSponsorshipCreatedEffectResponse();break;
+        case 67:
+          effect= new DataSponsorshipUpdatedEffectResponse();break;
+        case 68:
+          effect= new DataSponsorshipRemovedEffectResponse();break;
+        case 69:
+          effect= new ClaimableBalanceSponsorshipCreatedEffectResponse();break;
+        case 70:
+          effect= new ClaimableBalanceSponsorshipUpdatedEffectResponse();break;
+        case 71:
+          effect= new ClaimableBalanceSponsorshipRemovedEffectResponse();break;
+        case 72:
+          effect= new SignerSponsorshipCreatedEffectResponse();break;
+        case 73:
+          effect= new SignerSponsorshipUpdatedEffectResponse();break;
+        case 74:
+          effect= new SignerSponsorshipRemovedEffectResponse();break;
         default:
-            throw std::runtime_error("Invalid operation type");
+            throw std::runtime_error("Invalid effect type");
         }
         if(effect){
             effect->setParent(this);

@@ -43,6 +43,7 @@ SOURCES += \
     $$PWD/src/pathpaymentstrictreceiveoperation.cpp \
     $$PWD/src/pathpaymentstrictsendoperation.cpp \
     $$PWD/src/predicate.cpp \
+    $$PWD/src/requests/claimablebalancesrequestbuilder.cpp \
     $$PWD/src/requests/feestatsrequestbuilder.cpp \
     $$PWD/src/requests/strictreceivepathsrequestbuilder.cpp \
     $$PWD/src/requests/strictsendpathsrequestbuilder.cpp \
@@ -205,6 +206,7 @@ HEADERS += \
     $$PWD/src/pathpaymentstrictreceiveoperation.h \
     $$PWD/src/pathpaymentstrictsendoperation.h \
     $$PWD/src/predicate.h \
+    $$PWD/src/requests/claimablebalancesrequestbuilder.h \
     $$PWD/src/requests/feestatsrequestbuilder.h \
     $$PWD/src/requests/strictreceivepathsrequestbuilder.h \
     $$PWD/src/requests/strictsendpathsrequestbuilder.h \

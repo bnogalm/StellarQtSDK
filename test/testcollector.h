@@ -8,7 +8,7 @@
 #include <memory>
 #include <map>
 #include <string>
-
+#include <iostream>
 
 namespace TestCollector{
 typedef std::map<std::string, std::shared_ptr<QObject> > TestList;
@@ -20,9 +20,19 @@ inline TestList& GetTestList()
 
 inline int RunAllTests(int argc, char **argv) {
     int result = 0;
+    QList<std::string> failedTests;
     for (const auto&i:GetTestList()) {
-        result += QTest::qExec(i.second.get(), argc, argv);
+        int res = QTest::qExec(i.second.get(), argc, argv);
+        result += res;
         printf("\n");
+        if(res)
+            failedTests.append(i.first);
+    }
+    if(!failedTests.isEmpty())
+        std::cout<<"Failed:\n";
+    for(std::string s:failedTests)
+    {
+        std::cout<<s<<std::endl;
     }
     return result;
 }
