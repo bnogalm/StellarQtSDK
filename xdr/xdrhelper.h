@@ -85,7 +85,7 @@ struct Array{
     }
 
     void append(const T& v){
-        if(value.length()<max-1)
+        if(value.length()<max)
             value.append(v);
     }
     void clear()

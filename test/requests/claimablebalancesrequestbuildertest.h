@@ -28,7 +28,7 @@ class ClaimableBalancesRequestBuilderTest: public QObject
         "    {\n"
         "      \"destination\": \"GD3W2FFQQ2WTJTBHXYBLMQS664XCT3LYSRKUBWNU7K4KXBZDBLPY3RAU\",\n"
         "      \"predicate\": {\n"
-        "        \"absBefore\": \"2020-09-29T23:56:04Z\"\n"
+        "        \"abs_before\": \"2020-09-29T23:56:04Z\"\n"
         "      }\n"
         "    },\n"
         "    {\n"
@@ -36,11 +36,11 @@ class ClaimableBalancesRequestBuilderTest: public QObject
         "      \"predicate\": {\n"
         "        \"or\": [\n"
         "          {\n"
-        "            \"absBefore\": \"2020-09-28T17:57:04Z\"\n"
+        "            \"abs_before\": \"2020-09-28T17:57:04Z\"\n"
         "          },\n"
         "          {\n"
         "            \"not\": {\n"
-        "              \"absBefore\": \"2020-09-29T23:56:04Z\"\n"
+        "              \"abs_before\": \"2020-09-29T23:56:04Z\"\n"
         "            }\n"
         "          }\n"
         "        ]\n"
@@ -116,7 +116,7 @@ private slots:
           WAIT_FOR(!responseIsReady)
 
           QCOMPARE(response->getID(), id);
-          QCOMPARE(response->getAmount(), "10200.0000000");
+          QCOMPARE(response->getAmount(), "1000.0000000");
 
       }
 

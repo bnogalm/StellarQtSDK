@@ -5,7 +5,7 @@
 #include <QObject>
 #include "link.h"
 #include "claimant.h"
-
+#include "asset.h"
 namespace ClaimableBalanceResponseAttach
 {
 /**
@@ -35,10 +35,10 @@ class ClaimableBalanceResponse : public Response
 {
     Q_OBJECT
     Q_PROPERTY(QString id READ getID WRITE setId NOTIFY idChanged)
-    Q_PROPERTY(QString asset READ getAsset WRITE setAsset NOTIFY assetChanged)
+    Q_PROPERTY(QString asset READ getAssetString WRITE setAsset NOTIFY assetChanged)
     Q_PROPERTY(QString amount READ getAmount WRITE setAmount NOTIFY amountChanged)
     Q_PROPERTY(QString sponsor READ getSponsor WRITE setSponsor NOTIFY sponsorChanged)
-    Q_PROPERTY(qint64 last_modified_ledget READ getLastModified_ledget WRITE setLastModifiedLedget NOTIFY lastModifiedLedgetChanged)
+    Q_PROPERTY(qint64 last_modified_ledger READ getLastModifiedLedger WRITE setLastModifiedLedger NOTIFY lastModifiedLedgerChanged)
     Q_PROPERTY(qint64 last_modified_time READ getLastModifiedTime  WRITE setLastModifiedTime  NOTIFY lastModifiedTimeChanged)
     Q_PROPERTY(QString paging_token READ getPagingToken WRITE setPagingToken NOTIFY pagingTokenChanged)
     Q_PROPERTY(ClaimableBalanceResponseAttach::Links _links READ getLinks WRITE setLinks NOTIFY linksChanged)
@@ -47,14 +47,16 @@ class ClaimableBalanceResponse : public Response
 
 public:
     Q_INVOKABLE explicit ClaimableBalanceResponse(QNetworkReply* reply=nullptr);
+    virtual ~ClaimableBalanceResponse();
     QString getID() const;
-    QString getAsset() const;
+    QString getAssetString() const;
+    Asset *getAsset();
 
     QString getAmount() const;
 
     QString getSponsor() const;
 
-    qint64 getLastModified_ledget() const;
+    qint64 getLastModifiedLedger() const;
 
     qint64 getLastModifiedTime() const;
 
@@ -72,11 +74,11 @@ public slots:
 
     void setSponsor(QString sponsor);
 
-    void setLastModifiedLedget(qint64 last_modified_ledget);
+    void setLastModifiedLedger(qint64 lastModifiedLedger);
 
-    void setLastModifiedTime(qint64 last_modified_time);
+    void setLastModifiedTime(qint64 lastModifiedTime);
 
-    void setPagingToken(QString paging_token);
+    void setPagingToken(QString pagingToken);
 
     void setLinks(ClaimableBalanceResponseAttach::Links links);
 
@@ -87,7 +89,7 @@ signals:
     void assetChanged();
     void amountChanged();
     void sponsorChanged();
-    void lastModifiedLedgetChanged();
+    void lastModifiedLedgerChanged();
     void lastModifiedTimeChanged();
     void pagingTokenChanged();
     void linksChanged();
@@ -95,14 +97,15 @@ signals:
 
 private:
     QString m_id;
-    QString m_asset;
+    QString m_assetString;
+    Asset* m_asset;
     QString m_amount;
     QString m_sponsor;
-    qint64 m_last_modified_ledget;
-    qint64 m_last_modified_time;
-    QString m_paging_token;
+    qint64 m_lastModifiedLedger;
+    qint64 m_lastModifiedTime;
+    QString m_pagingToken;
     ClaimableBalanceResponseAttach::Links m_links;
     QList<Claimant> m_claimants;
 };
-
+Q_DECLARE_METATYPE(ClaimableBalanceResponseAttach::Links)
 #endif // CLAIMABLEBALANCERESPONSE_H

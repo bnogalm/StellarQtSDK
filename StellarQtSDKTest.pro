@@ -24,6 +24,7 @@ HEADERS += \
     test/feebumptransactiontest.h \
     test/keypairtest.h \
     test/requests/claimablebalancesrequestbuildertest.h \
+    test/responses/claimablebalancepagedeserializertest.h \
     test/responses/feestatsdeserializertest.h \
     test/sep10challengetest.h \
     test/strkeytest.h \

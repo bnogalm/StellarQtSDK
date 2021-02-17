@@ -1,8 +1,15 @@
 #include "claimablebalanceresponse.h"
 
-ClaimableBalanceResponse::ClaimableBalanceResponse(QNetworkReply *reply):Response(reply)
+
+ClaimableBalanceResponse::ClaimableBalanceResponse(QNetworkReply *reply):Response(reply),m_asset(nullptr)
 {
 
+}
+
+ClaimableBalanceResponse::~ClaimableBalanceResponse()
+{
+    if(m_asset)
+        delete m_asset;
 }
 
 QString ClaimableBalanceResponse::getID() const
@@ -10,9 +17,16 @@ QString ClaimableBalanceResponse::getID() const
     return m_id;
 }
 
-QString ClaimableBalanceResponse::getAsset() const
+Asset* ClaimableBalanceResponse::getAsset()
 {
+    if(!m_asset)
+        m_asset = Asset::create(m_assetString);
     return m_asset;
+}
+
+QString ClaimableBalanceResponse::getAssetString() const
+{
+    return m_assetString;
 }
 
 QString ClaimableBalanceResponse::getAmount() const
@@ -25,19 +39,19 @@ QString ClaimableBalanceResponse::getSponsor() const
     return m_sponsor;
 }
 
-qint64 ClaimableBalanceResponse::getLastModified_ledget() const
+qint64 ClaimableBalanceResponse::getLastModifiedLedger() const
 {
-    return m_last_modified_ledget;
+    return m_lastModifiedLedger;
 }
 
 qint64 ClaimableBalanceResponse::getLastModifiedTime() const
 {
-    return m_last_modified_time;
+    return m_lastModifiedTime;
 }
 
 QString ClaimableBalanceResponse::getPagingToken() const
 {
-    return m_paging_token;
+    return m_pagingToken;
 }
 
 ClaimableBalanceResponseAttach::Links ClaimableBalanceResponse::getLinks() const
@@ -61,10 +75,14 @@ void ClaimableBalanceResponse::setId(QString id)
 
 void ClaimableBalanceResponse::setAsset(QString asset)
 {
-    if (m_asset == asset)
+    if (m_assetString == asset)
         return;
-
-    m_asset = asset;
+    if(m_asset)
+    {
+        delete m_asset;
+        m_asset=nullptr;
+    }
+    m_assetString = asset;
     emit assetChanged();
 }
 
@@ -86,30 +104,30 @@ void ClaimableBalanceResponse::setSponsor(QString sponsor)
     emit sponsorChanged();
 }
 
-void ClaimableBalanceResponse::setLastModifiedLedget(qint64 last_modified_ledget)
+void ClaimableBalanceResponse::setLastModifiedLedger(qint64 lastModifiedLedger)
 {
-    if (m_last_modified_ledget == last_modified_ledget)
+    if (m_lastModifiedLedger == lastModifiedLedger)
         return;
 
-    m_last_modified_ledget = last_modified_ledget;
-    emit lastModifiedLedgetChanged();
+    m_lastModifiedLedger = lastModifiedLedger;
+    emit lastModifiedLedgerChanged();
 }
 
-void ClaimableBalanceResponse::setLastModifiedTime(qint64 last_modified_time)
+void ClaimableBalanceResponse::setLastModifiedTime(qint64 lastModifiedTime)
 {
-    if (m_last_modified_time == last_modified_time)
+    if (m_lastModifiedTime == lastModifiedTime)
         return;
 
-    m_last_modified_time = last_modified_time;
+    m_lastModifiedTime = lastModifiedTime;
     emit lastModifiedTimeChanged();
 }
 
-void ClaimableBalanceResponse::setPagingToken(QString paging_token)
+void ClaimableBalanceResponse::setPagingToken(QString pagingToken)
 {
-    if (m_paging_token == paging_token)
+    if (m_pagingToken == pagingToken)
         return;
 
-    m_paging_token = paging_token;
+    m_pagingToken = pagingToken;
     emit pagingTokenChanged();
 }
 

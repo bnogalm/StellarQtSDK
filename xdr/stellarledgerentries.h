@@ -329,23 +329,26 @@ namespace stellar
             clear();
             type = ClaimPredicateType::CLAIM_PREDICATE_UNCONDITIONAL;
         }
-        void setAndPredicates(Array<ClaimPredicate,2> predicates)
+        Array<ClaimPredicate,2>& fillAndPredicates()
         {
             clear();
             type = ClaimPredicateType::CLAIM_PREDICATE_AND;
-            andPredicates = predicates;
+            new (&andPredicates) Array<ClaimPredicate,2>();
+            return andPredicates;
         }
-        void setOrPredicates(Array<ClaimPredicate,2> predicates)
+        Array<ClaimPredicate,2>& fillOrPredicates()
         {
             clear();
             type = ClaimPredicateType::CLAIM_PREDICATE_OR;
-            orPredicates = predicates;
+            new (&orPredicates) Array<ClaimPredicate,2>();
+            return orPredicates;
         }
-        void setNotPredicate(Array<ClaimPredicate,1> predicate)
+        Array<ClaimPredicate,1>& fillNotPredicate()
         {
             clear();
             type = ClaimPredicateType::CLAIM_PREDICATE_NOT;
-            notPredicate = predicate;
+            new (&notPredicate) Array<ClaimPredicate,1>();
+            return notPredicate;
         }
         void setAbsBefore(qint64 ab)
         {
@@ -356,7 +359,7 @@ namespace stellar
         void setRelBefore(qint64 rb)
         {
             clear();
-            type = ClaimPredicateType::CLAIM_PREDICATE_BEFORE_ABSOLUTE_TIME;
+            type = ClaimPredicateType::CLAIM_PREDICATE_BEFORE_RELATIVE_TIME;
             relBefore= rb;
         }
         ClaimPredicate(const stellar::ClaimPredicate &obj){

@@ -1,8 +1,26 @@
 #include "claimant.h"
+#include <QCoreApplication>
+#include "responses/response.h"
+static void registerTypes()
+{    
+    QMetaType::registerConverter<QVariantList ,QList<Claimant> >(&ClaimantConverter::convertData);
+}
 
+Q_COREAPP_STARTUP_FUNCTION(registerTypes)
 Claimant::Claimant(QString destination, Predicate *predicate): m_destination(destination), m_predicate(predicate)
 {
 
+}
+
+Claimant::Claimant():m_predicate(nullptr)
+{
+
+}
+
+Claimant::Claimant(const Claimant &other)
+{
+    this->m_destination=other.m_destination;
+    this->m_predicate=Predicate::create(*(other.m_predicate));
 }
 
 Claimant::~Claimant(){
@@ -10,14 +28,14 @@ Claimant::~Claimant(){
         delete m_predicate;
 }
 
-QString Claimant::destination() const
+QString Claimant::getDestination() const
 {
     return m_destination;
 }
 
-Predicate *Claimant::predicate() const
+const Predicate& Claimant::getPredicate() const
 {
-    return m_predicate;
+    return *m_predicate;
 }
 
 bool Claimant::operator==(const Claimant &other)
@@ -38,10 +56,23 @@ void Claimant::setDestination(QString destination)
     m_destination = destination;
 }
 
-void Claimant::setPredicate(Predicate *predicate)
+void Claimant::setPredicate(Predicate &predicate)
 {
-    if (m_predicate == predicate)
+    if (m_predicate && m_predicate->equals(&predicate))
         return;
 
-    m_predicate = predicate;
+    m_predicate = Predicate::create(predicate);
+}
+
+QList<Claimant> ClaimantConverter::convertData(const QVariantList &source)
+{
+    QList<Claimant> res;
+    for(int n = 0;n<source.count();n++){
+
+        QVariantMap m = source[n].toMap();
+        Claimant r(m.value("destination").toString(), Predicate::create(m.value("predicate")));
+        res.append(r);
+
+    }
+    return res;
 }
