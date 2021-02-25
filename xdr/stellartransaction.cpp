@@ -41,15 +41,15 @@ stellar::Operation::Operation(const stellar::Operation &op){
         new (&operationPathPaymentStrictSend) PathPaymentStrictSendOp();
         operationPathPaymentStrictSend = op.operationPathPaymentStrictSend; break;
     case OperationType::CREATE_CLAIMABLE_BALANCE:
-        createClaimableBalanceOp = op.createClaimableBalanceOp; break;
+        operationCreateClaimableBalance = op.operationCreateClaimableBalance; break;
     case OperationType::CLAIM_CLAIMABLE_BALANCE:
-        claimClaimableBalanceOp = op.claimClaimableBalanceOp; break;
+        operationClaimClaimableBalance = op.operationClaimClaimableBalance; break;
     case OperationType::BEGIN_SPONSORING_FUTURE_RESERVES:
-        beginSponsoringFutureReservesOp = op.beginSponsoringFutureReservesOp; break;
+        operationBeginSponsoringFutureReserves = op.operationBeginSponsoringFutureReserves; break;
 //    case OperationType::END_SPONSORING_FUTURE_RESERVES:
 //        break;
     case OperationType::REVOKE_SPONSORSHIP:
-        revokeSponsorshipOp = op.revokeSponsorshipOp; break;
+        operationRevokeSponsorship = op.operationRevokeSponsorship; break;
     default: break;
     }
 }
@@ -128,15 +128,15 @@ const stellar::Operation &stellar::Operation::operator =(const stellar::Operatio
         new (&operationPathPaymentStrictSend) PathPaymentStrictSendOp();
         operationPathPaymentStrictSend = op.operationPathPaymentStrictSend; break;
     case OperationType::CREATE_CLAIMABLE_BALANCE:
-        createClaimableBalanceOp = op.createClaimableBalanceOp; break;
+        operationCreateClaimableBalance = op.operationCreateClaimableBalance; break;
     case OperationType::CLAIM_CLAIMABLE_BALANCE:
-        claimClaimableBalanceOp = op.claimClaimableBalanceOp; break;
+        operationClaimClaimableBalance = op.operationClaimClaimableBalance; break;
     case OperationType::BEGIN_SPONSORING_FUTURE_RESERVES:
-        beginSponsoringFutureReservesOp = op.beginSponsoringFutureReservesOp; break;
+        operationBeginSponsoringFutureReserves = op.operationBeginSponsoringFutureReserves; break;
 //    case OperationType::END_SPONSORING_FUTURE_RESERVES:
 //        break;
     case OperationType::REVOKE_SPONSORSHIP:
-        revokeSponsorshipOp = op.revokeSponsorshipOp; break;
+        operationRevokeSponsorship = op.operationRevokeSponsorship; break;
     default: break;
     }
     return *this;

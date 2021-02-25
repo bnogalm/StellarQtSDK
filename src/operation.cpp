@@ -126,7 +126,7 @@ Operation *Operation::fromXdr(stellar::Operation &xdr) {
 }
 
 Operation *Operation::setSourceAccount(QString sourceAccount)
-{
+{    
     m_sourceAccount = sourceAccount;
     return this;
 }

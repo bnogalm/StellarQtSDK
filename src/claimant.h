@@ -4,6 +4,7 @@
 #include "predicate.h"
 
 
+#include "strkey.h"
 
 
 class Claimant
@@ -20,6 +21,10 @@ public:
     QString getDestination() const;
     const Predicate &getPredicate() const;
 
+    stellar::Claimant toXdr() const;
+
+    static Claimant fromXdr(stellar::Claimant c);
+
     bool operator==(const Claimant& other);
     bool operator!=(const Claimant& other);
 public slots:
@@ -35,4 +40,6 @@ namespace ClaimantConverter
 {
     inline QList<Claimant> convertData(const QVariantList &source);
 }
+
+QList<Claimant> checkNotNull(QList<Claimant> claimants, const char *error);
 #endif // CLAIMANT_H

@@ -25,8 +25,12 @@ SOURCES += \
     $$PWD/src/abstracttransaction.cpp \
     $$PWD/src/account.cpp \
     $$PWD/src/accountmergeoperation.cpp \
+    $$PWD/src/beginsponsoringfuturereservesoperation.cpp \
     $$PWD/src/claimant.cpp \
+    $$PWD/src/claimclaimablebalanceoperation.cpp \
+    $$PWD/src/createclaimablebalanceoperation.cpp \
     $$PWD/src/createpassivesellofferoperation.cpp \
+    $$PWD/src/endsponsoringfuturereservesoperation.cpp \
     $$PWD/src/feebumptransaction.cpp \
     $$PWD/src/managebuyofferoperation.cpp \
     $$PWD/src/managesellofferoperation.cpp \
@@ -198,8 +202,12 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 HEADERS += \
     $$PWD/src/abstracttransaction.h \
+    $$PWD/src/beginsponsoringfuturereservesoperation.h \
     $$PWD/src/claimant.h \
+    $$PWD/src/claimclaimablebalanceoperation.h \
+    $$PWD/src/createclaimablebalanceoperation.h \
     $$PWD/src/createpassivesellofferoperation.h \
+    $$PWD/src/endsponsoringfuturereservesoperation.h \
     $$PWD/src/feebumptransaction.h \
     $$PWD/src/managebuyofferoperation.h \
     $$PWD/src/managesellofferoperation.h \

@@ -627,11 +627,11 @@ namespace stellar
         ManageDataOp operationManageData;
         PathPaymentStrictSendOp  operationPathPaymentStrictSend;
 
-        CreateClaimableBalanceOp createClaimableBalanceOp;//case CREATE_CLAIMABLE_BALANCE:
-        ClaimClaimableBalanceOp claimClaimableBalanceOp;//case CLAIM_CLAIMABLE_BALANCE:
-        BeginSponsoringFutureReservesOp beginSponsoringFutureReservesOp;//case BEGIN_SPONSORING_FUTURE_RESERVES:
+        CreateClaimableBalanceOp operationCreateClaimableBalance;//case CREATE_CLAIMABLE_BALANCE:
+        ClaimClaimableBalanceOp operationClaimClaimableBalance;//case CLAIM_CLAIMABLE_BALANCE:
+        BeginSponsoringFutureReservesOp operationBeginSponsoringFutureReserves;//case BEGIN_SPONSORING_FUTURE_RESERVES:
         //void;//case END_SPONSORING_FUTURE_RESERVES:
-        RevokeSponsorshipOp revokeSponsorshipOp;//case REVOKE_SPONSORSHIP:
+        RevokeSponsorshipOp operationRevokeSponsorship;//case REVOKE_SPONSORSHIP:
         };
 
         /**
@@ -678,15 +678,15 @@ namespace stellar
         case OperationType::PATH_PAYMENT_STRICT_SEND:
             out << obj.operationPathPaymentStrictSend; break;
         case OperationType::CREATE_CLAIMABLE_BALANCE:
-            out <<obj.createClaimableBalanceOp; break;
+            out <<obj.operationCreateClaimableBalance; break;
         case OperationType::CLAIM_CLAIMABLE_BALANCE:
-            out <<obj.claimClaimableBalanceOp; break;
+            out <<obj.operationClaimClaimableBalance; break;
         case OperationType::BEGIN_SPONSORING_FUTURE_RESERVES:
-            out <<obj.beginSponsoringFutureReservesOp; break;
+            out <<obj.operationBeginSponsoringFutureReserves; break;
         case OperationType::END_SPONSORING_FUTURE_RESERVES:
             break;
         case OperationType::REVOKE_SPONSORSHIP:
-            out <<obj.revokeSponsorshipOp; break;
+            out <<obj.operationRevokeSponsorship; break;
 
         //default: break;
         }
@@ -730,15 +730,15 @@ namespace stellar
             new (&obj.operationPathPaymentStrictSend) PathPaymentStrictSendOp();
             in >> obj.operationPathPaymentStrictSend; break;
         case OperationType::CREATE_CLAIMABLE_BALANCE:
-            in >>obj.createClaimableBalanceOp; break;
+            in >>obj.operationCreateClaimableBalance; break;
         case OperationType::CLAIM_CLAIMABLE_BALANCE:
-            in >>obj.claimClaimableBalanceOp; break;
+            in >>obj.operationClaimClaimableBalance; break;
         case OperationType::BEGIN_SPONSORING_FUTURE_RESERVES:
-            in >>obj.beginSponsoringFutureReservesOp; break;
+            in >>obj.operationBeginSponsoringFutureReserves; break;
         case OperationType::END_SPONSORING_FUTURE_RESERVES:
             break;
         case OperationType::REVOKE_SPONSORSHIP:
-            in >>obj.revokeSponsorshipOp; break;
+            in >>obj.operationRevokeSponsorship; break;
         //default: break;
         }
        return in;
