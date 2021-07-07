@@ -27,6 +27,22 @@ public:
     static Asset* createNonNativeAsset(QString code, const KeyPair& issuer);//makes a copy of issuer
     static Asset* createNonNativeAsset(QString code, QString issuer);
     static Asset* create(QString type, QString code, QString issuer);
+
+
+    ///
+    /// \brief create non native asset, same as createNonNativeAsset
+    /// \param code
+    /// \param issuer
+    /// \return asset
+    ///
+    static Asset* create(QString code, QString issuer);
+    /**
+     * Parses an asset string and returns the equivalent Asset instance.
+     * The asset string is expected to either be "native" or a string of the form "CODE:ISSUER"
+     *
+     * @param canonicalForm Canonical string representation of an asset
+     */
+    static Asset* create(QString canonicalForm);
     /**
      * Generates Asset object from a given XDR object
      * @param xdr XDR object

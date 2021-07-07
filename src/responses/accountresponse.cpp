@@ -15,7 +15,7 @@ static void registerTypes()
 Q_COREAPP_STARTUP_FUNCTION(registerTypes)
 
 AccountResponse::AccountResponse(QNetworkReply *reply)
-    :Response(reply), m_keypair(nullptr), m_sequence(0) ,m_subentryCount(0)
+    :Response(reply), m_keypair(nullptr), m_sequence(0) ,m_subentryCount(0),m_numSponsoring(0),m_numSponsored(0)
 {
 
 }
@@ -92,6 +92,21 @@ QList<AccountResponseAttach::Balance> AccountResponse::getBalances() const{
 
 QList<AccountResponseAttach::Signer> AccountResponse::getSigners() const{
     return m_signers;
+}
+
+qint64 AccountResponse::getNumSponsoring() const
+{
+    return m_numSponsoring;
+}
+
+qint64 AccountResponse::getNumSponsored() const
+{
+    return m_numSponsored;
+}
+
+QString AccountResponse::getSponsor() const
+{
+    return m_sponsor;
 }
 
 void AccountResponse::setAccountID(QString account_id)
@@ -188,7 +203,8 @@ bool Balance::operator !=(Balance &b)
             || (this->m_sellingLiabilities!=b.m_sellingLiabilities)
             || (this->m_isAuthorized!=b.m_isAuthorized)
             || (this->m_isAuthorizedToMaintainLiabilities!=b.m_isAuthorizedToMaintainLiabilities)
-            || (this->m_lastModifiedLedger!=b.m_lastModifiedLedger);
+            || (this->m_lastModifiedLedger!=b.m_lastModifiedLedger)
+            || (this->m_sponsor!=b.m_sponsor);
 }
 
 bool Balance::operator ==(Balance &b)
@@ -202,7 +218,13 @@ bool Balance::operator ==(Balance &b)
             && (this->m_sellingLiabilities==b.m_sellingLiabilities)
             && (this->m_isAuthorized==b.m_isAuthorized)
             && (this->m_isAuthorizedToMaintainLiabilities==b.m_isAuthorizedToMaintainLiabilities)
-            && (this->m_lastModifiedLedger==b.m_lastModifiedLedger);
+            && (this->m_lastModifiedLedger==b.m_lastModifiedLedger)
+            && (this->m_sponsor==b.m_sponsor);
+}
+
+QString Balance::getSponsor() const
+{
+    return m_sponsor;
 }
 
 
@@ -234,14 +256,21 @@ bool Signer::operator !=(Signer &s)
 {
     return (this->m_accountId!=s.m_accountId)
                 || (this->m_type!=s.m_type)
-                || (this->m_weight!=s.m_weight);
+                || (this->m_weight!=s.m_weight)
+                || (this->m_sponsor!=s.m_sponsor);
 }
 
 bool Signer::operator ==(Signer &s)
 {
     return (this->m_accountId==s.m_accountId)
             && (this->m_type==s.m_type)
-            && (this->m_weight==s.m_weight);
+            && (this->m_weight==s.m_weight)
+            && (this->m_sponsor==s.m_sponsor);
+}
+
+QString Signer::getSponsor() const
+{
+    return m_sponsor;
 }
 
 Link Links::getEffects() {

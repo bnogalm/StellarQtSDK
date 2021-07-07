@@ -42,6 +42,26 @@ Asset *Asset::create(QString type, QString code, QString issuer) {
     }
 }
 
+Asset *Asset::create(QString code, QString issuer)
+{
+    return Asset::createNonNativeAsset(code, KeyPair::fromAccountId(issuer));
+}
+
+Asset *Asset::create(QString canonicalForm)
+{
+    if (canonicalForm == "native")
+    {
+        return new AssetTypeNative();
+    }
+
+    QStringList parts = canonicalForm.split(":");
+    if (parts.size() != 2)
+    {
+        throw std::runtime_error("invalid asset");
+    }
+    return Asset::createNonNativeAsset(parts[0], parts[1]);
+}
+
 Asset *Asset::fromXdr(stellar::Asset &xdr) {
     switch (xdr.type) {
     case stellar::AssetType::ASSET_TYPE_NATIVE:

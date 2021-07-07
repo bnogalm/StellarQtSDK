@@ -67,7 +67,7 @@ class Balance {
     Q_PROPERTY(bool is_authorized MEMBER m_isAuthorized)
     Q_PROPERTY(bool is_authorized_to_maintain_liabilities MEMBER m_isAuthorizedToMaintainLiabilities)
     Q_PROPERTY(int last_modified_ledger MEMBER m_lastModifiedLedger)
-
+    Q_PROPERTY(QString sponsor READ getSponsor MEMBER m_sponsor)
 
 
 
@@ -85,6 +85,8 @@ class Balance {
 
     KeyPair *m_assetIssuerKeypair;
     Asset *m_asset;
+    QString m_sponsor;
+
 public:
     Balance();
     ~Balance();
@@ -105,6 +107,7 @@ public:
     bool operator !=(Balance& b);
     bool operator ==(Balance& b);
 
+    QString getSponsor() const;
 };
 
 /**
@@ -116,10 +119,12 @@ class Signer {
     Q_PROPERTY(QString key MEMBER m_accountId )
     Q_PROPERTY(QString type MEMBER m_type )
     Q_PROPERTY(int weight MEMBER m_weight)
+    Q_PROPERTY(QString sponsor READ getSponsor MEMBER m_sponsor)
 
     QString m_accountId;
     QString m_type;
     int m_weight;
+    QString m_sponsor;
 
 public:
     Signer();
@@ -133,6 +138,7 @@ public:
 
     bool operator !=(Signer& s);
     bool operator ==(Signer& s);
+    QString getSponsor() const;
 };
 
 /**
@@ -220,6 +226,10 @@ private:
     Q_PROPERTY(QList<AccountResponseAttach::Signer> signers MEMBER m_signers NOTIFY signersChanged)
     Q_PROPERTY(AccountResponseAttach::Data data MEMBER m_data NOTIFY dataChanged)
     Q_PROPERTY(AccountResponseAttach::Links _links MEMBER m_links NOTIFY linksChanged)
+    Q_PROPERTY(qint64 num_sponsoring READ getNumSponsoring MEMBER m_numSponsoring NOTIFY numSponsoringChanged)
+    Q_PROPERTY(qint64 num_sponsored READ getNumSponsored MEMBER m_numSponsored NOTIFY numSponsoredChanged)
+    Q_PROPERTY(QString sponsor READ getSponsor MEMBER m_sponsor NOTIFY sponsorChanged)
+
     QString m_account_id;
     KeyPair * m_keypair;//generated with m_account_id
 
@@ -234,6 +244,10 @@ private:
     QList<AccountResponseAttach::Signer> m_signers;
     AccountResponseAttach::Data m_data;
     AccountResponseAttach::Links m_links;
+
+    qint64 m_numSponsoring;
+    qint64 m_numSponsored;
+    QString m_sponsor;
 
 public:
     Q_INVOKABLE explicit AccountResponse(QNetworkReply* reply=nullptr);
@@ -261,6 +275,10 @@ public:
     QList<AccountResponseAttach::Balance> getBalances() const;
     QList<AccountResponseAttach::Signer> getSigners() const;
 
+    qint64 getNumSponsoring() const;
+    qint64 getNumSponsored() const;
+    QString getSponsor() const;
+
 public slots:
     void setAccountID(QString account_id);
 signals:
@@ -275,7 +293,9 @@ signals:
     void signersChanged();
     void dataChanged();
     void linksChanged();
-
+    void numSponsoringChanged();
+    void numSponsoredChanged();
+    void sponsorChanged();
 };
 
 Q_DECLARE_METATYPE(AccountResponseAttach::Thresholds)

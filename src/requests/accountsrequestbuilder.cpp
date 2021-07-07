@@ -11,19 +11,56 @@ AccountResponse *AccountsRequestBuilder::account(QUrl uri)  {
     return server()->get<AccountResponse>(this);
 }
 
-AccountResponse* AccountsRequestBuilder::account(KeyPair *account) {
-    this->setSegments(QStringList()<< "accounts"<< account->getAccountId());
+AccountResponse* AccountsRequestBuilder::account(QString accountID)
+{
+    this->setSegments(QStringList()<< "accounts"<< accountID);
     return this->account(this->buildUri());
 }
 
-AccountsRequestBuilder &AccountsRequestBuilder::signer(KeyPair *accountID)
+AccountResponse* AccountsRequestBuilder::account(KeyPair *account) {    
+    return this->account(account->getAccountId());
+}
+
+AccountsRequestBuilder &AccountsRequestBuilder::forSigner(QString accountID)
 {
-    addParameter("signer", accountID->getAccountId());
+    if (!parameter("asset").isNull()) {
+        throw std::runtime_error("cannot set both signer and asset");
+    }
+    if (!parameter("sponsor").isNull()) {
+        throw std::runtime_error("cannot set both signer and sponsor");
+    }
+    addParameter("signer",accountID);
     return *this;
 }
 
-AccountsRequestBuilder &AccountsRequestBuilder::asset(Asset *asset)
+AccountsRequestBuilder &AccountsRequestBuilder::forSigner(KeyPair *accountID)
+{    
+    return forSigner(accountID->getAccountId());
+}
+
+AccountsRequestBuilder &AccountsRequestBuilder::forSponsor(QString sponsor) {
+    if (!parameter("signer").isNull()) {
+        throw std::runtime_error("cannot set both signer and sponsor");
+    }
+    if (!parameter("asset").isNull()) {
+        throw std::runtime_error("cannot set both asset and sponsor");
+    }
+    addParameter("sponsor", sponsor);
+    return *this;
+}
+
+AccountsRequestBuilder &AccountsRequestBuilder::forSponsor(KeyPair* sponsor) {
+    return forSponsor(sponsor->getAccountId());
+}
+
+AccountsRequestBuilder &AccountsRequestBuilder::forAsset(Asset *asset)
 {
+    if (!parameter("signer").isNull()) {
+        throw std::runtime_error("cannot set both signer and asset");
+    }
+    if (!parameter("sponsor").isNull()) {
+        throw std::runtime_error("cannot set both sponsor and asset");
+    }
     RequestBuilder::setAssetParameter("asset",asset);
     return *this;
 }

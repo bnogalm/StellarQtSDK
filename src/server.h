@@ -17,6 +17,7 @@
 #include "requests/operationsrequestbuilder.h"
 #include "requests/effectsrequestbuilder.h"
 #include "requests/feestatsrequestbuilder.h"
+#include "requests/claimablebalancesrequestbuilder.h"
 #include <QTimer>
 #include <QHash>
 class Transaction;
@@ -79,6 +80,10 @@ public:
      */
     AssetsRequestBuilder assets();
 
+    /**
+     * Returns {@link ClaimableBalancesRequestBuilder} instance.
+     */
+    ClaimableBalancesRequestBuilder claimableBalances();
 
     /**
          * Returns {@link EffectsRequestBuilder} instance.

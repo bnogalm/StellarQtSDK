@@ -5,7 +5,7 @@ DEFINES += STELLAR_QT_REPLY_TIMEOUT=30000
 DEFINES *= ED25519_NO_SEED
 
 DEFINES += STELLAR_QT_SDK_CLIENT_NAME=\"\\\"qtcpp-stellar-sdk\\\"\"
-DEFINES += STELLAR_QT_SDK_CLIENT_VERSION=\"\\\"0.3.6\\\"\"
+DEFINES += STELLAR_QT_SDK_CLIENT_VERSION=\"\\\"0.3.7\\\"\"
 
 #DEFINES += STELLAR_QT_AUTOSET_BASE_FEE
 
@@ -25,7 +25,12 @@ SOURCES += \
     $$PWD/src/abstracttransaction.cpp \
     $$PWD/src/account.cpp \
     $$PWD/src/accountmergeoperation.cpp \
+    $$PWD/src/beginsponsoringfuturereservesoperation.cpp \
+    $$PWD/src/claimant.cpp \
+    $$PWD/src/claimclaimablebalanceoperation.cpp \
+    $$PWD/src/createclaimablebalanceoperation.cpp \
     $$PWD/src/createpassivesellofferoperation.cpp \
+    $$PWD/src/endsponsoringfuturereservesoperation.cpp \
     $$PWD/src/feebumptransaction.cpp \
     $$PWD/src/managebuyofferoperation.cpp \
     $$PWD/src/managesellofferoperation.cpp \
@@ -41,17 +46,50 @@ SOURCES += \
     $$PWD/src/createaccountoperation.cpp \
     $$PWD/src/pathpaymentstrictreceiveoperation.cpp \
     $$PWD/src/pathpaymentstrictsendoperation.cpp \
+    $$PWD/src/predicate.cpp \
+    $$PWD/src/requests/claimablebalancesrequestbuilder.cpp \
     $$PWD/src/requests/feestatsrequestbuilder.cpp \
     $$PWD/src/requests/strictreceivepathsrequestbuilder.cpp \
     $$PWD/src/requests/strictsendpathsrequestbuilder.cpp \
+    $$PWD/src/responses/claimablebalanceresponse.cpp \
+    $$PWD/src/responses/effects/accountsponsorshipcreatedeffectresponse.cpp \
+    $$PWD/src/responses/effects/accountsponsorshipremovedeffectresponse.cpp \
+    $$PWD/src/responses/effects/accountsponsorshipupdatedeffectresponse.cpp \
+    $$PWD/src/responses/effects/claimablebalanceclaimantcreatedeffectresponse.cpp \
+    $$PWD/src/responses/effects/claimablebalanceclaimedeffectresponse.cpp \
+    $$PWD/src/responses/effects/claimablebalancecreatedeffectresponse.cpp \
+    $$PWD/src/responses/effects/claimablebalancesponsorshipcreatedeffectresponse.cpp \
+    $$PWD/src/responses/effects/claimablebalancesponsorshipremovedeffectresponse.cpp \
+    $$PWD/src/responses/effects/claimablebalancesponsorshipupdatedeffectresponse.cpp \
+    $$PWD/src/responses/effects/datasponsorshipcreatedeffectresponse.cpp \
+    $$PWD/src/responses/effects/datasponsorshipremovedeffectresponse.cpp \
+    $$PWD/src/responses/effects/datasponsorshipupdatedeffectresponse.cpp \
+    $$PWD/src/responses/effects/sequencebumpedeffectresponse.cpp \
+    $$PWD/src/responses/effects/signersponsorshipcreatedeffectresponse.cpp \
+    $$PWD/src/responses/effects/signersponsorshipremovedeffectresponse.cpp \
+    $$PWD/src/responses/effects/signersponsorshipupdatedeffectresponse.cpp \
     $$PWD/src/responses/effects/trustlineauthorizedtomaintainliabilitieseffectresponse.cpp \
+    $$PWD/src/responses/effects/trustlinesponsorshipcreatedeffectresponse.cpp \
+    $$PWD/src/responses/effects/trustlinesponsorshipremovedeffectresponse.cpp \
+    $$PWD/src/responses/effects/trustlinesponsorshipupdatedeffectresponse.cpp \
     $$PWD/src/responses/feestatsresponse.cpp \
+    $$PWD/src/responses/operations/beginsponsoringfuturereservesoperationresponse.cpp \
     $$PWD/src/responses/operations/bumpsequenceoperationresponse.cpp \
+    $$PWD/src/responses/operations/claimclaimablebalanceoperationresponse.cpp \
+    $$PWD/src/responses/operations/createclaimablebalanceoperationresponse.cpp \
+    $$PWD/src/responses/operations/endsponsoringfuturereservesoperationresponse.cpp \
     $$PWD/src/responses/operations/managebuyofferoperationresponse.cpp \
     $$PWD/src/responses/operations/managesellofferoperationresponse.cpp \
     $$PWD/src/responses/operations/pathpaymentbaseoperationresponse.cpp \
     $$PWD/src/responses/operations/pathpaymentstrictreceiveoperationresponse.cpp \
     $$PWD/src/responses/operations/pathpaymentstrictsendoperationresponse.cpp \
+    $$PWD/src/responses/operations/revokesponsorshipoperationresponse.cpp \
+    $$PWD/src/revokeaccountsponsorshipoperation.cpp \
+    $$PWD/src/revokeclaimablebalancesponsorshipoperation.cpp \
+    $$PWD/src/revokedatasponsorshipoperation.cpp \
+    $$PWD/src/revokeoffersponsorshipoperation.cpp \
+    $$PWD/src/revokesignersponsorshipoperation.cpp \
+    $$PWD/src/revoketrustlinesponsorshipoperation.cpp \
     $$PWD/src/sep10challenge.cpp \
     $$PWD/src/strkey.cpp \
     $$PWD/src/inflationoperation.cpp \
@@ -170,23 +208,61 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 HEADERS += \
     $$PWD/src/abstracttransaction.h \
+    $$PWD/src/beginsponsoringfuturereservesoperation.h \
+    $$PWD/src/claimant.h \
+    $$PWD/src/claimclaimablebalanceoperation.h \
+    $$PWD/src/createclaimablebalanceoperation.h \
     $$PWD/src/createpassivesellofferoperation.h \
+    $$PWD/src/endsponsoringfuturereservesoperation.h \
     $$PWD/src/feebumptransaction.h \
     $$PWD/src/managebuyofferoperation.h \
     $$PWD/src/managesellofferoperation.h \
     $$PWD/src/pathpaymentstrictreceiveoperation.h \
     $$PWD/src/pathpaymentstrictsendoperation.h \
+    $$PWD/src/predicate.h \
+    $$PWD/src/requests/claimablebalancesrequestbuilder.h \
     $$PWD/src/requests/feestatsrequestbuilder.h \
     $$PWD/src/requests/strictreceivepathsrequestbuilder.h \
     $$PWD/src/requests/strictsendpathsrequestbuilder.h \
+    $$PWD/src/responses/claimablebalanceresponse.h \
+    $$PWD/src/responses/effects/accountsponsorshipcreatedeffectresponse.h \
+    $$PWD/src/responses/effects/accountsponsorshipremovedeffectresponse.h \
+    $$PWD/src/responses/effects/accountsponsorshipupdatedeffectresponse.h \
+    $$PWD/src/responses/effects/claimablebalanceclaimantcreatedeffectresponse.h \
+    $$PWD/src/responses/effects/claimablebalanceclaimedeffectresponse.h \
+    $$PWD/src/responses/effects/claimablebalancecreatedeffectresponse.h \
+    $$PWD/src/responses/effects/claimablebalancesponsorshipcreatedeffectresponse.h \
+    $$PWD/src/responses/effects/claimablebalancesponsorshipremovedeffectresponse.h \
+    $$PWD/src/responses/effects/claimablebalancesponsorshipupdatedeffectresponse.h \
+    $$PWD/src/responses/effects/datasponsorshipcreatedeffectresponse.h \
+    $$PWD/src/responses/effects/datasponsorshipremovedeffectresponse.h \
+    $$PWD/src/responses/effects/datasponsorshipupdatedeffectresponse.h \
+    $$PWD/src/responses/effects/sequencebumpedeffectresponse.h \
+    $$PWD/src/responses/effects/signersponsorshipcreatedeffectresponse.h \
+    $$PWD/src/responses/effects/signersponsorshipremovedeffectresponse.h \
+    $$PWD/src/responses/effects/signersponsorshipupdatedeffectresponse.h \
     $$PWD/src/responses/effects/trustlineauthorizedtomaintainliabilitieseffectresponse.h \
+    $$PWD/src/responses/effects/trustlinesponsorshipcreatedeffectresponse.h \
+    $$PWD/src/responses/effects/trustlinesponsorshipremovedeffectresponse.h \
+    $$PWD/src/responses/effects/trustlinesponsorshipupdatedeffectresponse.h \
     $$PWD/src/responses/feestatsresponse.h \
+    $$PWD/src/responses/operations/beginsponsoringfuturereservesoperationresponse.h \
     $$PWD/src/responses/operations/bumpsequenceoperationresponse.h \
+    $$PWD/src/responses/operations/claimclaimablebalanceoperationresponse.h \
+    $$PWD/src/responses/operations/createclaimablebalanceoperationresponse.h \
+    $$PWD/src/responses/operations/endsponsoringfuturereservesoperationresponse.h \
     $$PWD/src/responses/operations/managebuyofferoperationresponse.h \
     $$PWD/src/responses/operations/managesellofferoperationresponse.h \
     $$PWD/src/responses/operations/pathpaymentbaseoperationresponse.h \
     $$PWD/src/responses/operations/pathpaymentstrictreceiveoperationresponse.h \
     $$PWD/src/responses/operations/pathpaymentstrictsendoperationresponse.h \
+    $$PWD/src/responses/operations/revokesponsorshipoperationresponse.h \
+    $$PWD/src/revokeaccountsponsorshipoperation.h \
+    $$PWD/src/revokeclaimablebalancesponsorshipoperation.h \
+    $$PWD/src/revokedatasponsorshipoperation.h \
+    $$PWD/src/revokeoffersponsorshipoperation.h \
+    $$PWD/src/revokesignersponsorshipoperation.h \
+    $$PWD/src/revoketrustlinesponsorshipoperation.h \
     $$PWD/src/sep10challenge.h \
     $$PWD/xdr/stellartypes.h \
     $$PWD/src/account.h \

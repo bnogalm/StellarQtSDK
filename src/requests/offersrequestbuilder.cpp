@@ -14,6 +14,15 @@ OffersRequestBuilder &OffersRequestBuilder::forAccount(KeyPair *account) {
     return *this;
 }
 
+OffersRequestBuilder &OffersRequestBuilder::forSponsor(QString sponsor) {
+    RequestBuilder::addParameter("sponsor",sponsor);
+    return *this;
+}
+
+OffersRequestBuilder &OffersRequestBuilder::forSponsor(KeyPair *sponsor) {
+    return forSponsor(sponsor->getAccountId());
+}
+
 Page<OfferResponse>* OffersRequestBuilder::execute(QUrl uri){
     this->setRequestUri(uri);
     return server()->get<Page<OfferResponse> >(this);

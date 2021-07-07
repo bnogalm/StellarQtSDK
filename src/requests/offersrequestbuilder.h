@@ -20,6 +20,18 @@ public:
      OffersRequestBuilder& forAccount(KeyPair* account);
 
      /**
+      * Returns all offers sponsored by a given account.
+      *
+      * @param sponsor Account ID of the sponsor.
+      * @return current {@link OffersRequestBuilder} instance
+      * @see <a href="https://www.stellar.org/developers/horizon/reference/endpoints/offers.html">Offers</a>
+      */
+private:
+     OffersRequestBuilder& forSponsor(QString sponsor);
+public:
+     OffersRequestBuilder& forSponsor(KeyPair* sponsor);
+
+     /**
       * Requests specific <code>uri</code> and returns {@link Page} of {@link OfferResponse}.
       * This method is helpful for getting the next set of results.
       * @return {@link Page} of {@link OfferResponse}

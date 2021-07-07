@@ -21,7 +21,7 @@ public:
       * @throws IOException
       */
      AccountResponse *account(QUrl uri);
-     AccountResponse *account(QString) = delete;//to protect someone passing an account without using KeyPair class.
+     //AccountResponse *account(QString) = delete;//to protect someone passing an account without using KeyPair class.
 
      /**
       * Requests <code>GET /accounts/{account}</code>
@@ -29,6 +29,9 @@ public:
       * @param account Account to fetch
       * @throws IOException
       */
+private:
+     AccountResponse *account(QString accountID);
+public:
      AccountResponse *account(KeyPair* account);
 
      /**
@@ -37,7 +40,10 @@ public:
       * @param token Account ID
       * @return AccountsRequestBuilder
       */
-     AccountsRequestBuilder& signer(KeyPair* accountID);
+private:
+     AccountsRequestBuilder& forSigner(QString accountID);
+public:
+     AccountsRequestBuilder& forSigner(KeyPair* accountID);
 
 
      /**
@@ -46,7 +52,21 @@ public:
       * @param asset issued asset to filter with
       * @return AccountsRequestBuilder
       */
-     AccountsRequestBuilder& asset(Asset* asset);
+
+     /**
+      * Returns all accounts who are sponsored by a given account or have subentries which are sponsored by a given account.
+      *
+      * @param sponsor Account ID
+      * @return current {@link AccountsRequestBuilder} instance
+      * @see <a href="https://www.stellar.org/developers/horizon/reference/endpoints/accounts.html">Accounts</a>
+      */
+private:
+     AccountsRequestBuilder& forSponsor(QString sponsor);
+public:
+     AccountsRequestBuilder& forSponsor(KeyPair *sponsor);
+
+
+     AccountsRequestBuilder& forAsset(Asset* asset);
 
 
      AccountsRequestBuilder& cursor(QString token);
@@ -78,7 +98,8 @@ public:
         * @throws TooManyRequestsException when too many requests were sent to the Horizon server.
         * @throws IOException
         */
-       Page<AccountResponse>* execute();
+      Page<AccountResponse>* execute();
+
 };
 
 #endif // ACCOUNTSREQUESTBUILDER_H

@@ -33,6 +33,7 @@
 #include "../../src/responses/effects/dataremovedeffectresponse.h"
 #include "../../src/responses/effects/dataupdatedeffectresponse.h"
 #include "../../src/responses/effects/tradeeffectresponse.h"
+#include "../../src/responses/effects/sequencebumpedeffectresponse.h"
 #include "../../src/asset.h"
 #include "../../src/assettypenative.h"
 
@@ -822,6 +823,35 @@ private slots:
         QCOMPARE(effect.getLinks().getPrecedes().getHref(), "http://horizon-testnet.stellar.org/effects?order=asc&cursor=33788507721730-2");
       }
 
+
+      void testDeserializeSequenceBumpedEffect() {
+        QByteArray json = "{\n"
+                "        \"_links\": {\n"
+                "          \"operation\": {\n"
+                "            \"href\": \"https://horizon-testnet.stellar.org/operations/40181480638386177\"\n"
+                "          },\n"
+                "          \"succeeds\": {\n"
+                "            \"href\": \"https://horizon-testnet.stellar.org/effects?order=desc&cursor=40181480638386177-1\"\n"
+                "          },\n"
+                "          \"precedes\": {\n"
+                "            \"href\": \"https://horizon-testnet.stellar.org/effects?order=asc&cursor=40181480638386177-1\"\n"
+                "          }\n"
+                "        },\n"
+                "        \"id\": \"0040181480638386177-0000000001\",\n"
+                "        \"paging_token\": \"40181480638386177-1\",\n"
+                "        \"account\": \"GDPFGP4IPE5DXG6XRXC4ZBUI43PAGRQ5VVNJ3LJTBXDBZ4ITO6HBHNSF\",\n"
+                "        \"type\": \"sequence_bumped\",\n"
+                "        \"type_i\": 43,\n"
+                "        \"new_seq\": \"79473726952833048\",\n"
+                "        \"created_at\": \"2018-06-06T10:23:57Z\"\n"
+                "      }";
+
+        SequenceBumpedEffectResponse effect;
+        effect.loadFromJson(json);
+        QCOMPARE(effect.getAccount().getAccountId(), "GDPFGP4IPE5DXG6XRXC4ZBUI43PAGRQ5VVNJ3LJTBXDBZ4ITO6HBHNSF");
+        QCOMPARE(effect.getCreatedAt(), "2018-06-06T10:23:57Z");
+        QCOMPARE(effect.getNewSequence(), 79473726952833048L);
+      }
 };
 
 ADD_TEST(EffectDeserializerTest)

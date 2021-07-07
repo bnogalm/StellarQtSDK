@@ -12,7 +12,6 @@ inline QList<T> convert(QVariantList source)
     for(int n = 0;n<source.count();n++){
         T r;
         QVariantMap m = source[n].toMap();
-        //for(int i=0;i<T::staticMetaObject.propertyCount();i++)
         for(auto key : m.keys())
         {
             int index = T::staticMetaObject.indexOfProperty(key.toLatin1().data());

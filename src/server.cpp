@@ -110,6 +110,10 @@ AssetsRequestBuilder Server::assets() {
     return AssetsRequestBuilder(this);
 }
 
+ClaimableBalancesRequestBuilder Server::claimableBalances() {
+    return ClaimableBalancesRequestBuilder(this);
+}
+
 EffectsRequestBuilder Server::effects() {
     return EffectsRequestBuilder(this);
 }

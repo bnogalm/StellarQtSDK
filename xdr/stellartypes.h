@@ -10,8 +10,7 @@ namespace stellar
     typedef quint8 Hash[32];
     XDR_SERIALIZER(Hash)
 
-    typedef quint8 uint256[32];
-
+    typedef quint8 uint256[32];    
 
     enum class CryptoKeyType  : qint32
     {
@@ -90,6 +89,22 @@ namespace stellar
         uint256 preAuthTx;
         uint256 hashX;
         };
+
+        bool operator==(const SignerKey &other) const
+        {
+            if(other.type==type)
+            {
+                switch(type){
+                case SignerKeyType::SIGNER_KEY_TYPE_ED25519:
+                    return memcmp(ed25519,other.ed25519,sizeof(ed25519))==0;
+                case SignerKeyType::SIGNER_KEY_TYPE_PRE_AUTH_TX:
+                    return memcmp(preAuthTx,other.preAuthTx,sizeof(preAuthTx))==0;
+                case SignerKeyType::SIGNER_KEY_TYPE_HASH_X:
+                    return memcmp(hashX,other.hashX,sizeof(hashX))==0;
+                }
+            }
+            return false;
+        }
     };
     inline QDataStream &operator<<(QDataStream &out, const  SignerKey &obj) {
         out << obj.type;
