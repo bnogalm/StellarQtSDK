@@ -49,6 +49,7 @@ stellar::Operation::Operation(const stellar::Operation &op){
 //    case OperationType::END_SPONSORING_FUTURE_RESERVES:
 //        break;
     case OperationType::REVOKE_SPONSORSHIP:
+        new (&operationRevokeSponsorship) RevokeSponsorshipOp();
         operationRevokeSponsorship = op.operationRevokeSponsorship; break;
     default: break;
     }
@@ -69,6 +70,9 @@ stellar::Operation::~Operation(){
     case OperationType::PATH_PAYMENT_STRICT_SEND:
         operationPathPaymentStrictSend.~PathPaymentStrictSendOp();
         break;
+    case OperationType::REVOKE_SPONSORSHIP:
+        operationRevokeSponsorship.~RevokeSponsorshipOp();
+        break;
     default:
         break;
     }
@@ -88,6 +92,9 @@ const stellar::Operation &stellar::Operation::operator =(const stellar::Operatio
         break;
     case OperationType::PATH_PAYMENT_STRICT_SEND:
         operationPathPaymentStrictSend.~PathPaymentStrictSendOp();
+        break;
+    case OperationType::REVOKE_SPONSORSHIP:
+        operationRevokeSponsorship.~RevokeSponsorshipOp();
         break;
     default:
         break;
@@ -136,6 +143,7 @@ const stellar::Operation &stellar::Operation::operator =(const stellar::Operatio
 //    case OperationType::END_SPONSORING_FUTURE_RESERVES:
 //        break;
     case OperationType::REVOKE_SPONSORSHIP:
+        new (&operationRevokeSponsorship) RevokeSponsorshipOp();
         operationRevokeSponsorship = op.operationRevokeSponsorship; break;
     default: break;
     }

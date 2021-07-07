@@ -42,6 +42,11 @@ Asset *Asset::create(QString type, QString code, QString issuer) {
     }
 }
 
+Asset *Asset::create(QString code, QString issuer)
+{
+    return Asset::createNonNativeAsset(code, KeyPair::fromAccountId(issuer));
+}
+
 Asset *Asset::create(QString canonicalForm)
 {
     if (canonicalForm == "native")

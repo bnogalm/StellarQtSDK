@@ -11,7 +11,7 @@ class CreateClaimableBalanceOperation : public Operation
     Asset* m_asset;
 public:
     CreateClaimableBalanceOperation(QString amount, Asset* asset, QList<Claimant> claimants);
-    CreateClaimableBalanceOperation(stellar::CreateClaimableBalanceOp op);
+    CreateClaimableBalanceOperation(stellar::CreateClaimableBalanceOp& op);
     virtual ~CreateClaimableBalanceOperation();
     Asset* getAsset();
     QString getAmount();

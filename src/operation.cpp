@@ -15,6 +15,19 @@
 #include "bumpsequenceoperation.h"
 #include "managebuyofferoperation.h"
 
+#include "createclaimablebalanceoperation.h"
+#include "claimclaimablebalanceoperation.h"
+#include "beginsponsoringfuturereservesoperation.h"
+#include "endsponsoringfuturereservesoperation.h"
+
+#include "revokeaccountsponsorshipoperation.h"
+#include "revokeclaimablebalancesponsorshipoperation.h"
+#include "revokedatasponsorshipoperation.h"
+#include "revokeoffersponsorshipoperation.h"
+#include "revokesignersponsorshipoperation.h"
+#include "revoketrustlinesponsorshipoperation.h"
+
+
 Operation::Operation()
 {
 }
@@ -115,6 +128,46 @@ Operation *Operation::fromXdr(stellar::Operation &xdr) {
         break;
     case stellar::OperationType::PATH_PAYMENT_STRICT_SEND:
         operation = PathPaymentStrictSendOperation::build(xdr.operationPathPaymentStrictSend);
+        break;
+    case stellar::OperationType::CREATE_CLAIMABLE_BALANCE:
+      operation = CreateClaimableBalanceOperation::build(xdr.operationCreateClaimableBalance);
+      break;
+    case stellar::OperationType::CLAIM_CLAIMABLE_BALANCE:
+      operation = ClaimClaimableBalanceOperation::build(xdr.operationClaimClaimableBalance);
+      break;
+    case stellar::OperationType::BEGIN_SPONSORING_FUTURE_RESERVES:
+      operation = BeginSponsoringFutureReservesOperation::build(xdr.operationBeginSponsoringFutureReserves);
+      break;
+    case stellar::OperationType::END_SPONSORING_FUTURE_RESERVES:
+      operation = EndSponsoringFutureReservesOperation::build();
+      break;
+    case stellar::OperationType::REVOKE_SPONSORSHIP:
+      switch (xdr.operationRevokeSponsorship.type) {
+        case stellar::RevokeSponsorshipType::REVOKE_SPONSORSHIP_SIGNER:
+          operation = RevokeSignerSponsorshipOperation::build(xdr.operationRevokeSponsorship);
+          break;
+        case stellar::RevokeSponsorshipType::REVOKE_SPONSORSHIP_LEDGER_ENTRY:
+          switch (xdr.operationRevokeSponsorship.ledgerKey.type) {
+            case stellar::LedgerEntryType::DATA:
+              operation = RevokeDataSponsorshipOperation::build(xdr.operationRevokeSponsorship);
+              break;
+            case stellar::LedgerEntryType::OFFER:
+              operation = RevokeOfferSponsorshipOperation::build(xdr.operationRevokeSponsorship);
+              break;
+            case stellar::LedgerEntryType::ACCOUNT:
+              operation = RevokeAccountSponsorshipOperation::build(xdr.operationRevokeSponsorship);
+              break;
+            case stellar::LedgerEntryType::TRUSTLINE:
+              operation = RevokeTrustlineSponsorshipOperation::build(xdr.operationRevokeSponsorship);
+              break;
+            case stellar::LedgerEntryType::CLAIMABLE_BALANCE:
+              operation = RevokeClaimableBalanceSponsorshipOperation::build(xdr.operationRevokeSponsorship);
+              break;
+            default:
+              throw std::runtime_error("Unknown revoke sponsorship ledger entry type");
+          }
+          break;
+      }
         break;
     default:
         throw std::runtime_error("Unknown operation body");

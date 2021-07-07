@@ -34,6 +34,16 @@
 #include "src/pathpaymentstrictsendoperation.h"
 
 
+#include "src/revokeaccountsponsorshipoperation.h"
+#include "src/revokedatasponsorshipoperation.h"
+#include "src/revokeclaimablebalancesponsorshipoperation.h"
+#include "src/revokeoffersponsorshipoperation.h"
+#include "src/revokesignersponsorshipoperation.h"
+#include "src/revoketrustlinesponsorshipoperation.h"
+
+#include "src/beginsponsoringfuturereservesoperation.h"
+#include "src/endsponsoringfuturereservesoperation.h"
+
 
 class OperationTest: public QObject
 {
@@ -736,6 +746,113 @@ private slots:
    }
 
 
+     void testRevokeAccountSponsorshipOperation() {
+         QString source = "GA2N7NI5WEMJILMK4UPDTF2ZX2BIRQUM3HZUE27TRUNRFN5M5EXU6RQV";
+         QString accountId = "GAGQ7DNQUVQR6OWYOI563L5EMJE6KCAHPQSFCZFLY5PDRYMRCA5UWCMP";
+         RevokeAccountSponsorshipOperation* operation = RevokeAccountSponsorshipOperation::create(accountId)->setSourceAccount(source);
+         QCOMPARE(operation->toXdrBase64(),"AAAAAQAAAAA037UdsRiULYrlHjmXWb6CiMKM2fNCa/ONGxK3rOkvTwAAABIAAAAAAAAAAAAAAAAND42wpWEfOthyO+2vpGJJ5QgHfCRRZKvHXjjhkRA7Sw==");
+
+         stellar::Operation xdr = operation->toXdr();
+         RevokeAccountSponsorshipOperation* parsedOperation = (RevokeAccountSponsorshipOperation*) Operation::fromXdr(xdr);
+         QCOMPARE(accountId, parsedOperation->getAccountId());
+         QCOMPARE(source, parsedOperation->getSourceAccount());
+     }
+
+
+     void testRevokeDataSponsorshipOperation() {
+         QString source = "GA2N7NI5WEMJILMK4UPDTF2ZX2BIRQUM3HZUE27TRUNRFN5M5EXU6RQV";
+         QString accountId = "GAGQ7DNQUVQR6OWYOI563L5EMJE6KCAHPQSFCZFLY5PDRYMRCA5UWCMP";
+         QString dataName = "data_name";
+         RevokeDataSponsorshipOperation* operation = RevokeDataSponsorshipOperation::create(accountId, dataName)->setSourceAccount(source);
+         QCOMPARE(operation->toXdrBase64(), "AAAAAQAAAAA037UdsRiULYrlHjmXWb6CiMKM2fNCa/ONGxK3rOkvTwAAABIAAAAAAAAAAwAAAAAND42wpWEfOthyO+2vpGJJ5QgHfCRRZKvHXjjhkRA7SwAAAAlkYXRhX25hbWUAAAA=");
+
+         stellar::Operation xdr = operation->toXdr();
+         RevokeDataSponsorshipOperation* parsedOperation = (RevokeDataSponsorshipOperation*) Operation::fromXdr(xdr);
+         QCOMPARE(accountId, parsedOperation->getAccountId());
+         QCOMPARE(source, parsedOperation->getSourceAccount());         
+         QCOMPARE(dataName, parsedOperation->getDataName());
+     }
+
+     void testRevokeClaimableBalanceSponsorshipOperation() {
+         QString source = "GA2N7NI5WEMJILMK4UPDTF2ZX2BIRQUM3HZUE27TRUNRFN5M5EXU6RQV";
+         QString balanceId = "00000000550e14acbdafcd3089289363b3b0c8bec9b4edd87298c690655b4b2456d68ba0";
+         RevokeClaimableBalanceSponsorshipOperation* operation = RevokeClaimableBalanceSponsorshipOperation::create(balanceId)->setSourceAccount(source);
+         QCOMPARE(operation->toXdrBase64(), "AAAAAQAAAAA037UdsRiULYrlHjmXWb6CiMKM2fNCa/ONGxK3rOkvTwAAABIAAAAAAAAABAAAAABVDhSsva/NMIkok2OzsMi+ybTt2HKYxpBlW0skVtaLoA==");
+
+         stellar::Operation xdr = operation->toXdr();
+         RevokeClaimableBalanceSponsorshipOperation* parsedOperation = (RevokeClaimableBalanceSponsorshipOperation*) Operation::fromXdr(xdr);
+         QCOMPARE(balanceId, parsedOperation->getBalanceId());
+         QCOMPARE(source, parsedOperation->getSourceAccount());
+     }
+
+     void testRevokeOfferSponsorshipOperation() {
+         QString source = "GA2N7NI5WEMJILMK4UPDTF2ZX2BIRQUM3HZUE27TRUNRFN5M5EXU6RQV";
+         QString seller = "GAGQ7DNQUVQR6OWYOI563L5EMJE6KCAHPQSFCZFLY5PDRYMRCA5UWCMP";
+         qint64 offerId = 123456L;
+         RevokeOfferSponsorshipOperation* operation = RevokeOfferSponsorshipOperation::create(seller, offerId)->setSourceAccount(source);
+         QCOMPARE(operation->toXdrBase64(), "AAAAAQAAAAA037UdsRiULYrlHjmXWb6CiMKM2fNCa/ONGxK3rOkvTwAAABIAAAAAAAAAAgAAAAAND42wpWEfOthyO+2vpGJJ5QgHfCRRZKvHXjjhkRA7SwAAAAAAAeJA");
+
+         stellar::Operation xdr = operation->toXdr();
+         RevokeOfferSponsorshipOperation* parsedOperation = (RevokeOfferSponsorshipOperation*) Operation::fromXdr(xdr);
+         QCOMPARE(offerId, parsedOperation->getOfferId());
+         QCOMPARE(seller, parsedOperation->getSeller());
+         QCOMPARE(source, parsedOperation->getSourceAccount());
+     }
+
+     void testRevokeSignerSponsorshipOperation() {
+         QString source = "GA2N7NI5WEMJILMK4UPDTF2ZX2BIRQUM3HZUE27TRUNRFN5M5EXU6RQV";
+         QString accountId = "GAGQ7DNQUVQR6OWYOI563L5EMJE6KCAHPQSFCZFLY5PDRYMRCA5UWCMP";
+         stellar::SignerKey signerKey = KeyPair::fromAccountId("GBOSQJIV4VJMWMPVPB7EFVIRJT7A7SAAAB4FA23ZDJRUMXMYHBYWY57L")->getXdrSignerKey();
+         RevokeSignerSponsorshipOperation* operation = RevokeSignerSponsorshipOperation::create(accountId, signerKey)->setSourceAccount(source);
+         QCOMPARE(operation->toXdrBase64(), "AAAAAQAAAAA037UdsRiULYrlHjmXWb6CiMKM2fNCa/ONGxK3rOkvTwAAABIAAAABAAAAAA0PjbClYR862HI77a+kYknlCAd8JFFkq8deOOGREDtLAAAAAF0oJRXlUssx9Xh+QtURTP4PyAAAeFBreRpjRl2YOHFs");
+
+         stellar::Operation xdr = operation->toXdr();
+         RevokeSignerSponsorshipOperation* parsedOperation = (RevokeSignerSponsorshipOperation*) Operation::fromXdr(xdr);
+         QCOMPARE(accountId, parsedOperation->getAccountId());
+         QCOMPARE(source, parsedOperation->getSourceAccount());
+         QCOMPARE(signerKey, parsedOperation->getSigner());
+     }
+
+
+     void testRevokeTrustlineSponsorshipOperation() {
+         QString source = "GA2N7NI5WEMJILMK4UPDTF2ZX2BIRQUM3HZUE27TRUNRFN5M5EXU6RQV";
+         QString accountId = "GAGQ7DNQUVQR6OWYOI563L5EMJE6KCAHPQSFCZFLY5PDRYMRCA5UWCMP";
+         Asset* asset = Asset::create("DEMO", "GCWPICV6IV35FQ2MVZSEDLORHEMMIAODRQPVDEIKZOW2GC2JGGDCXVVV");
+         RevokeTrustlineSponsorshipOperation* operation = RevokeTrustlineSponsorshipOperation::create(accountId, asset)->setSourceAccount(source);
+         QCOMPARE(operation->toXdrBase64() , "AAAAAQAAAAA037UdsRiULYrlHjmXWb6CiMKM2fNCa/ONGxK3rOkvTwAAABIAAAAAAAAAAQAAAAAND42wpWEfOthyO+2vpGJJ5QgHfCRRZKvHXjjhkRA7SwAAAAFERU1PAAAAAKz0Cr5Fd9LDTK5kQa3RORjEAcOMH1GRCsutowtJMYYr");
+
+         stellar::Operation xdr = operation->toXdr();
+         RevokeTrustlineSponsorshipOperation* parsedOperation = (RevokeTrustlineSponsorshipOperation*) Operation::fromXdr(xdr);
+         QCOMPARE(accountId, parsedOperation->getAccountId());
+         QCOMPARE(source, parsedOperation->getSourceAccount());
+         QVERIFY(asset->equals(parsedOperation->getAsset()));
+     }
+
+     void testBeginSponsoringFutureReserves() {
+         QString source = "GA2N7NI5WEMJILMK4UPDTF2ZX2BIRQUM3HZUE27TRUNRFN5M5EXU6RQV";
+         QString accountId = "GAGQ7DNQUVQR6OWYOI563L5EMJE6KCAHPQSFCZFLY5PDRYMRCA5UWCMP";
+
+         BeginSponsoringFutureReservesOperation* operation = BeginSponsoringFutureReservesOperation::create(accountId)->setSourceAccount(source);
+         QCOMPARE(operation->toXdrBase64() , "AAAAAQAAAAA037UdsRiULYrlHjmXWb6CiMKM2fNCa/ONGxK3rOkvTwAAABAAAAAADQ+NsKVhHzrYcjvtr6RiSeUIB3wkUWSrx1444ZEQO0s=");
+
+         stellar::Operation xdr = operation->toXdr();
+         BeginSponsoringFutureReservesOperation* parsedOperation = (BeginSponsoringFutureReservesOperation*) Operation::fromXdr(xdr);
+         QCOMPARE(accountId, parsedOperation->getSponsoredID());
+         QCOMPARE(source, parsedOperation->getSourceAccount());
+
+     }
+     void testEndSponsoringFutureReserves() {
+         QString source = "GA2N7NI5WEMJILMK4UPDTF2ZX2BIRQUM3HZUE27TRUNRFN5M5EXU6RQV";
+
+         EndSponsoringFutureReservesOperation* operation = EndSponsoringFutureReservesOperation::create()->setSourceAccount(source);
+         QCOMPARE(operation->toXdrBase64() , "AAAAAQAAAAA037UdsRiULYrlHjmXWb6CiMKM2fNCa/ONGxK3rOkvTwAAABE=");
+
+         stellar::Operation xdr = operation->toXdr();
+         EndSponsoringFutureReservesOperation* parsedOperation = (EndSponsoringFutureReservesOperation*) Operation::fromXdr(xdr);
+         QCOMPARE(source, parsedOperation->getSourceAccount());
+
+
+     }
 };
 
 ADD_TEST(OperationTest)

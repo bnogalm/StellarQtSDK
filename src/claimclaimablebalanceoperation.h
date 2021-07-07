@@ -7,7 +7,7 @@ class ClaimClaimableBalanceOperation : public Operation
 {
     stellar::ClaimClaimableBalanceOp m_op;
 public:
-    ClaimClaimableBalanceOperation(stellar::ClaimClaimableBalanceOp op);
+    ClaimClaimableBalanceOperation(stellar::ClaimClaimableBalanceOp &op);
     ClaimClaimableBalanceOperation(QString balanceID);
 
     void fillOperationBody(stellar::Operation &operation);

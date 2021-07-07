@@ -13,8 +13,26 @@ namespace stellar
         quint8 thresholds[4];
     };
     XDR_SERIALIZER(Thresholds)
-    typedef Array<char,32> string32; //<32> //max
-    typedef Array<char,64> string64; //<64>
+
+    template <int S>
+    struct string: public Array<char,S>{
+        inline void operator=(QString text)
+        {
+            QByteArray utf8 = text.toUtf8();
+            if(utf8.size()>Array<char,S>::maxSize()){
+                throw std::runtime_error("String length exceed max size");
+            }
+            Array<char,S>::set(utf8.data(),utf8.size());
+        }
+        QString toString() const
+        {
+            return QString::fromUtf8(this->binary());
+        }
+    };
+
+    typedef string<32> string32;//<32> //max
+    typedef string<64> string64; //<64>
+
     typedef qint64 SequenceNumber;
     typedef quint64 TimePoint;
 
@@ -780,89 +798,145 @@ namespace stellar
     struct LedgerKey
     {
         LedgerEntryType type;
+        struct Account//case ACCOUNT:
+        {
+            AccountID accountID;
+        };
+        struct TrustLine//case ACCOUNT:
+        {
+            AccountID accountID;
+            Asset asset;
+        };
+        struct Offer //case OFFER:
+        {
+            AccountID sellerID;
+            qint64 offerID;
+        };
+        struct Data//case DATA:
+        {
+            AccountID accountID;
+            string64 dataName;
+        };
+        struct ClaimableBalance//case CLAIMABLE_BALANCE:
+        {
+            ClaimableBalanceID balanceID;
+        };
         union
         {
-            struct //case ACCOUNT:
-            {
-                AccountID accountID;
-            } account;
-            struct //case TRUSTLINE:
-            {
-                AccountID accountID;
-                Asset asset;
-            } trustLine;
-            struct //case OFFER:
-            {
-                AccountID sellerID;
-                qint64 offerID;
-            } offer;
-            struct //case DATA:
-            {
-                AccountID accountID;
-                string64 dataName;
-            } data;
-
-            struct //case CLAIMABLE_BALANCE:
-            {
-                ClaimableBalanceID balanceID;
-            } claimableBalance;
+            Account account;
+            TrustLine trustLine;
+            Offer offer;
+            Data data;
+            ClaimableBalance claimableBalance;
         };
         LedgerKey():type(LedgerEntryType::ACCOUNT)
         {
+            new (&account) Account();
+        }
+    private:
+        void clear()
+        {
+            switch(type){
+            case LedgerEntryType::ACCOUNT:
+                (account).~Account(); break;
+            case LedgerEntryType::TRUSTLINE:
+                (trustLine).~TrustLine(); break;
+            case LedgerEntryType::OFFER:
+                (offer).~Offer(); break;
+            case LedgerEntryType::DATA:
+                (data).~Data(); break;
+           case LedgerEntryType::CLAIMABLE_BALANCE:
+                (claimableBalance).~ClaimableBalance(); break;
+            default: break;
+            }
+        }
+    public:
+        Account& fillAccount()
+        {
+            clear();
+            new (&account) Account();
+            type=LedgerEntryType::ACCOUNT;
+            return account;
+        }
+        ClaimableBalance& fillClaimableBalance()
+        {
+            clear();
+            new (&claimableBalance) ClaimableBalance();
+            type=LedgerEntryType::CLAIMABLE_BALANCE;
+            return claimableBalance;
+        }
+        Data& fillData()
+        {
+            clear();
+            new (&data) Data();
+            type=LedgerEntryType::DATA;
+            return data;
+        }
+        Offer& fillOffer()
+        {
+            clear();
+            new (&offer) Offer();
+            type=LedgerEntryType::OFFER;
+            return offer;
+        }
+        TrustLine& fillTrustLine()
+        {
+            clear();
+            new (&trustLine) TrustLine();
+            type=LedgerEntryType::TRUSTLINE;
+            return trustLine;
+        }
 
+        ~LedgerKey()
+        {
+            clear();
         }
         LedgerKey(const LedgerKey &obj)
         {
-            type = obj.type;
             switch(obj.type){
             case LedgerEntryType::ACCOUNT:
+                new (&account) Account();
                 account.accountID= obj.account.accountID; break;
             case LedgerEntryType::TRUSTLINE:
+                new (&trustLine) TrustLine();
                 trustLine.accountID= obj.trustLine.accountID;
                 trustLine.asset= obj.trustLine.asset; break;
             case LedgerEntryType::OFFER:
+                new (&offer) Offer();
                 offer.sellerID= obj.offer.sellerID;
                 offer.offerID=obj.offer.offerID; break;
             case LedgerEntryType::DATA:
+                new (&data) Data();
                 data.accountID= obj.data.accountID;
                 data.dataName=obj.data.dataName; break;
            case LedgerEntryType::CLAIMABLE_BALANCE:
+                new (&claimableBalance) ClaimableBalance();
                 claimableBalance.balanceID= obj.claimableBalance.balanceID; break;
             //default: break;
             }
         }
-        ~LedgerKey()
-        {
-            switch(type){
-            case LedgerEntryType::DATA:
-                data.dataName.~string64();
-                break;
-            default: break;
-            }
-        }
         const LedgerKey& operator=(const LedgerKey &obj)
         {
-            switch(type){
-            case LedgerEntryType::DATA:
-                data.dataName.~string64();
-                break;
-            default: break;
-            }
+            clear();
             type = obj.type;
             switch(type){
             case LedgerEntryType::ACCOUNT:
+                new (&account) Account();
                 account.accountID= obj.account.accountID; break;
             case LedgerEntryType::TRUSTLINE:
+                new (&trustLine) TrustLine();
                 trustLine.accountID= obj.trustLine.accountID;
                 trustLine.asset= obj.trustLine.asset; break;
             case LedgerEntryType::OFFER:
+                new (&offer) Offer();
                 offer.sellerID= obj.offer.sellerID;
                 offer.offerID= obj.offer.offerID; break;
             case LedgerEntryType::DATA:
-                data.accountID= obj.data.accountID;
-                new (&(data.dataName)) string64();
+                new (&data) Data();
+                data.accountID= obj.data.accountID;                
                 data.dataName= obj.data.dataName; break;
             case LedgerEntryType::CLAIMABLE_BALANCE:
+                new (&claimableBalance) ClaimableBalance();
                 claimableBalance.balanceID= obj.claimableBalance.balanceID; break;
             }
             return *this;
@@ -892,15 +966,19 @@ namespace stellar
         in >> obj.type;
         switch(obj.type){
         case LedgerEntryType::ACCOUNT:
+            new (&obj.account) LedgerKey::Account();
             in >> obj.account.accountID; break;
         case LedgerEntryType::TRUSTLINE:
+            new (&obj.trustLine) LedgerKey::TrustLine();
             in >> obj.trustLine.accountID >> obj.trustLine.asset; break;
         case LedgerEntryType::OFFER:
+            new (&obj.offer) LedgerKey::Offer();
             in >> obj.offer.sellerID >> obj.offer.offerID; break;
         case LedgerEntryType::DATA:
-            new (&(obj.data.dataName)) string64();
+            new (&obj.data) LedgerKey::Data();
             in >> obj.data.accountID  >> obj.data.dataName; break;
        case LedgerEntryType::CLAIMABLE_BALANCE:
+            new (&obj.claimableBalance) LedgerKey::ClaimableBalance();
             in >> obj.claimableBalance.balanceID; break;
         //default: break;
         }

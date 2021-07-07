@@ -5,7 +5,7 @@ DEFINES += STELLAR_QT_REPLY_TIMEOUT=30000
 DEFINES *= ED25519_NO_SEED
 
 DEFINES += STELLAR_QT_SDK_CLIENT_NAME=\"\\\"qtcpp-stellar-sdk\\\"\"
-DEFINES += STELLAR_QT_SDK_CLIENT_VERSION=\"\\\"0.3.6\\\"\"
+DEFINES += STELLAR_QT_SDK_CLIENT_VERSION=\"\\\"0.3.7\\\"\"
 
 #DEFINES += STELLAR_QT_AUTOSET_BASE_FEE
 
@@ -84,6 +84,12 @@ SOURCES += \
     $$PWD/src/responses/operations/pathpaymentstrictreceiveoperationresponse.cpp \
     $$PWD/src/responses/operations/pathpaymentstrictsendoperationresponse.cpp \
     $$PWD/src/responses/operations/revokesponsorshipoperationresponse.cpp \
+    $$PWD/src/revokeaccountsponsorshipoperation.cpp \
+    $$PWD/src/revokeclaimablebalancesponsorshipoperation.cpp \
+    $$PWD/src/revokedatasponsorshipoperation.cpp \
+    $$PWD/src/revokeoffersponsorshipoperation.cpp \
+    $$PWD/src/revokesignersponsorshipoperation.cpp \
+    $$PWD/src/revoketrustlinesponsorshipoperation.cpp \
     $$PWD/src/sep10challenge.cpp \
     $$PWD/src/strkey.cpp \
     $$PWD/src/inflationoperation.cpp \
@@ -251,6 +257,12 @@ HEADERS += \
     $$PWD/src/responses/operations/pathpaymentstrictreceiveoperationresponse.h \
     $$PWD/src/responses/operations/pathpaymentstrictsendoperationresponse.h \
     $$PWD/src/responses/operations/revokesponsorshipoperationresponse.h \
+    $$PWD/src/revokeaccountsponsorshipoperation.h \
+    $$PWD/src/revokeclaimablebalancesponsorshipoperation.h \
+    $$PWD/src/revokedatasponsorshipoperation.h \
+    $$PWD/src/revokeoffersponsorshipoperation.h \
+    $$PWD/src/revokesignersponsorshipoperation.h \
+    $$PWD/src/revoketrustlinesponsorshipoperation.h \
     $$PWD/src/sep10challenge.h \
     $$PWD/xdr/stellartypes.h \
     $$PWD/src/account.h \

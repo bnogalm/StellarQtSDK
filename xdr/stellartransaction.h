@@ -522,39 +522,23 @@ namespace stellar
     struct RevokeSponsorshipOp
     {
         RevokeSponsorshipType type;
+        struct RevokeSponsorshipSigner
+        {
+            AccountID accountID;
+            SignerKey signerKey;
+        };
         union
         {
             LedgerKey ledgerKey;//case REVOKE_SPONSORSHIP_LEDGER_ENTRY
-            struct
-            {
-                AccountID accountID;
-                SignerKey signerKey;
-            }signer;//case REVOKE_SPONSORSHIP_SIGNER
+            RevokeSponsorshipSigner signer;//case REVOKE_SPONSORSHIP_SIGNER
 
         };
-        RevokeSponsorshipOp():type(RevokeSponsorshipType::REVOKE_SPONSORSHIP_SIGNER)
+        RevokeSponsorshipOp():type(RevokeSponsorshipType::REVOKE_SPONSORSHIP_LEDGER_ENTRY)
         {
-
+            new (&ledgerKey) LedgerKey();
         }
-        ~RevokeSponsorshipOp()
+        RevokeSponsorshipOp(const RevokeSponsorshipOp &obj)
         {
-            switch(type)
-            {
-            case RevokeSponsorshipType::REVOKE_SPONSORSHIP_LEDGER_ENTRY:
-                (ledgerKey).~LedgerKey();
-                break;
-            default: break;
-            }
-        }
-        const RevokeSponsorshipOp& operator = (const RevokeSponsorshipOp& obj)
-        {
-            switch(type)
-            {
-            case RevokeSponsorshipType::REVOKE_SPONSORSHIP_LEDGER_ENTRY:
-                (ledgerKey).~LedgerKey();
-                break;
-            default: break;
-            }
             type= obj.type;
             switch(obj.type)
             {
@@ -563,6 +547,74 @@ namespace stellar
                 ledgerKey = obj.ledgerKey;
                 break;
             case RevokeSponsorshipType::REVOKE_SPONSORSHIP_SIGNER:
+                new (&signer) RevokeSponsorshipSigner();
+                signer.accountID = obj.signer.accountID;
+                signer.signerKey = obj.signer.signerKey;
+                break;
+            }
+        }
+
+        ~RevokeSponsorshipOp()
+        {
+            switch(type)
+            {
+            case RevokeSponsorshipType::REVOKE_SPONSORSHIP_LEDGER_ENTRY:
+                (ledgerKey).~LedgerKey();
+                break;
+            case RevokeSponsorshipType::REVOKE_SPONSORSHIP_SIGNER:
+                (signer).~RevokeSponsorshipSigner();
+                break;
+            default: break;
+            }
+        }
+    private:
+        friend inline QDataStream &operator>>(QDataStream &in,  RevokeSponsorshipOp &obj);
+        void clear()
+        {
+            switch(type)
+            {
+            case RevokeSponsorshipType::REVOKE_SPONSORSHIP_LEDGER_ENTRY:
+                (ledgerKey).~LedgerKey();
+                break;
+            case RevokeSponsorshipType::REVOKE_SPONSORSHIP_SIGNER:
+                (signer).~RevokeSponsorshipSigner();
+                break;
+            default: break;
+            }
+        }
+    public:
+        LedgerKey& fillRevokeSponsorshipLedgerEntry()
+        {
+            if(type!=RevokeSponsorshipType::REVOKE_SPONSORSHIP_LEDGER_ENTRY)
+            {
+                clear();
+                type=RevokeSponsorshipType::REVOKE_SPONSORSHIP_LEDGER_ENTRY;
+                new (&ledgerKey) LedgerKey();
+            }
+            return ledgerKey;
+        }
+        RevokeSponsorshipSigner& fillRevokeSponsorshipSigner()
+        {
+            if(type!=RevokeSponsorshipType::REVOKE_SPONSORSHIP_SIGNER)
+            {
+                clear();
+                type=RevokeSponsorshipType::REVOKE_SPONSORSHIP_SIGNER;
+                new (&signer) RevokeSponsorshipSigner();
+            }
+            return signer;
+        }
+        const RevokeSponsorshipOp& operator = (const RevokeSponsorshipOp& obj)
+        {
+            clear();
+            type= obj.type;
+            switch(obj.type)
+            {
+            case RevokeSponsorshipType::REVOKE_SPONSORSHIP_LEDGER_ENTRY:
+                new (&ledgerKey) LedgerKey();
+                ledgerKey = obj.ledgerKey;
+                break;
+            case RevokeSponsorshipType::REVOKE_SPONSORSHIP_SIGNER:
+                new (&signer) RevokeSponsorshipSigner();
                 signer.accountID = obj.signer.accountID;
                 signer.signerKey = obj.signer.signerKey;
                 break;
@@ -587,6 +639,7 @@ namespace stellar
     }
 
     inline QDataStream &operator>>(QDataStream &in,  RevokeSponsorshipOp &obj) {
+        obj.clear();
        in >> obj.type;
        switch(obj.type)
        {
@@ -595,6 +648,7 @@ namespace stellar
            in >> obj.ledgerKey;
            break;
        case RevokeSponsorshipType::REVOKE_SPONSORSHIP_SIGNER:
+           new (&obj.signer) RevokeSponsorshipOp::RevokeSponsorshipSigner();
            in >> obj.signer.accountID >> obj.signer.signerKey;;
            break;
        }
@@ -738,6 +792,7 @@ namespace stellar
         case OperationType::END_SPONSORING_FUTURE_RESERVES:
             break;
         case OperationType::REVOKE_SPONSORSHIP:
+            new (&obj.operationRevokeSponsorship) RevokeSponsorshipOp();
             in >>obj.operationRevokeSponsorship; break;
         //default: break;
         }

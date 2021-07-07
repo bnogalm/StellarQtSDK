@@ -8,7 +8,7 @@ class BeginSponsoringFutureReservesOperation : public Operation
     stellar::BeginSponsoringFutureReservesOp m_op;
 public:
     BeginSponsoringFutureReservesOperation(QString sponsoredId);
-    BeginSponsoringFutureReservesOperation(stellar::BeginSponsoringFutureReservesOp op);
+    BeginSponsoringFutureReservesOperation(stellar::BeginSponsoringFutureReservesOp& op);
     QString getSponsoredID();
     void fillOperationBody(stellar::Operation &operation);
 

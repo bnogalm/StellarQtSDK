@@ -85,9 +85,6 @@ public:
     static QList<QString> mnemonicWords(SupportedMnemonicLanguages language = SupportedMnemonicLanguages::EN);
     static QByteArray mnemonicToBIP39Seed(QString words, QString passphrase=QString(""));
 
-
-
-
 };
 
 
@@ -154,7 +151,6 @@ struct get_power_s<A, 0, T>
 
 
 qint64 get_power(quint32 a, quint32 b);
-
 
 
 

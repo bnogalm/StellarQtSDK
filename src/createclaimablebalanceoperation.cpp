@@ -13,7 +13,7 @@ CreateClaimableBalanceOperation::CreateClaimableBalanceOperation(QString amount,
 
 }
 
-CreateClaimableBalanceOperation::CreateClaimableBalanceOperation(stellar::CreateClaimableBalanceOp op):m_op(op)
+CreateClaimableBalanceOperation::CreateClaimableBalanceOperation(stellar::CreateClaimableBalanceOp &op):m_op(op)
 {
 
 }

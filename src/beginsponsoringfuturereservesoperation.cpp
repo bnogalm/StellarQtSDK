@@ -7,7 +7,7 @@ BeginSponsoringFutureReservesOperation::BeginSponsoringFutureReservesOperation(Q
     m_op.sponsoredID=StrKey::encodeToXDRAccountId(sponsoredId);
 }
 
-BeginSponsoringFutureReservesOperation::BeginSponsoringFutureReservesOperation(stellar::BeginSponsoringFutureReservesOp op):m_op(op)
+BeginSponsoringFutureReservesOperation::BeginSponsoringFutureReservesOperation(stellar::BeginSponsoringFutureReservesOp &op):m_op(op)
 {
 }
 
