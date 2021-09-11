@@ -44,9 +44,8 @@ QByteArray ManageDataOperation::getValue() {
 
 void ManageDataOperation::fillOperationBody(stellar::Operation &operation)
 {
-    operation.type = stellar::OperationType::MANAGE_DATA;
-    new (&operation.operationManageData) stellar::ManageDataOp();
-    operation.operationManageData = m_op;
+    auto& o = operation.fillManageDataOp();
+    o = m_op;
 }
 
 

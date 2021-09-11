@@ -82,9 +82,8 @@ QList<Asset *> PathPaymentStrictReceiveOperation::getPath() {
 
 void PathPaymentStrictReceiveOperation::fillOperationBody(stellar::Operation &op)
 {
-    op.type = stellar::OperationType::PATH_PAYMENT_STRICT_RECEIVE;
-    new (&op.operationPathPaymentStrictReceive) stellar::PathPaymentStrictReceiveOp();
-    op.operationPathPaymentStrictReceive = m_op;
+    auto& o = op.fillPathPaymentStrictReceiveOp();
+    o = m_op;
 }
 
 PathPaymentStrictReceiveOperation *PathPaymentStrictReceiveOperation::build(stellar::PathPaymentStrictReceiveOp &op)

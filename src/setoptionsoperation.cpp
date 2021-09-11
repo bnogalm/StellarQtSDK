@@ -97,9 +97,8 @@ Integer SetOptionsOperation::getSignerWeight() {
 
 void SetOptionsOperation::fillOperationBody(stellar::Operation &op)
 {
-    op.type = stellar::OperationType::SET_OPTIONS;
-    new (&op.operationSetOptions) stellar::SetOptionsOp();
-    op.operationSetOptions = m_op;
+    auto& o = op.fillSetOptionsOp();
+    o = m_op;
 }
 
 SetOptionsOperation *SetOptionsOperation::build(stellar::SetOptionsOp &op)

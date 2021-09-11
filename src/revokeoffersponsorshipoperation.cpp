@@ -25,9 +25,8 @@ qint64 RevokeOfferSponsorshipOperation::getOfferId() const
 
 void RevokeOfferSponsorshipOperation::fillOperationBody(stellar::Operation &op)
 {
-    op.type = stellar::OperationType::REVOKE_SPONSORSHIP;
-    new (&op.operationRevokeSponsorship) stellar::RevokeSponsorshipOp();
-    op.operationRevokeSponsorship = m_op;
+    auto& o = op.fillRevokeSponsorshipOp();
+    o = m_op;
 }
 
 RevokeOfferSponsorshipOperation *RevokeOfferSponsorshipOperation::build(stellar::RevokeSponsorshipOp &op)

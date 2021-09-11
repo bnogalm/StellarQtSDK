@@ -27,9 +27,8 @@ stellar::SignerKey RevokeSignerSponsorshipOperation::getSigner() const
 
 void RevokeSignerSponsorshipOperation::fillOperationBody(stellar::Operation &op)
 {
-    op.type = stellar::OperationType::REVOKE_SPONSORSHIP;
-    new (&op.operationRevokeSponsorship) stellar::RevokeSponsorshipOp();
-    op.operationRevokeSponsorship = m_op;
+    auto& o = op.fillRevokeSponsorshipOp();
+    o = m_op;
 }
 
 RevokeSignerSponsorshipOperation *RevokeSignerSponsorshipOperation::build(stellar::RevokeSponsorshipOp &op)

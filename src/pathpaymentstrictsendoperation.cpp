@@ -82,9 +82,8 @@ QList<Asset *> PathPaymentStrictSendOperation::getPath() {
 
 void PathPaymentStrictSendOperation::fillOperationBody(stellar::Operation &op)
 {
-    op.type = stellar::OperationType::PATH_PAYMENT_STRICT_SEND;
-    new (&op.operationPathPaymentStrictSend) stellar::PathPaymentStrictSendOp();
-    op.operationPathPaymentStrictSend = m_op;
+    auto& o = op.fillPathPaymentStrictSendOp();
+    o = m_op;
 }
 
 PathPaymentStrictSendOperation *PathPaymentStrictSendOperation::build(stellar::PathPaymentStrictSendOp &op)

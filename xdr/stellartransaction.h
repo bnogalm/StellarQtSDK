@@ -696,8 +696,17 @@ namespace stellar
         Operation();
 
         Operation(const stellar::Operation& op);
+    private:
+        friend inline QDataStream &operator>>(QDataStream &in,  Operation &obj);
+        void clear();
+    public:
         ~Operation();
         const Operation& operator = (const Operation& op);
+        PathPaymentStrictReceiveOp& fillPathPaymentStrictReceiveOp();
+        SetOptionsOp& fillSetOptionsOp();
+        ManageDataOp& fillManageDataOp();
+        PathPaymentStrictSendOp& fillPathPaymentStrictSendOp();
+        RevokeSponsorshipOp& fillRevokeSponsorshipOp();
 
     };
     inline QDataStream &operator<<(QDataStream &out, const  Operation &obj) {
@@ -749,6 +758,7 @@ namespace stellar
     }
 
     inline QDataStream &operator>>(QDataStream &in,  Operation &obj) {
+        obj.clear();
         in >> obj.sourceAccount >> obj.type;
         switch(obj.type){
         case OperationType::CREATE_ACCOUNT:

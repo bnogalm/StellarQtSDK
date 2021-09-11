@@ -37,9 +37,8 @@ Asset *RevokeTrustlineSponsorshipOperation::getAsset()
 
 void RevokeTrustlineSponsorshipOperation::fillOperationBody(stellar::Operation &op)
 {
-    op.type = stellar::OperationType::REVOKE_SPONSORSHIP;
-    new (&op.operationRevokeSponsorship) stellar::RevokeSponsorshipOp();
-    op.operationRevokeSponsorship = m_op;
+    auto& o = op.fillRevokeSponsorshipOp();
+    o = m_op;
 }
 
 RevokeTrustlineSponsorshipOperation *RevokeTrustlineSponsorshipOperation::build(stellar::RevokeSponsorshipOp &op)
