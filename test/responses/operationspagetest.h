@@ -8,6 +8,7 @@
 #include "../../src/responses/operationpage.h"
 #include "../../src/responses/operations/createaccountoperationresponse.h"
 #include "../../src/responses/operations/paymentoperationresponse.h"
+#include "../../src/responses/operations/revokesponsorshipoperationresponse.h"
 
 #include "../../src/keypair.h"
 #include "../../src/assettypenative.h"
@@ -339,6 +340,70 @@ private:
             "    ]\n"
             "  }\n"
             "}";
+    void testDeserializeRevokeSponsorship() {
+        QByteArray revokeSponsorshipJSON = "{\n"
+            "  \"_links\": {\n"
+            "    \"self\": {\n"
+            "      \"href\": \"https://horizon-testnet.stellar.org/transactions/02a69bb0dc83d004ae918aab2d10c9dbc2cbf4451ab12927a691b87e5c6c5079/operations?cursor=\\u0026limit=10\\u0026order=asc\"\n"
+            "    },\n"
+            "    \"next\": {\n"
+            "      \"href\": \"https://horizon-testnet.stellar.org/transactions/02a69bb0dc83d004ae918aab2d10c9dbc2cbf4451ab12927a691b87e5c6c5079/operations?cursor=4458463816060929\\u0026limit=10\\u0026order=asc\"\n"
+            "    },\n"
+            "    \"prev\": {\n"
+            "      \"href\": \"https://horizon-testnet.stellar.org/transactions/02a69bb0dc83d004ae918aab2d10c9dbc2cbf4451ab12927a691b87e5c6c5079/operations?cursor=4458463816060929\\u0026limit=10\\u0026order=desc\"\n"
+            "    }\n"
+            "  },\n"
+            "  \"_embedded\": {\n"
+            "    \"records\": [\n"
+            "      {\n"
+            "        \"_links\": {\n"
+            "          \"self\": {\n"
+            "            \"href\": \"https://horizon-testnet.stellar.org/operations/4458463816060929\"\n"
+            "          },\n"
+            "          \"transaction\": {\n"
+            "            \"href\": \"https://horizon-testnet.stellar.org/transactions/02a69bb0dc83d004ae918aab2d10c9dbc2cbf4451ab12927a691b87e5c6c5079\"\n"
+            "          },\n"
+            "          \"effects\": {\n"
+            "            \"href\": \"https://horizon-testnet.stellar.org/operations/4458463816060929/effects\"\n"
+            "          },\n"
+            "          \"succeeds\": {\n"
+            "            \"href\": \"https://horizon-testnet.stellar.org/effects?order=desc\\u0026cursor=4458463816060929\"\n"
+            "          },\n"
+            "          \"precedes\": {\n"
+            "            \"href\": \"https://horizon-testnet.stellar.org/effects?order=asc\\u0026cursor=4458463816060929\"\n"
+            "          }\n"
+            "        },\n"
+            "        \"id\": \"4458463816060929\",\n"
+            "        \"paging_token\": \"4458463816060929\",\n"
+            "        \"transaction_successful\": true,\n"
+            "        \"source_account\": \"GB6QDNU47MYBR4NDTRP7M3FW27DAFOEADN5KDQI2DAVWW6YVKKG4QJS7\",\n"
+            "        \"type\": \"revoke_sponsorship\",\n"
+            "        \"type_i\": 18,\n"
+            "        \"created_at\": \"2020-10-02T20:35:22Z\",\n"
+            "        \"transaction_hash\": \"02a69bb0dc83d004ae918aab2d10c9dbc2cbf4451ab12927a691b87e5c6c5079\",\n"
+            "        \"offer_id\": \"8822470\"\n"
+            "      }\n"
+            "    ]\n"
+            "  }\n"
+            "}";
+
+        OperationPage operationsPage(0);
+        operationsPage.loadFromJson(json);
+
+        RevokeSponsorshipOperationResponse* revokeOp = (RevokeSponsorshipOperationResponse*) operationsPage.at(0);
+
+
+        QVERIFY(revokeOp->getAccountID().isNull());
+        QVERIFY(revokeOp->getClaimableBalanceID().isNull());
+        QVERIFY(revokeOp->getDataAccountID().isNull());
+        QVERIFY(revokeOp->getDataName().isNull());
+        QVERIFY(revokeOp->getSignerAccountID().isNull());
+        QVERIFY(revokeOp->getSignerKey().isNull());
+        QVERIFY(revokeOp->getTrustlineAccountID().isNull());
+        QVERIFY(revokeOp->getTrustlineAsset().isNull());
+        QCOMPARE(revokeOp->getOfferID(), "8822470");
+        QCOMPARE(revokeOp->getSourceAccount().getAccountId(), "GB6QDNU47MYBR4NDTRP7M3FW27DAFOEADN5KDQI2DAVWW6YVKKG4QJS7");
+    }
 };
 
 
