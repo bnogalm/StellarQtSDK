@@ -6,7 +6,11 @@
 #include "strkey.h"
 #define NONCE_SIZE 48
 
-Transaction* Sep10Challenge::buildChallengeTx(KeyPair *serverSignerSecret, QString clientAccountID, QString domainName, qint64 timebound,Network* network)
+
+const QString Sep10Challenge::HOME_DOMAIN_MANAGER_DATA_NAME_FLAG = "auth";
+const QString Sep10Challenge::WEB_AUTH_DOMAIN_MANAGER_DATA_NAME = "web_auth_domain";
+
+Transaction* Sep10Challenge::buildChallengeTx(KeyPair *serverSignerSecret, QString clientAccountID, QString domainName, QString webAuthDomain, qint64 timebound, Network* network)
 {
     if(StrKey::decodeVersionByte(clientAccountID)!=StrKey::VersionByte::ACCOUNT_ID)
         throw std::runtime_error("Version byte is invalid");
@@ -23,15 +27,19 @@ Transaction* Sep10Challenge::buildChallengeTx(KeyPair *serverSignerSecret, QStri
     }
     else
         timeBounds= new TimeBounds(0,0);
-    ManageDataOperation* dataOp = new ManageDataOperation(domainName + " auth",randomNonce);
-    dataOp->setSourceAccount(clientAccountID);
-    Transaction *tx = Transaction::Builder(sa,network).addOperation(dataOp).addTimeBounds(timeBounds).setBaseFee(Transaction::Builder::BASE_FEE).build();
+    ManageDataOperation* domainNameOperation = new ManageDataOperation(domainName + " " +HOME_DOMAIN_MANAGER_DATA_NAME_FLAG,randomNonce);
+    domainNameOperation->setSourceAccount(clientAccountID);
+
+    ManageDataOperation* webAuthDomainOperation = new ManageDataOperation(WEB_AUTH_DOMAIN_MANAGER_DATA_NAME,webAuthDomain.toUtf8());
+    webAuthDomainOperation->setSourceAccount(serverSignerSecret->getAccountId());
+
+    Transaction *tx = Transaction::Builder(sa,network).addOperation(domainNameOperation).addOperation(webAuthDomainOperation).addTimeBounds(timeBounds).setBaseFee(Transaction::Builder::BASE_FEE).build();
     tx->sign(serverSignerSecret);
     delete sa;
     return tx;
 }
 
-Sep10Challenge::ChallengeTransaction * Sep10Challenge::readChallengeTransaction(QString challengeXdr, QString serverAccountId, QStringList domainNames, Network *network)  {
+Sep10Challenge::ChallengeTransaction * Sep10Challenge::readChallengeTransaction(QString challengeXdr, QString serverAccountId, QStringList domainNames, QString webAuthDomain, Network *network)  {
     // decode the received input as a base64-urlencoded XDR representation of Stellar transaction envelope
     AbstractTransaction* parsed = Transaction::fromEnvelopeXdr(challengeXdr, network);
     Transaction* transaction = dynamic_cast<Transaction*>(parsed);
@@ -88,7 +96,7 @@ Sep10Challenge::ChallengeTransaction * Sep10Challenge::readChallengeTransaction(
     }
     QString matchedDomainName;
     for (QString homeDomain : domainNames) {
-        if ((homeDomain + " auth")==manageDataOperation->getName()) {
+        if ((homeDomain + " " + HOME_DOMAIN_MANAGER_DATA_NAME_FLAG)==manageDataOperation->getName()) {
             matchedDomainName = homeDomain;
             break;
         }
@@ -118,6 +126,7 @@ Sep10Challenge::ChallengeTransaction * Sep10Challenge::readChallengeTransaction(
     }
 
 
+    QByteArray webAuthDomaidUtf8 = webAuthDomain.toUtf8();
     // verify subsequent operations are manage data ops with source account set to server account
     for(int i=1;i<transaction->getOperations().length();i++)
     {
@@ -131,6 +140,15 @@ Sep10Challenge::ChallengeTransaction * Sep10Challenge::readChallengeTransaction(
             throw std::runtime_error("Operation should have a source account.");
         if (subsequentClientAccountId != serverAccountId)
             throw std::runtime_error("subsequent operations are unrecognized");
+
+        if (WEB_AUTH_DOMAIN_MANAGER_DATA_NAME == subsequentManageDataOperation->getName()) {
+           if (subsequentManageDataOperation->getValue().isNull()) {
+             throw std::runtime_error("'web_auth_domain' operation value should not be null.");
+           }
+           if (webAuthDomaidUtf8 !=  subsequentManageDataOperation->getValue()) {
+             throw std::runtime_error("'web_auth_domain' operation value does not match.");
+           }
+         }
     }
 
     if (!verifyTransactionSignature(transaction, serverAccountId)) {
@@ -140,18 +158,18 @@ Sep10Challenge::ChallengeTransaction * Sep10Challenge::readChallengeTransaction(
     return new ChallengeTransaction(transaction, clientAccountId, matchedDomainName);
 }
 
-Sep10Challenge::ChallengeTransaction *Sep10Challenge::readChallengeTransaction(QString challengeXdr, QString serverAccountId, QString domainName, Network *network)
+Sep10Challenge::ChallengeTransaction *Sep10Challenge::readChallengeTransaction(QString challengeXdr, QString serverAccountId, QString domainName, QString webAuthDomain, Network *network)
 {
-    return readChallengeTransaction(challengeXdr, serverAccountId, QStringList()<< domainName, network);
+    return readChallengeTransaction(challengeXdr, serverAccountId, QStringList()<< domainName, webAuthDomain, network);
 }
 
-QSet<QString> Sep10Challenge::verifyChallengeTransactionSigners(QString challengeXdr, QString serverAccountId, QStringList domainNames, QSet<QString> signers, Network *network) {
+QSet<QString> Sep10Challenge::verifyChallengeTransactionSigners(QString challengeXdr, QString serverAccountId, QStringList domainNames, QString webAuthDomain, QSet<QString> signers, Network *network) {
     if (signers.isEmpty()) {
         throw std::runtime_error("No verifiable signers provided, at least one G... address must be provided.");
     }
 
     // Read the transaction which validates its structure.
-    ChallengeTransaction* parsedChallengeTransaction = readChallengeTransaction(challengeXdr, serverAccountId, domainNames, network);
+    ChallengeTransaction* parsedChallengeTransaction = readChallengeTransaction(challengeXdr, serverAccountId, domainNames, webAuthDomain, network);
     Transaction* transaction = parsedChallengeTransaction->getTransaction();
 
     // Ensure the server account ID is an address and not a seed.
@@ -218,7 +236,7 @@ QSet<QString> Sep10Challenge::verifyChallengeTransactionSigners(QString challeng
     return signersFound;
 }
 
-QSet<QString> Sep10Challenge::verifyChallengeTransactionThreshold(QString challengeXdr, QString serverAccountId, QStringList domainNames, int threshold, QSet<Sep10Challenge::Signer> signers, Network *network)
+QSet<QString> Sep10Challenge::verifyChallengeTransactionThreshold(QString challengeXdr, QString serverAccountId, QStringList domainNames, QString webAuthDomain, int threshold, QSet<Sep10Challenge::Signer> signers, Network *network)
 {
     if (signers.isEmpty()) {
         throw std::runtime_error("No verifiable signers provided, at least one G... address must be provided.");
@@ -230,7 +248,7 @@ QSet<QString> Sep10Challenge::verifyChallengeTransactionThreshold(QString challe
         weightsForSigner.insert(signer.getKey(), signer.getWeight());
         signersSet.insert(signer.getKey());
     }
-    QSet<QString> signersFound = verifyChallengeTransactionSigners(challengeXdr, serverAccountId, domainNames, signersSet, network);
+    QSet<QString> signersFound = verifyChallengeTransactionSigners(challengeXdr, serverAccountId, domainNames,webAuthDomain, signersSet, network);
 
     int sum = 0;
     for (QString signer : signersFound) {
@@ -247,9 +265,9 @@ QSet<QString> Sep10Challenge::verifyChallengeTransactionThreshold(QString challe
     return signersFound;
 }
 
-QSet<QString> Sep10Challenge::verifyChallengeTransactionThreshold(QString challengeXdr, QString serverAccountId, QString domainName, int threshold, QSet<Sep10Challenge::Signer> signers, Network *network)
+QSet<QString> Sep10Challenge::verifyChallengeTransactionThreshold(QString challengeXdr, QString serverAccountId, QString domainName, QString webAuthDomain, int threshold, QSet<Sep10Challenge::Signer> signers, Network *network)
 {
-    return verifyChallengeTransactionThreshold(challengeXdr,serverAccountId,QStringList() << domainName, threshold,signers,network);
+    return verifyChallengeTransactionThreshold(challengeXdr,serverAccountId,QStringList() << domainName,webAuthDomain,threshold,signers,network);
 }
 
 QSet<QString> Sep10Challenge::verifyTransactionSignatures(Transaction *transaction, QSet<QString> signers){
