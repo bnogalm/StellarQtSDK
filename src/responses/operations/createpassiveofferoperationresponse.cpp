@@ -18,7 +18,7 @@ CreatePassiveSellOfferOperationResponse::~CreatePassiveSellOfferOperationRespons
         delete m_sellingAsset;
 }
 
-qint32 CreatePassiveSellOfferOperationResponse::getOfferId() const {
+qint64 CreatePassiveSellOfferOperationResponse::getOfferId() const {
     return m_offerID;
 }
 

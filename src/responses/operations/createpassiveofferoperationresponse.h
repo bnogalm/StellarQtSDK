@@ -13,7 +13,7 @@ class Asset;
 class CreatePassiveSellOfferOperationResponse : public OperationResponse
 {
     Q_OBJECT
-    Q_PROPERTY(qint32 offer_id MEMBER m_offerID)
+    Q_PROPERTY(qint64 offer_id MEMBER m_offerID)
     Q_PROPERTY(QString amount MEMBER m_amount)
     // Price is not implemented yet in horizon
     Q_PROPERTY(QString price MEMBER m_price)
@@ -26,7 +26,7 @@ class CreatePassiveSellOfferOperationResponse : public OperationResponse
     Q_PROPERTY(QString selling_asset_code READ sellingAssetCode WRITE setSellingAssetCode)
     Q_PROPERTY(QString selling_asset_issuer READ sellingAssetIssuer WRITE setSellingAssetIssuer)
 
-    qint32 m_offerID;
+    qint64 m_offerID;
     QString m_amount;
     QString m_price;
     QString m_buyingAssetType;
@@ -43,7 +43,7 @@ public:
     CreatePassiveSellOfferOperationResponse(QNetworkReply *reply=nullptr);
     virtual ~CreatePassiveSellOfferOperationResponse();
 
-    qint32 getOfferId() const;
+    qint64 getOfferId() const;
     QString getAmount() const;
     QString getPrice() const;
     Asset* getBuyingAsset();

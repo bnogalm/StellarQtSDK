@@ -18,7 +18,7 @@ ManageBuyOfferOperationResponse::~ManageBuyOfferOperationResponse()
         delete m_sellingAsset;
 }
 
-qint32 ManageBuyOfferOperationResponse::getOfferId() const {
+qint64 ManageBuyOfferOperationResponse::getOfferId() const {
     return m_offerID;
 }
 
