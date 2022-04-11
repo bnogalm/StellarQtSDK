@@ -57,6 +57,7 @@ SOURCES += \
     $$PWD/src/responses/effects/accountsponsorshipupdatedeffectresponse.cpp \
     $$PWD/src/responses/effects/claimablebalanceclaimantcreatedeffectresponse.cpp \
     $$PWD/src/responses/effects/claimablebalanceclaimedeffectresponse.cpp \
+    $$PWD/src/responses/effects/claimablebalanceclawedbackeffectresponse.cpp \
     $$PWD/src/responses/effects/claimablebalancecreatedeffectresponse.cpp \
     $$PWD/src/responses/effects/claimablebalancesponsorshipcreatedeffectresponse.cpp \
     $$PWD/src/responses/effects/claimablebalancesponsorshipremovedeffectresponse.cpp \
@@ -69,6 +70,7 @@ SOURCES += \
     $$PWD/src/responses/effects/signersponsorshipremovedeffectresponse.cpp \
     $$PWD/src/responses/effects/signersponsorshipupdatedeffectresponse.cpp \
     $$PWD/src/responses/effects/trustlineauthorizedtomaintainliabilitieseffectresponse.cpp \
+    $$PWD/src/responses/effects/trustlineflagsupdatedeffectresponse.cpp \
     $$PWD/src/responses/effects/trustlinesponsorshipcreatedeffectresponse.cpp \
     $$PWD/src/responses/effects/trustlinesponsorshipremovedeffectresponse.cpp \
     $$PWD/src/responses/effects/trustlinesponsorshipupdatedeffectresponse.cpp \
@@ -76,6 +78,8 @@ SOURCES += \
     $$PWD/src/responses/operations/beginsponsoringfuturereservesoperationresponse.cpp \
     $$PWD/src/responses/operations/bumpsequenceoperationresponse.cpp \
     $$PWD/src/responses/operations/claimclaimablebalanceoperationresponse.cpp \
+    $$PWD/src/responses/operations/clawbackclaimablebalanceoperationresponse.cpp \
+    $$PWD/src/responses/operations/clawbackoperationresponse.cpp \
     $$PWD/src/responses/operations/createclaimablebalanceoperationresponse.cpp \
     $$PWD/src/responses/operations/endsponsoringfuturereservesoperationresponse.cpp \
     $$PWD/src/responses/operations/managebuyofferoperationresponse.cpp \
@@ -84,6 +88,7 @@ SOURCES += \
     $$PWD/src/responses/operations/pathpaymentstrictreceiveoperationresponse.cpp \
     $$PWD/src/responses/operations/pathpaymentstrictsendoperationresponse.cpp \
     $$PWD/src/responses/operations/revokesponsorshipoperationresponse.cpp \
+    $$PWD/src/responses/operations/settrustlineflagsoperationresponse.cpp \
     $$PWD/src/revokeaccountsponsorshipoperation.cpp \
     $$PWD/src/revokeclaimablebalancesponsorshipoperation.cpp \
     $$PWD/src/revokedatasponsorshipoperation.cpp \
@@ -230,6 +235,7 @@ HEADERS += \
     $$PWD/src/responses/effects/accountsponsorshipupdatedeffectresponse.h \
     $$PWD/src/responses/effects/claimablebalanceclaimantcreatedeffectresponse.h \
     $$PWD/src/responses/effects/claimablebalanceclaimedeffectresponse.h \
+    $$PWD/src/responses/effects/claimablebalanceclawedbackeffectresponse.h \
     $$PWD/src/responses/effects/claimablebalancecreatedeffectresponse.h \
     $$PWD/src/responses/effects/claimablebalancesponsorshipcreatedeffectresponse.h \
     $$PWD/src/responses/effects/claimablebalancesponsorshipremovedeffectresponse.h \
@@ -242,6 +248,7 @@ HEADERS += \
     $$PWD/src/responses/effects/signersponsorshipremovedeffectresponse.h \
     $$PWD/src/responses/effects/signersponsorshipupdatedeffectresponse.h \
     $$PWD/src/responses/effects/trustlineauthorizedtomaintainliabilitieseffectresponse.h \
+    $$PWD/src/responses/effects/trustlineflagsupdatedeffectresponse.h \
     $$PWD/src/responses/effects/trustlinesponsorshipcreatedeffectresponse.h \
     $$PWD/src/responses/effects/trustlinesponsorshipremovedeffectresponse.h \
     $$PWD/src/responses/effects/trustlinesponsorshipupdatedeffectresponse.h \
@@ -249,6 +256,8 @@ HEADERS += \
     $$PWD/src/responses/operations/beginsponsoringfuturereservesoperationresponse.h \
     $$PWD/src/responses/operations/bumpsequenceoperationresponse.h \
     $$PWD/src/responses/operations/claimclaimablebalanceoperationresponse.h \
+    $$PWD/src/responses/operations/clawbackclaimablebalanceoperationresponse.h \
+    $$PWD/src/responses/operations/clawbackoperationresponse.h \
     $$PWD/src/responses/operations/createclaimablebalanceoperationresponse.h \
     $$PWD/src/responses/operations/endsponsoringfuturereservesoperationresponse.h \
     $$PWD/src/responses/operations/managebuyofferoperationresponse.h \
@@ -257,6 +266,7 @@ HEADERS += \
     $$PWD/src/responses/operations/pathpaymentstrictreceiveoperationresponse.h \
     $$PWD/src/responses/operations/pathpaymentstrictsendoperationresponse.h \
     $$PWD/src/responses/operations/revokesponsorshipoperationresponse.h \
+    $$PWD/src/responses/operations/settrustlineflagsoperationresponse.h \
     $$PWD/src/revokeaccountsponsorshipoperation.h \
     $$PWD/src/revokeclaimablebalancesponsorshipoperation.h \
     $$PWD/src/revokedatasponsorshipoperation.h \

@@ -90,7 +90,10 @@ namespace stellar
         CLAIM_CLAIMABLE_BALANCE = 15,
         BEGIN_SPONSORING_FUTURE_RESERVES = 16,
         END_SPONSORING_FUTURE_RESERVES = 17,
-        REVOKE_SPONSORSHIP = 18
+        REVOKE_SPONSORSHIP = 18,
+        CLAWBACK = 19,
+        CLAWBACK_CLAIMABLE_BALANCE = 20,
+        SET_TRUST_LINE_FLAGS = 21
     };
 
     /* CreateAccount
@@ -347,8 +350,8 @@ namespace stellar
     struct AllowTrustOp
     {
         AccountID trustor;
-        Asset asset;
-        quint32 authorize;//bool, 4 bytes
+        AssetCode asset;
+        quint32 authorize;// 0, or any bitwise combination of the AUTHORIZED_* flags of TrustLineFlags
     };
     // ASSET_TYPE_NATIVE is not allowed
     inline QDataStream &operator<<(QDataStream &out, const  AllowTrustOp &obj) {
@@ -655,6 +658,75 @@ namespace stellar
        return in;
     }
 
+    /* Claws back an amount of an asset from an account
+        Threshold: med
+        Result: ClawbackResult
+    */
+    struct ClawbackOp
+    {
+        Asset asset;
+        MuxedAccount from;
+        qint64 amount;
+    };
+
+    inline QDataStream &operator<<(QDataStream &out, const  ClawbackOp &obj) {
+        out << obj.asset << obj.from << obj.amount;
+        return out;
+    }
+
+    inline QDataStream &operator>>(QDataStream &in,  ClawbackOp &obj) {
+
+        in >> obj.asset >> obj.from >> obj.amount;
+        return in;
+    }
+
+    /* Claws back a claimable balance
+        Threshold: med
+        Result: ClawbackClaimableBalanceResult
+    */
+    struct ClawbackClaimableBalanceOp
+    {
+        ClaimableBalanceID balanceID;
+    };
+
+
+    inline QDataStream &operator<<(QDataStream &out, const  ClawbackClaimableBalanceOp &obj) {
+        out << obj.balanceID;
+        return out;
+    }
+
+    inline QDataStream &operator>>(QDataStream &in,  ClawbackClaimableBalanceOp &obj) {
+
+        in >> obj.balanceID;
+        return in;
+    }
+
+    /* SetTrustLineFlagsOp
+       Updates the flags of an existing trust line.
+       This is called by the issuer of the related asset.
+       Threshold: low
+       Result: SetTrustLineFlagsResult
+    */
+    struct SetTrustLineFlagsOp
+    {
+        AccountID trustor;
+        Asset asset;
+
+        quint32 clearFlags; // which flags to clear
+        quint32 setFlags;   // which flags to set
+    };
+
+    inline QDataStream &operator<<(QDataStream &out, const  SetTrustLineFlagsOp &obj) {
+        out << obj.trustor << obj.asset << obj.clearFlags << obj.setFlags;
+        return out;
+    }
+
+    inline QDataStream &operator>>(QDataStream &in,  SetTrustLineFlagsOp &obj) {
+
+        in >> obj.trustor >> obj.asset >> obj.clearFlags >> obj.setFlags;
+        return in;
+    }
+
     /* An operation is the lowest unit of work that a transaction does */
     struct Operation
     {
@@ -673,7 +745,10 @@ namespace stellar
         MuxedAccount operationAccountMerge;
         MuxedAccount operationInflation;
         BumpSequenceOp operationBumpSequence;
-        ManageBuyOfferOp operationManageBuyOffer;
+        ManageBuyOfferOp operationManageBuyOffer;        
+        ClawbackOp operationClawback;
+        ClawbackClaimableBalanceOp operationClawbackClaimableBalance;
+        SetTrustLineFlagsOp operationSetTrustLineFlags;
 
         //non trivials, you MUST call contructor explicity to use them
         PathPaymentStrictReceiveOp operationPathPaymentStrictReceive;
@@ -750,6 +825,12 @@ namespace stellar
             break;
         case OperationType::REVOKE_SPONSORSHIP:
             out <<obj.operationRevokeSponsorship; break;
+        case OperationType::CLAWBACK:
+            out << obj.operationClawback; break;
+        case OperationType::CLAWBACK_CLAIMABLE_BALANCE:
+            out << obj.operationClawbackClaimableBalance; break;
+        case OperationType::SET_TRUST_LINE_FLAGS:
+            out << obj.operationSetTrustLineFlags; break;
 
         //default: break;
         }
@@ -804,6 +885,12 @@ namespace stellar
         case OperationType::REVOKE_SPONSORSHIP:
             new (&obj.operationRevokeSponsorship) RevokeSponsorshipOp();
             in >>obj.operationRevokeSponsorship; break;
+        case OperationType::CLAWBACK:
+            in >> obj.operationClawback; break;
+        case OperationType::CLAWBACK_CLAIMABLE_BALANCE:
+            in >> obj.operationClawbackClaimableBalance; break;
+        case OperationType::SET_TRUST_LINE_FLAGS:
+            in >> obj.operationSetTrustLineFlags; break;
         //default: break;
         }
        return in;
@@ -1641,7 +1728,8 @@ namespace stellar
         SET_OPTIONS_UNKNOWN_FLAG = -6,           // can't set an unknown flag
         SET_OPTIONS_THRESHOLD_OUT_OF_RANGE = -7, // bad value for weight/threshold
         SET_OPTIONS_BAD_SIGNER = -8,             // signer cannot be masterkey
-        SET_OPTIONS_INVALID_HOME_DOMAIN = -9     // malformed home domain
+        SET_OPTIONS_INVALID_HOME_DOMAIN = -9,     // malformed home domain
+        SET_OPTIONS_AUTH_REVOCABLE_REQUIRED = -10 // auth revocable is required for clawback
     };
     XDR_SERIALIZER(SetOptionsResultCode)
 
@@ -1992,6 +2080,111 @@ namespace stellar
         in >> obj.code;
        return in;
     }
+
+    /******* Clawback Result ********/
+
+    enum class ClawbackResultCode : qint32
+    {
+        // codes considered as "success" for the operation
+        CLAWBACK_SUCCESS = 0,
+
+        // codes considered as "failure" for the operation
+        CLAWBACK_MALFORMED = -1,
+        CLAWBACK_NOT_CLAWBACK_ENABLED = -2,
+        CLAWBACK_NO_TRUST = -3,
+        CLAWBACK_UNDERFUNDED = -4
+    };
+    XDR_SERIALIZER(ClawbackResultCode)
+
+    struct ClawbackResult
+    {
+        ClawbackResultCode code;
+//        union{
+//            case : CLAWBACK_SUCCESS void;
+//            default: void
+//        };
+    };
+    inline QDataStream &operator<<(QDataStream &out, const  ClawbackResult &obj) {
+        out << obj.code;
+       return out;
+    }
+
+    inline QDataStream &operator>>(QDataStream &in,  ClawbackResult &obj) {
+        in >> obj.code;
+       return in;
+    }
+
+    /******* ClawbackClaimableBalance Result ********/
+
+    enum class ClawbackClaimableBalanceResultCode : qint32
+    {
+        // codes considered as "success" for the operation
+        CLAWBACK_CLAIMABLE_BALANCE_SUCCESS = 0,
+
+        // codes considered as "failure" for the operation
+        CLAWBACK_CLAIMABLE_BALANCE_DOES_NOT_EXIST = -1,
+        CLAWBACK_CLAIMABLE_BALANCE_NOT_ISSUER = -2,
+        CLAWBACK_CLAIMABLE_BALANCE_NOT_CLAWBACK_ENABLED = -3
+    };
+    XDR_SERIALIZER(ClawbackClaimableBalanceResultCode)
+
+    struct ClawbackClaimableBalanceResult
+    {
+        ClawbackClaimableBalanceResultCode code;
+//        union{
+//            case CLAWBACK_CLAIMABLE_BALANCE_SUCCESS:
+//                void;
+//            default:
+//                void;
+//        };
+
+    };
+    inline QDataStream &operator<<(QDataStream &out, const  ClawbackClaimableBalanceResult &obj) {
+        out << obj.code;
+       return out;
+    }
+
+    inline QDataStream &operator>>(QDataStream &in,  ClawbackClaimableBalanceResult &obj) {
+        in >> obj.code;
+       return in;
+    }
+
+    /******* SetTrustLineFlags Result ********/
+
+    enum class SetTrustLineFlagsResultCode : qint32
+    {
+        // codes considered as "success" for the operation
+        SET_TRUST_LINE_FLAGS_SUCCESS = 0,
+
+        // codes considered as "failure" for the operation
+        SET_TRUST_LINE_FLAGS_MALFORMED = -1,
+        SET_TRUST_LINE_FLAGS_NO_TRUST_LINE = -2,
+        SET_TRUST_LINE_FLAGS_CANT_REVOKE = -3,
+        SET_TRUST_LINE_FLAGS_INVALID_STATE = -4
+    };
+    XDR_SERIALIZER(SetTrustLineFlagsResultCode)
+
+    union SetTrustLineFlagsResult
+    {
+        SetTrustLineFlagsResultCode code;
+//        union{
+//            case SET_TRUST_LINE_FLAGS_SUCCESS:
+//                void;
+//            default:
+//                void;
+//        };
+    };
+    inline QDataStream &operator<<(QDataStream &out, const  SetTrustLineFlagsResult &obj) {
+        out << obj.code;
+       return out;
+    }
+
+    inline QDataStream &operator>>(QDataStream &in,  SetTrustLineFlagsResult &obj) {
+        in >> obj.code;
+       return in;
+    }
+
+
     /* High level Operation Result */
 
     enum class OperationResultCode : qint32
@@ -2019,6 +2212,9 @@ namespace stellar
         ManageDataResult manageDataResult;
         BumpSequenceResult bumpSequenceResult;
         CreateClaimableBalanceResult createClaimableBalanceResult;
+        ClawbackResult clawbackResult;
+        ClawbackClaimableBalanceResult clawbackClaimableBalanceResult;
+        SetTrustLineFlagsResult setTrustLineFlagsResult;
         //no trivial
         ManageBuyOfferResult manageBuyOfferResult;
         PaymentResult paymentResult;
@@ -2081,6 +2277,12 @@ namespace stellar
                 out << obj.pathPaymentStrictSendResult; break;
             case OperationType::CREATE_CLAIMABLE_BALANCE:
                 out << obj.createClaimableBalanceResult; break;
+            case OperationType::CLAWBACK:
+                out << obj.clawbackResult; break;
+            case OperationType::CLAWBACK_CLAIMABLE_BALANCE:
+                out << obj.clawbackClaimableBalanceResult; break;
+            case OperationType::SET_TRUST_LINE_FLAGS:
+                out << obj.setTrustLineFlagsResult; break;
             default:break;
             }
             break;
@@ -2136,6 +2338,12 @@ namespace stellar
                 in >> obj.pathPaymentStrictSendResult; break;
             case OperationType::CREATE_CLAIMABLE_BALANCE:
                 in >> obj.createClaimableBalanceResult; break;
+            case OperationType::CLAWBACK:
+                in >> obj.clawbackResult; break;
+            case OperationType::CLAWBACK_CLAIMABLE_BALANCE:
+                in >> obj.clawbackClaimableBalanceResult; break;
+            case OperationType::SET_TRUST_LINE_FLAGS:
+                in >> obj.setTrustLineFlagsResult; break;
             default: break;
             }
             break;

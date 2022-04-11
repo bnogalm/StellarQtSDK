@@ -22,8 +22,12 @@
 #include "../../src/responses/operations/managesellofferoperationresponse.h"
 #include "../../src/responses/operations/managebuyofferoperationresponse.h"
 #include "../../src/responses/operations/bumpsequenceoperationresponse.h"
-#include "../../src/responses/genericoperation.h"
 
+#include "../../src/responses/operations/clawbackclaimablebalanceoperationresponse.h"
+#include "../../src/responses/operations/clawbackoperationresponse.h"
+#include "../../src/responses/operations/settrustlineflagsoperationresponse.h"
+
+#include "../../src/responses/genericoperation.h"
 
 #include "../../src/asset.h"
 #include "../../src/assettypenative.h"
@@ -985,6 +989,140 @@ private slots:
       QCOMPARE(operation.getBumpTo(), 79473726952833048L);
     }
 
+    void testDeserializeClawbackClaimableBalanceOperation() {
+      QByteArray json = "{\n"
+          "  \"_links\": {\n"
+          "    \"effects\": {\n"
+          "      \"href\": \"/operations/12884914177/effects/{?cursor,limit,order}\",\n"
+          "      \"templated\": true\n"
+          "    },\n"
+          "    \"precedes\": {\n"
+          "      \"href\": \"/operations?cursor=12884914177\\u0026order=asc\"\n"
+          "    },\n"
+          "    \"self\": {\n"
+          "      \"href\": \"/operations/12884914177\"\n"
+          "    },\n"
+          "    \"succeeds\": {\n"
+          "      \"href\": \"/operations?cursor=12884914177\\u0026order=desc\"\n"
+          "    },\n"
+          "    \"transaction\": {\n"
+          "      \"href\": \"/transactions/12884914176\"\n"
+          "    }\n"
+          "  },\n"
+          "  \"id\": 12884914177,\n"
+          "  \"paging_token\": \"12884914177\",\n"
+          "  \"type_i\": 20,\n"
+          "  \"type\": \"clawback_claimable_balance\",\n"
+          "  \"balance_id\": \"00000000178826fbfe339e1f5c53417c6fedfe2c05e8bec14303143ec46b38981b09c3f9\"\n"
+          "}";
+
+      ClawbackClaimableBalanceOperationResponse operation;
+      operation.loadFromJson(json);
+
+      QCOMPARE(operation.getId(), 12884914177L);
+      QCOMPARE(operation.getBalanceID(), "00000000178826fbfe339e1f5c53417c6fedfe2c05e8bec14303143ec46b38981b09c3f9");
+      QCOMPARE(operation.getType(), "clawback_claimable_balance");
+    }
+
+    void testDeserializeClawbackOperation() {
+      QByteArray json = "{\n"
+          "  \"_links\": {\n"
+          "    \"effects\": {\n"
+          "      \"href\": \"/operations/12884914177/effects/{?cursor,limit,order}\",\n"
+          "      \"templated\": true\n"
+          "    },\n"
+          "    \"precedes\": {\n"
+          "      \"href\": \"/operations?cursor=12884914177\\u0026order=asc\"\n"
+          "    },\n"
+          "    \"self\": {\n"
+          "      \"href\": \"/operations/12884914177\"\n"
+          "    },\n"
+          "    \"succeeds\": {\n"
+          "      \"href\": \"/operations?cursor=12884914177\\u0026order=desc\"\n"
+          "    },\n"
+          "    \"transaction\": {\n"
+          "      \"href\": \"/transactions/12884914176\"\n"
+          "    }\n"
+          "  },\n"
+          "  \"id\": 12884914177,\n"
+          "  \"paging_token\": \"12884914177\",\n"
+          "  \"type_i\": 19,\n"
+          "  \"type\": \"clawback\",\n"
+          "  \"asset_type\": \"credit_alphanum4\",\n"
+          "  \"asset_code\": \"EUR\",\n"
+          "  \"asset_issuer\": \"GCWVFBJ24754I5GXG4JOEB72GJCL3MKWC7VAEYWKGQHPVH3ENPNBSKWS\",\n"
+          "  \"from\": \"GDPFGP4IPE5DXG6XRXC4ZBUI43PAGRQ5VVNJ3LJTBXDBZ4ITO6HBHNSF\"\n"
+          "}";
+
+      ClawbackOperationResponse operation;
+      operation.loadFromJson(json);
+
+      QCOMPARE(operation.getId(), 12884914177L);
+      QCOMPARE(operation.getFrom(), "GDPFGP4IPE5DXG6XRXC4ZBUI43PAGRQ5VVNJ3LJTBXDBZ4ITO6HBHNSF");
+      QCOMPARE(operation.getType(), "clawback");
+      QVERIFY(operation.getAsset()->equals(Asset::createNonNativeAsset("EUR", "GCWVFBJ24754I5GXG4JOEB72GJCL3MKWC7VAEYWKGQHPVH3ENPNBSKWS")));
+      QCOMPARE(operation.getAssetIssuer(), "GCWVFBJ24754I5GXG4JOEB72GJCL3MKWC7VAEYWKGQHPVH3ENPNBSKWS");
+      QCOMPARE(operation.getAssetCode(), "EUR");
+      QCOMPARE(operation.getAssetType(), "credit_alphanum4");
+    }
+
+    void testDeserializeSetTrustlineFlagsOperation() {
+      QByteArray json = "{\n"
+          "  \"_links\": {\n"
+          "    \"effects\": {\n"
+          "      \"href\": \"/operations/12884914177/effects/{?cursor,limit,order}\",\n"
+          "      \"templated\": true\n"
+          "    },\n"
+          "    \"precedes\": {\n"
+          "      \"href\": \"/operations?cursor=12884914177\\u0026order=asc\"\n"
+          "    },\n"
+          "    \"self\": {\n"
+          "      \"href\": \"/operations/12884914177\"\n"
+          "    },\n"
+          "    \"succeeds\": {\n"
+          "      \"href\": \"/operations?cursor=12884914177\\u0026order=desc\"\n"
+          "    },\n"
+          "    \"transaction\": {\n"
+          "      \"href\": \"/transactions/12884914176\"\n"
+          "    }\n"
+          "  },\n"
+          "  \"id\": 12884914177,\n"
+          "  \"paging_token\": \"12884914177\",\n"
+          "  \"type_i\": 21,\n"
+          "  \"type\": \"set_trust_line_flags\",\n"
+          "  \"asset_type\": \"credit_alphanum4\",\n"
+          "  \"asset_code\": \"EUR\",\n"
+          "  \"asset_issuer\": \"GCWVFBJ24754I5GXG4JOEB72GJCL3MKWC7VAEYWKGQHPVH3ENPNBSKWS\",\n"
+          "  \"set_flags\": [\n"
+          "     4\n"
+          "  ],"
+          "  \"clear_flags\": [\n"
+          "     2\n"
+          "  ],"
+          "  \"set_flags_s\": [\n"
+          "     \"clawback_enabled\"\n"
+          "  ],"
+          "  \"clear_flags_s\": [\n"
+          "     \"authorized_to_maintain_liabilites\"\n"
+          "  ],"
+          "  \"trustor\": \"GDPFGP4IPE5DXG6XRXC4ZBUI43PAGRQ5VVNJ3LJTBXDBZ4ITO6HBHNSF\"\n"
+          "}";
+
+      SetTrustLineFlagsOperationResponse operation;
+      operation.loadFromJson(json);
+
+      QCOMPARE(operation.getId(), 12884914177L);
+      QCOMPARE(operation.getTrustor(), "GDPFGP4IPE5DXG6XRXC4ZBUI43PAGRQ5VVNJ3LJTBXDBZ4ITO6HBHNSF");
+      QCOMPARE(operation.getType(), "set_trust_line_flags");
+      QVERIFY(operation.getAsset()->equals(Asset::createNonNativeAsset("EUR", "GCWVFBJ24754I5GXG4JOEB72GJCL3MKWC7VAEYWKGQHPVH3ENPNBSKWS")));
+      QCOMPARE(operation.getAssetIssuer(), "GCWVFBJ24754I5GXG4JOEB72GJCL3MKWC7VAEYWKGQHPVH3ENPNBSKWS");
+      QCOMPARE(operation.getAssetCode(), "EUR");
+      QCOMPARE(operation.getAssetType(), "credit_alphanum4");
+      QCOMPARE(operation.getSetFlags(), QList<qint32>() << 4);
+      QCOMPARE(operation.getClearFlags(), QList<qint32>() << 2);
+      QCOMPARE(operation.getSetFlagStrings(), QStringList() << "clawback_enabled");
+      QCOMPARE(operation.getClearFlagStrings(), QStringList()<< "authorized_to_maintain_liabilites");
+    }
 };
 ADD_TEST(OperationDeserializerTest)
 #endif // OPERATIONDESERIALIZERTEST_H
