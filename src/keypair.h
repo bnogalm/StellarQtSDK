@@ -32,7 +32,7 @@ public:
      * @param publicKey
      * @param privateKey
      */
-    KeyPair(quint8* publicKey,quint8* privateKey=nullptr);
+    KeyPair(const quint8* publicKey, const quint8 *privateKey=nullptr);
 
     /** Creates a new KeyPair from the given strkey encoded Stellar account ID.
      * Some requesters and API classes requires KeyPair class, if KeyPair is not going to be used any longer, this constructor allow to build a keypair on the stack
@@ -122,11 +122,11 @@ public:
 
      stellar::SignerKey getXdrSignerKey();
 
-     static KeyPair* fromXdrPublicKey(stellar::PublicKey& key);
+     static KeyPair* fromXdrPublicKey(const stellar::PublicKey& key);
 
-     static KeyPair* fromXdrMutexPublicKey(stellar::MuxedAccount& key);
+     static KeyPair* fromXdrMutexPublicKey(const stellar::MuxedAccount &key);
 
-     static KeyPair* fromXdrSignerKey(stellar::SignerKey key);
+     static KeyPair* fromXdrSignerKey(const stellar::SignerKey key);
 
      /**
       * Sign the provided data with the keypair's private key.

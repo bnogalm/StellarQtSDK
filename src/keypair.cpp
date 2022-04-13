@@ -44,7 +44,7 @@ KeyPair::~KeyPair()
 }
 
 
-KeyPair::KeyPair(quint8 *publicKey, quint8 *privateKey)
+KeyPair::KeyPair(const quint8 *publicKey,const quint8 *privateKey)
 {
     m_publicKey = new quint8[keyLength];
     memcpy(m_publicKey,publicKey,keyLength);
@@ -164,7 +164,7 @@ stellar::SignatureHint KeyPair::getSignatureHint() {
 stellar::PublicKey KeyPair::getXdrPublicKey() {
     stellar::PublicKey publicKey;
     publicKey.type = stellar::PublicKeyType::PUBLIC_KEY_TYPE_ED25519;
-    memcpy(publicKey.ed25519,this->getPublicKey().data(),keyLength);
+    memcpy(publicKey.ed25519,m_publicKey,keyLength);
     return publicKey;
 }
 
@@ -172,27 +172,27 @@ stellar::MuxedAccount KeyPair::getXdrMutexPublicKey()
 {
     stellar::MuxedAccount mutexPublicKey;
     mutexPublicKey.type = stellar::CryptoKeyType::KEY_TYPE_ED25519;
-    memcpy(mutexPublicKey.ed25519,this->getPublicKey().data(),keyLength);
+    memcpy(mutexPublicKey.ed25519,m_publicKey,keyLength);
     return mutexPublicKey;
 }
 
 stellar::SignerKey KeyPair::getXdrSignerKey() {
     stellar::SignerKey signerKey;
     signerKey.type = stellar::SignerKeyType::SIGNER_KEY_TYPE_ED25519;
-    memcpy(signerKey.ed25519,this->getPublicKey().data(),keyLength);
+    memcpy(signerKey.ed25519,m_publicKey,keyLength);
     return signerKey;
 }
 
-KeyPair *KeyPair::fromXdrPublicKey(stellar::PublicKey& key) {
+KeyPair *KeyPair::fromXdrPublicKey(const stellar::PublicKey &key) {
     return new KeyPair(key.ed25519);
 }
 
-KeyPair *KeyPair::fromXdrMutexPublicKey(stellar::MuxedAccount &key)
+KeyPair *KeyPair::fromXdrMutexPublicKey(const stellar::MuxedAccount &key)
 {
     return new KeyPair(key.ed25519);
 }
 
-KeyPair *KeyPair::fromXdrSignerKey(stellar::SignerKey key) {
+KeyPair *KeyPair::fromXdrSignerKey(const stellar::SignerKey key) {
     return new KeyPair(key.ed25519);
 }
 
