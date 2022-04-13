@@ -5,7 +5,10 @@
 #include <QDateTime>
 #include "account.h"
 #include "transaction.h"
+#include "asset.h"
+#include "assettypecreditalphanum.h"
 #include "managedataoperation.h"
+
 #include <QtNetwork/qpassworddigestor.h>
 
 Util::Util()
@@ -84,6 +87,29 @@ QByteArray Util::mnemonicToBIP39Seed(QString words, QString passphrase)
                                        , acceptedWords.join(' ').toUtf8()
                                        , passphrase.prepend(QString("mnemonic")).toUtf8()
                                        ,2048,64);
+}
+
+void Util::claimableBalanceIdToXDR(QString balanceID, stellar::ClaimableBalanceID &balanceIdToFill) {
+    QByteArray balanceIDDecoded = QByteArray::fromHex(balanceID.toLower().toLatin1());
+    if(balanceIDDecoded.length()!=sizeof(stellar::ClaimableBalanceID))
+        throw std::runtime_error("invalid balance id length");
+    balanceIdToFill.type = *((stellar::ClaimableBalanceIDType*)(balanceIDDecoded.data()));
+    memcpy(balanceIdToFill.v0,balanceIDDecoded.data()+sizeof(stellar::ClaimableBalanceIDType),sizeof(balanceIdToFill.v0));
+
+}
+
+QString Util::xdrToClaimableBalanceId(stellar::ClaimableBalanceID &balanceId) {
+    //byteorder??, verify when v1 exists
+    QString res = QString("%1").arg((int)balanceId.type, 8, 16, QLatin1Char('0'));
+    res.append(QByteArray::fromRawData((char*)balanceId.v0,sizeof(balanceId.v0)).toHex());
+    return res;
+}
+
+AssetTypeCreditAlphaNum *Util::assertNonNativeAsset(Asset *asset) {
+    if (AssetTypeCreditAlphaNum* res = dynamic_cast<AssetTypeCreditAlphaNum*>(asset)) {
+        return res;
+    }
+    throw std::runtime_error("native assets are not supported");
 }
 
 QString checkNotNull(QString p, const char *error)

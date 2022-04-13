@@ -48,6 +48,10 @@
 #include "effects/signersponsorshipcreatedeffectresponse.h"
 #include "effects/signersponsorshipremovedeffectresponse.h"
 #include "effects/signersponsorshipupdatedeffectresponse.h"
+#include "effects/trustlineflagsupdatedeffectresponse.h"
+#include "effects/claimablebalanceclawedbackeffectresponse.h"
+
+
 EffectsPage::EffectsPage(QNetworkReply *reply)
     :Page<EffectResponse>(reply)
 {
@@ -99,6 +103,8 @@ void EffectsPage::processRecords(const QJsonArray &records)
           effect= new TrustlineDeauthorizedEffectResponse();break;
         case 25:
           effect= new TrustlineAuthorizedToMaintainLiabilitiesEffectResponse();break;
+        case 26:
+          effect= new TrustlineFlagsUpdatedEffectResponse();break;
 
         // Trading effects
         case 30:
@@ -156,6 +162,8 @@ void EffectsPage::processRecords(const QJsonArray &records)
           effect= new SignerSponsorshipUpdatedEffectResponse();break;
         case 74:
           effect= new SignerSponsorshipRemovedEffectResponse();break;
+        case 80:
+          effect= new ClaimableBalanceClawedBackEffectResponse();break;
         default:
             throw std::runtime_error("Invalid effect type");
         }

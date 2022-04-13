@@ -2,12 +2,13 @@
 #define ALLOWTRUSTOPERATION_H
 #include "operation.h"
 
-
 /**
+ * @deprecated As of release 0.24.0, replaced by {@link SetTrustlineFlagsOperation}
+ *
  * Represents <a href="https://www.stellar.org/developers/learn/concepts/list-of-operations.html#allow-trust" target="_blank">AllowTrust</a> operation.
  * @see <a href="https://www.stellar.org/developers/learn/concepts/list-of-operations.html" target="_blank">List of Operations</a>
  */
-class AllowTrustOperation : public Operation
+class Q_DECL_DEPRECATED AllowTrustOperation : public Operation
 {
     KeyPair* m_trustor;
 

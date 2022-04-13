@@ -93,6 +93,45 @@ namespace stellar
        return in;
     }
 
+    struct AssetCode{
+        AssetType type;
+        union{
+            struct{
+                AssetCode4 assetCode;// 1 to 4 characters
+                AccountID issuer;
+            }alphaNum4;
+            struct{
+                AssetCode12 assetCode;// 5 to 12 characters
+                AccountID issuer;
+            }alphaNum12;
+        };
+    };
+    inline QDataStream &operator<<(QDataStream &out, const  AssetCode &obj) {
+        out << obj.type;
+        switch(obj.type){
+        case AssetType::ASSET_TYPE_CREDIT_ALPHANUM4:
+            out << obj.alphaNum4.assetCode << obj.alphaNum4.issuer; break;
+        case AssetType::ASSET_TYPE_CREDIT_ALPHANUM12:
+            out << obj.alphaNum12.assetCode << obj.alphaNum12.issuer; break;
+        default: throw std::runtime_error("invalid assed code"); break;
+        }
+
+       return out;
+    }
+
+    inline QDataStream &operator>>(QDataStream &in,  AssetCode &obj) {
+        in >> obj.type;
+        switch(obj.type){
+        case AssetType::ASSET_TYPE_CREDIT_ALPHANUM4:
+            in >> obj.alphaNum4.assetCode  >> obj.alphaNum4.issuer; break;
+        case AssetType::ASSET_TYPE_CREDIT_ALPHANUM12:
+            in >> obj.alphaNum12.assetCode >> obj.alphaNum12.issuer; break;
+        default: throw std::runtime_error("invalid assed code"); break;//default: break;
+        }
+
+       return in;
+    }
+
 
     // price in fractional representation
     struct alignas(4) Price
@@ -174,10 +213,16 @@ namespace stellar
         // otherwise, authorization cannot be revoked
         AUTH_REVOCABLE_FLAG = 0x2,
         // Once set, causes all AUTH_* flags to be read-only
-        AUTH_IMMUTABLE_FLAG = 0x4
+        AUTH_IMMUTABLE_FLAG = 0x4,
+
+        // Trustlines are created with clawback enabled set to "true",
+        // and claimable balances created from those trustlines are created
+        // with clawback enabled set to "true"
+        AUTH_CLAWBACK_ENABLED_FLAG = 0x8
     };
     //mask for all valid flags
     const qint32 MASK_ACCOUNT_FLAGS = 0x7;
+    const qint32 MASK_ACCOUNT_FLAGS_V16 = 0xF;
 
     // maximum number of signers
     const qint32 MAX_SIGNERS = 20;
@@ -574,6 +619,33 @@ namespace stellar
        return in;
     }
 
+    enum class ClaimableBalanceFlags : qint32
+    {
+        // If set, the issuer account of the asset held by the claimable balance may
+        // clawback the claimable balance
+        CLAIMABLE_BALANCE_CLAWBACK_ENABLED_FLAG = 0x1
+    };
+
+    const qint32 MASK_CLAIMABLE_BALANCE_FLAGS = 0x1;
+
+    struct ClaimableBalanceEntryExtensionV1
+    {
+        // reserved for future use
+        Reserved ext;
+
+        quint32 flags; // see ClaimableBalanceFlags
+    };
+
+    inline QDataStream &operator<<(QDataStream &out, const  ClaimableBalanceEntryExtensionV1 &obj) {
+        out << obj.ext<< obj.flags;
+       return out;
+    }
+
+    inline QDataStream &operator>>(QDataStream &in,  ClaimableBalanceEntryExtensionV1 &obj) {
+        in >> obj.ext>> obj.flags;
+       return in;
+    }
+
     struct ClaimableBalanceEntry
     {
         // Unique identifier for this ClaimableBalanceEntry
@@ -590,15 +662,39 @@ namespace stellar
 
         // reserved for future use
         Reserved ext;
+        union{
+            ClaimableBalanceEntryExtensionV1 v1;
+        };
     };
 
     inline QDataStream &operator<<(QDataStream &out, const  ClaimableBalanceEntry &obj) {
         out << obj.balanceID<< obj.claimants<< obj.asset<< obj.amount<< obj.ext;
+        switch(obj.ext.reserved)
+        {
+        case 1:
+        {
+            out << obj.v1;
+            break;
+        }
+        default:
+        break;
+        }
+
        return out;
     }
 
     inline QDataStream &operator>>(QDataStream &in,  ClaimableBalanceEntry &obj) {
         in >> obj.balanceID>> obj.claimants>> obj.asset>> obj.amount>> obj.ext;
+        switch(obj.ext.reserved)
+        {
+        case 1:
+        {
+            in >> obj.v1;
+            break;
+        }
+        default:
+        break;
+        }
        return in;
     }
 
@@ -628,11 +724,15 @@ namespace stellar
         AUTHORIZED_FLAG = 1,
         // issuer has authorized account to maintain and reduce liabilities for its
         // credit
-        AUTHORIZED_TO_MAINTAIN_LIABILITIES_FLAG = 2
+        AUTHORIZED_TO_MAINTAIN_LIABILITIES_FLAG = 2,
+        // issuer has specified that it may clawback its credit, and that claimable
+        // balances created with its credit may also be clawed back
+        TRUSTLINE_CLAWBACK_ENABLED_FLAG = 4
     };
     //mask for all trustline flags
     const qint32 MASK_TRUSTLINE_FLAGS = 1;
     const qint32 MASK_TRUSTLINE_FLAGS_V13 = 3;
+    const qint32 MASK_TRUSTLINE_FLAGS_V16 = 7;
 
     struct TrustLineEntry
     {

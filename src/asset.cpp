@@ -62,7 +62,7 @@ Asset *Asset::create(QString canonicalForm)
     return Asset::createNonNativeAsset(parts[0], parts[1]);
 }
 
-Asset *Asset::fromXdr(stellar::Asset &xdr) {
+Asset *Asset::fromXdr(const stellar::Asset &xdr) {
     switch (xdr.type) {
     case stellar::AssetType::ASSET_TYPE_NATIVE:
         return new AssetTypeNative();

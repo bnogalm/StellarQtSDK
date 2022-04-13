@@ -7,12 +7,8 @@ ClaimClaimableBalanceOperation::ClaimClaimableBalanceOperation(stellar::ClaimCla
 
 ClaimClaimableBalanceOperation::ClaimClaimableBalanceOperation(QString balanceID)
 {
-    checkNotNull(balanceID, "balanceID cannot be null");
-    m_op.balanceID.type = stellar::ClaimableBalanceIDType::CLAIMABLE_BALANCE_ID_TYPE_V0;
-    QByteArray balanceIDDecoded = QByteArray::fromHex(balanceID.toLower().toLatin1());
-    if(balanceIDDecoded.length()!=sizeof(m_op.balanceID.v0))
-        throw std::runtime_error("invalid balance id length");
-    memcpy(balanceIDDecoded.data(),m_op.balanceID.v0,sizeof(m_op.balanceID.v0));
+    checkNotNull(balanceID, "balanceID cannot be null");    
+    Util::claimableBalanceIdToXDR(balanceID,m_op.balanceID);
 }
 
 void ClaimClaimableBalanceOperation::fillOperationBody(stellar::Operation &operation)
@@ -22,7 +18,7 @@ void ClaimClaimableBalanceOperation::fillOperationBody(stellar::Operation &opera
 }
 
 QString ClaimClaimableBalanceOperation::getBalanceId() {
-    return QString(QByteArray::fromRawData((char*)m_op.balanceID.v0,sizeof(m_op.balanceID.v0)).toHex());
+    return Util::xdrToClaimableBalanceId(m_op.balanceID);
 }
 
 ClaimClaimableBalanceOperation *ClaimClaimableBalanceOperation::build(stellar::ClaimClaimableBalanceOp &op)

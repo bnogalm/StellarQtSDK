@@ -12,7 +12,7 @@ inline QList<T> convert(QVariantList source)
     for(int n = 0;n<source.count();n++){
         T r;
         QVariantMap m = source[n].toMap();
-        for(auto key : m.keys())
+        for(auto& key : m.keys())
         {
             int index = T::staticMetaObject.indexOfProperty(key.toLatin1().data());
             if(index>=T::staticMetaObject.propertyOffset()){
@@ -22,6 +22,15 @@ inline QList<T> convert(QVariantList source)
         }
         res.append(r);
 
+    }
+    return res;
+}
+template<class T>
+inline QList<T> convertPlain(QVariantList source)
+{
+    QList<T> res;
+    for(int n = 0;n<source.count();n++){
+        res.append(source[n].value<T>());
     }
     return res;
 }

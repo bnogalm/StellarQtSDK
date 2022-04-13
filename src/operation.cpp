@@ -27,6 +27,10 @@
 #include "revokesignersponsorshipoperation.h"
 #include "revoketrustlinesponsorshipoperation.h"
 
+#include "clawbackoperation.h"
+#include "clawbackclaimablebalanceoperation.h"
+#include "settrustlineflagsoperation.h"
+
 
 Operation::Operation()
 {
@@ -169,6 +173,16 @@ Operation *Operation::fromXdr(stellar::Operation &xdr) {
           break;
       }
         break;
+
+    case stellar::OperationType::CLAWBACK:
+      operation = ClawbackOperation::build(xdr.operationClawback);
+      break;
+    case stellar::OperationType::CLAWBACK_CLAIMABLE_BALANCE:
+      operation = ClawbackClaimableBalanceOperation::build(xdr.operationClawbackClaimableBalance);
+      break;
+    case stellar::OperationType::SET_TRUST_LINE_FLAGS:
+      operation = SetTrustlineFlagsOperation::build(xdr.operationSetTrustLineFlags);
+      break;
     default:
         throw std::runtime_error("Unknown operation body");
     }
