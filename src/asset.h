@@ -47,7 +47,7 @@ public:
      * Generates Asset object from a given XDR object
      * @param xdr XDR object
      */
-    static Asset* fromXdr(stellar::Asset& xdr);
+    static Asset* fromXdr(const stellar::Asset &xdr);
 
     /**
      * Returns asset type. Possible types:

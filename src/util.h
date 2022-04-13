@@ -5,6 +5,9 @@
 #include <QList>
 #include <QRegularExpression>
 #include "xdr/stellartransaction.h"
+
+class Asset;
+class AssetTypeCreditAlphaNum;
 QString checkNotNull(QString p, const char* error);
 QByteArray checkNotNull(QByteArray p, const char* error);
 
@@ -84,6 +87,13 @@ public:
     enum class SupportedMnemonicLanguages{ EN };
     static QList<QString> mnemonicWords(SupportedMnemonicLanguages language = SupportedMnemonicLanguages::EN);
     static QByteArray mnemonicToBIP39Seed(QString words, QString passphrase=QString(""));
+
+
+    static void claimableBalanceIdToXDR(QString balanceID, stellar::ClaimableBalanceID& balanceIdToFill);
+
+    static QString xdrToClaimableBalanceId(stellar::ClaimableBalanceID& balanceId);
+
+    static AssetTypeCreditAlphaNum* assertNonNativeAsset(Asset* asset);
 
 };
 

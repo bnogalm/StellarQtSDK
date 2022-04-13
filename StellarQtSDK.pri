@@ -28,6 +28,8 @@ SOURCES += \
     $$PWD/src/beginsponsoringfuturereservesoperation.cpp \
     $$PWD/src/claimant.cpp \
     $$PWD/src/claimclaimablebalanceoperation.cpp \
+    $$PWD/src/clawbackclaimablebalanceoperation.cpp \
+    $$PWD/src/clawbackoperation.cpp \
     $$PWD/src/createclaimablebalanceoperation.cpp \
     $$PWD/src/createpassivesellofferoperation.cpp \
     $$PWD/src/endsponsoringfuturereservesoperation.cpp \
@@ -96,6 +98,7 @@ SOURCES += \
     $$PWD/src/revokesignersponsorshipoperation.cpp \
     $$PWD/src/revoketrustlinesponsorshipoperation.cpp \
     $$PWD/src/sep10challenge.cpp \
+    $$PWD/src/settrustlineflagsoperation.cpp \
     $$PWD/src/strkey.cpp \
     $$PWD/src/inflationoperation.cpp \
     $$PWD/src/util.cpp \
@@ -216,6 +219,8 @@ HEADERS += \
     $$PWD/src/beginsponsoringfuturereservesoperation.h \
     $$PWD/src/claimant.h \
     $$PWD/src/claimclaimablebalanceoperation.h \
+    $$PWD/src/clawbackclaimablebalanceoperation.h \
+    $$PWD/src/clawbackoperation.h \
     $$PWD/src/createclaimablebalanceoperation.h \
     $$PWD/src/createpassivesellofferoperation.h \
     $$PWD/src/endsponsoringfuturereservesoperation.h \
@@ -274,6 +279,7 @@ HEADERS += \
     $$PWD/src/revokesignersponsorshipoperation.h \
     $$PWD/src/revoketrustlinesponsorshipoperation.h \
     $$PWD/src/sep10challenge.h \
+    $$PWD/src/settrustlineflagsoperation.h \
     $$PWD/xdr/stellartypes.h \
     $$PWD/src/account.h \
     $$PWD/src/transactionbuilderaccount.h \

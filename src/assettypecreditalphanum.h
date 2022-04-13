@@ -43,5 +43,5 @@ public:
 
     virtual QString toString() const;
 };
-
+AssetTypeCreditAlphaNum* checkNotNull(AssetTypeCreditAlphaNum* asset, const char *error);
 #endif // ASSETTYPECREDITALPHANUM_H

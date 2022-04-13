@@ -42,3 +42,11 @@ QString AssetTypeCreditAlphaNum::toString() const
 {
     return getCode()+":"+this->getIssuer().getAccountId();
 }
+
+AssetTypeCreditAlphaNum *checkNotNull(AssetTypeCreditAlphaNum *asset, const char *error)
+{
+    if(!asset){
+        throw std::runtime_error(error);
+    }
+    return asset;
+}
