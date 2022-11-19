@@ -1,6 +1,6 @@
 #include "assetresponse.h"
 
-AssetResponse::AssetResponse(QNetworkReply *reply):Response(reply),m_asset(nullptr),m_numAccounts(0)
+AssetResponse::AssetResponse(QNetworkReply *reply):Response(reply),m_asset(nullptr),m_numAccounts(0),m_numClaimableBalances(0)
 {
 
 }
@@ -41,6 +41,22 @@ QString AssetResponse::getAmount() const{
 
 int AssetResponse::getNumAccounts() const{
     return m_numAccounts;
+}
+
+AssetResponseAttach::Accounts AssetResponse::getAccounts() const{
+    return m_accounts;
+}
+
+AssetResponseAttach::Balances AssetResponse::getBalances() const{
+    return m_balances;
+}
+
+QString AssetResponse::getClaimableBalancesAmount() const{
+    return m_claimableBalancesAmount;
+}
+
+int AssetResponse::getNumClaimableBalances() {
+    return m_numClaimableBalances;
 }
 
 AssetResponseAttach::Flags AssetResponse::getFlags() const{
@@ -105,6 +121,50 @@ Link AssetResponseAttach::Links::getToml() {
     return m_toml;
 }
 bool AssetResponseAttach::Links::operator !=(AssetResponseAttach::Links& t)
+{
+    Q_UNUSED(t)
+    return true;
+}
+
+AssetResponseAttach::Accounts::Accounts():m_authorized(0),m_authorizedToMaintainLiabilities(0),m_unauthorized(0) {
+
+}
+
+int AssetResponseAttach::Accounts::authorized() {
+    return m_authorized;
+}
+
+int AssetResponseAttach::Accounts::authorizedToMaintainLiabilities() {
+    return m_authorizedToMaintainLiabilities;
+}
+
+int AssetResponseAttach::Accounts::unauthorized() {
+    return m_unauthorized;
+}
+
+bool AssetResponseAttach::Accounts::operator !=(Accounts &t)
+{
+    Q_UNUSED(t)
+    return true;
+}
+
+AssetResponseAttach::Balances::Balances() {
+
+}
+
+QString AssetResponseAttach::Balances::authorized() {
+    return m_authorized;
+}
+
+QString AssetResponseAttach::Balances::authorizedToMaintainLiabilities() {
+    return m_authorizedToMaintainLiabilities;
+}
+
+QString AssetResponseAttach::Balances::unauthorized() {
+    return m_unauthorized;
+}
+
+bool AssetResponseAttach::Balances::operator !=(Balances &t)
 {
     Q_UNUSED(t)
     return true;
