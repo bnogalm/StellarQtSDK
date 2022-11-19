@@ -32,6 +32,12 @@ TransactionsRequestBuilder& TransactionsRequestBuilder::forLedger(qint64 ledgerS
     return *this;
 }
 
+TransactionsRequestBuilder &TransactionsRequestBuilder::forClaimableBalance(QString claimableBalance) {
+    claimableBalance = checkNotNull(claimableBalance, "claimableBalance cannot be null");
+    setSegments(QStringList() << "claimable_balances" << claimableBalance << "transactions");
+    return *this;
+}
+
 Page<TransactionResponse> *TransactionsRequestBuilder::execute(QUrl uri){
     this->setRequestUri(uri);//we overwrite the uri
     return server()->get<Page<TransactionResponse> >(this);

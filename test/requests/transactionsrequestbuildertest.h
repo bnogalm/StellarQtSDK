@@ -42,6 +42,15 @@ private slots:
         QCOMPARE(QString("https://horizon-testnet.stellar.org/accounts/GBRPYHIL2CI3FNQ4BXLFMNDLFJUNPU2HY3ZMFSHONUCEOASW7QC7OX2H/transactions?limit=200&order=desc"), uri.toString());
     }
 
+    void testForClaimableBalance() {
+      Server server("https://horizon-testnet.stellar.org");
+      QUrl uri = server.transactions()
+              .forClaimableBalance("00000000846c047755e4a46912336f56096b48ece78ddb5fbf6d90f0eb4ecae5324fbddb")
+              .limit(200)
+              .order(RequestBuilder::Order::DESC)
+              .buildUri();
+      QCOMPARE(uri.toString(),QString("https://horizon-testnet.stellar.org/claimable_balances/00000000846c047755e4a46912336f56096b48ece78ddb5fbf6d90f0eb4ecae5324fbddb/transactions?limit=200&order=desc"));
+    }
     void testForLedger() {
         Server* server = new Server("https://horizon-testnet.stellar.org");
         QUrl uri = server->transactions()

@@ -39,6 +39,12 @@ OperationsRequestBuilder &OperationsRequestBuilder::forTransaction(QString trans
     return *this;
 }
 
+OperationsRequestBuilder &OperationsRequestBuilder::forClaimableBalance(QString claimableBalance) {
+    claimableBalance = checkNotNull(claimableBalance, "claimableBalance cannot be null");
+    setSegments(QStringList()<<"claimable_balances"<< claimableBalance<< "operations");
+    return *this;
+}
+
 OperationsRequestBuilder &OperationsRequestBuilder::stream()
 {
     setStreamMode();

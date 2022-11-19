@@ -56,6 +56,15 @@ public:
      * @throws TooManyRequestsException when too many requests were sent to the Horizon server.
      * @throws IOException
      */
+
+    /**
+     * Builds request to <code>GET /claimable_balances/{claimable_balance_id}/transactions</code>
+     * @see <a href="https://www.stellar.org/developers/horizon/reference/transactions-for-claimable-balance.html">Transactions for ClaimableBalance</a>
+     * @param claimableBalance Claimable Balance for which to get transactions
+     */
+    TransactionsRequestBuilder& forClaimableBalance(QString claimableBalance);
+
+
     Page<TransactionResponse> *execute(QUrl uri);
 
     //    /**

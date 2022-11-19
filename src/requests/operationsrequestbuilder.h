@@ -61,6 +61,13 @@ public:
           * This mode will keep the connection to horizon open and horizon will continue to return
           * responses as ledgers close.
           */
+
+    /**
+     * Builds request to <code>GET /claimable_balances/{claimable_balance_id}/operations</code>
+     * @see <a href="https://www.stellar.org/developers/horizon/reference/operations-for-claimable-balance.html">Operations for ClaimableBalance</a>
+     * @param claimableBalance Claimable Balance for which to get operations
+     */
+    OperationsRequestBuilder& forClaimableBalance(QString claimableBalance);
     OperationsRequestBuilder &stream();
     /**
        * Requests specific <code>uri</code> and returns {@link Page} of {@link OperationResponse}.
