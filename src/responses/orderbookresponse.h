@@ -23,8 +23,8 @@ public:
     QString getAmount();
     QString getPrice();
     Price getPriceR();
-    bool operator !=(Row& row);
-    bool operator ==(Row& row);
+    bool operator !=(Row const& row) const;
+    bool operator ==(Row const& row) const;
 };
 }
 class Asset;

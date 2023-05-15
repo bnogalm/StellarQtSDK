@@ -134,7 +134,7 @@ FeeBumpTransaction::Builder &FeeBumpTransaction::Builder::setBaseFee(qint64 base
 }
 
 FeeBumpTransaction::Builder &FeeBumpTransaction::Builder::setFeeAccount(QString feeAccount) {
-    if (m_feeAccount != 0) {
+    if (not m_feeAccount.isEmpty()) {
         throw std::runtime_error("fee account has been already been set.");
     }
 

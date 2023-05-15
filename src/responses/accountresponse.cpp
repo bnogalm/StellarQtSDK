@@ -1,7 +1,10 @@
-#include "accountresponse.h"
+#include <QCoreApplication>
+
 #include "../keypair.h"
 #include "../util.h"
-#include <QCoreApplication>
+#include "accountresponse.h"
+#include "assettypenative.h"
+
 static void registerTypes()
 {
     qRegisterMetaType<AccountResponseAttach::Balance>();
@@ -192,7 +195,7 @@ int Balance::getLastModifiedLedger() const
     return m_lastModifiedLedger;
 }
 
-bool Balance::operator !=(Balance &b)
+bool Balance::operator !=(Balance const &b) const
 {
     return (this->m_assetType!=b.m_assetType)
             || (this->m_assetCode!=b.m_assetCode)
@@ -207,7 +210,7 @@ bool Balance::operator !=(Balance &b)
             || (this->m_sponsor!=b.m_sponsor);
 }
 
-bool Balance::operator ==(Balance &b)
+bool Balance::operator ==(Balance const &b) const
 {
     return (this->m_assetType==b.m_assetType)
             && (this->m_assetCode==b.m_assetCode)
@@ -252,7 +255,7 @@ int Signer::getWeight() const{
     return m_weight;
 }
 
-bool Signer::operator !=(Signer &s)
+bool Signer::operator !=(Signer const &s) const
 {
     return (this->m_accountId!=s.m_accountId)
                 || (this->m_type!=s.m_type)
@@ -260,7 +263,7 @@ bool Signer::operator !=(Signer &s)
                 || (this->m_sponsor!=s.m_sponsor);
 }
 
-bool Signer::operator ==(Signer &s)
+bool Signer::operator ==(Signer const &s) const
 {
     return (this->m_accountId==s.m_accountId)
             && (this->m_type==s.m_type)

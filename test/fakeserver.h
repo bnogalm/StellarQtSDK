@@ -1,6 +1,7 @@
 #ifndef FAKESERVER_H
 #define FAKESERVER_H
 
+#include <QRegularExpression>
 #include <QTcpServer>
 #include <QTcpSocket>
 #include <QTest>
@@ -63,10 +64,11 @@ private slots:
         }
     }
     void readClient()
-    {        
+    {
+        static QRegularExpression const whitespace{"[ \r\n][ \r\n]*"};
         QTcpSocket* socket = (QTcpSocket*)sender();
         while (socket->canReadLine()) {
-            QStringList tokens = QString(socket->readLine()).split(QRegExp("[ \r\n][ \r\n]*"));
+            QStringList tokens = QString(socket->readLine()).split(whitespace);
             //qDebug() << "TOKENS "<< tokens;
             if(tokens.size()>=2){
 
