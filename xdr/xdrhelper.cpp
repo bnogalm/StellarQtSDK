@@ -11,14 +11,16 @@ QDataStream &xdr::operator>>(QDataStream &in, xdr::Reserved &obj) {
     return in;
 }
 
-QDataStream &xdr::operator<<(QDataStream &out, const char c)
-{
-    out.writeRawData(&c,1);
-    return out;
-}
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+    QDataStream &xdr::operator<<(QDataStream &out, const char c)
+    {
+        out.writeRawData(&c,1);
+        return out;
+    }
 
-QDataStream &xdr::operator>>(QDataStream &in, char& c)
-{
-    in.readRawData(&c,1);
-    return in;
-}
+    QDataStream &xdr::operator>>(QDataStream &in, char& c)
+    {
+        in.readRawData(&c,1);
+        return in;
+    }
+#endif

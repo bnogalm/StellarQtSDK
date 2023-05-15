@@ -1,11 +1,14 @@
 #ifndef ACCOUNTRESPONSE_H
 #define ACCOUNTRESPONSE_H
-#include "response.h"
-#include "../asset.h"
-#include "../assettypenative.h"
-#include "link.h"
+
 #include <QMetaProperty>
 #include <QVariantMap>
+
+#include "../asset.h"
+#include "keypair.h"
+#include "link.h"
+#include "response.h"
+
 namespace AccountResponseAttach
 {
 /**
@@ -104,8 +107,8 @@ public:
     bool getAuthorizedToMaintainLiabilities() const;
     int getLastModifiedLedger() const;
 
-    bool operator !=(Balance& b);
-    bool operator ==(Balance& b);
+    bool operator !=(Balance const& b) const;
+    bool operator ==(Balance const& b) const;
 
     QString getSponsor() const;
 };
@@ -136,8 +139,8 @@ public:
 
     int getWeight() const;
 
-    bool operator !=(Signer& s);
-    bool operator ==(Signer& s);
+    bool operator !=(Signer const& s) const;
+    bool operator ==(Signer const& s) const;
     QString getSponsor() const;
 };
 

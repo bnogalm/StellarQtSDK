@@ -52,9 +52,12 @@ QByteArray StrKey::encodeCheck(StrKey::VersionByte versionByte, QByteArray data)
 
     //TODO remove CyoEncode encoding, we dont require padding and it just cause problems for just base32 encoding decoding
     int requiresTrim= bytesEncoded.indexOf('=');
-    if(requiresTrim>=0)
+    if (requiresTrim>=0)
     {
         bytesEncoded.resize(requiresTrim);
+    }
+    if (bytesEncoded[bytesEncoded.size() - 1] == '\0') {
+        bytesEncoded.chop(1);
     }
 
     if (VersionByte::SEED == versionByte) {

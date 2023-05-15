@@ -13,6 +13,10 @@ DEFINES += STELLAR_QT_SDK_CLIENT_VERSION=\"\\\"0.3.17\\\"\"
 #DEFINES += STELLAR_QT_DEBUG_NETWORK_REQUESTS
 
 QT *= core network
+versionAtLeast(QT_VERSION, 6) {
+    QT *= core5compat
+}
+
 CONFIG *= c++11
 
 TEMPLATE = app
