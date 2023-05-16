@@ -14,11 +14,11 @@ template<class T>
 struct Optional
 {
 
-    Optional<T>():filled(0)
+    Optional():filled(0)
     {
     }
 
-    Optional<T>(T v):filled(1)
+    Optional(T v):filled(1)
     {
         value = v;
     }
