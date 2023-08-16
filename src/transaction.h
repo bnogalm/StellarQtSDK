@@ -65,6 +65,12 @@ public:
      qint64 getFee() const;
 
      /**
+      * Returns the claimable balance ID for the CreateClaimableBalanceOperation at the given index within the transaction.
+      */
+     QString getClaimableBalanceId(int index);
+
+
+     /**
       * Generates Transaction XDR v0 object.
       */
      stellar::TransactionV0 toV0Xdr() const;

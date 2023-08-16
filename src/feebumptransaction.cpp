@@ -31,8 +31,8 @@ Transaction *FeeBumpTransaction::getInnerTransaction() const
 FeeBumpTransaction *FeeBumpTransaction::fromFeeBumpTransactionEnvelope(stellar::FeeBumpTransactionEnvelope envelope, Network *network)
 {
 
-    Transaction* inner = Transaction::fromV1EnvelopeXdr(envelope.tx.v1, network);
-    QString feeAccount = StrKey::encodeStellarAccountId(StrKey::muxedAccountToAccountId(envelope.tx.feeSource));
+    Transaction* inner = Transaction::fromV1EnvelopeXdr(envelope.tx.v1, network);    
+    QString feeAccount = StrKey::encodeStellarMuxedAccount(envelope.tx.feeSource);
     qint64 fee = envelope.tx.fee;
 
     FeeBumpTransaction* feeBump = new FeeBumpTransaction(feeAccount, fee, inner);
@@ -65,7 +65,7 @@ QByteArray FeeBumpTransaction::signatureBase() const
         QDataStream outputStream(&output,QIODevice::WriteOnly);
         outputStream << payload;
         return output;
-    } catch (std::exception e) {
+    } catch (const std::exception& e) {
         return QByteArray();
     }
 }

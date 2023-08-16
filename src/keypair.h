@@ -8,8 +8,9 @@ class Opertion;
 
 class KeyPair
 {
-
+public:
     const static int keyLength = 32;
+private:
     quint8 *m_publicKey;
     quint8 *m_privateKey;
     QByteArray m_secretSeed;

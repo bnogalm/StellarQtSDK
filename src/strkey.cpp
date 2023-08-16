@@ -20,6 +20,7 @@ StrKey::VersionByte StrKey::decodeVersionByte(QByteArray encoded) {
     switch(decodedVersionByte)
     {
     case StrKey::VersionByte::ACCOUNT_ID:    
+    case StrKey::VersionByte::MUXED_ACCOUNT:
     case StrKey::VersionByte::SEED:
     case StrKey::VersionByte::PRE_AUTH_TX:
     case StrKey::VersionByte::SHA256_HASH:

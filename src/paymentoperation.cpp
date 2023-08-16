@@ -41,7 +41,7 @@ PaymentOperation *PaymentOperation::create(QString destination, Asset *asset, QS
 
 QString PaymentOperation::getDestination() const
 {
-    return StrKey::encodeStellarAccountId(StrKey::muxedAccountToAccountId(m_op.destination));
+    return StrKey::encodeStellarMuxedAccount(m_op.destination);
 }
 
 Asset *PaymentOperation::getAsset() {

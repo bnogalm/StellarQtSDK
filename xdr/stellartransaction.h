@@ -3,6 +3,7 @@
 
 #include "stellarledgerentries.h"
 #include "xdrhelper.h"
+
 namespace stellar
 {
     using namespace xdr;
@@ -12,12 +13,28 @@ namespace stellar
         struct med25519_t{
             quint64 id;
             uint256 ed25519;
+            bool operator ==(const med25519_t& other) const
+            {
+                return other.id==id && (memcmp(other.ed25519, ed25519, sizeof(ed25519))==0);
+            }
         };
         CryptoKeyType type;
         union{
             uint256 ed25519;
             med25519_t med25519;
         };
+        bool operator ==(const MuxedAccount& other) const
+        {
+            if(isMuxed(other.type))
+            {
+                return other.type == type && other.med25519==med25519;
+            }
+            else
+            {
+                return other.type == type && (memcmp(other.ed25519, ed25519, sizeof(ed25519))==0);
+            }
+
+        }
     };
     inline QDataStream &operator<<(QDataStream &out, const  MuxedAccount::med25519_t &obj) {
         out << obj.id<< obj.ed25519;
@@ -53,7 +70,6 @@ namespace stellar
         }
        return in;
     }
-
 
     struct DecoratedSignature
     {

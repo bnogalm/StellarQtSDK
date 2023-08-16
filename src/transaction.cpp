@@ -1,6 +1,7 @@
 #include "transaction.h"
-#include "account.h"
 #include <QDateTime>
+#include "createclaimablebalanceoperation.h"
+#include "accountconverter.h"
 
 quint32 Transaction::Builder::s_defaultOperationFee = Transaction::Builder::BASE_FEE;
 
@@ -39,7 +40,7 @@ QByteArray Transaction::signatureBase() const{
         stellar::TransactionSignaturePayload payload(this->toV1Xdr(), m_network->getNetworkId());
         outputStream << payload;
         return output;
-    } catch (std::exception e) {
+    } catch (...) {
         return QByteArray();
     }
 }
@@ -75,6 +76,40 @@ qint64 Transaction::getFee() const{
     return m_fee;
 }
 
+QString Transaction::getClaimableBalanceId(int index) {
+    if (index < 0 || index >= m_operations.length()) {
+        throw std::runtime_error("index is outside the bounds of the operations within this transaction");
+    }
+    if (!(dynamic_cast<CreateClaimableBalanceOperation*>(m_operations[index]))) {
+        throw std::runtime_error("operation at index is not of type CreateClaimableBalanceOperation");
+    }
+
+    // We mimic the relevant code from Stellar Core
+    // https://github.com/stellar/stellar-core/blob/9f3cc04e6ec02c38974c42545a86cdc79809252b/src/test/TestAccount.cpp#L285
+    //
+    // Note that the source account must be *unmuxed* for this to work.
+
+    stellar::OperationID id;
+    id.type = stellar::EnvelopeType::ENVELOPE_TYPE_OP_ID;
+
+    id.id.opNum = index;
+    id.id.seqNum =getSequenceNumber();
+    id.id.sourceAccount = AccountConverter(false).encode(m_sourceAccount);
+
+
+    stellar::ClaimableBalanceID result;
+    result.type = stellar::ClaimableBalanceIDType::CLAIMABLE_BALANCE_ID_TYPE_V0;
+    QByteArray output = QByteArray::fromRawData((char*)result.v0,sizeof(result.v0));
+    QDataStream outputStream(&output,QIODevice::WriteOnly);
+    outputStream << id;
+
+    QByteArray outputResult;
+    QDataStream outputStreamResult(&outputResult,QIODevice::WriteOnly);
+    outputStreamResult << result;
+
+    return Util::bytesToHex(outputResult).toLower();
+}
+
 stellar::TransactionV0 Transaction::toV0Xdr() const{
 
     stellar::TransactionV0 transaction;
@@ -90,7 +125,7 @@ stellar::TransactionV0 Transaction::toV0Xdr() const{
     transaction.fee = m_fee;
     // sequenceNumber
     transaction.seqNum = m_sequenceNumber;
-    // sourceAccount    
+    // sourceAccount
     stellar::AccountID accountID = StrKey::encodeToXDRAccountId(m_sourceAccount);
     memcpy(transaction.sourceAccountEd25519,accountID.ed25519,sizeof(transaction.sourceAccountEd25519));
     // operations
@@ -142,8 +177,8 @@ Transaction *Transaction::fromV0EnvelopeXdr(stellar::TransactionV0Envelope &enve
 }
 
 Transaction *Transaction::fromV1EnvelopeXdr(stellar::TransactionV1Envelope &envelope, Network *network)
-{
-    QString sourceAccount = StrKey::encodeStellarAccountId(StrKey::muxedAccountToAccountId(envelope.tx.sourceAccount));
+{    
+    QString sourceAccount = StrKey::encodeStellarMuxedAccount(envelope.tx.sourceAccount);
     QVector<Operation*> ops;
     for(auto op : envelope.tx.operations.value)
     {

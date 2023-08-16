@@ -238,7 +238,10 @@ private slots:
 
 
      void testCheckMemoRequiredWithMemoIdAddress()
-     {         
+     {
+         FakeServer fakeServer;
+
+         fakeServer.addPost("/transactions",successTransactionResponse);
          m_server = new Server("http://localhost:8080");
 
          KeyPair* source = KeyPair::fromSecretSeed(QString("SDQXFKA32UVQHUTLYJ42N56ZUEM5PNVVI4XE7EA5QFMLA2DHDCQX3GPY"));
@@ -253,13 +256,34 @@ private slots:
                      .setTimeout(Transaction::Builder::TIMEOUT_INFINITE)
                      .setBaseFee(100)
                      .build();
-             QFAIL("Missing exception");
+             //QFAIL("Missing exception");
          } catch (std::runtime_error e) {
-             qDebug() << "EXCEPTION "<< e.what();
-             QCOMPARE("invalid address length", QString(e.what()));
+             //qDebug() << "EXCEPTION "<< e.what();
+             //QCOMPARE("invalid address length", QString(e.what()));
+             QFAIL("Muxed accounts not working");
          }
 
-         QVERIFY(transaction==nullptr);//we dont even allow to build the transaction if destination is wrong.
+         //QVERIFY(transaction==nullptr);//we dont even allow to build the transaction if destination is wrong.
+         QVERIFY(transaction);//muxed accounts enabled
+//         transaction->sign(source);
+
+//         SubmitTransactionResponse *r=nullptr;
+//         QMetaObject::Connection c = QObject::connect(m_server,&Server::transactionResponse,[&r](SubmitTransactionResponse *response){
+//             r = response;
+
+//         });
+//         m_server->submitTransaction(transaction);
+
+//         WAIT_FOR(!r)
+
+//         QVERIFY(r);
+
+//         r=nullptr;
+
+//         m_server->submitTransaction(feeBump(transaction));
+//         WAIT_FOR(!r)
+
+//         QVERIFY(r);
 
      }
 
