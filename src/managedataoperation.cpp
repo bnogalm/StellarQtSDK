@@ -42,8 +42,9 @@ QByteArray ManageDataOperation::getValue() {
     return QByteArray();
 }
 
-void ManageDataOperation::fillOperationBody(stellar::Operation &operation)
+void ManageDataOperation::fillOperationBody(AccountConverter &accountConverter, stellar::Operation &operation)
 {
+    Q_UNUSED(accountConverter)
     auto& o = operation.fillManageDataOp();
     o = m_op;
 }

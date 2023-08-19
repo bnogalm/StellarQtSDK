@@ -8,7 +8,7 @@ CreateClaimableBalanceOperation::CreateClaimableBalanceOperation(QString amount,
     m_op.amount = Operation::toXdrAmount(amount);
     m_op.asset = asset->toXdr();
     m_op.claimants.clear();
-    for(auto c:claimants)
+    for(const auto& c:claimants)
         m_op.claimants.append(c.toXdr());
 
 }
@@ -36,15 +36,16 @@ QString CreateClaimableBalanceOperation::getAmount() {
 
 QList<Claimant> CreateClaimableBalanceOperation::getClaimants() {
     QList<Claimant> claimants;
-    for(auto c : m_op.claimants.value)
+    for(const auto& c : m_op.claimants.value)
     {
         claimants.append(Claimant::fromXdr(c));
     }
     return claimants;
 }
 
-void CreateClaimableBalanceOperation::fillOperationBody(stellar::Operation &operation)
+void CreateClaimableBalanceOperation::fillOperationBody(AccountConverter &accountConverter, stellar::Operation &operation)
 {
+    Q_UNUSED(accountConverter)
     operation.type = stellar::OperationType::CREATE_CLAIMABLE_BALANCE;
     operation.operationCreateClaimableBalance = m_op;
 }

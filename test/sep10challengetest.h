@@ -2,7 +2,6 @@
 #define SEP10CHALLENGETEST_H
 #include <QObject>
 
-#include "src/util.h"
 #include "src/keypair.h"
 #include "src/transaction.h"
 
@@ -96,7 +95,7 @@ private slots:
                         300
                         );
             QFAIL("Missing exception");
-        } catch (std::runtime_error e) {
+        } catch (const std::runtime_error& e) {
             //"Version byte is invalid"
         }
 
@@ -204,7 +203,7 @@ private slots:
                         webAuthDomain
                         );
             QFAIL("Missing exception");
-        } catch (std::runtime_error e) {
+        } catch (const std::runtime_error& e) {
             //"Version byte is invalid"
         }
     }
@@ -227,7 +226,7 @@ private slots:
         operations[0]->setSourceAccount("MCAAAAAAAAAAAAB7BQ2L7E5NBWMXDUCMZSIPOBKRDSBYVLMXGSSKF6YNPIB7Y77ITKNOG");
 
         Account* account = new Account(KeyPair::fromAccountId(transaction->getSourceAccount()), transaction->getSequenceNumber());
-        Transaction* withMuxedClient = Transaction::Builder(account,transaction->getNetwork())
+        Transaction* withMuxedClient = Transaction::Builder(AccountConverter().enableMuxed(), account,transaction->getNetwork())
                 .setBaseFee(transaction->getFee())
                 .addOperation(operations[0])
                 .addMemo(transaction->getMemo())
@@ -245,7 +244,7 @@ private slots:
                         webAuthDomain
                         );
             QFAIL("Missing exception");
-        } catch (std::runtime_error e) {
+        } catch (const std::runtime_error& e) {
             //"invalid address length: MCAAAAAAAAAAAAB7BQ2L7E5NBWMXDUCMZSIPOBKRDSBYVLMXGSSKF6YNPIB7Y77ITKNOG"
         }
     }
@@ -293,7 +292,7 @@ private slots:
         manageDataOperation1->setSourceAccount(client->getAccountId());
 
 
-        Transaction* transaction = Transaction::Builder(sourceAccount)
+        Transaction* transaction = Transaction::Builder(AccountConverter().enableMuxed(), sourceAccount)
                 .setBaseFee(100)
                 .addOperation(manageDataOperation1)
                 .addMemo(Memo::none())
@@ -304,7 +303,7 @@ private slots:
         try {
             Sep10Challenge::readChallengeTransaction(transaction->toEnvelopeXdrBase64(), server->getAccountId(), domainName, webAuthDomain);
             QFAIL("Missing exception");
-        } catch (std::runtime_error e) {
+        } catch (const std::runtime_error& e) {
             //Transaction not signed by server
         }
     }
@@ -330,7 +329,7 @@ private slots:
         try {
             Sep10Challenge::readChallengeTransaction(challenge, server->getAccountId(),  domainName, webAuthDomain);
             QFAIL("Missing exception");
-        } catch (std::runtime_error) {
+        } catch (const std::runtime_error&) {
 
         }
     }
@@ -355,7 +354,7 @@ private slots:
         try {
             Sep10Challenge::readChallengeTransaction(transaction->toEnvelopeXdrBase64(), KeyPair::random()->getAccountId(), domainName, webAuthDomain);
             QFAIL("Missing exception");
-        } catch (std::runtime_error) {
+        } catch (const std::runtime_error&) {
             //"Transaction source account is not equal to server's account."
         }
     }
@@ -380,7 +379,7 @@ private slots:
         ManageDataOperation* manageDataOperation1 = ManageDataOperation::create(domainName + " auth", encodedNonce);
         manageDataOperation1->setSourceAccount(client->getAccountId());
 
-        Transaction* transaction = Transaction::Builder(sourceAccount)
+        Transaction* transaction = Transaction::Builder(AccountConverter().enableMuxed(), sourceAccount)
                 .setBaseFee(100)
                 .addTimeBounds(new TimeBounds(now,end))
                 .addMemo(Memo::none())
@@ -392,7 +391,7 @@ private slots:
         try {
             Sep10Challenge::readChallengeTransaction(challenge, server->getAccountId(), domainName , webAuthDomain);
             QFAIL("Missing exception");
-        } catch (std::runtime_error) {
+        } catch (const std::runtime_error&) {
             //"The transaction sequence number should be zero."
         }
     }
@@ -417,7 +416,7 @@ private slots:
         operation->setSourceAccount(client->getAccountId());
 
 
-        Transaction* transaction = Transaction::Builder(sourceAccount)
+        Transaction* transaction = Transaction::Builder(AccountConverter().enableMuxed(), sourceAccount)
                 .setBaseFee(100)
                 .addTimeBounds(new TimeBounds(now,end))
                 .addMemo(Memo::none())
@@ -431,7 +430,7 @@ private slots:
         try {
             Sep10Challenge::readChallengeTransaction(challenge, server->getAccountId(), domainName ,webAuthDomain);
             QFAIL("Missing exception");
-        } catch (std::runtime_error) {
+        } catch (const std::runtime_error&) {
             //"Transaction requires non-infinite timebounds."
         }
     }
@@ -455,7 +454,7 @@ private slots:
         ManageDataOperation* operation = ManageDataOperation::create(domainName + " auth", encodedNonce);
         operation->setSourceAccount(client->getAccountId());
         try {
-            Transaction* transaction = Transaction::Builder(sourceAccount)
+            Transaction* transaction = Transaction::Builder(AccountConverter().enableMuxed(), sourceAccount)
                     .setBaseFee(100)
                     .addMemo(Memo::none())
                     .addOperation(operation)
@@ -465,7 +464,7 @@ private slots:
             //            QString challenge = transaction->toEnvelopeXdrBase64();
             //            Sep10Challenge::readChallengeTransaction(challenge, server->getAccountId(), domainName);
             QFAIL("Missing exception");
-        } catch (std::runtime_error) {
+        } catch (const std::runtime_error&) {
             //"Transaction requires timebounds."
         }
     }
@@ -491,7 +490,7 @@ private slots:
         operation->setSourceAccount(client->getAccountId());
 
 
-        Transaction* transaction = Transaction::Builder(sourceAccount)
+        Transaction* transaction = Transaction::Builder(AccountConverter().enableMuxed(), sourceAccount)
                 .setBaseFee(100)
                 .addMemo(Memo::none())
                 .addTimeBounds(new TimeBounds(now,end))
@@ -505,7 +504,7 @@ private slots:
         try {
             Sep10Challenge::readChallengeTransaction(challenge, server->getAccountId(), domainName , webAuthDomain);
             QFAIL("Missing exception");
-        } catch (std::runtime_error) {
+        } catch (const std::runtime_error&) {
             //"Transaction is not within range of the specified timebounds."
         }
 
@@ -531,7 +530,7 @@ private slots:
         operation->setSourceAccount(client->getAccountId());
 
 
-        Transaction* transaction = Transaction::Builder(sourceAccount)
+        Transaction* transaction = Transaction::Builder(AccountConverter().enableMuxed(), sourceAccount)
                 .setBaseFee(100)
                 .addMemo(Memo::none())
                 .addTimeBounds(new TimeBounds(now,end))
@@ -545,7 +544,7 @@ private slots:
         try {
             Sep10Challenge::readChallengeTransaction(challenge, server->getAccountId(), domainName , webAuthDomain);
             QFAIL("Missing exception");
-        } catch (std::runtime_error) {
+        } catch (const std::runtime_error&) {
             //Transaction is not within range of the specified timebounds."
         }
     }
@@ -568,7 +567,7 @@ private slots:
         Account* sourceAccount = new Account(server, -1L);
         ManageDataOperation* operation1 = ManageDataOperation::create(domainName + " auth", encodedNonce);
 
-        Transaction* transaction = Transaction::Builder(sourceAccount)
+        Transaction* transaction = Transaction::Builder(AccountConverter().enableMuxed(), sourceAccount)
                 .setBaseFee(100)
                 .addMemo(Memo::none())
                 .addTimeBounds(new TimeBounds(now,end))
@@ -580,7 +579,7 @@ private slots:
         try {
             Sep10Challenge::readChallengeTransaction(challenge, server->getAccountId(), domainName , webAuthDomain);
             QFAIL("Missing exception");
-        } catch (std::runtime_error) {
+        } catch (const std::runtime_error&) {
             //"Operation should have a source account."
         }
     }
@@ -598,7 +597,7 @@ private slots:
         SetOptionsOperation* setOptionsOperation = SetOptionsOperation::create();
         setOptionsOperation->setSourceAccount(client->getAccountId());
 
-        Transaction* transaction = Transaction::Builder(sourceAccount)
+        Transaction* transaction = Transaction::Builder(AccountConverter().enableMuxed(), sourceAccount)
                 .setBaseFee(100)
                 .addMemo(Memo::none())
                 .addTimeBounds(new TimeBounds(now,end))
@@ -610,7 +609,7 @@ private slots:
         try {
             Sep10Challenge::readChallengeTransaction(challenge, server->getAccountId(), domainName ,webAuthDomain);
             QFAIL("Missing exception");
-        } catch (std::runtime_error) {
+        } catch (const std::runtime_error&) {
             //"Operation type should be ManageData."
         }
     }
@@ -634,7 +633,7 @@ private slots:
         Account* sourceAccount = new Account(server, -1L);
         ManageDataOperation* manageDataOperation1 = ManageDataOperation::create(domainName + " auth", encodedNonce);
 
-        Transaction* transaction = Transaction::Builder(sourceAccount)
+        Transaction* transaction = Transaction::Builder(AccountConverter().enableMuxed(), sourceAccount)
                 .setBaseFee(100)
                 .addMemo(Memo::none())
                 .addTimeBounds(timeBounds)
@@ -646,7 +645,7 @@ private slots:
         try {
             Sep10Challenge::readChallengeTransaction(challenge, server->getAccountId(), domainName , webAuthDomain);
             QFAIL("Missing exception");
-        } catch (std::runtime_error e) {
+        } catch (const std::runtime_error& e) {
             //"Operation should have a source account."
         }
     }
@@ -672,7 +671,7 @@ private slots:
         ManageDataOperation* manageDataOperation1 = ManageDataOperation::create(domainName + " auth", encodedNonce);
         manageDataOperation1->setSourceAccount(client->getAccountId());
 
-        Transaction* transaction = Transaction::Builder(sourceAccount)
+        Transaction* transaction = Transaction::Builder(AccountConverter().enableMuxed(), sourceAccount)
                 .setBaseFee(100)
                 .addMemo(Memo::none())
                 .addTimeBounds(timeBounds)
@@ -684,7 +683,7 @@ private slots:
         try {
             Sep10Challenge::readChallengeTransaction(challenge, server->getAccountId(), domainName, webAuthDomain);
             QFAIL("Missing exception");
-        } catch (std::runtime_error e) {
+        } catch (const std::runtime_error& e) {
             //"Random nonce encoded as base64 should be 64 bytes long."
         }
 
@@ -712,7 +711,7 @@ private slots:
         ManageDataOperation* manageDataOperation1 = ManageDataOperation::create(domainName + " auth", encodedNonce);
         manageDataOperation1->setSourceAccount(client->getAccountId());
 
-        Transaction* transaction = Transaction::Builder(sourceAccount)
+        Transaction* transaction = Transaction::Builder(AccountConverter().enableMuxed(), sourceAccount)
                 .setBaseFee(100)
                 .addMemo(Memo::none())
                 .addTimeBounds(timeBounds)
@@ -724,7 +723,7 @@ private slots:
         try {
             Sep10Challenge::readChallengeTransaction(challenge, server->getAccountId(), domainName, webAuthDomain);
             QFAIL("Missing exception");
-        } catch (std::runtime_error e) {
+        } catch (const std::runtime_error& e) {
             //"Failed to decode random nonce provided in ManageData operation."
         }
     }
@@ -750,7 +749,7 @@ private slots:
         ManageDataOperation* manageDataOperation1 = ManageDataOperation::create(domainName + " auth", encodedNonce);
         manageDataOperation1->setSourceAccount(client->getAccountId());
 
-        Transaction* transaction = Transaction::Builder(sourceAccount)
+        Transaction* transaction = Transaction::Builder(AccountConverter().enableMuxed(), sourceAccount)
                 .setBaseFee(100)
                 .addMemo(Memo::none())
                 .addTimeBounds(timeBounds)
@@ -762,7 +761,7 @@ private slots:
         try {
             Sep10Challenge::readChallengeTransaction(challenge, server->getAccountId(), domainName, webAuthDomain);
             QFAIL("Missing exception");
-        } catch (std::runtime_error e) {
+        } catch (const std::runtime_error& e) {
             //"Random nonce before encoding as base64 should be 48 bytes long."
         }
 
@@ -782,7 +781,7 @@ private slots:
         ManageDataOperation* manageDataOperation1 = ManageDataOperation::create(domainName + " auth");
         manageDataOperation1->setSourceAccount(client->getAccountId());
 
-        Transaction* transaction = Transaction::Builder(sourceAccount)
+        Transaction* transaction = Transaction::Builder(AccountConverter().enableMuxed(), sourceAccount)
                 .setBaseFee(100)
                 .addMemo(Memo::none())
                 .addTimeBounds(timeBounds)
@@ -793,7 +792,7 @@ private slots:
         try {
             Sep10Challenge::readChallengeTransaction(challenge, server->getAccountId(), domainName, webAuthDomain);
             QFAIL("Missing exception");
-        } catch (std::runtime_error) {
+        } catch (const std::runtime_error&) {
             //"The transaction's operation value should not be null."
         }
     }
@@ -822,7 +821,7 @@ private slots:
         manageDataOperation2->setSourceAccount(server->getAccountId());
 
 
-        Transaction* transaction = Transaction::Builder(sourceAccount)
+        Transaction* transaction = Transaction::Builder(AccountConverter().enableMuxed(), sourceAccount)
                 .setBaseFee(100)
                 .addMemo(Memo::none())
                 .addTimeBounds(timeBounds)
@@ -862,7 +861,7 @@ private slots:
         manageDataOperation2->setSourceAccount(client->getAccountId());//<--
 
 
-        Transaction* transaction = Transaction::Builder(sourceAccount)
+        Transaction* transaction = Transaction::Builder(AccountConverter().enableMuxed(), sourceAccount)
                 .setBaseFee(100)
                 .addMemo(Memo::none())
                 .addTimeBounds(timeBounds)
@@ -876,7 +875,7 @@ private slots:
             Sep10Challenge::readChallengeTransaction(challenge, server->getAccountId(), domainName, webAuthDomain);
             QFAIL("Missing exception");
         }
-        catch(std::runtime_error)
+        catch(const std::runtime_error&)
         {
             //Subsequent operations are unrecognized
         }
@@ -905,7 +904,7 @@ private slots:
         ManageDataOperation* manageDataOperation2 = ManageDataOperation::create("key", "value");
 
 
-        Transaction* transaction = Transaction::Builder(sourceAccount)
+        Transaction* transaction = Transaction::Builder(AccountConverter().enableMuxed(), sourceAccount)
                 .setBaseFee(100)
                 .addMemo(Memo::none())
                 .addTimeBounds(timeBounds)
@@ -919,7 +918,7 @@ private slots:
             Sep10Challenge::readChallengeTransaction(challenge, server->getAccountId(), domainName, webAuthDomain);
             QFAIL("Missing exception");
         }
-        catch(std::runtime_error)
+        catch(const std::runtime_error&)
         {
             //"Operation should have a source account."
         }
@@ -947,7 +946,7 @@ private slots:
         BumpSequenceOperation* operation2 = BumpSequenceOperation::create(0L);
         operation2->setSourceAccount(server->getAccountId());
 
-        Transaction* transaction = Transaction::Builder(sourceAccount)
+        Transaction* transaction = Transaction::Builder(AccountConverter().enableMuxed(), sourceAccount)
                 .setBaseFee(100)
                 .addMemo(Memo::none())
                 .addTimeBounds(timeBounds)
@@ -961,7 +960,7 @@ private slots:
             Sep10Challenge::readChallengeTransaction(challenge, server->getAccountId(), domainName, webAuthDomain);
             QFAIL("Missing exception");
         }
-        catch(std::runtime_error)
+        catch(const std::runtime_error&)
         {
             //"Operation type should be ManageData."
         }
@@ -983,7 +982,7 @@ private slots:
            webAuthDomain,
            300
          );
-       } catch (std::runtime_error e) {
+       } catch (const std::runtime_error& e) {
          QFAIL("Should not have thrown any exception.");
        }
 
@@ -1007,13 +1006,13 @@ private slots:
                          webAuthDomain,
                          300
                          );
-         } catch (std::runtime_error e) {
+         } catch (const std::runtime_error& e) {
              QFAIL("Should not have thrown any exception.");
          }
          try {
              Sep10Challenge::readChallengeTransaction(transaction->toEnvelopeXdrBase64(), server->getAccountId(), QStringList()<< "example3.com"<< "example2.com",webAuthDomain);
              QFAIL("Missing exception");
-         } catch (std::runtime_error) {
+         } catch (const std::runtime_error&) {
              //"The transaction's operation key name does not include one of the expected home domains.";
          }
      }
@@ -1033,13 +1032,13 @@ private slots:
                          webAuthDomain,
                          300
                          );
-         } catch (std::runtime_error e) {
+         } catch (const std::runtime_error& e) {
              QFAIL("Should not have thrown any exception.");
          }
          try {
              Sep10Challenge::readChallengeTransaction(transaction->toEnvelopeXdrBase64(), server->getAccountId(), QStringList(), webAuthDomain);
              QFAIL("Missing exception");
-         } catch (std::runtime_error) {
+         } catch (const std::runtime_error&) {
              //"The transaction's operation key name does not include one of the expected home domains."
          }
      }
@@ -1117,7 +1116,7 @@ private slots:
         manageDataOperation2->setSourceAccount(server->getAccountId());
 
 
-        Transaction* transaction = Transaction::Builder(sourceAccount)
+        Transaction* transaction = Transaction::Builder(AccountConverter().enableMuxed(), sourceAccount)
                 .setBaseFee(100)
                 .addMemo(Memo::none())
                 .addTimeBounds(timeBounds)
@@ -1158,7 +1157,7 @@ private slots:
         manageDataOperation2->setSourceAccount(client->getAccountId());
 
 
-        Transaction* transaction = Transaction::Builder(sourceAccount)
+        Transaction* transaction = Transaction::Builder(AccountConverter().enableMuxed(), sourceAccount)
                 .setBaseFee(100)
                 .addMemo(Memo::none())
                 .addTimeBounds(timeBounds)
@@ -1174,7 +1173,7 @@ private slots:
         try {
             Sep10Challenge::verifyChallengeTransactionSigners(transaction->toEnvelopeXdrBase64(), server->getAccountId(), domainName, webAuthDomain, signers);
             QFAIL("Missing exception");
-        } catch (std::runtime_error) {
+        } catch (const std::runtime_error&) {
             //"Subsequent operations are unrecognized."
         }
     }
@@ -1201,7 +1200,7 @@ private slots:
 
         ManageDataOperation* manageDataOperation2 = ManageDataOperation::create("key", "value");
 
-        Transaction* transaction = Transaction::Builder(sourceAccount)
+        Transaction* transaction = Transaction::Builder(AccountConverter().enableMuxed(), sourceAccount)
                 .setBaseFee(100)
                 .addMemo(Memo::none())
                 .addTimeBounds(timeBounds)
@@ -1217,7 +1216,7 @@ private slots:
         try {
             Sep10Challenge::verifyChallengeTransactionSigners(transaction->toEnvelopeXdrBase64(), server->getAccountId(), domainName, webAuthDomain, signers);
             QFAIL("Missing exception");
-        } catch (std::runtime_error) {
+        } catch (const std::runtime_error&) {
             //"Operation should have a source account."
         }
 
@@ -1248,7 +1247,7 @@ private slots:
         op2->setSourceAccount(server->getAccountId());
 
 
-        Transaction* transaction = Transaction::Builder(sourceAccount)
+        Transaction* transaction = Transaction::Builder(AccountConverter().enableMuxed(), sourceAccount)
                 .setBaseFee(100)
                 .addMemo(Memo::none())
                 .addTimeBounds(timeBounds)
@@ -1264,7 +1263,7 @@ private slots:
         try {
             Sep10Challenge::verifyChallengeTransactionSigners(transaction->toEnvelopeXdrBase64(), server->getAccountId(), domainName, webAuthDomain, signers);
             QFAIL("Missing exception");
-        } catch (std::runtime_error) {
+        } catch (const std::runtime_error&) {
             //"Operation type should be ManageData."
         }
     }
@@ -1310,14 +1309,14 @@ private slots:
               invalidWebAuthDomain,
               300
           );
-        } catch (std::runtime_error e) {
+        } catch (const std::runtime_error& e) {
           QFAIL("Should not have thrown any exception.");
         }
 
         try {
           Sep10Challenge::readChallengeTransaction(transaction->toEnvelopeXdrBase64(), server->getAccountId(), domainName, webAuthDomain);
           QFAIL("Missing excepcion");
-        } catch (std::runtime_error e)
+        } catch (const std::runtime_error& e)
         {
           QCOMPARE(QString("'web_auth_domain' operation value does not match."), QString(e.what()));
         }
@@ -1348,7 +1347,7 @@ private slots:
         ManageDataOperation* webAuthDomainOperation = ManageDataOperation::create("web_auth_domain")
             ->setSourceAccount(server->getAccountId());
 
-        Transaction* transaction = Transaction::Builder(sourceAccount)
+        Transaction* transaction = Transaction::Builder(AccountConverter().enableMuxed(), sourceAccount)
                 .addOperation(domainNameOperation)
                 .addOperation(webAuthDomainOperation)
                 .addMemo(Memo::none())
@@ -1363,7 +1362,7 @@ private slots:
         try {
           Sep10Challenge::readChallengeTransaction(challenge, server->getAccountId(), domainName, webAuthDomain);
           QFAIL("Missing excepcion");
-        } catch (std::runtime_error e) {
+        } catch (const std::runtime_error& e) {
             QCOMPARE(QString(e.what()),QString("'web_auth_domain' operation value should not be null."));
         }
 
@@ -1397,7 +1396,7 @@ private slots:
         ManageDataOperation* otherDomainOperation = ManageDataOperation::create("subsequent_op")
             ->setSourceAccount(server->getAccountId());
 
-        Transaction* transaction = Transaction::Builder(sourceAccount)
+        Transaction* transaction = Transaction::Builder(AccountConverter().enableMuxed(), sourceAccount)
                 .addOperation(domainNameOperation)
                 .addOperation(webAuthDomainOperation)
                 .addOperation(otherDomainOperation)
@@ -1438,7 +1437,7 @@ private slots:
         ManageDataOperation* manageDataOperation1 = ManageDataOperation::create(domainName + " auth", encodedNonce);
         manageDataOperation1->setSourceAccount(masterClient->getAccountId());
 
-        Transaction* transaction = Transaction::Builder(sourceAccount)
+        Transaction* transaction = Transaction::Builder(AccountConverter().enableMuxed(), sourceAccount)
                 .setBaseFee(100)
                 .addMemo(Memo::none())
                 .addTimeBounds(timeBounds)
@@ -1455,7 +1454,7 @@ private slots:
         try {
             Sep10Challenge::verifyChallengeTransactionThreshold(transaction->toEnvelopeXdrBase64(), server->getAccountId(), domainName, webAuthDomain, threshold, signers);
             QFAIL("Missing exception");
-        } catch (std::runtime_error e) {
+        } catch (const std::runtime_error& e) {
             //"Transaction not signed by server
         }
     }
@@ -1618,7 +1617,7 @@ private slots:
         try {
             Sep10Challenge::verifyChallengeTransactionThreshold(transaction->toEnvelopeXdrBase64(), server->getAccountId(), domainName, webAuthDomain, threshold, signers);
             QFAIL("Missing exception");
-        } catch (std::runtime_error e) {
+        } catch (const std::runtime_error& e) {
             //"Signers with weight 3 do not meet threshold 7."
         }
     }
@@ -1653,7 +1652,7 @@ private slots:
         try {
             Sep10Challenge::verifyChallengeTransactionThreshold(transaction->toEnvelopeXdrBase64(), server->getAccountId(), domainName, webAuthDomain, threshold, signers);
             QFAIL("Missing exception");
-        } catch (std::runtime_error e) {
+        } catch (const std::runtime_error& e) {
             //"Transaction has unrecognized signatures."
         }
 
@@ -1684,7 +1683,7 @@ private slots:
         try {
             Sep10Challenge::verifyChallengeTransactionThreshold(transaction->toEnvelopeXdrBase64(), server->getAccountId(), domainName, webAuthDomain, threshold, signers);
             QFAIL("Missing exception");
-        } catch (std::runtime_error e) {
+        } catch (const std::runtime_error& e) {
             //"No verifiable signers provided, at least one G... address must be provided."
         }
     }
@@ -1724,7 +1723,7 @@ private slots:
         try {
             Sep10Challenge::verifyChallengeTransactionThreshold(transaction->toEnvelopeXdrBase64(), server->getAccountId(), domainName, webAuthDomain, threshold, signers);
             QFAIL("Missing exception");
-        } catch (std::runtime_error e) {
+        } catch (const std::runtime_error& e) {
             //"No verifiable signers provided, at least one G... address must be provided."
         }
     }
@@ -1783,7 +1782,7 @@ private slots:
         ManageDataOperation* manageDataOperation1 = ManageDataOperation::create(domainName + " auth", encodedNonce);
         manageDataOperation1->setSourceAccount(masterClient->getAccountId());
 
-        Transaction* transaction = Transaction::Builder(sourceAccount)
+        Transaction* transaction = Transaction::Builder(AccountConverter().enableMuxed(), sourceAccount)
                 .setBaseFee(100)
                 .addMemo(Memo::none())
                 .addTimeBounds(timeBounds)
@@ -1804,7 +1803,7 @@ private slots:
         try {
             Sep10Challenge::verifyChallengeTransactionSigners(transaction->toEnvelopeXdrBase64(), server->getAccountId(), domainName, webAuthDomain, signers);
             QFAIL("Missing exception");
-        } catch (std::runtime_error e) {
+        } catch (const std::runtime_error& e) {
             //"Transaction not signed by server
         }
     }
@@ -1859,7 +1858,7 @@ private slots:
         try {
             Sep10Challenge::verifyChallengeTransactionSigners(transaction->toEnvelopeXdrBase64(), server->getAccountId(), domainName, webAuthDomain, signers);
             QFAIL("Missing exception");
-        } catch (std::runtime_error e) {
+        } catch (const std::runtime_error& e) {
             //"Transaction not signed by any client signer."
         }
     }
@@ -1893,7 +1892,7 @@ private slots:
         try {
             Sep10Challenge::verifyChallengeTransactionSigners(transaction->toEnvelopeXdrBase64(), server->getAccountId(), domainName, webAuthDomain, signers);
             QFAIL("Missing exception");
-        } catch (std::runtime_error e) {
+        } catch (const std::runtime_error& e) {
             //"Transaction has unrecognized signatures."
         }
     }
@@ -2051,7 +2050,7 @@ private slots:
             Sep10Challenge::verifyChallengeTransactionSigners(transaction->toEnvelopeXdrBase64(), server->getAccountId(), domainName,webAuthDomain, signers);
             QFAIL("Missing exception");
         }
-        catch(std::runtime_error)
+        catch(const std::runtime_error&)
         {
             //"Transaction not signed by any client signer."
         }
@@ -2118,7 +2117,7 @@ private slots:
         try {
             Sep10Challenge::verifyChallengeTransactionSigners(transaction->toEnvelopeXdrBase64(), server->getAccountId(), domainName,webAuthDomain, signers);
             QFAIL("Missing exception");
-        } catch (std::runtime_error) {
+        } catch (const std::runtime_error&) {
             //"Transaction has unrecognized signatures."
         }
     }
@@ -2147,7 +2146,7 @@ private slots:
         try {
             Sep10Challenge::verifyChallengeTransactionSigners(transaction->toEnvelopeXdrBase64(), server->getAccountId(), domainName,webAuthDomain, signers);
             QFAIL("Missing exception");
-        } catch (std::runtime_error) {
+        } catch (const std::runtime_error&) {
             //"No verifiable signers provided, at least one G... address must be provided."
         }
     }
@@ -2173,7 +2172,7 @@ private slots:
         try {
             Sep10Challenge::verifyChallengeTransactionSigners(transaction->toEnvelopeXdrBase64(), server->getAccountId(), domainName, webAuthDomain,  signers);
             QFAIL("Missing exception");
-        } catch (std::runtime_error) {
+        } catch (const std::runtime_error&) {
             //"No verifiable signers provided, at least one G... address must be provided."
         }
     }
@@ -2200,7 +2199,7 @@ private slots:
         try {
             Sep10Challenge::verifyChallengeTransactionSigners(transaction->toEnvelopeXdrBase64(), server->getAccountId(), domainName, webAuthDomain, signers);
             QFAIL("Missing exception");
-        } catch (std::runtime_error) {
+        } catch (const std::runtime_error&) {
             //"No verifiable signers provided, at least one G... address must be provided."
         }
     }

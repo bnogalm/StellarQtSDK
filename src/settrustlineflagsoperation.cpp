@@ -23,8 +23,9 @@ SetTrustlineFlagsOperation::~SetTrustlineFlagsOperation()
         delete m_asset;
 }
 
-void SetTrustlineFlagsOperation::fillOperationBody(stellar::Operation &operation)
+void SetTrustlineFlagsOperation::fillOperationBody(AccountConverter &accountConverter, stellar::Operation &operation)
 {
+    Q_UNUSED(accountConverter)
     operation.type = stellar::OperationType::SET_TRUST_LINE_FLAGS;
     operation.operationSetTrustLineFlags = m_op;
 }

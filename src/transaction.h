@@ -26,7 +26,7 @@ class Transaction : public AbstractTransaction
     stellar::EnvelopeType m_envelopeType;
     friend class Builder;
     friend class FeeBumpTransaction;
-    Transaction(QString sourceAccount, qint64 fee, qint64 sequenceNumber, QVector<Operation*> operations, Memo* memo, TimeBounds *timeBounds, Network* network);
+    Transaction(AccountConverter accountConverter, QString sourceAccount, qint64 fee, qint64 sequenceNumber, QVector<Operation*> operations, Memo* memo, TimeBounds *timeBounds, Network* network);
 
 
 public:
@@ -73,12 +73,12 @@ public:
      /**
       * Generates Transaction XDR v0 object.
       */
-     stellar::TransactionV0 toV0Xdr() const;
+     stellar::TransactionV0 toV0Xdr(AccountConverter accountConverter = AccountConverter().enableMuxed()) const;
 
      /**
       * Generates Transaction XDR v0 object.
       */
-     stellar::Transaction toV1Xdr() const;
+     stellar::Transaction toV1Xdr(AccountConverter accountConverter = AccountConverter().enableMuxed()) const;
 
      /**
       * Returns new Transaction object from Transaction XDR object.
@@ -89,6 +89,11 @@ public:
 
      static Transaction* fromV0EnvelopeXdr(stellar::TransactionV0Envelope& envelope, Network* network);
      static Transaction* fromV1EnvelopeXdr(stellar::TransactionV1Envelope& envelope, Network* network);
+
+     static Transaction* fromV0EnvelopeXdr(AccountConverter accountConverter, stellar::TransactionV0Envelope& envelope, Network* network);
+     static Transaction* fromV1EnvelopeXdr(AccountConverter accountConverter, stellar::TransactionV1Envelope& envelope, Network* network);
+
+
 
      /**
       * Generates TransactionEnvelope XDR object.
@@ -101,6 +106,7 @@ public:
       */
      class Builder {
 
+         AccountConverter m_accountConverter;
          TransactionBuilderAccount *m_sourceAccount;
          Network* m_network;
          Memo *m_memo;
@@ -120,7 +126,7 @@ public:
         * who will use a sequence number. When build() is called, the account object's sequence number
         * will be incremented.        
         */
-         Builder(TransactionBuilderAccount *sourceAccount, Network* network= Network::current());
+         Builder(AccountConverter accountConverter, TransactionBuilderAccount *sourceAccount, Network* network= Network::current());
         ~Builder();
 
          int getOperationsCount();

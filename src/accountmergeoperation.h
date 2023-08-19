@@ -19,7 +19,7 @@ public:
      * The account that receives the remaining XLM balance of the source account.
      */
     QString getDestination() const;
-    void fillOperationBody(stellar::Operation &operation);
+    void fillOperationBody(AccountConverter& accountConverter, stellar::Operation &operation);
 
     /**
      * @brief build an AccountMergeOperation setting destination from an xdr operation

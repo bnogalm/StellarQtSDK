@@ -35,6 +35,22 @@ public:
      * @param account the XDR MuxedAccount representation of an account
      */
     QString decode(stellar::MuxedAccount account);
+
+    /**
+     * Filter muxed account
+     *
+     * @param account the XDR MuxedAccount representation of an account
+     */
+    stellar::MuxedAccount filter(stellar::MuxedAccount account);
+
+
+    /**
+     * Filter muxed account
+     *
+     * @param account representation of an account M -> G (if muxed is disabled)
+     */
+    QString filter(QString account);
+
 };
 
 #endif // ACCOUNTCONVERTER_H

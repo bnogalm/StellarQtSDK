@@ -20,6 +20,7 @@ include(StellarQtSDK.pri)
 
 
 HEADERS += \
+    test/claimablebalanceidtest.h \
     test/fakeserver.h \
     test/feebumptransactiontest.h \
     test/keypairtest.h \

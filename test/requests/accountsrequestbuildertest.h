@@ -85,7 +85,7 @@ private slots:
             .forAsset(asset)
             .buildUri();
         QFAIL("missing exception");
-      } catch (std::runtime_error e) {
+      } catch (const std::runtime_error& e) {
         //assertEquals("cannot set both sponsor and asset", e.getMessage());
       }
     }
@@ -101,7 +101,7 @@ private slots:
             .forSponsor(sponsor)
             .buildUri();
         QFAIL("missing exception");
-      } catch (std::runtime_error e) {
+      } catch (const std::runtime_error& e) {
         //assertEquals("cannot set both signer and sponsor", e.getMessage());
       }
     }

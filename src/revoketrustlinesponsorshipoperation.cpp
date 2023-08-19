@@ -35,8 +35,9 @@ Asset *RevokeTrustlineSponsorshipOperation::getAsset()
     return m_asset;
 }
 
-void RevokeTrustlineSponsorshipOperation::fillOperationBody(stellar::Operation &op)
+void RevokeTrustlineSponsorshipOperation::fillOperationBody(AccountConverter &accountConverter, stellar::Operation &op)
 {
+    Q_UNUSED(accountConverter)
     auto& o = op.fillRevokeSponsorshipOp();
     o = m_op;
 }

@@ -35,37 +35,37 @@ Predicate *Predicate::create(Predicate &predicate)
         Predicate::AbsBefore &rm = dynamic_cast<Predicate::AbsBefore&>(predicate);
         return new Predicate::AbsBefore(rm);
     }
-    catch (std::bad_cast) {
+    catch (const std::bad_cast&) {
     }
     try {
         Predicate::And &rm = dynamic_cast<Predicate::And&>(predicate);
         return new Predicate::And(rm);
     }
-    catch (std::bad_cast) {
+    catch (const std::bad_cast&) {
     }
     try {
         Predicate::Not &rm = dynamic_cast<Predicate::Not&>(predicate);
         return new Predicate::Not(rm);
     }
-    catch (std::bad_cast) {
+    catch (const std::bad_cast&) {
     }
     try {
         Predicate::Or &rm = dynamic_cast<Predicate::Or&>(predicate);
         return new Predicate::Or(rm);
     }
-    catch (std::bad_cast) {
+    catch (const std::bad_cast&) {
     }
     try {
         Predicate::RelBefore &rm = dynamic_cast<Predicate::RelBefore&>(predicate);
         return new Predicate::RelBefore(rm);
     }
-    catch (std::bad_cast) {
+    catch (const std::bad_cast&) {
     }
     try {
         Predicate::Unconditional &rm = dynamic_cast<Predicate::Unconditional&>(predicate);
         return new Predicate::Unconditional(rm);
     }
-    catch (std::bad_cast) {
+    catch (const std::bad_cast&) {
     }
     throw std::runtime_error("Unsupported predicate");
 }

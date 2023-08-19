@@ -45,7 +45,7 @@ public:
     bool getAuthorizeToMaintainLiabilities() const;
 
 
-    void fillOperationBody(stellar::Operation &operation);
+    void fillOperationBody(AccountConverter& accountConverter, stellar::Operation &operation);
 
 
     static AllowTrustOperation* build(stellar::AllowTrustOp &op);

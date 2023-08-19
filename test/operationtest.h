@@ -477,7 +477,7 @@ private slots:
         Account* account = new Account(source, sequenceNumber);
 
 
-        Transaction* transaction = Transaction::Builder(account).addOperation(new CreateAccountOperation(destination,"2000"))
+        Transaction* transaction = Transaction::Builder(AccountConverter().enableMuxed(), account).addOperation(new CreateAccountOperation(destination,"2000"))
                 .setTimeout(Transaction::Builder::TIMEOUT_INFINITE)
                 .setBaseFee(Transaction::Builder::BASE_FEE)
                 .build();
@@ -728,13 +728,13 @@ private slots:
             Operation::toXdrAmount("0.00000001");
             QFAIL("expected exception");
         }
-        catch (std::exception e) {
+        catch (const std::exception& e) {
         }
         try {
             Operation::toXdrAmount("72991284.30073811");
             QFAIL("expected exception");
         }
-        catch(std::exception e){
+        catch(const std::exception& e){
         }
     }
 
@@ -773,7 +773,7 @@ private slots:
             ClaimClaimableBalanceOperation* operation = ClaimClaimableBalanceOperation::create(balanceId)->setSourceAccount(accountId);
             operation->toXdr();
             QFAIL("missing excepcion");
-        } catch (std::runtime_error e) {
+        } catch (const std::runtime_error& e) {
             //"invalid balanceId"
         }
     }
@@ -786,7 +786,7 @@ private slots:
             ClaimClaimableBalanceOperation* operation = ClaimClaimableBalanceOperation::create(balanceId)->setSourceAccount(accountId);
             operation->toXdr();
             QFAIL("missing excepcion");
-        } catch (std::runtime_error ignored) {
+        } catch (const std::runtime_error& ignored) {
         }
     }
 
@@ -798,7 +798,7 @@ private slots:
             ClaimClaimableBalanceOperation* operation = ClaimClaimableBalanceOperation::create(balanceId)->setSourceAccount(accountId);
             operation->toXdr();
             QFAIL("missing excepcion");
-        } catch (std::runtime_error e) {
+        } catch (const std::runtime_error& e) {
             //"invalid balanceId"
         }
     }
@@ -951,7 +951,7 @@ private slots:
             QString amt = "100";
             ClawbackOperation::create(accountId, Asset::create("native"), amt);
             QFAIL("missing excepcion");
-        } catch (std::runtime_error e) {
+        } catch (const std::runtime_error& e) {
             //"native assets are not supported"
         }
     }
@@ -991,7 +991,7 @@ private slots:
 
             SetTrustlineFlagsOperation::create(accountId, Asset::create("native"), toClear, toSet)->setSourceAccount(source);
             QFAIL("missing excepcion");
-        } catch (std::runtime_error e) {
+        } catch (const std::runtime_error& e) {
             //"native assets are not supported"
         }
     }

@@ -110,13 +110,13 @@ private slots:
         try {
             Util::mnemonicToBIP39Seed("illness spike retreat truth genius clock brain pass fit cave bargain");
             QFAIL("expected exception, not enough words");
-        } catch (std::runtime_error err) {
+        } catch (const std::runtime_error& err) {
 
         }
         try {
             Util::mnemonicToBIP39Seed("illness spieke retreat truth genius clock brain pass fit cave bargain bargain");
             QFAIL("expected exception, invalid word");
-        } catch (std::runtime_error err) {
+        } catch (const std::runtime_error& err) {
 
         }
 

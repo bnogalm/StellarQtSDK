@@ -25,8 +25,9 @@ stellar::SignerKey RevokeSignerSponsorshipOperation::getSigner() const
     return m_op.signer.signerKey;
 }
 
-void RevokeSignerSponsorshipOperation::fillOperationBody(stellar::Operation &op)
+void RevokeSignerSponsorshipOperation::fillOperationBody(AccountConverter &accountConverter, stellar::Operation &op)
 {
+    Q_UNUSED(accountConverter)
     auto& o = op.fillRevokeSponsorshipOp();
     o = m_op;
 }

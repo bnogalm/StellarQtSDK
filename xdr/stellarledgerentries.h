@@ -4,6 +4,8 @@
 #include "xdrhelper.h"
 #include "stellartypes.h"
 #include <stdio.h>
+#include <exception>
+
 namespace stellar
 {
     using namespace xdr;

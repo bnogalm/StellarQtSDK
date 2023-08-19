@@ -13,7 +13,7 @@ public:
     QString getDataName() const;
 
 
-    void fillOperationBody(stellar::Operation &op);
+    void fillOperationBody(AccountConverter& accountConverter, stellar::Operation &op);
     /**
      * Construct a new RevokeDataSponsorshipOperation builder from a RevokeSponsorship XDR.
      * @param op {@link RevokeSponsorshipOp}

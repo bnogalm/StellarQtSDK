@@ -30,7 +30,7 @@ public:
       * Data value
       */
      QByteArray getValue();
-     void fillOperationBody(stellar::Operation &operation);
+     void fillOperationBody(AccountConverter& accountConverter, stellar::Operation &operation);
 
      /**
       * Construct a new ManageOffer builder from a ManageDataOp XDR.

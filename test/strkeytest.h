@@ -38,7 +38,7 @@ private slots:
         try {
             StrKey::decodeCheck(StrKey::VersionByte::SEED, address.toLatin1());
             QFAIL("Should provocate an exception");
-        } catch (std::runtime_error e) {
+        } catch (const std::runtime_error& e) {
             QCOMPARE(QString(e.what()),QString("Version byte is invalid"));
         }
     }
@@ -47,7 +47,7 @@ private slots:
         try {
             StrKey::decodeCheck(StrKey::VersionByte::SEED, seed.toLatin1());
             QFAIL("Should provocate an exception");
-        } catch (std::runtime_error e) {
+        } catch (const std::runtime_error& e) {
 
         }
     }
@@ -65,7 +65,7 @@ private slots:
       try {
         StrKey::decodeVersionByte(QString("INVALIDBXTOC7FIKUO5BOO3OGLK4SF7ZPOBLMQHMZDI45J2Z6INVALID"));
         QFAIL("missing exception");
-      } catch (std::runtime_error e) {
+      } catch (const std::runtime_error& e) {
             QVERIFY(QString(e.what())=="Version byte is invalid");
       }
     }
@@ -141,7 +141,7 @@ private slots:
           try {
               StrKey::decodeCheck(StrKey::VersionByte::ACCOUNT_ID, QByteArray(""));
               QFAIL("missing exception");
-          } catch (std::runtime_error e) {
+          } catch (const std::runtime_error& e) {
           }
       }
 
@@ -149,7 +149,7 @@ private slots:
           try {
               StrKey::decodeCheck(StrKey::VersionByte::ACCOUNT_ID, QString("GA3D5KRYM6CB7OWQ6TWYRR3Z4T7GNZLKERYNZGGA5SOAOPIFY6YQHE55").toLatin1());
               QFAIL("missing exception");
-          } catch (std::runtime_error e) {
+          } catch (const std::runtime_error& e) {
               QCOMPARE(QString(e.what()),QString("Checksum invalid"));
           }
       }
@@ -158,7 +158,7 @@ private slots:
           try {
               StrKey::decodeCheck(StrKey::VersionByte::ACCOUNT_ID, QString("GA3D5KRYM6CB7OWOOOORR3Z4T7GNZLKERYNZGGA5SOAOPIFY6YQHES5").toLatin1());
               QFAIL("missing exception");
-          } catch (std::runtime_error e) {
+          } catch (const std::runtime_error& e) {
           }
       }
 
@@ -188,8 +188,6 @@ private slots:
         stellar::MuxedAccount muxedAccount = StrKey::encodeToXDRMuxedAccount(muxedAddress);
         QCOMPARE(muxedAccount.type, stellar::CryptoKeyType::KEY_TYPE_MUXED_ED25519);
 
-        qDebug() << "COMP " << StrKey::encodeStellarAccountId(account.ed25519) << StrKey::encodeStellarAccountId(muxedAccount.med25519.ed25519)
-                 << StrKey::encodeStellarMuxedAccount(muxedAccount);
         QVERIFY(memcmp(account.ed25519, muxedAccount.med25519.ed25519, sizeof(account.ed25519))==0);
 
         QCOMPARE(muxedAccount.med25519.id,9223372036854775808UL);

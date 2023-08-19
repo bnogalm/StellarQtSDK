@@ -2,8 +2,8 @@
 #include "transaction.h"
 #include "feebumptransaction.h"
 
-AbstractTransaction::AbstractTransaction(Network *network) : m_network(network)
-{
+AbstractTransaction::AbstractTransaction(AccountConverter accountConverter, Network *network) : m_accountConverter(accountConverter), m_network(network)
+{    
     checkNotNull(network, "network cannot be null");
 }
 void AbstractTransaction::sign(KeyPair *signer) {

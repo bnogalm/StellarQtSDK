@@ -19,7 +19,7 @@ public:
 
 
 
-    void fillOperationBody(stellar::Operation &operation);
+    void fillOperationBody(AccountConverter& accountConverter, stellar::Operation &operation);
     static CreateClaimableBalanceOperation* build(stellar::CreateClaimableBalanceOp &op);
     /**
      * Creates a new CreateClaimableBalance builder.

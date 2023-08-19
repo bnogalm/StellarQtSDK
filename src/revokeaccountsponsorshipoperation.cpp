@@ -15,8 +15,9 @@ QString RevokeAccountSponsorshipOperation::getAccountId() const{
     return StrKey::encodeStellarAccountId(m_op.ledgerKey.account.accountID);
 }
 
-void RevokeAccountSponsorshipOperation::fillOperationBody(stellar::Operation &op)
+void RevokeAccountSponsorshipOperation::fillOperationBody(AccountConverter &accountConverter, stellar::Operation &op)
 {
+    Q_UNUSED(accountConverter)
     auto& o = op.fillRevokeSponsorshipOp();
     o = m_op;
 }

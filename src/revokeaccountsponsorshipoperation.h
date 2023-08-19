@@ -11,7 +11,7 @@ public:
     RevokeAccountSponsorshipOperation(stellar::RevokeSponsorshipOp& op);
     QString getAccountId() const;
 
-    void fillOperationBody(stellar::Operation &op);
+    void fillOperationBody(AccountConverter& accountConverter, stellar::Operation &op);
     static RevokeAccountSponsorshipOperation* build(stellar::RevokeSponsorshipOp &op);
     /**
      * Creates a new RevokeAccountSponsorshipOperation builder.

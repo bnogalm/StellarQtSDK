@@ -15,7 +15,7 @@ public:
     qint64 getOfferId() const;
 
 
-    void fillOperationBody(stellar::Operation &op);
+    void fillOperationBody(AccountConverter& accountConverter, stellar::Operation &op);
     /**
      * Construct a new RevokeOfferSponsorshipOperation builder from a RevokeSponsorship XDR.
      * @param op {@link RevokeSponsorshipOp}

@@ -33,7 +33,7 @@ Transaction* Sep10Challenge::buildChallengeTx(KeyPair *serverSignerSecret, QStri
     ManageDataOperation* webAuthDomainOperation = new ManageDataOperation(WEB_AUTH_DOMAIN_MANAGER_DATA_NAME,webAuthDomain.toUtf8());
     webAuthDomainOperation->setSourceAccount(serverSignerSecret->getAccountId());
 
-    Transaction *tx = Transaction::Builder(sa,network).addOperation(domainNameOperation).addOperation(webAuthDomainOperation).addTimeBounds(timeBounds).setBaseFee(Transaction::Builder::BASE_FEE).build();
+    Transaction *tx = Transaction::Builder(AccountConverter().enableMuxed(), sa, network).addOperation(domainNameOperation).addOperation(webAuthDomainOperation).addTimeBounds(timeBounds).setBaseFee(Transaction::Builder::BASE_FEE).build();
     tx->sign(serverSignerSecret);
     delete sa;
     return tx;
@@ -183,7 +183,7 @@ QSet<QString> Sep10Challenge::verifyChallengeTransactionSigners(QString challeng
         StrKey::VersionByte versionByte;
         try {
             versionByte = StrKey::decodeVersionByte(signer);
-        } catch (std::runtime_error e) {
+        } catch (const std::runtime_error& e) {
             continue;
         }
 

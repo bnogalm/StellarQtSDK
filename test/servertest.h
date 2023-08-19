@@ -86,7 +86,7 @@ class ServerTest: public QObject
 
     FeeBumpTransaction* feeBump(Transaction* inner) {
         KeyPair* signer = KeyPair::fromSecretSeed(QString("SA5ZEFDVFZ52GRU7YUGR6EDPBNRU2WLA6IQFQ7S2IH2DG3VFV3DOMV2Q"));
-        FeeBumpTransaction* tx =  FeeBumpTransaction::Builder(inner)
+        FeeBumpTransaction* tx =  FeeBumpTransaction::Builder(AccountConverter().enableMuxed(), inner)
                 .setFeeAccount(signer->getAccountId())
                 .setBaseFee(FeeBumpTransaction::MIN_BASE_FEE*10)
                 .build();
@@ -114,7 +114,7 @@ private slots:
 
 
         Account* account = new Account(source, sequenceNumber);
-        Transaction::Builder *builder = new Transaction::Builder(account);
+        Transaction::Builder *builder = new Transaction::Builder(AccountConverter().enableMuxed(), account);
         builder->addOperation(new CreateAccountOperation(destination, "2000"))
                 .addMemo(Memo::text("Hello world!"))
                 .setTimeout(Transaction::Builder::TIMEOUT_INFINITE)
@@ -158,7 +158,7 @@ private slots:
 
 
          Account* account = new Account(source, sequenceNumber);
-         Transaction::Builder *builder = new Transaction::Builder(account);
+         Transaction::Builder *builder = new Transaction::Builder(AccountConverter().enableMuxed(), account);
          builder->addOperation(new CreateAccountOperation(destination, "2000"))
                  .addMemo(Memo::text("Hello world!")).setTimeout(Transaction::Builder::TIMEOUT_INFINITE).setBaseFee(Transaction::Builder::BASE_FEE);
 
@@ -204,7 +204,7 @@ private slots:
 
          KeyPair* source = KeyPair::fromSecretSeed(QString("SDQXFKA32UVQHUTLYJ42N56ZUEM5PNVVI4XE7EA5QFMLA2DHDCQX3GPY"));
          Account* account = new Account(source, 1L);
-         Transaction *transaction =  Transaction::Builder(account)
+         Transaction *transaction =  Transaction::Builder(AccountConverter().enableMuxed(), account)
                  .addOperation(PaymentOperation::create(KeyPair::fromAccountId(DESTINATION_ACCOUNT_MEMO_REQUIRED_A), new AssetTypeNative(), "10"))
                  .addOperation(PathPaymentStrictReceiveOperation::create(new AssetTypeNative(), "10", KeyPair::fromAccountId(DESTINATION_ACCOUNT_MEMO_REQUIRED_B), new AssetTypeCreditAlphaNum4("BTC", QString("GA7GYB3QGLTZNHNGXN3BMANS6TC7KJT3TCGTR763J4JOU4QHKL37RVV2")), "5"))
                  .addOperation(PathPaymentStrictSendOperation::create(new AssetTypeNative(), "10", KeyPair::fromAccountId(DESTINATION_ACCOUNT_MEMO_REQUIRED_C), new AssetTypeCreditAlphaNum4("BTC", QString("GA7GYB3QGLTZNHNGXN3BMANS6TC7KJT3TCGTR763J4JOU4QHKL37RVV2")), "5"))
@@ -248,7 +248,7 @@ private slots:
          Account* account = new Account(source, 1L);
          Transaction* transaction =nullptr;
          try{
-             transaction = Transaction::Builder(account, Network::current())
+             transaction = Transaction::Builder(AccountConverter().enableMuxed(), account, Network::current())
                      .addOperation(new PaymentOperation(DESTINATION_ACCOUNT_MEMO_ID, new AssetTypeNative(), "10"))
                      .addOperation(new PathPaymentStrictReceiveOperation(new AssetTypeNative(), "10", DESTINATION_ACCOUNT_MEMO_ID, new AssetTypeCreditAlphaNum4("BTC", QString("GA7GYB3QGLTZNHNGXN3BMANS6TC7KJT3TCGTR763J4JOU4QHKL37RVV2")), "5"))
                      .addOperation(new PathPaymentStrictSendOperation(new AssetTypeNative(), "10", DESTINATION_ACCOUNT_MEMO_ID, new AssetTypeCreditAlphaNum4("BTC", QString("GA7GYB3QGLTZNHNGXN3BMANS6TC7KJT3TCGTR763J4JOU4QHKL37RVV2")), "5"))
@@ -257,7 +257,7 @@ private slots:
                      .setBaseFee(100)
                      .build();
              //QFAIL("Missing exception");
-         } catch (std::runtime_error e) {
+         } catch (const std::runtime_error& e) {
              //qDebug() << "EXCEPTION "<< e.what();
              //QCOMPARE("invalid address length", QString(e.what()));
              QFAIL("Muxed accounts not working");
@@ -295,7 +295,7 @@ private slots:
 
          KeyPair* source = KeyPair::fromSecretSeed(QString("SDQXFKA32UVQHUTLYJ42N56ZUEM5PNVVI4XE7EA5QFMLA2DHDCQX3GPY"));
          Account* account = new Account(source, 1L);
-         Transaction *transaction =  Transaction::Builder(account)
+         Transaction *transaction =  Transaction::Builder(AccountConverter().enableMuxed(), account)
                  .addOperation(PaymentOperation::create(KeyPair::fromAccountId(DESTINATION_ACCOUNT_MEMO_REQUIRED_A), new AssetTypeNative(), "10"))
                  .addOperation(PathPaymentStrictReceiveOperation::create(new AssetTypeNative(), "10", KeyPair::fromAccountId(DESTINATION_ACCOUNT_MEMO_REQUIRED_B), new AssetTypeCreditAlphaNum4("BTC", QString("GA7GYB3QGLTZNHNGXN3BMANS6TC7KJT3TCGTR763J4JOU4QHKL37RVV2")), "5"))
                  .addOperation(PathPaymentStrictSendOperation::create(new AssetTypeNative(), "10", KeyPair::fromAccountId(DESTINATION_ACCOUNT_MEMO_REQUIRED_C), new AssetTypeCreditAlphaNum4("BTC", QString("GA7GYB3QGLTZNHNGXN3BMANS6TC7KJT3TCGTR763J4JOU4QHKL37RVV2")), "5"))
@@ -333,7 +333,7 @@ private slots:
 
          KeyPair* source = KeyPair::fromSecretSeed(QString("SDQXFKA32UVQHUTLYJ42N56ZUEM5PNVVI4XE7EA5QFMLA2DHDCQX3GPY"));
          Account* account = new Account(source, 1L);
-         Transaction *transaction =  Transaction::Builder(account)
+         Transaction *transaction =  Transaction::Builder(AccountConverter().enableMuxed(), account)
                  .addOperation(PaymentOperation::create(KeyPair::fromAccountId(DESTINATION_ACCOUNT_MEMO_REQUIRED_A), new AssetTypeNative(), "10"))
                  .addOperation(PathPaymentStrictReceiveOperation::create(new AssetTypeNative(), "10", KeyPair::fromAccountId(DESTINATION_ACCOUNT_NO_MEMO_REQUIRED), new AssetTypeCreditAlphaNum4("BTC", QString("GA7GYB3QGLTZNHNGXN3BMANS6TC7KJT3TCGTR763J4JOU4QHKL37RVV2")), "5"))
                  .addOperation(PathPaymentStrictSendOperation::create(new AssetTypeNative(), "10", KeyPair::fromAccountId(DESTINATION_ACCOUNT_NO_MEMO_REQUIRED), new AssetTypeCreditAlphaNum4("BTC", QString("GA7GYB3QGLTZNHNGXN3BMANS6TC7KJT3TCGTR763J4JOU4QHKL37RVV2")), "5"))
@@ -372,7 +372,7 @@ private slots:
 
          KeyPair* source = KeyPair::fromSecretSeed(QString("SDQXFKA32UVQHUTLYJ42N56ZUEM5PNVVI4XE7EA5QFMLA2DHDCQX3GPY"));
          Account* account = new Account(source, 1L);
-         Transaction *transaction =  Transaction::Builder(account)
+         Transaction *transaction =  Transaction::Builder(AccountConverter().enableMuxed(), account)
                  .addOperation(PaymentOperation::create(KeyPair::fromAccountId(DESTINATION_ACCOUNT_NO_MEMO_REQUIRED), new AssetTypeNative(), "10"))
                  .addOperation(PathPaymentStrictReceiveOperation::create(new AssetTypeNative(), "10", KeyPair::fromAccountId(DESTINATION_ACCOUNT_MEMO_REQUIRED_B), new AssetTypeCreditAlphaNum4("BTC", QString("GA7GYB3QGLTZNHNGXN3BMANS6TC7KJT3TCGTR763J4JOU4QHKL37RVV2")), "5"))
                  .addOperation(PathPaymentStrictSendOperation::create(new AssetTypeNative(), "10", KeyPair::fromAccountId(DESTINATION_ACCOUNT_NO_MEMO_REQUIRED), new AssetTypeCreditAlphaNum4("BTC", QString("GA7GYB3QGLTZNHNGXN3BMANS6TC7KJT3TCGTR763J4JOU4QHKL37RVV2")), "5"))
@@ -412,7 +412,7 @@ private slots:
 
          KeyPair* source = KeyPair::fromSecretSeed(QString("SDQXFKA32UVQHUTLYJ42N56ZUEM5PNVVI4XE7EA5QFMLA2DHDCQX3GPY"));
          Account* account = new Account(source, 1L);
-         Transaction *transaction =  Transaction::Builder(account)
+         Transaction *transaction =  Transaction::Builder(AccountConverter().enableMuxed(), account)
                  .addOperation(PaymentOperation::create(KeyPair::fromAccountId(DESTINATION_ACCOUNT_NO_MEMO_REQUIRED), new AssetTypeNative(), "10"))
                  .addOperation(PathPaymentStrictReceiveOperation::create(new AssetTypeNative(), "10", KeyPair::fromAccountId(DESTINATION_ACCOUNT_NO_MEMO_REQUIRED), new AssetTypeCreditAlphaNum4("BTC", QString("GA7GYB3QGLTZNHNGXN3BMANS6TC7KJT3TCGTR763J4JOU4QHKL37RVV2")), "5"))
                  .addOperation(PathPaymentStrictSendOperation::create(new AssetTypeNative(), "10", KeyPair::fromAccountId(DESTINATION_ACCOUNT_MEMO_REQUIRED_C), new AssetTypeCreditAlphaNum4("BTC", QString("GA7GYB3QGLTZNHNGXN3BMANS6TC7KJT3TCGTR763J4JOU4QHKL37RVV2")), "5"))
@@ -451,7 +451,7 @@ private slots:
 
          KeyPair* source = KeyPair::fromSecretSeed(QString("SDQXFKA32UVQHUTLYJ42N56ZUEM5PNVVI4XE7EA5QFMLA2DHDCQX3GPY"));
          Account* account = new Account(source, 1L);
-         Transaction *transaction =  Transaction::Builder(account)
+         Transaction *transaction =  Transaction::Builder(AccountConverter().enableMuxed(), account)
                  .addOperation(PaymentOperation::create(KeyPair::fromAccountId(DESTINATION_ACCOUNT_NO_MEMO_REQUIRED), new AssetTypeNative(), "10"))
                  .addOperation(PathPaymentStrictReceiveOperation::create(new AssetTypeNative(), "10", KeyPair::fromAccountId(DESTINATION_ACCOUNT_NO_MEMO_REQUIRED), new AssetTypeCreditAlphaNum4("BTC", QString("GA7GYB3QGLTZNHNGXN3BMANS6TC7KJT3TCGTR763J4JOU4QHKL37RVV2")), "5"))
                  .addOperation(PathPaymentStrictSendOperation::create(new AssetTypeNative(), "10", KeyPair::fromAccountId(DESTINATION_ACCOUNT_NO_MEMO_REQUIRED), new AssetTypeCreditAlphaNum4("BTC", QString("GA7GYB3QGLTZNHNGXN3BMANS6TC7KJT3TCGTR763J4JOU4QHKL37RVV2")), "5"))
@@ -490,7 +490,7 @@ private slots:
 
          KeyPair* source = KeyPair::fromSecretSeed(QString("SDQXFKA32UVQHUTLYJ42N56ZUEM5PNVVI4XE7EA5QFMLA2DHDCQX3GPY"));
          Account* account = new Account(source, 1L);
-         Transaction *transaction =  Transaction::Builder(account)
+         Transaction *transaction =  Transaction::Builder(AccountConverter().enableMuxed(), account)
                  .addOperation(PaymentOperation::create(KeyPair::fromAccountId(DESTINATION_ACCOUNT_NO_MEMO_REQUIRED), new AssetTypeNative(), "10"))
                  .addOperation(PathPaymentStrictReceiveOperation::create(new AssetTypeNative(), "10", KeyPair::fromAccountId(DESTINATION_ACCOUNT_NO_MEMO_REQUIRED), new AssetTypeCreditAlphaNum4("BTC", QString("GA7GYB3QGLTZNHNGXN3BMANS6TC7KJT3TCGTR763J4JOU4QHKL37RVV2")), "5"))
                  .addOperation(PathPaymentStrictSendOperation::create(new AssetTypeNative(), "10", KeyPair::fromAccountId(DESTINATION_ACCOUNT_MEMO_REQUIRED_C), new AssetTypeCreditAlphaNum4("BTC", QString("GA7GYB3QGLTZNHNGXN3BMANS6TC7KJT3TCGTR763J4JOU4QHKL37RVV2")), "5"))
@@ -530,7 +530,7 @@ private slots:
 
          KeyPair* source = KeyPair::fromSecretSeed(QString("SDQXFKA32UVQHUTLYJ42N56ZUEM5PNVVI4XE7EA5QFMLA2DHDCQX3GPY"));
          Account* account = new Account(source, 1L);
-         Transaction *transaction =  Transaction::Builder(account)
+         Transaction *transaction =  Transaction::Builder(AccountConverter().enableMuxed(), account)
                  .addOperation(ManageDataOperation::create("Hello", "Stellar"))
                  .addOperation(PaymentOperation::create(KeyPair::fromAccountId(DESTINATION_ACCOUNT_MEMO_REQUIRED_A), new AssetTypeNative(), "10"))
                  .addOperation(PathPaymentStrictReceiveOperation::create(new AssetTypeNative(), "10", KeyPair::fromAccountId(DESTINATION_ACCOUNT_MEMO_REQUIRED_A), new AssetTypeCreditAlphaNum4("BTC", QString("GA7GYB3QGLTZNHNGXN3BMANS6TC7KJT3TCGTR763J4JOU4QHKL37RVV2")), "5"))
@@ -572,7 +572,7 @@ private slots:
 
          KeyPair* source = KeyPair::fromSecretSeed(QString("SDQXFKA32UVQHUTLYJ42N56ZUEM5PNVVI4XE7EA5QFMLA2DHDCQX3GPY"));
          Account* account = new Account(source, 1L);
-         Transaction *transaction =  Transaction::Builder(account)
+         Transaction *transaction =  Transaction::Builder(AccountConverter().enableMuxed(), account)
                  .addOperation(PaymentOperation::create(KeyPair::fromAccountId(DESTINATION_ACCOUNT_NO_FOUND), new AssetTypeNative(), "10"))
                  .addOperation(PathPaymentStrictReceiveOperation::create(new AssetTypeNative(), "10", KeyPair::fromAccountId(DESTINATION_ACCOUNT_NO_FOUND), new AssetTypeCreditAlphaNum4("BTC", QString("GA7GYB3QGLTZNHNGXN3BMANS6TC7KJT3TCGTR763J4JOU4QHKL37RVV2")), "5"))
                  .addOperation(PathPaymentStrictSendOperation::create(new AssetTypeNative(), "10", KeyPair::fromAccountId(DESTINATION_ACCOUNT_NO_FOUND), new AssetTypeCreditAlphaNum4("BTC", QString("GA7GYB3QGLTZNHNGXN3BMANS6TC7KJT3TCGTR763J4JOU4QHKL37RVV2")), "5"))
@@ -607,7 +607,7 @@ private slots:
 
          KeyPair* source = KeyPair::fromSecretSeed(QString("SDQXFKA32UVQHUTLYJ42N56ZUEM5PNVVI4XE7EA5QFMLA2DHDCQX3GPY"));
          Account* account = new Account(source, 1L);
-         Transaction *transaction =  Transaction::Builder(account)
+         Transaction *transaction =  Transaction::Builder(AccountConverter().enableMuxed(), account)
                  .addOperation(PaymentOperation::create(KeyPair::fromAccountId(DESTINATION_ACCOUNT_NO_FOUND), new AssetTypeNative(), "10"))
                  .addOperation(PathPaymentStrictReceiveOperation::create(new AssetTypeNative(), "10", KeyPair::fromAccountId(DESTINATION_ACCOUNT_NO_FOUND), new AssetTypeCreditAlphaNum4("BTC", QString("GA7GYB3QGLTZNHNGXN3BMANS6TC7KJT3TCGTR763J4JOU4QHKL37RVV2")), "5"))
                  .addOperation(PathPaymentStrictSendOperation::create(new AssetTypeNative(), "10", KeyPair::fromAccountId(DESTINATION_ACCOUNT_NO_FOUND), new AssetTypeCreditAlphaNum4("BTC", QString("GA7GYB3QGLTZNHNGXN3BMANS6TC7KJT3TCGTR763J4JOU4QHKL37RVV2")), "5"))
@@ -646,7 +646,7 @@ private slots:
 
          KeyPair* source = KeyPair::fromSecretSeed(QString("SDQXFKA32UVQHUTLYJ42N56ZUEM5PNVVI4XE7EA5QFMLA2DHDCQX3GPY"));
          Account* account = new Account(source, 1L);
-         Transaction *transaction =  Transaction::Builder(account)
+         Transaction *transaction =  Transaction::Builder(AccountConverter().enableMuxed(), account)
                  .addOperation(PaymentOperation::create(KeyPair::fromAccountId(DESTINATION_ACCOUNT_FETCH_ERROR), new AssetTypeNative(), "10"))
                  .addOperation(PaymentOperation::create(KeyPair::fromAccountId(DESTINATION_ACCOUNT_MEMO_REQUIRED_A), new AssetTypeNative(), "10"))
                  .addOperation(PaymentOperation::create(KeyPair::fromAccountId(DESTINATION_ACCOUNT_MEMO_REQUIRED_B), new AssetTypeNative(), "10"))

@@ -13,7 +13,7 @@ public:
     QString getAccountId() const;
     stellar::SignerKey getSigner() const;
 
-    void fillOperationBody(stellar::Operation &op);
+    void fillOperationBody(AccountConverter& accountConverter, stellar::Operation &op);
     /**
      * Construct a new RevokeSignerSponsorshipOperation builder from a RevokeSponsorship XDR.
      * @param op {@link RevokeSponsorshipOp}

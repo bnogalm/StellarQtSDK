@@ -7,14 +7,17 @@
 #include "operation.h"
 #include "memo.h"
 #include "network.h"
+#include "accountconverter.h"
+
 class AbstractTransaction : public QObject
 {
     Q_OBJECT
 protected:
+    AccountConverter m_accountConverter;
     Network* m_network;
     QVector<stellar::DecoratedSignature> m_signatures;
 
-    explicit AbstractTransaction(Network* network);
+    explicit AbstractTransaction(AccountConverter accountConverter, Network* network);
 public:
     static const int MIN_BASE_FEE = 100;
     /**

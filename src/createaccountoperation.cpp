@@ -53,8 +53,9 @@ KeyPair *CreateAccountOperation::getDestination() {
     return m_destination;
 }
 
-void CreateAccountOperation::fillOperationBody(stellar::Operation &operation)
+void CreateAccountOperation::fillOperationBody(AccountConverter &accountConverter, stellar::Operation &operation)
 {
+    Q_UNUSED(accountConverter)
     operation.type = stellar::OperationType::CREATE_ACCOUNT;
     operation.operationCreateAccount = m_op;
 }

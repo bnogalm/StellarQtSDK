@@ -29,8 +29,9 @@ QString RevokeClaimableBalanceSponsorshipOperation::getBalanceId() const
     //return Util::bytesToHex(QByteArray::fromRawData((const char*)(m_op.ledgerKey.claimableBalance.balanceID.v0),sizeof(m_op.ledgerKey.claimableBalance.balanceID.v0)));
 }
 
-void RevokeClaimableBalanceSponsorshipOperation::fillOperationBody(stellar::Operation &op)
+void RevokeClaimableBalanceSponsorshipOperation::fillOperationBody(AccountConverter &accountConverter, stellar::Operation &op)
 {
+    Q_UNUSED(accountConverter)
     auto& o = op.fillRevokeSponsorshipOp();
     o = m_op;
 }

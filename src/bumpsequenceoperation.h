@@ -12,7 +12,7 @@ public:
 
     qint64 getBumpTo() const;
 
-    void fillOperationBody(stellar::Operation &operation);
+    void fillOperationBody(AccountConverter& accountConverter, stellar::Operation &operation);
 
 
     static BumpSequenceOperation* build(stellar::BumpSequenceOp &op);

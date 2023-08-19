@@ -54,9 +54,9 @@ public:
      * The assets (other than send asset and destination asset) involved in the offers the path takes. For example, if you can only find a path from USD to EUR through XLM and BTC, the path would be USD -&raquo; XLM -&raquo; BTC -&raquo; EUR and the path would contain XLM and BTC.
      */
     QList<Asset*> getPath();
-    void fillOperationBody(stellar::Operation &op);
+    void fillOperationBody(AccountConverter& accountConverter, stellar::Operation &op);
 
-    static PathPaymentStrictSendOperation * build(stellar::PathPaymentStrictSendOp &op);
+    static PathPaymentStrictSendOperation * build(AccountConverter &accountConverter, stellar::PathPaymentStrictSendOp &op);
     static PathPaymentStrictSendOperation * create(Asset* sendAsset, QString sendMax, KeyPair* destination,
                                          Asset* destAsset, QString destAmount);
 

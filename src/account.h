@@ -9,6 +9,7 @@
  */
 class Account : public TransactionBuilderAccount
 {
+    stellar::MuxedAccount m_accountId;
     KeyPair *m_keyPair;
     qint64 m_sequenceNumber;
 public:
@@ -18,10 +19,13 @@ public:
      * @param keypair KeyPair associated with this Account
      * @param sequenceNumber Current sequence number of the account (can be obtained using java-stellar-sdk or horizon server)
      */
-    Account(KeyPair* keypair, qint64 sequenceNumber);
+    Account(KeyPair* keypair, qint64 sequenceNumber);    
+    Account(QString accountId, qint64 sequenceNumber);
     ~Account();
 
     KeyPair* getKeypair();
+
+    QString getAccountId() const;
 
     qint64 getSequenceNumber();
     qint64 getIncrementedSequenceNumber();

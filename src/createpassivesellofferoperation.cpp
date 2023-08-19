@@ -55,8 +55,9 @@ QString CreatePassiveSellOfferOperation::getPrice() {
     return Price::toString(m_op.price.n,m_op.price.d);;
 }
 
-void CreatePassiveSellOfferOperation::fillOperationBody(stellar::Operation &operation)
+void CreatePassiveSellOfferOperation::fillOperationBody(AccountConverter &accountConverter, stellar::Operation &operation)
 {
+    Q_UNUSED(accountConverter)
     operation.type = stellar::OperationType::CREATE_PASSIVE_SELL_OFFER;
     operation.operationCreatePassiveSellOffer = m_op;
 }

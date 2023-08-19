@@ -19,6 +19,8 @@ QByteArray Network::getNetworkId() {
 }
 
 Network* Network::current() {
+    if(!s_current)
+        throw std::runtime_error("Not selected network");
     return s_current;
 }
 

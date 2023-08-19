@@ -11,8 +11,9 @@ ClawbackClaimableBalanceOperation::ClawbackClaimableBalanceOperation(QString bal
     Util::claimableBalanceIdToXDR(balanceID,m_op.balanceID);
 }
 
-void ClawbackClaimableBalanceOperation::fillOperationBody(stellar::Operation &operation)
+void ClawbackClaimableBalanceOperation::fillOperationBody(AccountConverter &accountConverter, stellar::Operation &operation)
 {
+    Q_UNUSED(accountConverter)
     operation.type = stellar::OperationType::CLAWBACK_CLAIMABLE_BALANCE;
     operation.operationClawbackClaimableBalance = m_op;
 }

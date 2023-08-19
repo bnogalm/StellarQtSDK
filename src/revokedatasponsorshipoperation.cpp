@@ -23,8 +23,9 @@ QString RevokeDataSponsorshipOperation::getDataName() const
     return m_op.ledgerKey.data.dataName.toString();
 }
 
-void RevokeDataSponsorshipOperation::fillOperationBody(stellar::Operation &op)
+void RevokeDataSponsorshipOperation::fillOperationBody(AccountConverter& accountConverter, stellar::Operation &op)
 {    
+    Q_UNUSED(accountConverter)
     auto& o = op.fillRevokeSponsorshipOp();
     o = m_op;
 }

@@ -58,7 +58,8 @@ qint64 ManageSellOfferOperation::getOfferId() {
     return m_op.offerID;
 }
 
-void ManageSellOfferOperation::fillOperationBody(stellar::Operation &op) {
+void ManageSellOfferOperation::fillOperationBody(AccountConverter &accountConverter, stellar::Operation &op) {
+    Q_UNUSED(accountConverter)
     op.operationManageSellOffer = m_op;
     op.type = stellar::OperationType::MANAGE_SELL_OFFER;
 }

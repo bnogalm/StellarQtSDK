@@ -85,7 +85,7 @@ private slots:
             Q_UNUSED(issuer)
             QFAIL("missing exception");
          }
-         catch(std::runtime_error e)
+         catch(const std::runtime_error& e)
          {
 
          }
@@ -106,7 +106,7 @@ private slots:
         try {
             keypair->sign(data.toUtf8());
             QFAIL("missing exception");
-        } catch (std::runtime_error e) {
+        } catch (const std::runtime_error& e) {
             QCOMPARE(QString("KeyPair does not contain secret key. Use KeyPair::fromSecretSeed method to create a new KeyPair with a secret key."), QString(e.what()));
         }
     }

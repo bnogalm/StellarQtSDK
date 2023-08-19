@@ -10,7 +10,7 @@ public:
     RevokeClaimableBalanceSponsorshipOperation(QString balanceID);
     RevokeClaimableBalanceSponsorshipOperation(stellar::RevokeSponsorshipOp& op);
     QString getBalanceId() const;
-    void fillOperationBody(stellar::Operation &op);
+    void fillOperationBody(AccountConverter& accountConverter, stellar::Operation &op);
     /**
      * Construct a new RevokeClaimableBalanceSponsorshipOperation builder from a RevokeSponsorship XDR.
      * @param op {@link RevokeSponsorshipOp}

@@ -10,7 +10,7 @@ namespace stellar
     typedef quint8 Hash[32];
     XDR_SERIALIZER(Hash)
 
-    typedef quint8 uint256[32];    
+    typedef quint8 uint256[32];
 
     enum class CryptoKeyType  : qint32
     {

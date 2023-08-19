@@ -11,8 +11,9 @@ ClaimClaimableBalanceOperation::ClaimClaimableBalanceOperation(QString balanceID
     Util::claimableBalanceIdToXDR(balanceID,m_op.balanceID);
 }
 
-void ClaimClaimableBalanceOperation::fillOperationBody(stellar::Operation &operation)
+void ClaimClaimableBalanceOperation::fillOperationBody(AccountConverter &accountConverter, stellar::Operation &operation)
 {
+    Q_UNUSED(accountConverter)
     operation.type = stellar::OperationType::CLAIM_CLAIMABLE_BALANCE;
     operation.operationClaimClaimableBalance = m_op;
 }

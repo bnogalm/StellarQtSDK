@@ -23,7 +23,13 @@ private slots:
 
     void testNoDefaultNetwork() {
         Network::use(0);
-        QVERIFY(Network::current()==0);
+        try{
+            QVERIFY(Network::current()==0);
+        }
+        catch(const std::runtime_error& e)
+        {
+            QCOMPARE(e.what(),"Not selected network");
+        }
     }
 
     void testSwitchToTestNetwork() {

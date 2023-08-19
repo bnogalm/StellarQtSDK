@@ -1,7 +1,7 @@
 #include "feebumptransaction.h"
 
 
-FeeBumpTransaction::FeeBumpTransaction(QString feeAccount, qint64 fee, Transaction *innerTransaction):AbstractTransaction(innerTransaction ? innerTransaction->getNetwork(): nullptr)
+FeeBumpTransaction::FeeBumpTransaction(AccountConverter accountConverter, QString feeAccount, qint64 fee, Transaction *innerTransaction):AbstractTransaction(accountConverter, innerTransaction ? innerTransaction->getNetwork(): nullptr)
 {
     m_feeAccount = checkNotNull(feeAccount, "feeAccount cannot be null");
     m_inner = checkNotNull(innerTransaction, "innerTransaction cannot be null");
@@ -28,20 +28,25 @@ Transaction *FeeBumpTransaction::getInnerTransaction() const
     return m_inner;
 }
 
-FeeBumpTransaction *FeeBumpTransaction::fromFeeBumpTransactionEnvelope(stellar::FeeBumpTransactionEnvelope envelope, Network *network)
+FeeBumpTransaction *FeeBumpTransaction::fromFeeBumpTransactionEnvelope(AccountConverter accountConverter, stellar::FeeBumpTransactionEnvelope envelope, Network *network)
 {
 
-    Transaction* inner = Transaction::fromV1EnvelopeXdr(envelope.tx.v1, network);    
-    QString feeAccount = StrKey::encodeStellarMuxedAccount(envelope.tx.feeSource);
+    Transaction* inner = Transaction::fromV1EnvelopeXdr(accountConverter, envelope.tx.v1, network);
+    QString feeAccount = accountConverter.decode(envelope.tx.feeSource);
     qint64 fee = envelope.tx.fee;
 
-    FeeBumpTransaction* feeBump = new FeeBumpTransaction(feeAccount, fee, inner);
+    FeeBumpTransaction* feeBump = new FeeBumpTransaction(accountConverter, feeAccount, fee, inner);
 
     for(stellar::DecoratedSignature& signature : envelope.signatures.value){
         feeBump->m_signatures.append(signature);
     }
 
     return feeBump;
+}
+
+FeeBumpTransaction *FeeBumpTransaction::fromFeeBumpTransactionEnvelope(stellar::FeeBumpTransactionEnvelope envelope, Network *network)
+{
+    return fromFeeBumpTransactionEnvelope(AccountConverter().enableMuxed(), envelope, network);
 }
 
 stellar::FeeBumpTransaction FeeBumpTransaction::toXdr() const
@@ -80,13 +85,15 @@ stellar::TransactionEnvelope FeeBumpTransaction::toEnvelopeXdr()
     return stellar::TransactionEnvelope(envelope);
 }
 
-FeeBumpTransaction::Builder::Builder(Transaction *inner) {
+FeeBumpTransaction::Builder::Builder(AccountConverter accountConverter, Transaction *inner) {
     m_inner = checkNotNull(inner, "inner cannot be null");
-    m_baseFee=0;
+    m_baseFee = 0;
+    m_accountConverter = accountConverter;
 
     stellar::EnvelopeType txType = inner->toEnvelopeXdr().type;
     if (txType == stellar::EnvelopeType::ENVELOPE_TYPE_TX_V0) {
         m_inner = new Transaction(
+                    accountConverter,
                     inner->getSourceAccount(),
                     inner->getFee(),
                     inner->getSequenceNumber(),
@@ -144,6 +151,7 @@ FeeBumpTransaction::Builder &FeeBumpTransaction::Builder::setFeeAccount(QString 
 
 FeeBumpTransaction *FeeBumpTransaction::Builder::build() {
     FeeBumpTransaction* result = new FeeBumpTransaction(
+                m_accountConverter,
                 checkNotNull(m_feeAccount, "fee account has to be set. you must call setFeeAccount()."),
                 checkNotNull(m_baseFee, "base fee has to be set. you must call setBaseFee()."),
                 m_inner

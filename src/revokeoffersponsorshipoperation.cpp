@@ -23,8 +23,9 @@ qint64 RevokeOfferSponsorshipOperation::getOfferId() const
     return m_op.ledgerKey.offer.offerID;
 }
 
-void RevokeOfferSponsorshipOperation::fillOperationBody(stellar::Operation &op)
+void RevokeOfferSponsorshipOperation::fillOperationBody(AccountConverter &accountConverter, stellar::Operation &op)
 {
+    Q_UNUSED(accountConverter)
     auto& o = op.fillRevokeSponsorshipOp();
     o = m_op;
 }

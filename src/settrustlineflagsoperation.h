@@ -17,7 +17,7 @@ public:
 
     ~SetTrustlineFlagsOperation();
 
-    void fillOperationBody(stellar::Operation &operation);
+    void fillOperationBody(AccountConverter& accountConverter, stellar::Operation &operation);
     /**
      * The account owning of the trustline.
      */
