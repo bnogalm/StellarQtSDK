@@ -126,7 +126,15 @@ public:
         * who will use a sequence number. When build() is called, the account object's sequence number
         * will be incremented.        
         */
-         Builder(AccountConverter accountConverter, TransactionBuilderAccount *sourceAccount, Network* network= Network::current());
+        Builder(AccountConverter accountConverter, TransactionBuilderAccount *sourceAccount, Network* network= Network::current());
+
+        /**
+         * @brief Builder
+         * @param other
+         *
+         * Copy constructor defined so we it releases ownership of created objects, the copy will own these resources.
+         */
+        Builder(Builder& other);
         ~Builder();
 
          int getOperationsCount();

@@ -156,6 +156,7 @@ stellar::SignatureHint KeyPair::getSignatureHint() {
         memcpy(signatureHint.signatureHint,signatureHintBytes.data(),4);
         return signatureHint;
     } catch (const std::exception& e) {
+        Q_UNUSED(e)
         //throw new AssertionError(e);
     }
     return stellar::SignatureHint();
@@ -206,6 +207,7 @@ QByteArray KeyPair::sign(QByteArray data) {
         ed25519_sign(signature,(const uchar*) data.constData(), data.length(), this->m_publicKey, this->m_privateKey);
         return QByteArray((char*)signature,64);
     } catch (const std::exception& e) {
+        Q_UNUSED(e)
         throw std::runtime_error("error signing");
     }
     return QByteArray();

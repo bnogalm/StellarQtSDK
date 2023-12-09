@@ -48,7 +48,7 @@ private slots:
             StrKey::decodeCheck(StrKey::VersionByte::SEED, seed.toLatin1());
             QFAIL("Should provocate an exception");
         } catch (const std::runtime_error& e) {
-
+            Q_UNUSED(e)
         }
     }
 
@@ -142,6 +142,7 @@ private slots:
               StrKey::decodeCheck(StrKey::VersionByte::ACCOUNT_ID, QByteArray(""));
               QFAIL("missing exception");
           } catch (const std::runtime_error& e) {
+              Q_UNUSED(e)
           }
       }
 
@@ -159,6 +160,7 @@ private slots:
               StrKey::decodeCheck(StrKey::VersionByte::ACCOUNT_ID, QString("GA3D5KRYM6CB7OWOOOORR3Z4T7GNZLKERYNZGGA5SOAOPIFY6YQHES5").toLatin1());
               QFAIL("missing exception");
           } catch (const std::runtime_error& e) {
+              Q_UNUSED(e)
           }
       }
 

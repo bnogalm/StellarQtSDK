@@ -250,6 +250,20 @@ Transaction::Builder::Builder(AccountConverter accountConverter, TransactionBuil
     m_network= network;
 }
 
+Transaction::Builder::Builder(Builder &other): m_accountConverter(other.m_accountConverter)
+    ,m_sourceAccount(other.m_sourceAccount)
+    ,m_network(other.m_network)
+    ,m_memo(other.m_memo)
+    ,m_timeBounds(other.m_timeBounds)
+    ,m_operations(other.m_operations)
+    ,m_timeoutSet(other.m_timeoutSet)
+    ,m_baseFee(other.m_baseFee)
+{
+    other.m_memo=nullptr;
+    other.m_timeBounds=nullptr;
+    other.m_operations.clear();
+}
+
 Transaction::Builder::~Builder()
 {
     //it will not destroy the account object

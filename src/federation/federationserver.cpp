@@ -6,6 +6,7 @@
 #include <QUrlQuery>
 
 #include <QCoreApplication>
+#include <stdexcept>
 
 QNetworkAccessManager* FederationServer::s_httpClient = nullptr;
 QHash<QString,FederationServer*>* FederationServer::s_cachedFederationServers = nullptr;

@@ -14,7 +14,7 @@ class ClawbackOperation : public Operation
 public:
     ClawbackOperation(QString from, Asset* asset, QString amount);
     ClawbackOperation(stellar::ClawbackOp& op);
-    ~ClawbackOperation();
+    virtual ~ClawbackOperation();
     void fillOperationBody(AccountConverter& accountConverter, stellar::Operation &operation);
     /**
      * The account owning of the trustline.

@@ -4,6 +4,8 @@
 #include <QJsonObject>
 #include <QJsonArray>
 #include <QNetworkAccessManager>
+#include <stdexcept>
+
 PageBase::PageBase(QNetworkReply *reply):Response(reply), m_responseType(0)
 {
 }

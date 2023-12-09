@@ -78,13 +78,14 @@ stellar::Operation Operation::toXdr(AccountConverter accountConverter) {
 }
 
 QString Operation::toXdrBase64() {
-    try {
+    try {        
         stellar::Operation operation = this->toXdr();
         QByteArray outputStream;
         QDataStream xdrOutputStream(&outputStream,QIODevice::WriteOnly);
         xdrOutputStream << operation;
         return outputStream.toBase64(XDR_BASE64ENCODING);
     } catch (const std::exception& e) {
+        Q_UNUSED(e)
         //throw new AssertionError(e);
     }
     return QString();

@@ -87,6 +87,7 @@ private slots:
         QFAIL("missing exception");
       } catch (const std::runtime_error& e) {
         //assertEquals("cannot set both sponsor and asset", e.getMessage());
+        Q_UNUSED(e)
       }
     }
 
@@ -103,6 +104,7 @@ private slots:
         QFAIL("missing exception");
       } catch (const std::runtime_error& e) {
         //assertEquals("cannot set both signer and sponsor", e.getMessage());
+        Q_UNUSED(e)
       }
     }
 };

@@ -3,6 +3,7 @@
 #include <QString>
 #include "util.h"
 #include <exception>
+#include <QMap>
 
 /**
  * Indicates that no network was selected.
@@ -29,18 +30,22 @@ class NoNetworkSelectedException :public std::exception {
 
 class Network
 {
-    static const QString PUBLIC;
-    static const QString TESTNET;
+    static const QString PUBLIC_S;
+    static const QString TESTNET_S;
     static Network *s_current;
+    static QMap<QString, Network*> s_usedNetworks;
     QString m_networkPassphrase;
-    friend Network* checkNotNull(Network* network, const char *error);
-public:
 
+
+    friend Network* checkNotNull(Network* network, const char *error);
     /**
      * Creates a new Network object to represent a network with a given passphrase
      * @param networkPassphrase
      */
     Network(QString networkPassphrase);
+public:
+
+
     /**
      * Returns network passphrase
      */
@@ -63,14 +68,27 @@ public:
     static void use(Network *network);
 
     /**
-     * Use Stellar Public Network
+     * Use Stellar Public Network as default network
      */
     static void usePublicNetwork();
 
     /**
-     * Use Stellar Test Network.
+     * Use Stellar Test Network as default network
      */
     static void useTestNetwork();
+
+    ///
+    /// \brief PUBLIC
+    /// to keep same API than other SDKs
+    /// \return
+    ///
+    static Network* PUBLIC();
+    ///
+    /// \brief TESTNET
+    /// to keep same API than other SDKs
+    /// \return
+    ///
+    static Network* TESTNET();
 };
 
 Network* checkNotNull(Network* network, const char *error);

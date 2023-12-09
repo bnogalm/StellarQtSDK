@@ -46,6 +46,7 @@ private slots:
         QCOMPARE(transaction->getNetwork(),Network::current());
         QCOMPARE(transaction->getFee(),200);
         //QCOMPARE(transaction->getTimeBounds()->getMaxTime(),end);
+        qDebug() << transaction->getTimeBounds()->getMaxTime()<< (nowPrev+300);
         QVERIFY(transaction->getTimeBounds()->getMaxTime()>=nowPrev+300);
         QVERIFY(transaction->getTimeBounds()->getMaxTime()<=end);
         QVERIFY(transaction->getTimeBounds()->getMinTime()<=now);
@@ -97,6 +98,7 @@ private slots:
             QFAIL("Missing exception");
         } catch (const std::runtime_error& e) {
             //"Version byte is invalid"
+            Q_UNUSED(e)
         }
 
     }
@@ -205,6 +207,7 @@ private slots:
             QFAIL("Missing exception");
         } catch (const std::runtime_error& e) {
             //"Version byte is invalid"
+            Q_UNUSED(e)
         }
     }
 
@@ -246,6 +249,7 @@ private slots:
             QFAIL("Missing exception");
         } catch (const std::runtime_error& e) {
             //"invalid address length: MCAAAAAAAAAAAAB7BQ2L7E5NBWMXDUCMZSIPOBKRDSBYVLMXGSSKF6YNPIB7Y77ITKNOG"
+            Q_UNUSED(e)
         }
     }
 
@@ -305,6 +309,7 @@ private slots:
             QFAIL("Missing exception");
         } catch (const std::runtime_error& e) {
             //Transaction not signed by server
+            Q_UNUSED(e)
         }
     }
 
@@ -473,8 +478,8 @@ private slots:
     void testReadChallengeTransactionInvalidTimeBoundsTooEarly(){
         KeyPair* server = KeyPair::random();
         KeyPair* client = KeyPair::random();
-        qint64 now = QDateTime::currentMSecsSinceEpoch() / 1000L + 300;
-        qint64 end = now + 300;
+        qint64 now = QDateTime::currentMSecsSinceEpoch() / 1000L + 3000;
+        qint64 end = now + 6000;
 
         QString domainName = "example.com";
         QString webAuthDomain = "example.com";
@@ -647,6 +652,7 @@ private slots:
             QFAIL("Missing exception");
         } catch (const std::runtime_error& e) {
             //"Operation should have a source account."
+            Q_UNUSED(e)
         }
     }
 
@@ -685,6 +691,7 @@ private slots:
             QFAIL("Missing exception");
         } catch (const std::runtime_error& e) {
             //"Random nonce encoded as base64 should be 64 bytes long."
+            Q_UNUSED(e)
         }
 
     }
@@ -725,6 +732,7 @@ private slots:
             QFAIL("Missing exception");
         } catch (const std::runtime_error& e) {
             //"Failed to decode random nonce provided in ManageData operation."
+            Q_UNUSED(e)
         }
     }
 
@@ -763,6 +771,7 @@ private slots:
             QFAIL("Missing exception");
         } catch (const std::runtime_error& e) {
             //"Random nonce before encoding as base64 should be 48 bytes long."
+            Q_UNUSED(e)
         }
 
     }
@@ -984,6 +993,7 @@ private slots:
          );
        } catch (const std::runtime_error& e) {
          QFAIL("Should not have thrown any exception.");
+         Q_UNUSED(e)
        }
 
        Sep10Challenge::ChallengeTransaction* challengeTransaction = Sep10Challenge::readChallengeTransaction(transaction->toEnvelopeXdrBase64(), server->getAccountId(), QStringList()<< "example3.com"<< "example2.com"<< "example.com",webAuthDomain);
@@ -1008,6 +1018,7 @@ private slots:
                          );
          } catch (const std::runtime_error& e) {
              QFAIL("Should not have thrown any exception.");
+             Q_UNUSED(e)
          }
          try {
              Sep10Challenge::readChallengeTransaction(transaction->toEnvelopeXdrBase64(), server->getAccountId(), QStringList()<< "example3.com"<< "example2.com",webAuthDomain);
@@ -1034,6 +1045,7 @@ private slots:
                          );
          } catch (const std::runtime_error& e) {
              QFAIL("Should not have thrown any exception.");
+             Q_UNUSED(e)
          }
          try {
              Sep10Challenge::readChallengeTransaction(transaction->toEnvelopeXdrBase64(), server->getAccountId(), QStringList(), webAuthDomain);
@@ -1311,6 +1323,7 @@ private slots:
           );
         } catch (const std::runtime_error& e) {
           QFAIL("Should not have thrown any exception.");
+          Q_UNUSED(e)
         }
 
         try {
@@ -1371,8 +1384,8 @@ private slots:
 
       void testReadChallengeTransactionValidWebAuthDomainAllowSubsequentManageDataOperationsToHaveNullValue()
       {
-          KeyPair* server = KeyPair::random();
-          KeyPair* client = KeyPair::random();
+        KeyPair* server = KeyPair::random();
+        KeyPair* client = KeyPair::random();
         QString domainName = "example.com";
         QString webAuthDomain = "example.com";
 
@@ -1390,20 +1403,20 @@ private slots:
 
         Account* sourceAccount = new Account(server, -1L);
         ManageDataOperation* domainNameOperation = ManageDataOperation::create(domainName + " auth", encodedNonce)
-            ->setSourceAccount(client->getAccountId());
+                                                       ->setSourceAccount(client->getAccountId());
         ManageDataOperation* webAuthDomainOperation = ManageDataOperation::create("web_auth_domain", webAuthDomain.toUtf8())
-            ->setSourceAccount(server->getAccountId());
+                                                          ->setSourceAccount(server->getAccountId());
         ManageDataOperation* otherDomainOperation = ManageDataOperation::create("subsequent_op")
-            ->setSourceAccount(server->getAccountId());
+                                                        ->setSourceAccount(server->getAccountId());
 
         Transaction* transaction = Transaction::Builder(AccountConverter().enableMuxed(), sourceAccount)
-                .addOperation(domainNameOperation)
-                .addOperation(webAuthDomainOperation)
-                .addOperation(otherDomainOperation)
-                .addMemo(Memo::none())
-                .addTimeBounds(timeBounds)
-                .setBaseFee(100)
-                .build();
+                                       .addOperation(domainNameOperation)
+                                       .addOperation(webAuthDomainOperation)
+                                       .addOperation(otherDomainOperation)
+                                       .addMemo(Memo::none())
+                                       .addTimeBounds(timeBounds)
+                                       .setBaseFee(100)
+                                       .build();
 
         transaction->sign(server);
         QString challenge = transaction->toEnvelopeXdrBase64();
@@ -1413,6 +1426,192 @@ private slots:
         QCOMPARE(client->getAccountId(), challengeTransaction->getClientAccountId());
         QCOMPARE(domainName, challengeTransaction->getMatchedHomeDomain());
       }
+
+    void testChallengeWithClientDomain() {
+        KeyPair* server = KeyPair::random();
+        KeyPair* client = KeyPair::random();
+        KeyPair* clientDomainSigner = KeyPair::random();
+
+        long now = QDateTime::currentMSecsSinceEpoch() / 1000L;
+        long end = now + 300;
+        TimeBounds* timeBounds = new TimeBounds(now, end);
+        QString domainName = "example.com";
+        QString webAuthDomain = "auth.example.com";
+        QString clientDomain = "client.domain.com";
+
+        Transaction* transaction =
+            Sep10Challenge::buildChallengeTx(
+                server,
+                client->getAccountId(),
+                domainName,
+                webAuthDomain,
+                timeBounds,
+                Network::current(),
+                clientDomain,
+                clientDomainSigner->getAccountId());
+
+        QCOMPARE(transaction->getNetwork(), Network::TESTNET());
+        QCOMPARE(transaction->getFee(), 300);
+        QCOMPARE(transaction->getTimeBounds(), timeBounds);
+        QCOMPARE(transaction->getSourceAccount(), server->getAccountId());
+        QCOMPARE(transaction->getSequenceNumber(), 0);
+
+        QCOMPARE(transaction->getOperations().length(), 3);
+        ManageDataOperation* homeDomainOp = (ManageDataOperation*) transaction->getOperations()[0];
+        QCOMPARE(client->getAccountId(), homeDomainOp->getSourceAccount());
+        QCOMPARE(homeDomainOp->getName(), domainName + " auth");
+
+        QCOMPARE(homeDomainOp->getValue().length(), 64);
+
+        //Base64.getDecoder().decode(QString(homeDomainOp->getValue()));
+
+        ManageDataOperation* webAuthDomainOp = (ManageDataOperation*) transaction->getOperations()[1];
+        QCOMPARE(server->getAccountId(), webAuthDomainOp->getSourceAccount());
+        QCOMPARE(webAuthDomainOp->getName(), "web_auth_domain");
+        QCOMPARE(webAuthDomain, webAuthDomainOp->getValue());
+
+        ManageDataOperation* clientAuthDomainOp = (ManageDataOperation*) transaction->getOperations()[2];
+        QCOMPARE(clientDomainSigner->getAccountId(), clientAuthDomainOp->getSourceAccount());
+        QCOMPARE(clientAuthDomainOp->getName(), "client_domain");
+        QCOMPARE(clientDomain, clientAuthDomainOp->getValue());
+
+        QCOMPARE(transaction->getSignatures().size(), 1);
+        QVERIFY(
+            server->verify(
+                transaction->hash(), transaction->getSignatures().at(0).signature.binary()));
+      }
+
+    void testChallengeWithClientDomainButWithoutClientDomainSigner() {
+        KeyPair* server = KeyPair::random();
+        KeyPair* client = KeyPair::random();
+        KeyPair* clientDomainSigner = KeyPair::random();
+
+        long now = QDateTime::currentMSecsSinceEpoch() / 1000L;
+        long end = now + 300;
+        TimeBounds* timeBounds = new TimeBounds(now, end);
+        QString domainName = "example.com";
+        QString webAuthDomain = "auth.example.com";
+        QString clientDomain = "client.domain.com";
+
+        try {
+            Sep10Challenge::buildChallengeTx(
+                server,
+                client->getAccountId(),
+                domainName,
+                webAuthDomain,
+                timeBounds,
+                Network::TESTNET(),
+                "",
+                clientDomainSigner->getAccountId());
+            QFAIL("Missing exception");
+        } catch (std::runtime_error e) {
+            QCOMPARE(e.what(), "clientDomain is required if clientSigningKey is provided");
+        }
+
+        try {
+            Sep10Challenge::buildChallengeTx(
+                server,
+                client->getAccountId(),
+                domainName,
+                webAuthDomain,
+                timeBounds,
+                Network::TESTNET(),
+                clientDomain,
+                "");
+            QFAIL("Missing exception");
+        } catch (std::runtime_error e) {
+            QCOMPARE(e.what(), "clientDomain is required if clientSigningKey is provided");
+        }
+    }
+
+
+    void testVerifyChallengeWithClientDomain() {
+        KeyPair* server = KeyPair::random();
+        KeyPair* client = KeyPair::random();
+        KeyPair* clientDomainSigner = KeyPair::random();
+
+        long now = QDateTime::currentMSecsSinceEpoch() / 1000L;
+        long end = now + 300;
+        TimeBounds* timeBounds = new TimeBounds(now, end);
+        QString domainName = "example.com";
+        QString webAuthDomain = "auth.example.com";
+        QString clientDomain = "client.domain.com";
+
+        Transaction* transaction =
+            Sep10Challenge::buildChallengeTx(
+                server,
+                client->getAccountId(),
+                domainName,
+                webAuthDomain,
+                timeBounds,
+                Network::TESTNET(),
+                clientDomain,
+                clientDomainSigner->getAccountId());
+
+        transaction->sign(client);
+        transaction->sign(clientDomainSigner);
+
+        // should pass if clientDomainSigner is omitted from signers set
+        QSet<QString> signers({client->getAccountId()});
+        Sep10Challenge::verifyChallengeTransactionSigners(
+            transaction->toEnvelopeXdrBase64(),
+            server->getAccountId(),
+            domainName,
+            webAuthDomain,
+            signers,
+            Network::TESTNET());
+
+        // should pass if clientDomainSigner is included in signers set
+        signers = QSet<QString>({client->getAccountId(), clientDomainSigner->getAccountId()});
+        Sep10Challenge::verifyChallengeTransactionSigners(
+            transaction->toEnvelopeXdrBase64(),
+            server->getAccountId(),
+            domainName,
+            webAuthDomain,
+            signers,
+            Network::TESTNET());
+    }
+
+
+    void testVerifyChallengeWithClientDomainMissingSignature(){
+        KeyPair* server = KeyPair::random();
+        KeyPair* client = KeyPair::random();
+        KeyPair* clientDomainSigner = KeyPair::random();
+
+        long now = QDateTime::currentMSecsSinceEpoch() / 1000L;
+        long end = now + 300;
+        TimeBounds* timeBounds = new TimeBounds(now, end);
+        QString domainName = "example.com";
+        QString webAuthDomain = "auth.example.com";
+        QString clientDomain = "client.domain.com";
+
+        Transaction* transaction =
+            Sep10Challenge::buildChallengeTx(
+                server,
+                client->getAccountId(),
+                domainName,
+                webAuthDomain,
+                timeBounds,
+                Network::TESTNET(),
+                clientDomain,
+                clientDomainSigner->getAccountId());
+
+        transaction->sign(client);
+
+        QSet<QString> signers({client->getAccountId()});
+        try {
+            Sep10Challenge::verifyChallengeTransactionSigners(
+                transaction->toEnvelopeXdrBase64(),
+                server->getAccountId(),
+                domainName,
+                webAuthDomain,
+                signers,
+                Network::TESTNET());
+            QFAIL("Missing exception");
+        } catch (std::runtime_error e) {
+            QCOMPARE(e.what(), "Transaction not signed by by the source account of the 'client_domain'.");
+        }
+    }
 
     void testVerifyChallengeTransactionThresholdInvalidNotSignedByServer(){
 
@@ -1456,6 +1655,7 @@ private slots:
             QFAIL("Missing exception");
         } catch (const std::runtime_error& e) {
             //"Transaction not signed by server
+            Q_UNUSED(e)
         }
     }
 
@@ -1619,6 +1819,7 @@ private slots:
             QFAIL("Missing exception");
         } catch (const std::runtime_error& e) {
             //"Signers with weight 3 do not meet threshold 7."
+            Q_UNUSED(e)
         }
     }
 
@@ -1654,6 +1855,7 @@ private slots:
             QFAIL("Missing exception");
         } catch (const std::runtime_error& e) {
             //"Transaction has unrecognized signatures."
+            Q_UNUSED(e)
         }
 
     }
@@ -1685,6 +1887,7 @@ private slots:
             QFAIL("Missing exception");
         } catch (const std::runtime_error& e) {
             //"No verifiable signers provided, at least one G... address must be provided."
+            Q_UNUSED(e)
         }
     }
 
@@ -1725,6 +1928,7 @@ private slots:
             QFAIL("Missing exception");
         } catch (const std::runtime_error& e) {
             //"No verifiable signers provided, at least one G... address must be provided."
+            Q_UNUSED(e)
         }
     }
 
@@ -1805,6 +2009,7 @@ private slots:
             QFAIL("Missing exception");
         } catch (const std::runtime_error& e) {
             //"Transaction not signed by server
+            Q_UNUSED(e)
         }
     }
 
@@ -1860,6 +2065,7 @@ private slots:
             QFAIL("Missing exception");
         } catch (const std::runtime_error& e) {
             //"Transaction not signed by any client signer."
+            Q_UNUSED(e)
         }
     }
 
@@ -1894,6 +2100,7 @@ private slots:
             QFAIL("Missing exception");
         } catch (const std::runtime_error& e) {
             //"Transaction has unrecognized signatures."
+            Q_UNUSED(e)
         }
     }
 

@@ -11,6 +11,8 @@
 
 class Sep10Challenge
 {
+    static const int GRACE_PERIOD_SECONDS;
+    static const QString CLIENT_DOMAIN_DATA_NAME;
     static const QString HOME_DOMAIN_MANAGER_DATA_NAME_FLAG;
     static const QString WEB_AUTH_DOMAIN_MANAGER_DATA_NAME;
      /**
@@ -64,7 +66,14 @@ public:
     // "timebound" is the time duration the transaction should be valid for, O means infinity.
     // More details on SEP 10: https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0010.md
     //returned Transaction must be deleted after use, you can use the Transaction class to obtain the base64 encoded
-    static Transaction* buildChallengeTx(KeyPair* serverSignerSecret, QString clientAccountID, QString domainName, QString webAuthDomain, qint64 timebound, Network *network= Network::current());
+    static Transaction* buildChallengeTx(KeyPair* serverSignerSecret, QString clientAccountID, QString domainName, QString webAuthDomain, qint64 timebound, Network *network= Network::current()
+                                         , QString clientDomain=QString(), QString clientSigningKey=QString(), Memo *memo=nullptr);
+
+
+    static Transaction* buildChallengeTx(KeyPair* serverSignerSecret, QString clientAccountID, QString domainName, QString webAuthDomain, TimeBounds* timebound, Network *network= Network::current()
+                                         , QString clientDomain=QString(), QString clientSigningKey=QString(), Memo *memo=nullptr);
+
+
     /**
        * Reads a SEP 10 challenge transaction and returns the decoded transaction envelope and client account ID contained within.
        * <p>

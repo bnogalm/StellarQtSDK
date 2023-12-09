@@ -4,6 +4,7 @@
 #include <QString>
 #include <QtEndian>
 #include <exception>
+#include <stdexcept>
 #include <QDataStream>
 #include "xdr/stellartransaction.h"
 

@@ -7,8 +7,13 @@ ClawbackClaimableBalanceOperation::ClawbackClaimableBalanceOperation(stellar::Cl
 
 ClawbackClaimableBalanceOperation::ClawbackClaimableBalanceOperation(QString balanceID)
 {
-    checkNotNull(balanceID, "balanceID cannot be null");    
+    checkNotNull(balanceID, "balanceID cannot be null");
     Util::claimableBalanceIdToXDR(balanceID,m_op.balanceID);
+}
+
+ClawbackClaimableBalanceOperation::~ClawbackClaimableBalanceOperation()
+{
+
 }
 
 void ClawbackClaimableBalanceOperation::fillOperationBody(AccountConverter &accountConverter, stellar::Operation &operation)

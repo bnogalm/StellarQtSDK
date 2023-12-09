@@ -71,6 +71,7 @@ QByteArray FeeBumpTransaction::signatureBase() const
         outputStream << payload;
         return output;
     } catch (const std::exception& e) {
+        Q_UNUSED(e)
         return QByteArray();
     }
 }

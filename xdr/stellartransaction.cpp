@@ -46,12 +46,19 @@ stellar::Operation::Operation(const stellar::Operation &op){
         operationClaimClaimableBalance = op.operationClaimClaimableBalance; break;
     case OperationType::BEGIN_SPONSORING_FUTURE_RESERVES:
         operationBeginSponsoringFutureReserves = op.operationBeginSponsoringFutureReserves; break;
-//    case OperationType::END_SPONSORING_FUTURE_RESERVES:
-//        break;
+   case OperationType::END_SPONSORING_FUTURE_RESERVES:
+       break;
     case OperationType::REVOKE_SPONSORSHIP:
         new (&operationRevokeSponsorship) RevokeSponsorshipOp();
         operationRevokeSponsorship = op.operationRevokeSponsorship; break;
-    default: break;
+    case OperationType::CLAWBACK:
+        operationClawback = op.operationClawback; break;
+    case OperationType::CLAWBACK_CLAIMABLE_BALANCE:
+        new (&operationClawbackClaimableBalance) ClawbackClaimableBalanceOp();
+        operationClawbackClaimableBalance = op.operationClawbackClaimableBalance; break;
+    case OperationType::SET_TRUST_LINE_FLAGS:
+        operationSetTrustLineFlags = op.operationSetTrustLineFlags; break;
+    //default: break;
     }
 }
 
@@ -73,6 +80,9 @@ void stellar::Operation::clear()
         break;
     case OperationType::REVOKE_SPONSORSHIP:
         operationRevokeSponsorship.~RevokeSponsorshipOp();
+        break;
+    case OperationType::CLAWBACK_CLAIMABLE_BALANCE:
+        operationClawbackClaimableBalance.~ClawbackClaimableBalanceOp();
         break;
     default:
         break;
@@ -126,12 +136,19 @@ const stellar::Operation &stellar::Operation::operator =(const stellar::Operatio
         operationClaimClaimableBalance = op.operationClaimClaimableBalance; break;
     case OperationType::BEGIN_SPONSORING_FUTURE_RESERVES:
         operationBeginSponsoringFutureReserves = op.operationBeginSponsoringFutureReserves; break;
-//    case OperationType::END_SPONSORING_FUTURE_RESERVES:
-//        break;
+    case OperationType::END_SPONSORING_FUTURE_RESERVES:
+       break;
     case OperationType::REVOKE_SPONSORSHIP:
         new (&operationRevokeSponsorship) RevokeSponsorshipOp();
         operationRevokeSponsorship = op.operationRevokeSponsorship; break;
-    default: break;
+    case OperationType::CLAWBACK:
+        operationClawback = op.operationClawback; break;
+    case OperationType::CLAWBACK_CLAIMABLE_BALANCE:
+        new (&operationClawbackClaimableBalance) ClawbackClaimableBalanceOp();
+        operationClawbackClaimableBalance = op.operationClawbackClaimableBalance; break;
+    case OperationType::SET_TRUST_LINE_FLAGS:
+        operationSetTrustLineFlags = op.operationSetTrustLineFlags; break;
+    //default: break;
     }
     return *this;
 }
@@ -250,7 +267,23 @@ stellar::OperationResult::OperationResult(const stellar::OperationResult &op)
     case OperationType::PATH_PAYMENT_STRICT_SEND:
         new (&pathPaymentStrictSendResult) PathPaymentStrictSendResult();
         pathPaymentStrictSendResult = op.pathPaymentStrictSendResult; break;
-    default: break;
+    case OperationType::CREATE_CLAIMABLE_BALANCE:
+        createClaimableBalanceResult = op.createClaimableBalanceResult; break;
+    case OperationType::CLAWBACK:
+        clawbackResult = op.clawbackResult; break;
+    case OperationType::CLAWBACK_CLAIMABLE_BALANCE:
+        clawbackClaimableBalanceResult = op.clawbackClaimableBalanceResult; break;
+    case OperationType::SET_TRUST_LINE_FLAGS:
+        setTrustLineFlagsResult = op.setTrustLineFlagsResult; break;
+    case OperationType::CLAIM_CLAIMABLE_BALANCE:
+        claimClaimableBalanceResult = op.claimClaimableBalanceResult; break;
+    case OperationType::BEGIN_SPONSORING_FUTURE_RESERVES:
+        beginSponsoringFutureReservesResult = op.beginSponsoringFutureReservesResult; break;
+    case OperationType::END_SPONSORING_FUTURE_RESERVES:
+        endSponsoringFutureReservesResult = op.endSponsoringFutureReservesResult; break;
+    case OperationType::REVOKE_SPONSORSHIP:
+        revokeSponsorshipResult = op.revokeSponsorshipResult; break;
+    //default: break;
     }
 }
 
@@ -347,7 +380,24 @@ const stellar::OperationResult &stellar::OperationResult::operator =(const stell
     case OperationType::PATH_PAYMENT_STRICT_SEND:
         new (&pathPaymentStrictSendResult) PathPaymentStrictSendResult();
         pathPaymentStrictSendResult = op.pathPaymentStrictSendResult; break;
-    default: break;
+    case OperationType::CREATE_CLAIMABLE_BALANCE:
+        createClaimableBalanceResult = op.createClaimableBalanceResult; break;
+    case OperationType::CLAWBACK:
+        clawbackResult = op.clawbackResult; break;
+    case OperationType::CLAWBACK_CLAIMABLE_BALANCE:
+        clawbackClaimableBalanceResult = op.clawbackClaimableBalanceResult; break;
+    case OperationType::SET_TRUST_LINE_FLAGS:
+        setTrustLineFlagsResult = op.setTrustLineFlagsResult; break;
+    case OperationType::CLAIM_CLAIMABLE_BALANCE:
+        claimClaimableBalanceResult = op.claimClaimableBalanceResult; break;
+    case OperationType::BEGIN_SPONSORING_FUTURE_RESERVES:
+        beginSponsoringFutureReservesResult = op.beginSponsoringFutureReservesResult; break;
+    case OperationType::END_SPONSORING_FUTURE_RESERVES:
+        endSponsoringFutureReservesResult = op.endSponsoringFutureReservesResult; break;
+    case OperationType::REVOKE_SPONSORSHIP:
+        revokeSponsorshipResult = op.revokeSponsorshipResult; break;
+
+    //default: break;
     }
     return *this;
 }

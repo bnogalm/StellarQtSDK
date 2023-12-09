@@ -87,7 +87,7 @@ private slots:
          }
          catch(const std::runtime_error& e)
          {
-
+            Q_UNUSED(e)
          }
     }
 

@@ -21,18 +21,29 @@ inline TestList& GetTestList()
 inline int RunAllTests(int argc, char **argv) {
     int result = 0;
     QList<std::string> failedTests;
+    QMap<std::string, std::string> failedTestsWithExceptions;
     for (const auto&i:GetTestList()) {
+        try{
         int res = QTest::qExec(i.second.get(), argc, argv);
         result += res;
         printf("\n");
         if(res)
             failedTests.append(i.first);
+        }
+        catch(std::exception& e)
+        {
+            failedTestsWithExceptions.insert(i.first, e.what());
+            failedTests.append(i.first);
+        }
     }
     if(!failedTests.isEmpty())
         std::cout<<"Failed:\n";
     for(std::string s:failedTests)
     {
-        std::cout<<s<<std::endl;
+        if(!failedTestsWithExceptions.contains(s))
+            std::cout<<s<<std::endl;
+        else
+            std::cout<<s<< " throwed exception: " << failedTestsWithExceptions.value(s) << std::endl;
     }
     return result;
 }

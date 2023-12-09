@@ -904,6 +904,7 @@ namespace stellar
         case OperationType::CLAWBACK:
             in >> obj.operationClawback; break;
         case OperationType::CLAWBACK_CLAIMABLE_BALANCE:
+            new (&obj.operationClawbackClaimableBalance) ClawbackClaimableBalanceOp();
             in >> obj.operationClawbackClaimableBalance; break;
         case OperationType::SET_TRUST_LINE_FLAGS:
             in >> obj.operationSetTrustLineFlags; break;
@@ -2231,6 +2232,12 @@ namespace stellar
         ClawbackResult clawbackResult;
         ClawbackClaimableBalanceResult clawbackClaimableBalanceResult;
         SetTrustLineFlagsResult setTrustLineFlagsResult;
+        ClaimClaimableBalanceResult claimClaimableBalanceResult;
+        BeginSponsoringFutureReservesResult beginSponsoringFutureReservesResult;
+        EndSponsoringFutureReservesResult endSponsoringFutureReservesResult;
+        RevokeSponsorshipResult revokeSponsorshipResult;
+
+
         //no trivial
         ManageBuyOfferResult manageBuyOfferResult;
         PaymentResult paymentResult;
@@ -2299,7 +2306,15 @@ namespace stellar
                 out << obj.clawbackClaimableBalanceResult; break;
             case OperationType::SET_TRUST_LINE_FLAGS:
                 out << obj.setTrustLineFlagsResult; break;
-            default:break;
+            case OperationType::CLAIM_CLAIMABLE_BALANCE:
+                out << obj.claimClaimableBalanceResult; break;
+            case OperationType::BEGIN_SPONSORING_FUTURE_RESERVES:
+                out << obj.beginSponsoringFutureReservesResult; break;
+            case OperationType::END_SPONSORING_FUTURE_RESERVES:
+                out << obj.endSponsoringFutureReservesResult; break;
+            case OperationType::REVOKE_SPONSORSHIP:
+                out << obj.revokeSponsorshipResult; break;
+            //default:break;
             }
             break;
         }
@@ -2360,7 +2375,15 @@ namespace stellar
                 in >> obj.clawbackClaimableBalanceResult; break;
             case OperationType::SET_TRUST_LINE_FLAGS:
                 in >> obj.setTrustLineFlagsResult; break;
-            default: break;
+            case OperationType::CLAIM_CLAIMABLE_BALANCE:
+                in >> obj.claimClaimableBalanceResult; break;
+            case OperationType::BEGIN_SPONSORING_FUTURE_RESERVES:
+                in >> obj.beginSponsoringFutureReservesResult; break;
+            case OperationType::END_SPONSORING_FUTURE_RESERVES:
+                in >> obj.endSponsoringFutureReservesResult; break;
+            case OperationType::REVOKE_SPONSORSHIP:
+                in >> obj.revokeSponsorshipResult; break;
+            //default: break;
             }
             break;
         }

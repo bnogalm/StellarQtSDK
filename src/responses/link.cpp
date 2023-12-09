@@ -1,4 +1,5 @@
 #include "link.h"
+#include <stdexcept>
 
 Link::Link():m_templated(false)
 {

@@ -4,6 +4,7 @@
 #include <QVector>
 #include <QDataStream>
 #include <QDebug>
+#include <stdexcept>
 
 namespace xdr{
 /**

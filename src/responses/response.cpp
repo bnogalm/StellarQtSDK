@@ -5,6 +5,8 @@
 #include <QNetworkRequest>
 #include <QTimer>
 #include <QTimerEvent>
+#include <stdexcept>
+
 #define RECONNECT_DELAY 1000
 
 Response::Response(QNetworkReply *reply)    

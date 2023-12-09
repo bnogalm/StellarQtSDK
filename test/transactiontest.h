@@ -83,6 +83,7 @@ private slots:
         }
         catch (const std::runtime_error& e) {
             // expected
+            Q_UNUSED(e)
         }
     }
     void testBuilderSuccessTestnet(){
@@ -188,6 +189,7 @@ private slots:
         } catch (const std::runtime_error& exception) {
             // Should not throw as max_time is set
             QFAIL("Should not throw");
+            Q_UNUSED(exception)
         }
     }
 

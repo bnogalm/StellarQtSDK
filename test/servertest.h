@@ -261,6 +261,7 @@ private slots:
              //qDebug() << "EXCEPTION "<< e.what();
              //QCOMPARE("invalid address length", QString(e.what()));
              QFAIL("Muxed accounts not working");
+             Q_UNUSED(e)
          }
 
          //QVERIFY(transaction==nullptr);//we dont even allow to build the transaction if destination is wrong.

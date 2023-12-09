@@ -104,7 +104,7 @@ private slots:
             Memo::hash(QString("test"));
             QFAIL("Expected exception");
         } catch (const std::runtime_error& exception) {
-
+            Q_UNUSED(exception)
         }
     }
     void testMemoReturnHashSuccess() {
