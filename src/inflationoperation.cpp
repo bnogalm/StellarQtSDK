@@ -5,8 +5,9 @@ InflationOperation::InflationOperation()
 
 }
 
-void InflationOperation::fillOperationBody(stellar::Operation &operation)
+void InflationOperation::fillOperationBody(AccountConverter &accountConverter, stellar::Operation &operation)
 {
+    Q_UNUSED(accountConverter)
     operation.type =  stellar::OperationType::INFLATION;
 }
 

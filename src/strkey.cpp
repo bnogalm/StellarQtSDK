@@ -20,6 +20,7 @@ StrKey::VersionByte StrKey::decodeVersionByte(QByteArray encoded) {
     switch(decodedVersionByte)
     {
     case StrKey::VersionByte::ACCOUNT_ID:    
+    case StrKey::VersionByte::MUXED_ACCOUNT:
     case StrKey::VersionByte::SEED:
     case StrKey::VersionByte::PRE_AUTH_TX:
     case StrKey::VersionByte::SHA256_HASH:
@@ -56,7 +57,9 @@ QByteArray StrKey::encodeCheck(StrKey::VersionByte versionByte, QByteArray data)
     {
         bytesEncoded.resize(requiresTrim);
     }
-
+    if (bytesEncoded[bytesEncoded.size() - 1] == '\0') {
+        bytesEncoded.chop(1);
+    }
     if (VersionByte::SEED == versionByte) {
         payload.fill('\0',payload.length());
     }

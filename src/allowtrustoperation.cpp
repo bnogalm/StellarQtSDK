@@ -71,7 +71,8 @@ bool AllowTrustOperation::getAuthorizeToMaintainLiabilities() const
     return m_op.authorize&static_cast<quint32>(stellar::TrustLineFlags::AUTHORIZED_TO_MAINTAIN_LIABILITIES_FLAG);
 }
 
-void AllowTrustOperation::fillOperationBody(stellar::Operation &operation) {
+void AllowTrustOperation::fillOperationBody(AccountConverter &accountConverter, stellar::Operation &operation) {
+    Q_UNUSED(accountConverter)
     operation.type = stellar::OperationType::ALLOW_TRUST;
     operation.operationAllowTrust = m_op;
 }

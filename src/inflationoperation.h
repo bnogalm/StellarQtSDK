@@ -10,7 +10,7 @@ class InflationOperation : public Operation
 {
 public:
     InflationOperation();
-    void fillOperationBody(stellar::Operation &operation);
+    void fillOperationBody(AccountConverter& accountConverter, stellar::Operation &operation);
     InflationOperation* create();
 };
 

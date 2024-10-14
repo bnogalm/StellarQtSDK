@@ -4,20 +4,19 @@
 #include <QDateTime>
 #include <QRandomGenerator>
 #include "strkey.h"
+#include "memo.h"
+
+
 #define NONCE_SIZE 48
 
-
+const int Sep10Challenge::GRACE_PERIOD_SECONDS = 5 * 60;
+const QString Sep10Challenge::CLIENT_DOMAIN_DATA_NAME = "client_domain";
 const QString Sep10Challenge::HOME_DOMAIN_MANAGER_DATA_NAME_FLAG = "auth";
 const QString Sep10Challenge::WEB_AUTH_DOMAIN_MANAGER_DATA_NAME = "web_auth_domain";
 
-Transaction* Sep10Challenge::buildChallengeTx(KeyPair *serverSignerSecret, QString clientAccountID, QString domainName, QString webAuthDomain, qint64 timebound, Network* network)
+Transaction* Sep10Challenge::buildChallengeTx(KeyPair *serverSignerSecret, QString clientAccountID, QString domainName, QString webAuthDomain, qint64 timebound, Network* network
+                                              , QString clientDomain, QString clientSigningKey, Memo *memo)
 {
-    if(StrKey::decodeVersionByte(clientAccountID)!=StrKey::VersionByte::ACCOUNT_ID)
-        throw std::runtime_error("Version byte is invalid");
-    QByteArray randomNonce = Util::generateRandomNonce(NONCE_SIZE);//48 random bytes converted to base64 is 64 bytes
-    randomNonce = randomNonce.toBase64(QByteArray::Base64Option::Base64UrlEncoding| QByteArray::OmitTrailingEquals);    
-    // represent server signing account
-    Account *sa = new Account(new KeyPair(*serverSignerSecret),-1);//as is a temporal account, we use a keypair copy.
     TimeBounds *timeBounds;
     if(timebound>0)
     {
@@ -27,13 +26,47 @@ Transaction* Sep10Challenge::buildChallengeTx(KeyPair *serverSignerSecret, QStri
     }
     else
         timeBounds= new TimeBounds(0,0);
+    return buildChallengeTx(serverSignerSecret, clientAccountID, domainName, webAuthDomain, timeBounds, network, clientDomain, clientSigningKey,memo);
+}
+
+
+Transaction* Sep10Challenge::buildChallengeTx(KeyPair* serverSignerSecret, QString clientAccountID, QString domainName, QString webAuthDomain, TimeBounds* timeBounds, Network *network
+                                         , QString clientDomain, QString clientSigningKey, Memo *memo)
+{
+    if (clientDomain.isEmpty() != clientSigningKey.isEmpty()) {
+        throw std::runtime_error("clientDomain is required if clientSigningKey is provided");
+    }
+    if(StrKey::decodeVersionByte(clientAccountID)!=StrKey::VersionByte::ACCOUNT_ID)
+        throw std::runtime_error("Version byte is invalid");
+    QByteArray randomNonce = Util::generateRandomNonce(NONCE_SIZE);//48 random bytes converted to base64 is 64 bytes
+    randomNonce = randomNonce.toBase64(QByteArray::Base64Option::Base64UrlEncoding| QByteArray::OmitTrailingEquals);    
+    // represent server signing account
+    Account *sa = new Account(new KeyPair(*serverSignerSecret),-1);//as is a temporal account, we use a keypair copy.
+
     ManageDataOperation* domainNameOperation = new ManageDataOperation(domainName + " " +HOME_DOMAIN_MANAGER_DATA_NAME_FLAG,randomNonce);
     domainNameOperation->setSourceAccount(clientAccountID);
 
     ManageDataOperation* webAuthDomainOperation = new ManageDataOperation(WEB_AUTH_DOMAIN_MANAGER_DATA_NAME,webAuthDomain.toUtf8());
     webAuthDomainOperation->setSourceAccount(serverSignerSecret->getAccountId());
 
-    Transaction *tx = Transaction::Builder(sa,network).addOperation(domainNameOperation).addOperation(webAuthDomainOperation).addTimeBounds(timeBounds).setBaseFee(Transaction::Builder::BASE_FEE).build();
+    auto builder = Transaction::Builder(AccountConverter().enableMuxed(), sa, network).addOperation(domainNameOperation).addOperation(webAuthDomainOperation).addTimeBounds(timeBounds).setBaseFee(Transaction::Builder::BASE_FEE);
+
+    if (!clientSigningKey.isEmpty()) {
+        if (StrKey::decodeVersionByte(clientSigningKey) != StrKey::VersionByte::ACCOUNT_ID) {
+            throw std::runtime_error("clientSigningKey is not a valid account id");
+        }
+        builder.addOperation((new ManageDataOperation(CLIENT_DOMAIN_DATA_NAME, clientDomain.toLatin1()))->setSourceAccount(clientSigningKey));
+    }
+
+    if(memo)
+    {
+        if(!(dynamic_cast<MemoId*>(memo))) {
+            throw std::runtime_error("only memo type `id` is supported");
+        }
+        builder.addMemo(memo);
+    }
+
+    Transaction *tx = builder.build();
     tx->sign(serverSignerSecret);
     delete sa;
     return tx;
@@ -62,6 +95,11 @@ Sep10Challenge::ChallengeTransaction * Sep10Challenge::readChallengeTransaction(
         throw std::runtime_error("The transaction sequence number should be zero.");
     }
 
+    Memo* memo = transaction->getMemo();
+    if (memo && !(dynamic_cast<MemoNone*>(memo) || dynamic_cast<MemoId*>(memo))) {
+        throw std::runtime_error("only memo type `id` is supported");
+    }
+
     // verify that transaction has time bounds set, and that current time is between the minimum and maximum bounds.
     if (transaction->getTimeBounds() == nullptr) {
         throw std::runtime_error("Transaction requires timebounds.");
@@ -74,7 +112,7 @@ Sep10Challenge::ChallengeTransaction * Sep10Challenge::readChallengeTransaction(
     }
 
     long currentTime = QDateTime::currentMSecsSinceEpoch() / 1000L;
-    if (currentTime < minTime || currentTime > maxTime) {
+    if ((currentTime + GRACE_PERIOD_SECONDS) < minTime || currentTime > maxTime) {
         throw std::runtime_error("Transaction is not within range of the specified timebounds.");
     }
 
@@ -82,7 +120,7 @@ Sep10Challenge::ChallengeTransaction * Sep10Challenge::readChallengeTransaction(
     if (transaction->getOperations().length() < 1) {
         throw std::runtime_error("Transaction requires at least one ManageData operation.");
     }
-    Operation* operation = transaction->getOperations()[0];
+    Operation* operation = transaction->getOperations().at(0);
     ManageDataOperation* manageDataOperation = dynamic_cast<ManageDataOperation*>(operation);
 
     if (!manageDataOperation) {
@@ -95,7 +133,7 @@ Sep10Challenge::ChallengeTransaction * Sep10Challenge::readChallengeTransaction(
         throw std::runtime_error("Operation should have a source account.");
     }
     QString matchedDomainName;
-    for (QString homeDomain : domainNames) {
+    for (const QString& homeDomain : domainNames) {
         if ((homeDomain + " " + HOME_DOMAIN_MANAGER_DATA_NAME_FLAG)==manageDataOperation->getName()) {
             matchedDomainName = homeDomain;
             break;
@@ -130,7 +168,7 @@ Sep10Challenge::ChallengeTransaction * Sep10Challenge::readChallengeTransaction(
     // verify subsequent operations are manage data ops with source account set to server account
     for(int i=1;i<transaction->getOperations().length();i++)
     {
-        auto subsequentOp = transaction->getOperations()[i];
+        auto subsequentOp = transaction->getOperations().at(i);
         ManageDataOperation* subsequentManageDataOperation = dynamic_cast<ManageDataOperation*>(subsequentOp);
         if (!subsequentManageDataOperation)
             throw std::runtime_error("Operation type should be ManageData.");
@@ -138,7 +176,7 @@ Sep10Challenge::ChallengeTransaction * Sep10Challenge::readChallengeTransaction(
         QString subsequentClientAccountId = subsequentManageDataOperation->getSourceAccount();
         if (subsequentClientAccountId.isEmpty())
             throw std::runtime_error("Operation should have a source account.");
-        if (subsequentClientAccountId != serverAccountId)
+        if ((subsequentManageDataOperation->getName() != CLIENT_DOMAIN_DATA_NAME) && subsequentClientAccountId != serverAccountId)
             throw std::runtime_error("subsequent operations are unrecognized");
 
         if (WEB_AUTH_DOMAIN_MANAGER_DATA_NAME == subsequentManageDataOperation->getName()) {
@@ -178,12 +216,13 @@ QSet<QString> Sep10Challenge::verifyChallengeTransactionSigners(QString challeng
     // Deduplicate the client signers and ensure the server is not included
     // anywhere we check or output the list of signers.
     QSet<QString> clientSigners;
-    for (QString signer : signers) {
+    for (const QString& signer : signers) {
         // Ignore non-G... account/address signers.
         StrKey::VersionByte versionByte;
         try {
             versionByte = StrKey::decodeVersionByte(signer);
-        } catch (std::runtime_error e) {
+        } catch (const std::runtime_error& e) {
+            Q_UNUSED(e)
             continue;
         }
 
@@ -213,6 +252,26 @@ QSet<QString> Sep10Challenge::verifyChallengeTransactionSigners(QString challeng
     // are consumed only once on the transaction.
     QSet<QString> allSigners = QSet<QString>(clientSigners);
     allSigners.insert(serverKeyPair->getAccountId());
+
+
+    QString clientDomainSigner;
+
+    for (Operation* op : transaction->getOperations()) {
+        if (!(dynamic_cast<ManageDataOperation*>(op))) {
+            throw std::runtime_error("Operation type should be ManageData.");
+        }
+        ManageDataOperation* manageDataOp = (ManageDataOperation*) op;
+        if (manageDataOp->getSourceAccount().isNull()) {
+            throw std::runtime_error("Operation should have a source account.");
+        }
+        if (manageDataOp->getName() == (CLIENT_DOMAIN_DATA_NAME)) {
+            allSigners.insert(manageDataOp->getSourceAccount());
+            clientDomainSigner = manageDataOp->getSourceAccount();
+            break;
+        }
+    }
+
+
     QSet<QString> signersFound = verifyTransactionSignatures(transaction, allSigners);
 
     // Confirm the server is in the list of signers found and remove it.
@@ -227,9 +286,20 @@ QSet<QString> Sep10Challenge::verifyChallengeTransactionSigners(QString challeng
     if (signersFound.isEmpty()) {
         throw std::runtime_error("Transaction not signed by any client signer.");
     }
+    int expectedSignaturesLength = transaction->getSignatures().size() - 1;
 
+    if (!clientDomainSigner.isNull()) {
+        // Confirm the client_domain signer is in the list of signers found and remove it.
+        bool clientSignerFound = signersFound.remove(clientDomainSigner);
+
+        // Confirm we matched a signature to the client_domain signer.
+        if (!clientSignerFound) {
+            throw std::runtime_error("Transaction not signed by by the source account of the 'client_domain'.");
+        }
+        expectedSignaturesLength--;
+    }
     // Confirm all signatures were consumed by a signer.
-   if (signersFound.size() != transaction->getSignatures().size() - 1) {
+   if (signersFound.size() != expectedSignaturesLength) {
         throw std::runtime_error("Transaction has unrecognized signatures.");
     }
 
@@ -251,7 +321,7 @@ QSet<QString> Sep10Challenge::verifyChallengeTransactionThreshold(QString challe
     QSet<QString> signersFound = verifyChallengeTransactionSigners(challengeXdr, serverAccountId, domainNames,webAuthDomain, signersSet, network);
 
     int sum = 0;
-    for (QString signer : signersFound) {
+    for (const QString& signer : signersFound) {
         Integer weight = weightsForSigner.value(signer);
         if (weight.filled) {
             sum += weight.value;
@@ -285,11 +355,12 @@ QSet<QString> Sep10Challenge::verifyTransactionSignatures(Transaction *transacti
         signatures.insert(decoratedSignature.hint, decoratedSignature.signature.binary());
     }
 
-    for (QString signer : signers) {
+    for (const QString& signer : signers) {
         KeyPair* keyPair = KeyPair::fromAccountId(signer);
         stellar::SignatureHint hint = keyPair->getSignatureHint();
 
-        for (QByteArray& signature : signatures.values(hint)) {
+        auto signaturesFiltered = signatures.values(hint);
+        for (const QByteArray& signature : signaturesFiltered) {
             if (keyPair->verify(txHash, signature)) {
                 signersFound.insert(signer);
                 // explicitly ensure that a transaction signature cannot be

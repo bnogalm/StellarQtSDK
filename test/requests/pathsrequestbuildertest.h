@@ -92,7 +92,7 @@ private slots:
         try {
             server.strictReceivePaths().sourceAssets(assets).sourceAccount(KeyPair("GD4KO3IOYYWIYVI236Y35K2DU6VNYRH3BPNFJSH57J5BLLCQHBIOK3IN"));
             QFAIL("missing exception");
-        } catch (std::runtime_error e) {
+        } catch (const std::runtime_error& e) {
             QString errorMsg(e.what());
             QVERIFY(errorMsg.contains("cannot set both source_assets and source_account"));
         }
@@ -100,7 +100,7 @@ private slots:
         try {
             server.strictReceivePaths().sourceAccount(KeyPair("GD4KO3IOYYWIYVI236Y35K2DU6VNYRH3BPNFJSH57J5BLLCQHBIOK3IN")).sourceAssets(assets);
             QFAIL("missing exception");
-        } catch (std::runtime_error e) {
+        } catch (const std::runtime_error& e) {
             QString errorMsg(e.what());
             QVERIFY(errorMsg.contains("cannot set both source_assets and source_account"));
         }
@@ -169,7 +169,7 @@ private slots:
         try {
             server.strictSendPaths().destinationAssets(assets).destinationAccount(KeyPair("GD4KO3IOYYWIYVI236Y35K2DU6VNYRH3BPNFJSH57J5BLLCQHBIOK3IN"));
             QFAIL("missing exception");
-        } catch (std::runtime_error e) {
+        } catch (const std::runtime_error& e) {
             QString errorMsg(e.what());
             QVERIFY(errorMsg.contains("cannot set both destination_assets and destination_account"));
         }
@@ -177,7 +177,7 @@ private slots:
         try {
             server.strictSendPaths().destinationAccount(KeyPair("GD4KO3IOYYWIYVI236Y35K2DU6VNYRH3BPNFJSH57J5BLLCQHBIOK3IN")).destinationAssets(assets);
             QFAIL("missing exception");
-        } catch (std::runtime_error e) {
+        } catch (const std::runtime_error& e) {
             QString errorMsg(e.what());
             QVERIFY(errorMsg.contains("cannot set both destination_assets and destination_account"));
         }

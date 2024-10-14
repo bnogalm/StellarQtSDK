@@ -14,7 +14,8 @@ class ClawbackClaimableBalanceOperation : public Operation
 public:
     ClawbackClaimableBalanceOperation(stellar::ClawbackClaimableBalanceOp &op);
     ClawbackClaimableBalanceOperation(QString balanceID);
-    void fillOperationBody(stellar::Operation &operation);
+    virtual ~ClawbackClaimableBalanceOperation();
+    void fillOperationBody(AccountConverter& accountConverter, stellar::Operation &operation);
     /**
      * The id of the claimable balance which will be clawed back.
      */

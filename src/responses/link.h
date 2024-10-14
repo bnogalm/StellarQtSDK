@@ -21,8 +21,8 @@ public:
     QString getHref() const;
     bool getTemplated() const;
     QUrl getUri();
-    bool operator !=(Link& link);
-    bool operator ==(Link& link);
+    bool operator !=(const Link& link) const;
+    bool operator ==(const Link& link) const;
 };
 Q_DECLARE_METATYPE(Link)
 #endif // LINK_H

@@ -58,7 +58,7 @@ QString PathPaymentStrictSendOperation::getSendAmount() {
 }
 
 QString PathPaymentStrictSendOperation::getDestination() const{
-    return StrKey::encodeStellarAccountId(StrKey::muxedAccountToAccountId(m_op.destination));
+    return StrKey::encodeStellarMuxedAccount(m_op.destination);
 }
 
 Asset *PathPaymentStrictSendOperation::getDestAsset() {
@@ -80,15 +80,18 @@ QList<Asset *> PathPaymentStrictSendOperation::getPath() {
     return m_path;
 }
 
-void PathPaymentStrictSendOperation::fillOperationBody(stellar::Operation &op)
+void PathPaymentStrictSendOperation::fillOperationBody(AccountConverter &accountConverter, stellar::Operation &op)
 {
     auto& o = op.fillPathPaymentStrictSendOp();
     o = m_op;
+    o.destination = accountConverter.filter(o.destination);
 }
 
-PathPaymentStrictSendOperation *PathPaymentStrictSendOperation::build(stellar::PathPaymentStrictSendOp &op)
+PathPaymentStrictSendOperation *PathPaymentStrictSendOperation::build(AccountConverter &accountConverter, stellar::PathPaymentStrictSendOp &op)
 {
-    return new PathPaymentStrictSendOperation(op);
+    auto result = new PathPaymentStrictSendOperation(op);
+    result->m_op.destination = accountConverter.filter(op.destination);
+    return result;
 }
 
 PathPaymentStrictSendOperation *PathPaymentStrictSendOperation::create(Asset* sendAsset, QString sendMax, KeyPair* destination,

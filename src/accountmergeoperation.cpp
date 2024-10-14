@@ -14,15 +14,14 @@ QString AccountMergeOperation::getDestination() const {
     return m_destination;
 }
 
-void AccountMergeOperation::fillOperationBody(stellar::Operation &operation) {
+void AccountMergeOperation::fillOperationBody(AccountConverter &accountConverter, stellar::Operation &operation) {
     operation.type = stellar::OperationType::ACCOUNT_MERGE;
-    operation.operationAccountMerge = StrKey::encodeToXDRMuxedAccount(m_destination);
+    operation.operationAccountMerge = accountConverter.encode(m_destination);
 }
 
 AccountMergeOperation *AccountMergeOperation::build(stellar::MuxedAccount &operationAccountMerge)
 {
-
-    return new AccountMergeOperation(StrKey::encodeStellarAccountId(StrKey::muxedAccountToAccountId(operationAccountMerge)));
+    return new AccountMergeOperation(StrKey::encodeStellarMuxedAccount(operationAccountMerge));
 }
 
 AccountMergeOperation *AccountMergeOperation::create(KeyPair* destination)

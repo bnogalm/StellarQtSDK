@@ -1,9 +1,17 @@
 #include "account.h"
 #include "util.h"
-
+#include "accountconverter.h"
 
 Account::Account(KeyPair *keypair, qint64 sequenceNumber) {
     m_keyPair = checkNotNull(keypair, "keypair cannot be null");
+    m_accountId = AccountConverter().encode(keypair->getAccountId());
+    m_sequenceNumber = sequenceNumber;
+}
+
+Account::Account(QString accountId, qint64 sequenceNumber)
+{
+    m_keyPair = KeyPair::fromAccountId(AccountConverter(false).filter(accountId));
+    m_accountId = AccountConverter().encode(checkNotNull(accountId, "accountId cannot be null"));
     m_sequenceNumber = sequenceNumber;
 }
 
@@ -15,6 +23,11 @@ Account::~Account()
 
 KeyPair *Account::getKeypair() {
     return m_keyPair;
+}
+
+QString Account::getAccountId() const
+{
+    return AccountConverter().decode(m_accountId);
 }
 
 qint64 Account::getSequenceNumber() {

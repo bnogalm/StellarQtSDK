@@ -477,7 +477,7 @@ private slots:
         Account* account = new Account(source, sequenceNumber);
 
 
-        Transaction* transaction = Transaction::Builder(account).addOperation(new CreateAccountOperation(destination,"2000"))
+        Transaction* transaction = Transaction::Builder(AccountConverter().enableMuxed(), account).addOperation(new CreateAccountOperation(destination,"2000"))
                 .setTimeout(Transaction::Builder::TIMEOUT_INFINITE)
                 .setBaseFee(Transaction::Builder::BASE_FEE)
                 .build();
@@ -728,13 +728,15 @@ private slots:
             Operation::toXdrAmount("0.00000001");
             QFAIL("expected exception");
         }
-        catch (std::exception e) {
+        catch (const std::exception& e) {
+            Q_UNUSED(e)
         }
         try {
             Operation::toXdrAmount("72991284.30073811");
             QFAIL("expected exception");
         }
-        catch(std::exception e){
+        catch(const std::exception& e){
+            Q_UNUSED(e)
         }
     }
 
@@ -773,8 +775,9 @@ private slots:
             ClaimClaimableBalanceOperation* operation = ClaimClaimableBalanceOperation::create(balanceId)->setSourceAccount(accountId);
             operation->toXdr();
             QFAIL("missing excepcion");
-        } catch (std::runtime_error e) {
+        } catch (const std::runtime_error& e) {
             //"invalid balanceId"
+            Q_UNUSED(e)
         }
     }
 
@@ -786,7 +789,8 @@ private slots:
             ClaimClaimableBalanceOperation* operation = ClaimClaimableBalanceOperation::create(balanceId)->setSourceAccount(accountId);
             operation->toXdr();
             QFAIL("missing excepcion");
-        } catch (std::runtime_error ignored) {
+        } catch (const std::runtime_error& ignored) {
+            Q_UNUSED(ignored)
         }
     }
 
@@ -798,8 +802,9 @@ private slots:
             ClaimClaimableBalanceOperation* operation = ClaimClaimableBalanceOperation::create(balanceId)->setSourceAccount(accountId);
             operation->toXdr();
             QFAIL("missing excepcion");
-        } catch (std::runtime_error e) {
+        } catch (const std::runtime_error& e) {
             //"invalid balanceId"
+            Q_UNUSED(e)
         }
     }
 
@@ -916,7 +921,7 @@ private slots:
         QString source = "GA2N7NI5WEMJILMK4UPDTF2ZX2BIRQUM3HZUE27TRUNRFN5M5EXU6RQV";
         QString balanceId = "00000000929b20b72e5890ab51c24f1cc46fa01c4f318d8d33367d24dd614cfdf5491072";
         ClawbackClaimableBalanceOperation* operation = ClawbackClaimableBalanceOperation::create(balanceId)->setSourceAccount(source);
-        QCOMPARE(operation->toXdrBase64(), "AAAAAQAAAAA037UdsRiULYrlHjmXWb6CiMKM2fNCa/ONGxK3rOkvTwAAABQAAAAAkpsgty5YkKtRwk8cxG+gHE8xjY0zNn0k3WFM/fVJEHI=");
+        QCOMPARE(operation->toXdrBase64(), QString("AAAAAQAAAAA037UdsRiULYrlHjmXWb6CiMKM2fNCa/ONGxK3rOkvTwAAABQAAAAAkpsgty5YkKtRwk8cxG+gHE8xjY0zNn0k3WFM/fVJEHI="));
 
         stellar::Operation xdr = operation->toXdr();
         ClawbackClaimableBalanceOperation* parsedOperation = (ClawbackClaimableBalanceOperation*) Operation::fromXdr(xdr);
@@ -933,7 +938,7 @@ private slots:
         QString amt = "100";
 
         ClawbackOperation* operation = ClawbackOperation::create(accountId, asset, amt)->setSourceAccount(source);
-        QCOMPARE(operation->toXdrBase64(), "AAAAAQAAAAA037UdsRiULYrlHjmXWb6CiMKM2fNCa/ONGxK3rOkvTwAAABMAAAABREVNTwAAAACs9Aq+RXfSw0yuZEGt0TkYxAHDjB9RkQrLraMLSTGGKwAAAAAND42wpWEfOthyO+2vpGJJ5QgHfCRRZKvHXjjhkRA7SwAAAAA7msoA");
+        QCOMPARE(operation->toXdrBase64(), QString("AAAAAQAAAAA037UdsRiULYrlHjmXWb6CiMKM2fNCa/ONGxK3rOkvTwAAABMAAAABREVNTwAAAACs9Aq+RXfSw0yuZEGt0TkYxAHDjB9RkQrLraMLSTGGKwAAAAAND42wpWEfOthyO+2vpGJJ5QgHfCRRZKvHXjjhkRA7SwAAAAA7msoA"));
 
         stellar::Operation xdr = operation->toXdr();
         ClawbackOperation* parsedOperation = (ClawbackOperation*) Operation::fromXdr(xdr);
@@ -951,8 +956,9 @@ private slots:
             QString amt = "100";
             ClawbackOperation::create(accountId, Asset::create("native"), amt);
             QFAIL("missing excepcion");
-        } catch (std::runtime_error e) {
+        } catch (const std::runtime_error& e) {
             //"native assets are not supported"
+            Q_UNUSED(e)
         }
     }
 
@@ -991,8 +997,9 @@ private slots:
 
             SetTrustlineFlagsOperation::create(accountId, Asset::create("native"), toClear, toSet)->setSourceAccount(source);
             QFAIL("missing excepcion");
-        } catch (std::runtime_error e) {
+        } catch (const std::runtime_error& e) {
             //"native assets are not supported"
+            Q_UNUSED(e)
         }
     }
 };

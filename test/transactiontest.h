@@ -65,7 +65,7 @@ private slots:
 //        try {
 //            Transaction::Builder::setDefaultOperationFee(99);
 //            QFAIL("expected IllegalArgumentException");
-//        } catch (std::runtime_error e) {
+//        } catch (const std::runtime_error& e) {
 //            // expected
 //        }
 
@@ -75,14 +75,15 @@ private slots:
     void testMissingOperationFee() {
         Account* account = new Account(KeyPair::fromAccountId(QString("GDW6AUTBXTOC7FIKUO5BOO3OGLK4SF7ZPOBLMQHMZDI45J2Z6VXRB5NR")), 2908908335136768L);
         try {
-            Transaction::Builder(account, Network::current())
+            Transaction::Builder(AccountConverter().enableMuxed(), account, Network::current())
                     .addOperation(new CreateAccountOperation(KeyPair::fromAccountId(QString("GDW6AUTBXTOC7FIKUO5BOO3OGLK4SF7ZPOBLMQHMZDI45J2Z6VXRB5NR")), "2000"))
                     .setTimeout(Transaction::Builder::TIMEOUT_INFINITE)
                     .build();
             QFAIL("missing exception");
         }
-        catch (std::runtime_error e) {
+        catch (const std::runtime_error& e) {
             // expected
+            Q_UNUSED(e)
         }
     }
     void testBuilderSuccessTestnet(){
@@ -92,7 +93,7 @@ private slots:
 
         qint64 sequenceNumber = 2908908335136768;
         Account* account = new Account(source, sequenceNumber);
-        Transaction* transaction = Transaction::Builder(account)
+        Transaction* transaction = Transaction::Builder(AccountConverter().enableMuxed(), account)
                 .addOperation(new CreateAccountOperation(destination, "2000"))
                 .setTimeout(Transaction::Builder::TIMEOUT_INFINITE)
                 .setBaseFee(Transaction::Builder::BASE_FEE)
@@ -117,7 +118,7 @@ private slots:
         KeyPair *destination = KeyPair::fromAccountId(QString("GDW6AUTBXTOC7FIKUO5BOO3OGLK4SF7ZPOBLMQHMZDI45J2Z6VXRB5NR"));
 
         Account *account = new Account(source, 2908908335136768);
-        Transaction *transaction = Transaction::Builder(account)
+        Transaction *transaction = Transaction::Builder(AccountConverter().enableMuxed(), account)
                 .addOperation(new CreateAccountOperation(destination, "2000"))
                 .addMemo(Memo::text("Hello world!"))
                 .setTimeout(Transaction::Builder::TIMEOUT_INFINITE)
@@ -138,7 +139,7 @@ private slots:
         KeyPair* destination = KeyPair::fromAccountId(QString("GDW6AUTBXTOC7FIKUO5BOO3OGLK4SF7ZPOBLMQHMZDI45J2Z6VXRB5NR"));
 
         Account* account = new Account(source, 2908908335136768L);
-        Transaction* transaction = Transaction::Builder(account)
+        Transaction* transaction = Transaction::Builder(AccountConverter().enableMuxed(), account)
                 .addOperation(CreateAccountOperation::create(destination, "2000"))
                 .addTimeBounds(new TimeBounds(42, 1337))
                 .addMemo(Memo::hash(QString("abcdef")))
@@ -179,28 +180,29 @@ private slots:
     void testBuilderWithTimeBoundsButNoTimeout(){
         Account* account = new Account(KeyPair::random(), 2908908335136768L);
         try {
-            Transaction::Builder(account)
+            Transaction::Builder(AccountConverter().enableMuxed(), account)
                     .addOperation(CreateAccountOperation::create(KeyPair::random(), "2000"))
                     .addTimeBounds(new TimeBounds(42, 1337))
                     .addMemo(Memo::hash(QString("abcdef")))
                     .setBaseFee(Transaction::Builder::BASE_FEE)
                     .build();
-        } catch (std::runtime_error exception) {
+        } catch (const std::runtime_error& exception) {
             // Should not throw as max_time is set
             QFAIL("Should not throw");
+            Q_UNUSED(exception)
         }
     }
 
     void testBuilderRequiresTimeoutOrTimeBounds(){
         Account* account = new Account(KeyPair::random(), 2908908335136768L);
         try {
-            Transaction::Builder(account)
+            Transaction::Builder(AccountConverter().enableMuxed(), account)
                     .addOperation(CreateAccountOperation::create(KeyPair::random(), "2000"))
                     .addMemo(Memo::hash(QString("abcdef")))
                     .setBaseFee(Transaction::Builder::BASE_FEE)
                     .build();
             QFAIL("missing exception");
-        } catch (std::runtime_error exception) {
+        } catch (const std::runtime_error& exception) {
             QVERIFY(QString(exception.what()).compare("TimeBounds has to be set or you must call setTimeout(TIMEOUT_INFINITE).")==0);
         }
     }
@@ -208,14 +210,14 @@ private slots:
     void testBuilderTimeoutNegative(){
         Account* account = new Account(KeyPair::random(), 2908908335136768L);
         try {
-            Transaction::Builder(account)
+            Transaction::Builder(AccountConverter().enableMuxed(), account)
                     .addOperation(CreateAccountOperation::create(KeyPair::random(), "2000"))
                     .addMemo(Memo::hash(QString("abcdef")))
                     .setTimeout(-1)
                     .setBaseFee(Transaction::Builder::BASE_FEE)
                     .build();
             QFAIL("missing exception");
-        } catch (std::runtime_error exception) {
+        } catch (const std::runtime_error& exception) {
             QVERIFY(QString(exception.what()).contains("timeout cannot be negative"));
             QCOMPARE(account->getSequenceNumber(),2908908335136768L);
         }
@@ -223,7 +225,7 @@ private slots:
 
     void testBuilderTimeoutSetsTimeBounds() {
         Account* account = new Account(KeyPair::random(), 2908908335136768L);
-        Transaction* transaction = Transaction::Builder(account)
+        Transaction* transaction = Transaction::Builder(AccountConverter().enableMuxed(), account)
                 .addOperation(CreateAccountOperation::create(KeyPair::random(), "2000"))
                 .setTimeout(10)
                 .setBaseFee(Transaction::Builder::BASE_FEE)
@@ -238,14 +240,14 @@ private slots:
     void testBuilderFailsWhenSettingTimeoutAndMaxTimeAlreadySet() {
         Account* account = new Account(KeyPair::random(), 2908908335136768L);
         try {
-            Transaction::Builder(account)
+            Transaction::Builder(AccountConverter().enableMuxed(), account)
                     .addOperation(CreateAccountOperation::create(KeyPair::random(), "2000"))
                     .addTimeBounds(new TimeBounds(42, 1337))
                     .setTimeout(10)
                     .setBaseFee(Transaction::Builder::BASE_FEE)
                     .build();
             QFAIL("missing exception");
-        } catch (std::runtime_error exception) {
+        } catch (const std::runtime_error& exception) {
             QVERIFY(QString(exception.what()).contains("TimeBounds.max_time has been already set"));
             QCOMPARE(account->getSequenceNumber(),2908908335136768L);
         }
@@ -253,7 +255,7 @@ private slots:
 
     void testBuilderFailsWhenSettingTimeoutAndMaxTimeNotSet() {
         Account* account = new Account(KeyPair::random(), 2908908335136768L);
-        Transaction* transaction = Transaction::Builder(account)
+        Transaction* transaction = Transaction::Builder(AccountConverter().enableMuxed(), account)
                 .addOperation(CreateAccountOperation::create(KeyPair::random(), "2000"))
                 .addTimeBounds(new TimeBounds(42, 0))
                 .setTimeout(10)
@@ -273,7 +275,7 @@ private slots:
       KeyPair* source = KeyPair::fromSecretSeed(QString("SCH27VUZZ6UAKB67BDNF6FA42YMBMQCBKXWGMFD5TZ6S5ZZCZFLRXKHS"));
       KeyPair* destination = KeyPair::fromAccountId(QString("GDW6AUTBXTOC7FIKUO5BOO3OGLK4SF7ZPOBLMQHMZDI45J2Z6VXRB5NR"));
       Account* account = new Account(source, 2908908335136768L);
-      Transaction* transaction = Transaction::Builder(account)
+      Transaction* transaction = Transaction::Builder(AccountConverter().enableMuxed(), account)
               .addOperation(CreateAccountOperation::create(destination, "2000"))
               .addTimeBounds(new TimeBounds(42, 0))
               .addMemo(Memo::hash(QString("abcdef")))
@@ -301,7 +303,7 @@ private slots:
         KeyPair *destination = KeyPair::fromAccountId(QString("GDW6AUTBXTOC7FIKUO5BOO3OGLK4SF7ZPOBLMQHMZDI45J2Z6VXRB5NR"));
 
         Account *account = new Account(source, 2908908335136768);
-        Transaction *transaction = Transaction::Builder(account)
+        Transaction *transaction = Transaction::Builder(AccountConverter().enableMuxed(), account)
                 .addOperation(new CreateAccountOperation(destination, "2000"))
                 .setTimeout(Transaction::Builder::TIMEOUT_INFINITE)
                 .setBaseFee(Transaction::Builder::BASE_FEE)
@@ -320,7 +322,7 @@ private slots:
         KeyPair* destination = KeyPair::fromAccountId(QString("GDW6AUTBXTOC7FIKUO5BOO3OGLK4SF7ZPOBLMQHMZDI45J2Z6VXRB5NR"));
 
         Account* account = new Account(source, 2908908335136768L);
-        Transaction* transaction = Transaction::Builder(account, Network::current())
+        Transaction* transaction = Transaction::Builder(AccountConverter().enableMuxed(), account, Network::current())
                 .addOperation(new CreateAccountOperation(destination->getAccountId(), "2000"))
                 .setTimeout(Transaction::Builder::TIMEOUT_INFINITE)
                 .setBaseFee(Transaction::MIN_BASE_FEE)
@@ -354,7 +356,7 @@ private slots:
         KeyPair *destination = KeyPair::fromAccountId("GDJJRRMBK4IWLEPJGIE6SXD2LP7REGZODU7WDC3I2D6MR37F4XSHBKX2");
 
         Account *account = new Account(source, 0);
-        Transaction *transaction = Transaction::Builder(account)
+        Transaction *transaction = Transaction::Builder(AccountConverter().enableMuxed(), account)
                 .addOperation(new PaymentOperation(destination->getAccountId(), new AssetTypeNative(), "2000"))
                 .setTimeout(Transaction::Builder::TIMEOUT_INFINITE)
                 .setBaseFee(Transaction::Builder::BASE_FEE)
@@ -383,7 +385,7 @@ private slots:
       KeyPair *destination = KeyPair::fromAccountId(QString("GDW6AUTBXTOC7FIKUO5BOO3OGLK4SF7ZPOBLMQHMZDI45J2Z6VXRB5NR"));
 
       Account *account = new Account(source, 2908908335136768L);
-      Transaction *transaction = Transaction::Builder(account)
+      Transaction *transaction = Transaction::Builder(AccountConverter().enableMuxed(), account)
               .addOperation(new CreateAccountOperation(destination, "2000"))
               .setTimeout(Transaction::Builder::TIMEOUT_INFINITE)
               .setBaseFee(Transaction::Builder::BASE_FEE)
@@ -401,10 +403,10 @@ private slots:
 
       Account *account = new Account(source, 2908908335136768);
       try {
-        Transaction *transaction = Transaction::Builder(account).setTimeout(Transaction::Builder::TIMEOUT_INFINITE).setBaseFee(Transaction::Builder::BASE_FEE).build();
+        Transaction *transaction = Transaction::Builder(AccountConverter().enableMuxed(), account).setTimeout(Transaction::Builder::TIMEOUT_INFINITE).setBaseFee(Transaction::Builder::BASE_FEE).build();
         Q_UNUSED(transaction);
         QFAIL("missing exception");
-      } catch (std::runtime_error exception) {
+      } catch (const std::runtime_error& exception) {
         QVERIFY(QString(exception.what()).contains("At least one operation required"));
         QVERIFY(2908908335136768== account->getSequenceNumber());
       }
@@ -418,12 +420,12 @@ private slots:
 
       try {
         Account *account = new Account(source, 2908908335136768L);
-        Transaction::Builder(account)
+        Transaction::Builder(AccountConverter().enableMuxed(), account)
                 .addOperation(new CreateAccountOperation(destination, "2000"))
                 .addMemo(Memo::none())
                 .addMemo(Memo::none());
         QFAIL("missing exception");
-      } catch (std::runtime_error exception) {
+      } catch (const std::runtime_error& exception) {
         QVERIFY(QString(exception.what()).contains("Memo has been already added."));
       }
   }
@@ -434,7 +436,7 @@ private slots:
         KeyPair *source = KeyPair::fromSecretSeed(QString("SCH27VUZZ6UAKB67BDNF6FA42YMBMQCBKXWGMFD5TZ6S5ZZCZFLRXKHS"));
         KeyPair *destination = KeyPair::fromAccountId(QString("GDW6AUTBXTOC7FIKUO5BOO3OGLK4SF7ZPOBLMQHMZDI45J2Z6VXRB5NR"));
         Account *account = new Account(source, 2908908335136768);
-        Transaction *transaction = Transaction::Builder(account)
+        Transaction *transaction = Transaction::Builder(AccountConverter().enableMuxed(), account)
                 .addOperation(new CreateAccountOperation(destination, "2000"))
                 .addMemo(Memo::text("Hello world!"))
                 .setTimeout(Transaction::Builder::TIMEOUT_INFINITE)

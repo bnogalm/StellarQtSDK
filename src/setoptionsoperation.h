@@ -80,7 +80,7 @@ public:
      * Additional signer weight. The signer is deleted if the weight is 0.
      */
     Integer getSignerWeight();
-    void fillOperationBody(stellar::Operation &op);
+    void fillOperationBody(AccountConverter& accountConverter, stellar::Operation &op);
     /**
     * Builds SetOptions operation.
     * @see SetOptionsOperation

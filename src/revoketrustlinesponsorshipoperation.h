@@ -17,7 +17,7 @@ public:
 
     Asset* getAsset();
 
-    void fillOperationBody(stellar::Operation &op);
+    void fillOperationBody(AccountConverter& accountConverter, stellar::Operation &op);
     /**
      * Construct a new RevokeTrustlineSponsorshipOperation builder from a RevokeSponsorship XDR.
      * @param op {@link RevokeSponsorshipOp}

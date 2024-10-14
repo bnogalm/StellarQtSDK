@@ -25,7 +25,7 @@ public:
      * The limit of the trustline. For example, if a gateway extends a trustline of up to 200 USD to a user, the limit is 200.
      */
     QString getLimit();
-    void fillOperationBody(stellar::Operation &operation);
+    void fillOperationBody(AccountConverter& accountConverter, stellar::Operation &operation);
     static ChangeTrustOperation* build(stellar::ChangeTrustOp &op);
     static ChangeTrustOperation* create(Asset* asset, QString limit);
 

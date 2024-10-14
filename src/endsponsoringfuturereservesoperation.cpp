@@ -5,8 +5,9 @@ EndSponsoringFutureReservesOperation::EndSponsoringFutureReservesOperation()
 
 }
 
-void EndSponsoringFutureReservesOperation::fillOperationBody(stellar::Operation &operation)
+void EndSponsoringFutureReservesOperation::fillOperationBody(AccountConverter &accountConverter, stellar::Operation &operation)
 {
+    Q_UNUSED(accountConverter)
     operation.type = stellar::OperationType::END_SPONSORING_FUTURE_RESERVES;
 }
 

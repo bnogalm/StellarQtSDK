@@ -4,10 +4,10 @@ QT -= gui
 CONFIG += c++11 testcase
 
 DEFINES += STELLAR_ALLOW_UNSECURE_RANDOM
-DEFINES += STELLAR_SKIP_LIVE_TESTS
+#DEFINES += STELLAR_SKIP_LIVE_TESTS
 
 DEFINES += STELLAR_ENABLE_TEST_METHODS
-
+#DEFINES += STELLAR_QT_DEBUG_NETWORK_REQUESTS
 
 TARGET = StellarQtSDKTest
 CONFIG += console
@@ -20,6 +20,7 @@ include(StellarQtSDK.pri)
 
 
 HEADERS += \
+    test/claimablebalanceidtest.h \
     test/fakeserver.h \
     test/feebumptransactiontest.h \
     test/keypairtest.h \

@@ -28,7 +28,9 @@ private slots:
         try {
             new Account(0l, 10L);
             QFAIL("expected exception");
-        } catch (std::exception e) {}
+        } catch (const std::exception& e) {
+            Q_UNUSED(e)
+        }
         //we dont have allow null counter
 //        try {
 //            new Account(KeyPair::random(), 0);

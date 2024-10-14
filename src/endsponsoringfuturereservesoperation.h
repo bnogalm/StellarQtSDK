@@ -7,7 +7,7 @@ class EndSponsoringFutureReservesOperation : public Operation
 {    
 public:
     EndSponsoringFutureReservesOperation();
-    void fillOperationBody(stellar::Operation &operation);
+    void fillOperationBody(AccountConverter& accountConverter, stellar::Operation &operation);
     /**
          * Sets the source account for this operation.
          * @param sourceAccount The operation's source account.

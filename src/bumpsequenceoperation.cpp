@@ -21,8 +21,9 @@ qint64 BumpSequenceOperation::getBumpTo() const
     return m_op.bumpTo;
 }
 
-void BumpSequenceOperation::fillOperationBody(stellar::Operation &operation)
+void BumpSequenceOperation::fillOperationBody(AccountConverter &accountConverter, stellar::Operation &operation)
 {
+    Q_UNUSED(accountConverter)
     operation.type = stellar::OperationType::BUMP_SEQUENCE;
     operation.operationBumpSequence=m_op;
 }

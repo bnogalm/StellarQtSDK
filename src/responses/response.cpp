@@ -5,6 +5,8 @@
 #include <QNetworkRequest>
 #include <QTimer>
 #include <QTimerEvent>
+#include <stdexcept>
+
 #define RECONNECT_DELAY 1000
 
 Response::Response(QNetworkReply *reply)    
@@ -112,11 +114,20 @@ void Response::fillObject(const QMetaObject* mo, void* obj,const QJsonObject& js
         //we check we have that property
         if(v.isValid())
         {
-            int propertyUserType = v.userType();
-            const QMetaObject* pmo = QMetaType::metaObjectForType(propertyUserType);
+
+            int propertyUserTypeId = v.userType();
+
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+            const QMetaType
+#else
+            const int
+#endif
+                variantMapType{qMetaTypeId<QVariantMap>()},
+                propertyUserType{propertyUserTypeId};
+
+            const QMetaObject* pmo = QMetaType::metaObjectForType(propertyUserTypeId);
             //if is a gadget/qobject and there is not a custom conversion function registered
-            if(pmo && !QMetaType::hasRegisteredConverterFunction(qMetaTypeId<QVariantMap>(), propertyUserType))
-            {
+            if(pmo && !QMetaType::hasRegisteredConverterFunction(variantMapType, propertyUserType)) {
                 QJsonObject pobjJson = jsonObj.value(key).toObject();
                 fillObject(pmo,v.data(),pobjJson);
             }

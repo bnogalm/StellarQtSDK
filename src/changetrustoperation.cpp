@@ -35,7 +35,8 @@ QString ChangeTrustOperation::getLimit() {
     return Operation::fromXdrAmount(m_op.limit);
 }
 
-void ChangeTrustOperation::fillOperationBody(stellar::Operation &operation){
+void ChangeTrustOperation::fillOperationBody(AccountConverter &accountConverter, stellar::Operation &operation){
+    Q_UNUSED(accountConverter)
     operation.type = stellar::OperationType::CHANGE_TRUST;
     operation.operationChangeTrust=m_op;
 }

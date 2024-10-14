@@ -2,6 +2,7 @@
 #include "federationresponse.h"
 #include "federationserver.h"
 #include <QStringList>
+#include <stdexcept>
 
 Federation::Federation(){}
 

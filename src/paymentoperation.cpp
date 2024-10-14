@@ -14,8 +14,7 @@ PaymentOperation::PaymentOperation(QString destination, Asset *asset, QString am
 PaymentOperation::PaymentOperation(stellar::PaymentOp &op)
     :m_asset(nullptr)
     ,m_op(op)
-{
-
+{    
 }
 
 PaymentOperation::~PaymentOperation()
@@ -24,9 +23,11 @@ PaymentOperation::~PaymentOperation()
         delete m_asset;
 }
 
-PaymentOperation* PaymentOperation::build(stellar::PaymentOp &op)
+PaymentOperation* PaymentOperation::build(AccountConverter accountConverter, stellar::PaymentOp &op)
 {
-    return new PaymentOperation(op);
+    auto result = new PaymentOperation(op);
+    result->m_op.destination = accountConverter.filter(op.destination);
+    return result;
 }
 
 PaymentOperation *PaymentOperation::create(KeyPair *destination, Asset *asset, QString amount)
@@ -41,7 +42,7 @@ PaymentOperation *PaymentOperation::create(QString destination, Asset *asset, QS
 
 QString PaymentOperation::getDestination() const
 {
-    return StrKey::encodeStellarAccountId(StrKey::muxedAccountToAccountId(m_op.destination));
+    return StrKey::encodeStellarMuxedAccount(m_op.destination);
 }
 
 Asset *PaymentOperation::getAsset() {
@@ -56,10 +57,12 @@ QString PaymentOperation::getAmount() {
     return Operation::fromXdrAmount(m_op.amount);
 }
 
-void PaymentOperation::fillOperationBody(stellar::Operation &op) {
+void PaymentOperation::fillOperationBody(AccountConverter &accountConverter, stellar::Operation &op) {
     op.type = stellar::OperationType::PAYMENT;
     //payment op is trivial so no need to call constructor
     op.operationPayment = m_op;
+
+    op.operationPayment.destination = accountConverter.filter(op.operationPayment.destination);//DUDO QUITARLO ya se hace en el constructor
 
 
 }

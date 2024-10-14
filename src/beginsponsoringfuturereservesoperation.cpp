@@ -16,8 +16,9 @@ QString BeginSponsoringFutureReservesOperation::getSponsoredID()
     return StrKey::encodeStellarAccountId(m_op.sponsoredID);
 }
 
-void BeginSponsoringFutureReservesOperation::fillOperationBody(stellar::Operation &operation)
+void BeginSponsoringFutureReservesOperation::fillOperationBody(AccountConverter &accountConverter, stellar::Operation &operation)
 {
+    Q_UNUSED(accountConverter)
     operation.type = stellar::OperationType::BEGIN_SPONSORING_FUTURE_RESERVES;
     operation.operationBeginSponsoringFutureReserves=m_op;
 }

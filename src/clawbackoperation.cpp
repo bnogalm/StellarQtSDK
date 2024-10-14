@@ -28,16 +28,16 @@ ClawbackOperation::~ClawbackOperation()
         delete m_asset;
 }
 
-void ClawbackOperation::fillOperationBody(stellar::Operation &operation)
-{
+void ClawbackOperation::fillOperationBody(AccountConverter &accountConverter, stellar::Operation &operation)
+{    
     operation.type = stellar::OperationType::CLAWBACK;
     operation.operationClawback = m_op;
+    operation.operationClawback.from = accountConverter.filter(operation.operationClawback.from);
 }
 
 QString ClawbackOperation::getFrom() const
 {
-
-    return StrKey::encodeStellarAccountId(StrKey::muxedAccountToAccountId(m_op.from));
+    return StrKey::encodeStellarMuxedAccount(m_op.from);
 }
 
 QString ClawbackOperation::getAmount() const
@@ -52,9 +52,11 @@ Asset *ClawbackOperation::getAsset()
     return m_asset;
 }
 
-ClawbackOperation *ClawbackOperation::build(stellar::ClawbackOp &op)
+ClawbackOperation *ClawbackOperation::build(AccountConverter &accountConverter, stellar::ClawbackOp &op)
 {
-    return new ClawbackOperation(op);
+    auto result = new ClawbackOperation(op);
+    result->m_op.from = accountConverter.filter(op.from);
+    return result;
 }
 
 ClawbackOperation *ClawbackOperation::create(QString from, Asset *asset, QString amount)

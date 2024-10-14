@@ -3,6 +3,7 @@
 
 #include "stellarledgerentries.h"
 #include "xdrhelper.h"
+
 namespace stellar
 {
     using namespace xdr;
@@ -12,12 +13,28 @@ namespace stellar
         struct med25519_t{
             quint64 id;
             uint256 ed25519;
+            bool operator ==(const med25519_t& other) const
+            {
+                return other.id==id && (memcmp(other.ed25519, ed25519, sizeof(ed25519))==0);
+            }
         };
         CryptoKeyType type;
         union{
             uint256 ed25519;
             med25519_t med25519;
         };
+        bool operator ==(const MuxedAccount& other) const
+        {
+            if(isMuxed(other.type))
+            {
+                return other.type == type && other.med25519==med25519;
+            }
+            else
+            {
+                return other.type == type && (memcmp(other.ed25519, ed25519, sizeof(ed25519))==0);
+            }
+
+        }
     };
     inline QDataStream &operator<<(QDataStream &out, const  MuxedAccount::med25519_t &obj) {
         out << obj.id<< obj.ed25519;
@@ -53,7 +70,6 @@ namespace stellar
         }
        return in;
     }
-
 
     struct DecoratedSignature
     {
@@ -888,6 +904,7 @@ namespace stellar
         case OperationType::CLAWBACK:
             in >> obj.operationClawback; break;
         case OperationType::CLAWBACK_CLAIMABLE_BALANCE:
+            new (&obj.operationClawbackClaimableBalance) ClawbackClaimableBalanceOp();
             in >> obj.operationClawbackClaimableBalance; break;
         case OperationType::SET_TRUST_LINE_FLAGS:
             in >> obj.operationSetTrustLineFlags; break;
@@ -2215,6 +2232,12 @@ namespace stellar
         ClawbackResult clawbackResult;
         ClawbackClaimableBalanceResult clawbackClaimableBalanceResult;
         SetTrustLineFlagsResult setTrustLineFlagsResult;
+        ClaimClaimableBalanceResult claimClaimableBalanceResult;
+        BeginSponsoringFutureReservesResult beginSponsoringFutureReservesResult;
+        EndSponsoringFutureReservesResult endSponsoringFutureReservesResult;
+        RevokeSponsorshipResult revokeSponsorshipResult;
+
+
         //no trivial
         ManageBuyOfferResult manageBuyOfferResult;
         PaymentResult paymentResult;
@@ -2283,7 +2306,15 @@ namespace stellar
                 out << obj.clawbackClaimableBalanceResult; break;
             case OperationType::SET_TRUST_LINE_FLAGS:
                 out << obj.setTrustLineFlagsResult; break;
-            default:break;
+            case OperationType::CLAIM_CLAIMABLE_BALANCE:
+                out << obj.claimClaimableBalanceResult; break;
+            case OperationType::BEGIN_SPONSORING_FUTURE_RESERVES:
+                out << obj.beginSponsoringFutureReservesResult; break;
+            case OperationType::END_SPONSORING_FUTURE_RESERVES:
+                out << obj.endSponsoringFutureReservesResult; break;
+            case OperationType::REVOKE_SPONSORSHIP:
+                out << obj.revokeSponsorshipResult; break;
+            //default:break;
             }
             break;
         }
@@ -2344,7 +2375,15 @@ namespace stellar
                 in >> obj.clawbackClaimableBalanceResult; break;
             case OperationType::SET_TRUST_LINE_FLAGS:
                 in >> obj.setTrustLineFlagsResult; break;
-            default: break;
+            case OperationType::CLAIM_CLAIMABLE_BALANCE:
+                in >> obj.claimClaimableBalanceResult; break;
+            case OperationType::BEGIN_SPONSORING_FUTURE_RESERVES:
+                in >> obj.beginSponsoringFutureReservesResult; break;
+            case OperationType::END_SPONSORING_FUTURE_RESERVES:
+                in >> obj.endSponsoringFutureReservesResult; break;
+            case OperationType::REVOKE_SPONSORSHIP:
+                in >> obj.revokeSponsorshipResult; break;
+            //default: break;
             }
             break;
         }

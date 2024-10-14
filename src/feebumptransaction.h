@@ -13,13 +13,14 @@ class FeeBumpTransaction : public AbstractTransaction
 
 public:
     friend class Builder;
-    FeeBumpTransaction(QString feeAccount, qint64 fee, Transaction* innerTransaction);
+    FeeBumpTransaction(AccountConverter accountConverter, QString feeAccount, qint64 fee, Transaction* innerTransaction);
     virtual ~FeeBumpTransaction();
     qint64 getFee() const;
     QString getFeeAccount() const;
 
     Transaction* getInnerTransaction() const;
 
+    static FeeBumpTransaction* fromFeeBumpTransactionEnvelope(AccountConverter accountConverter, stellar::FeeBumpTransactionEnvelope envelope, Network* network);
     static FeeBumpTransaction* fromFeeBumpTransactionEnvelope(stellar::FeeBumpTransactionEnvelope envelope, Network* network);
     stellar::FeeBumpTransaction toXdr() const;
 
@@ -36,6 +37,7 @@ public:
         Transaction* m_inner;
         qint64 m_baseFee;
         QString m_feeAccount;
+        AccountConverter m_accountConverter;
 
       public:
         /**
@@ -43,7 +45,7 @@ public:
          *
          * @param inner The inner transaction which will be fee bumped.
          */
-        Builder(Transaction* inner);
+        Builder(AccountConverter accountConverter, Transaction* inner);
         ~Builder();
 
         Builder& setBaseFee(qint64 baseFee);

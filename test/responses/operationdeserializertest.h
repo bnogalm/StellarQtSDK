@@ -448,8 +448,9 @@ private slots:
 #pragma GCC diagnostic pop
 #endif
             QFAIL("not known key type signer");
-        } catch (std::runtime_error e) {
+        } catch (const std::runtime_error& e) {
             //QCOMPARE(QString::fromLatin1(e.what()),QString("Version byte is invalid"));
+            Q_UNUSED(e)
         }
         QCOMPARE(operation.getSignerKey(), QString("TBGFYVCU76LJ7GZOCGR4X7DG2NV42JPG5CKRL42LA5FZOFI3U2WU7ZAL"));
     }

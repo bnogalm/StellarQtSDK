@@ -1,3 +1,5 @@
+#example to add the Stellar Qt SDK to your project. It will not link correctly because it doesn't have a main().
+
 QT += core
 QT -= gui
 

@@ -2,7 +2,6 @@
 #define FEEBUMPTRANSACTIONTEST_H
 #include <QObject>
 #include "src/keypair.h"
-#include "src/util.h"
 #include "src/account.h"
 
 #include "src/feebumptransaction.h"
@@ -20,7 +19,7 @@ public:
         KeyPair* source = KeyPair::fromSecretSeed(QString("SCH27VUZZ6UAKB67BDNF6FA42YMBMQCBKXWGMFD5TZ6S5ZZCZFLRXKHS"));
 
         Account* account = new Account(source, 2908908335136768L);
-        Transaction* inner = Transaction::Builder(account,Network::current())
+        Transaction* inner = Transaction::Builder(AccountConverter().enableMuxed(), account, Network::current())
                 .addOperation(new PaymentOperation(
                                   "GA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJVSGZ",
                                   new AssetTypeNative(),
@@ -51,11 +50,11 @@ private slots:
         Transaction* inner = createInnerTransaction();
 
         try {
-            FeeBumpTransaction::Builder(inner)
+            FeeBumpTransaction::Builder(AccountConverter().enableMuxed(), inner)
                     .setBaseFee(Transaction::MIN_BASE_FEE * 2)
                     .build();
             QFAIL("missing exception");
-        } catch (std::runtime_error e) {
+        } catch (const std::runtime_error& e) {
             QCOMPARE(QString(e.what()), "fee account has to be set. you must call setFeeAccount().");
         }
     }
@@ -64,13 +63,13 @@ private slots:
         Transaction* inner = createInnerTransaction();
 
         try {
-            FeeBumpTransaction::Builder(inner)
+            FeeBumpTransaction::Builder(AccountConverter().enableMuxed(), inner)
                     .setBaseFee(Transaction::MIN_BASE_FEE * 2)
                     .setFeeAccount("GDQNY3PBOJOKYZSRMK2S7LHHGWZIUISD4QORETLMXEWXBI7KFZZMKTL3")
                     .setFeeAccount("GDW6AUTBXTOC7FIKUO5BOO3OGLK4SF7ZPOBLMQHMZDI45J2Z6VXRB5NR")
                     .build();
             QFAIL("missing exception");
-        } catch (std::runtime_error e) {
+        } catch (const std::runtime_error& e) {
             QCOMPARE(QString(e.what()), "fee account has been already been set.");
         }
     }
@@ -80,11 +79,11 @@ private slots:
         Transaction* inner = createInnerTransaction();
 
         try {
-            FeeBumpTransaction::Builder(inner)
+            FeeBumpTransaction::Builder(AccountConverter().enableMuxed(), inner)
                     .setFeeAccount("GDQNY3PBOJOKYZSRMK2S7LHHGWZIUISD4QORETLMXEWXBI7KFZZMKTL3")
                     .build();
             QFAIL("missing exception");
-        } catch (std::runtime_error e) {
+        } catch (const std::runtime_error& e) {
             QCOMPARE(QString(e.what()), "base fee has to be set. you must call setBaseFee().");
         }
     }
@@ -94,13 +93,13 @@ private slots:
         Transaction* inner = createInnerTransaction();
 
         try {
-            FeeBumpTransaction::Builder(inner)
+            FeeBumpTransaction::Builder(AccountConverter().enableMuxed(), inner)
                     .setBaseFee(Transaction::MIN_BASE_FEE * 2)
                     .setFeeAccount("GDQNY3PBOJOKYZSRMK2S7LHHGWZIUISD4QORETLMXEWXBI7KFZZMKTL3")
                     .setBaseFee(Transaction::MIN_BASE_FEE)
                     .build();
             QFAIL("missing exception");
-        } catch (std::runtime_error e) {
+        } catch (const std::runtime_error& e) {
             QCOMPARE(QString(e.what()), "base fee has been already set.");
 
         }
@@ -110,12 +109,12 @@ private slots:
         Transaction* inner = createInnerTransaction();
 
         try {
-            FeeBumpTransaction::Builder(inner)
+            FeeBumpTransaction::Builder(AccountConverter().enableMuxed(), inner)
                     .setBaseFee(Transaction::MIN_BASE_FEE -1)
                     .setFeeAccount("GDQNY3PBOJOKYZSRMK2S7LHHGWZIUISD4QORETLMXEWXBI7KFZZMKTL3")
                     .build();
             QFAIL("missing exception");
-        } catch (std::runtime_error e) {
+        } catch (const std::runtime_error& e) {
             QCOMPARE(QString(e.what()), "baseFee cannot be smaller than the BASE_FEE");
         }
     }
@@ -124,12 +123,12 @@ private slots:
         Transaction* inner = createInnerTransaction(Transaction::MIN_BASE_FEE+1);
 
         try {
-            FeeBumpTransaction::Builder(inner)
+            FeeBumpTransaction::Builder(AccountConverter().enableMuxed(), inner)
                     .setBaseFee(Transaction::MIN_BASE_FEE)
                     .setFeeAccount("GDQNY3PBOJOKYZSRMK2S7LHHGWZIUISD4QORETLMXEWXBI7KFZZMKTL3")
                     .build();
             QFAIL("missing exception");
-        } catch (std::runtime_error e) {
+        } catch (const std::runtime_error& e) {
             QCOMPARE(QString(e.what()), "base fee cannot be lower than provided inner transaction base fee");
         }
     }
@@ -138,19 +137,19 @@ private slots:
         Transaction* inner = createInnerTransaction(Transaction::MIN_BASE_FEE+1);
 
         try {
-            FeeBumpTransaction::Builder(inner)
+            FeeBumpTransaction::Builder(AccountConverter().enableMuxed(), inner)
                     .setBaseFee(std::numeric_limits<qint64>::max())
                     .setFeeAccount("GDQNY3PBOJOKYZSRMK2S7LHHGWZIUISD4QORETLMXEWXBI7KFZZMKTL3")
                     .build();
             QFAIL("missing exception");
-        } catch (std::runtime_error e) {
+        } catch (const std::runtime_error& e) {
             QCOMPARE(QString(e.what()), "fee overflows 64 bit int");
         }
     }
     void testSetBaseFeeEqualToInner() {
         Transaction* inner = createInnerTransaction();
 
-        FeeBumpTransaction* feeBump = FeeBumpTransaction::Builder(inner)
+        FeeBumpTransaction* feeBump = FeeBumpTransaction::Builder(AccountConverter().enableMuxed(), inner)
                 .setBaseFee(Transaction::MIN_BASE_FEE)
                 .setFeeAccount("GDQNY3PBOJOKYZSRMK2S7LHHGWZIUISD4QORETLMXEWXBI7KFZZMKTL3")
                 .build();
@@ -171,7 +170,7 @@ private slots:
         Transaction* inner = createInnerTransaction();
         QCOMPARE( inner->hashHex(),"2a8ead3351faa7797b284f59027355ddd69c21adb8e4da0b9bb95531f7f32681");
 
-        FeeBumpTransaction* feeBump = FeeBumpTransaction::Builder(inner)
+        FeeBumpTransaction* feeBump = FeeBumpTransaction::Builder(AccountConverter().enableMuxed(), inner)
                 .setBaseFee(Transaction::MIN_BASE_FEE * 2)
                 .setFeeAccount("GDQNY3PBOJOKYZSRMK2S7LHHGWZIUISD4QORETLMXEWXBI7KFZZMKTL3")
                 .build();
@@ -181,7 +180,7 @@ private slots:
     void testRoundTripXdr()  {
         Transaction* inner = createInnerTransaction();
 
-        FeeBumpTransaction* feeBump = FeeBumpTransaction::Builder(inner)
+        FeeBumpTransaction* feeBump = FeeBumpTransaction::Builder(AccountConverter().enableMuxed(), inner)
                 .setBaseFee(Transaction::MIN_BASE_FEE * 2)
                 .setFeeAccount("GDQNY3PBOJOKYZSRMK2S7LHHGWZIUISD4QORETLMXEWXBI7KFZZMKTL3")
                 .build();
@@ -222,7 +221,7 @@ private slots:
       Transaction* innerV0 = createInnerTransaction();
       innerV0->setEnvelopeType(stellar::EnvelopeType::ENVELOPE_TYPE_TX_V0);
 
-      FeeBumpTransaction* feeBump = FeeBumpTransaction::Builder(innerV0)
+      FeeBumpTransaction* feeBump = FeeBumpTransaction::Builder(AccountConverter().enableMuxed(), innerV0)
           .setBaseFee(Transaction::MIN_BASE_FEE * 2)
           .setFeeAccount("GDQNY3PBOJOKYZSRMK2S7LHHGWZIUISD4QORETLMXEWXBI7KFZZMKTL3")
           .build();

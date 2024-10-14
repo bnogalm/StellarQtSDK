@@ -95,8 +95,9 @@ Integer SetOptionsOperation::getSignerWeight() {
     return Integer();
 }
 
-void SetOptionsOperation::fillOperationBody(stellar::Operation &op)
+void SetOptionsOperation::fillOperationBody(AccountConverter &accountConverter, stellar::Operation &op)
 {
+    Q_UNUSED(accountConverter)
     auto& o = op.fillSetOptionsOp();
     o = m_op;
 }

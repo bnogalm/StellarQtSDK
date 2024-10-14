@@ -67,30 +67,31 @@ QString Operation::fromXdrAmount(qint64 value) {
     }
 }
 
-stellar::Operation Operation::toXdr() {
+stellar::Operation Operation::toXdr(AccountConverter accountConverter) {
     stellar::Operation xdr;
     if(!this->getSourceAccount().isEmpty()){
         stellar::MuxedAccount& sourceAccount = xdr.sourceAccount.filler();
-        sourceAccount = StrKey::encodeToXDRMuxedAccount(m_sourceAccount);
+        sourceAccount = accountConverter.encode(m_sourceAccount);
     }
-    this->fillOperationBody(xdr);
+    this->fillOperationBody(accountConverter, xdr);
     return xdr;
 }
 
 QString Operation::toXdrBase64() {
-    try {
+    try {        
         stellar::Operation operation = this->toXdr();
         QByteArray outputStream;
         QDataStream xdrOutputStream(&outputStream,QIODevice::WriteOnly);
         xdrOutputStream << operation;
         return outputStream.toBase64(XDR_BASE64ENCODING);
-    } catch (std::exception e) {
+    } catch (const std::exception& e) {
+        Q_UNUSED(e)
         //throw new AssertionError(e);
     }
     return QString();
 }
 
-Operation *Operation::fromXdr(stellar::Operation &xdr) {
+Operation *Operation::fromXdr(AccountConverter accountConverter, stellar::Operation &xdr) {
 
     Operation* operation=nullptr;
     switch (xdr.type) {
@@ -98,10 +99,10 @@ Operation *Operation::fromXdr(stellar::Operation &xdr) {
         operation = CreateAccountOperation::build(xdr.operationCreateAccount);
         break;
     case stellar::OperationType::PAYMENT:
-        operation = PaymentOperation::build(xdr.operationPayment);
+        operation = PaymentOperation::build(accountConverter, xdr.operationPayment);
         break;
     case stellar::OperationType::PATH_PAYMENT_STRICT_RECEIVE:
-        operation = PathPaymentOperation::build(xdr.operationPathPaymentStrictReceive);
+        operation = PathPaymentOperation::build(accountConverter, xdr.operationPathPaymentStrictReceive);
         break;
     case stellar::OperationType::MANAGE_SELL_OFFER:
         operation = ManageSellOfferOperation::build(xdr.operationManageSellOffer);
@@ -131,7 +132,7 @@ Operation *Operation::fromXdr(stellar::Operation &xdr) {
         operation = ManageBuyOfferOperation::build(xdr.operationManageBuyOffer);
         break;
     case stellar::OperationType::PATH_PAYMENT_STRICT_SEND:
-        operation = PathPaymentStrictSendOperation::build(xdr.operationPathPaymentStrictSend);
+        operation = PathPaymentStrictSendOperation::build(accountConverter, xdr.operationPathPaymentStrictSend);
         break;
     case stellar::OperationType::CREATE_CLAIMABLE_BALANCE:
       operation = CreateClaimableBalanceOperation::build(xdr.operationCreateClaimableBalance);
@@ -175,7 +176,7 @@ Operation *Operation::fromXdr(stellar::Operation &xdr) {
         break;
 
     case stellar::OperationType::CLAWBACK:
-      operation = ClawbackOperation::build(xdr.operationClawback);
+      operation = ClawbackOperation::build(accountConverter, xdr.operationClawback);
       break;
     case stellar::OperationType::CLAWBACK_CLAIMABLE_BALANCE:
       operation = ClawbackClaimableBalanceOperation::build(xdr.operationClawbackClaimableBalance);
@@ -186,10 +187,15 @@ Operation *Operation::fromXdr(stellar::Operation &xdr) {
     default:
         throw std::runtime_error("Unknown operation body");
     }
-    if (xdr.sourceAccount.filled) {        
-        operation->setSourceAccount(StrKey::encodeStellarAccountId(StrKey::muxedAccountToAccountId(xdr.sourceAccount.value)));
+    if (xdr.sourceAccount.filled) {                
+        operation->setSourceAccount(accountConverter.decode(xdr.sourceAccount.value));
     }
     return operation;
+}
+
+Operation *Operation::fromXdr(stellar::Operation &xdr)
+{
+    return fromXdr(AccountConverter().enableMuxed(),xdr);
 }
 
 Operation *Operation::setSourceAccount(QString sourceAccount)

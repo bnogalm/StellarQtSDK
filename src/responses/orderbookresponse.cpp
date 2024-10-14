@@ -25,13 +25,13 @@ Price OrderBookResponseAttach::Row::getPriceR() {
     return Price(m_priceR.value("n").toUInt(), m_priceR.value("d").toUInt());
 }
 
-bool OrderBookResponseAttach::Row::operator !=(OrderBookResponseAttach::Row &row)
+bool OrderBookResponseAttach::Row::operator !=(const Row &row) const
 {
     Q_UNUSED(row)
     return true;
 }
 
-bool OrderBookResponseAttach::Row::operator ==(OrderBookResponseAttach::Row &row)
+bool OrderBookResponseAttach::Row::operator ==(const Row &row) const
 {
     return (this->m_amount==row.m_amount)
             && (this->m_price==row.m_price)

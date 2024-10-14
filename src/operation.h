@@ -1,5 +1,6 @@
 #ifndef OPERATION_H
 #define OPERATION_H
+#include "accountconverter.h"
 #include "keypair.h"
 #include "util.h"
 
@@ -22,7 +23,7 @@ public:
     /**
      * Generates Operation XDR object.
      */
-    stellar::Operation toXdr();
+    stellar::Operation toXdr(AccountConverter accountConverter = AccountConverter().enableMuxed());
 
     /**
      * Returns base64-encoded Operation XDR object.
@@ -31,6 +32,12 @@ public:
 
     /**
      * Returns new Operation object from Operation XDR object.
+     * @param xdr XDR object
+     */
+    static Operation* fromXdr(AccountConverter accountConverter, stellar::Operation& xdr);
+
+    /**
+     * Returns new Operation object from Operation XDR object using muxed accounts.
      * @param xdr XDR object
      */
     static Operation* fromXdr(stellar::Operation& xdr);
@@ -51,7 +58,7 @@ public:
      * Fills OperationBody XDR object
      * @return OperationBody XDR object
      */
-    virtual void fillOperationBody(stellar::Operation &operation)=0; // abstract org.stellar.sdk.xdr.Operation.OperationBody toOperationBody();
+    virtual void fillOperationBody(AccountConverter& accountConverter, stellar::Operation &operation)=0; // abstract org.stellar.sdk.xdr.Operation.OperationBody toOperationBody();
 
 
 };

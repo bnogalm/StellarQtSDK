@@ -10,7 +10,7 @@ public:
     ClaimClaimableBalanceOperation(stellar::ClaimClaimableBalanceOp &op);
     ClaimClaimableBalanceOperation(QString balanceID);
 
-    void fillOperationBody(stellar::Operation &operation);
+    void fillOperationBody(AccountConverter& accountConverter, stellar::Operation &operation);
     QString getBalanceId();
     static ClaimClaimableBalanceOperation* build(stellar::ClaimClaimableBalanceOp &op);
     static ClaimClaimableBalanceOperation* create(QString balanceId);

@@ -19,7 +19,7 @@ public:
     PaymentOperation(stellar::PaymentOp &op);
     virtual ~PaymentOperation();
 
-    static PaymentOperation * build(stellar::PaymentOp &op);
+    static PaymentOperation * build(AccountConverter accountConverter, stellar::PaymentOp &op);
 
     static PaymentOperation * create(KeyPair* destination, Asset* asset, QString amount);
     static PaymentOperation * create(QString destination, Asset* asset, QString amount);
@@ -40,7 +40,7 @@ public:
     QString getAmount();
 
 
-    void fillOperationBody(stellar::Operation &op);
+    void fillOperationBody(AccountConverter& accountConverter, stellar::Operation &op);
 
     /**
       * Sets the source account for this operation.

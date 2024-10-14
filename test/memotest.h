@@ -42,7 +42,7 @@ private slots:
         try {
             Memo::text("12345678901234567890123456789");
             QFAIL("Expected exception");
-        } catch (std::runtime_error exception) {
+        } catch (const std::runtime_error& exception) {
             QVERIFY(QString(exception.what()).contains("text must be <= 28 bytes."));
         }
     }
@@ -50,7 +50,7 @@ private slots:
         try {
             Memo::text("价值交易的开源协议!!");
             QFAIL("Expected exception");
-        } catch (std::runtime_error exception) {
+        } catch (const std::runtime_error& exception) {
             QVERIFY(QString(exception.what()).contains("text must be <= 28 bytes."));
         }
     }
@@ -95,7 +95,7 @@ private slots:
         try {
             Memo::hash(longer);
             QFAIL("Expected exception");
-        } catch (std::runtime_error exception) {
+        } catch (const std::runtime_error& exception) {
             QVERIFY(QString(exception.what()).contains("MEMO_HASH can contain 32 bytes at max."));
         }
     }
@@ -103,8 +103,8 @@ private slots:
         try {
             Memo::hash(QString("test"));
             QFAIL("Expected exception");
-        } catch (std::runtime_error exception) {
-
+        } catch (const std::runtime_error& exception) {
+            Q_UNUSED(exception)
         }
     }
     void testMemoReturnHashSuccess() {

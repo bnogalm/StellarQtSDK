@@ -10,7 +10,7 @@ public:
     BeginSponsoringFutureReservesOperation(QString sponsoredId);
     BeginSponsoringFutureReservesOperation(stellar::BeginSponsoringFutureReservesOp& op);
     QString getSponsoredID();
-    void fillOperationBody(stellar::Operation &operation);
+    void fillOperationBody(AccountConverter& accountConverter, stellar::Operation &operation);
 
 
     static BeginSponsoringFutureReservesOperation* build(stellar::BeginSponsoringFutureReservesOp &op);

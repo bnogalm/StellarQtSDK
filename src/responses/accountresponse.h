@@ -4,6 +4,7 @@
 #include "../asset.h"
 #include "../assettypenative.h"
 #include "link.h"
+#include "keypair.h"
 #include <QMetaProperty>
 #include <QVariantMap>
 namespace AccountResponseAttach
@@ -26,8 +27,8 @@ public:
     int getLowThreshold() const;
     int getMedThreshold() const;
     int getHighThreshold() const;
-    bool operator !=(Thresholds& t);
-    bool operator ==(Thresholds& t);
+    bool operator !=(const Thresholds& t) const;
+    bool operator ==(const Thresholds &t) const;
 };
 
 /**
@@ -47,8 +48,8 @@ public:
     bool getAuthRequired() const;
     bool getAuthRevocable() const;
     bool getAuthImmutable() const;
-    bool operator !=(Flags& f);
-    bool operator ==(Flags& f);
+    bool operator !=(const Flags& f) const;
+    bool operator ==(const Flags &f) const;
 };
 
 /**
@@ -104,8 +105,8 @@ public:
     bool getAuthorizedToMaintainLiabilities() const;
     int getLastModifiedLedger() const;
 
-    bool operator !=(Balance& b);
-    bool operator ==(Balance& b);
+    bool operator !=(const Balance& b) const;
+    bool operator ==(const Balance &b) const;
 
     QString getSponsor() const;
 };
@@ -136,8 +137,8 @@ public:
 
     int getWeight() const;
 
-    bool operator !=(Signer& s);
-    bool operator ==(Signer& s);
+    bool operator !=(const Signer& s) const;
+    bool operator ==(const Signer &s) const;
     QString getSponsor() const;
 };
 
@@ -164,8 +165,8 @@ public:
     Link getOperations();
     Link getSelf();
     Link getTransactions();
-    bool operator !=(Links& links);
-    bool operator ==(Links& links);
+    bool operator !=(const Links &links) const;
+    bool operator ==(const Links& links) const;
 };
 
 /**
@@ -196,8 +197,8 @@ public:
     * @return raw value
     */
     QByteArray getRaw(QString key) const;
-    bool operator !=(Data& data);
-    bool operator ==(Data& data);
+    bool operator !=(const Data& data) const;
+    bool operator ==(const Data &data) const;
 };
 }
 namespace ResponseConverters{

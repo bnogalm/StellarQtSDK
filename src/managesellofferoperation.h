@@ -48,7 +48,7 @@ public:
     qint64 getOfferId();
 
 
-    void fillOperationBody(stellar::Operation& op);
+    void fillOperationBody(AccountConverter& accountConverter, stellar::Operation& op);
 
     /**
       * Construct a new ManageSellOfferOperation builder from a ManageSellOfferOp XDR.

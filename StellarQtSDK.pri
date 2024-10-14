@@ -5,7 +5,7 @@ DEFINES += STELLAR_QT_REPLY_TIMEOUT=30000
 DEFINES *= ED25519_NO_SEED
 
 DEFINES += STELLAR_QT_SDK_CLIENT_NAME=\"\\\"qtcpp-stellar-sdk\\\"\"
-DEFINES += STELLAR_QT_SDK_CLIENT_VERSION=\"\\\"0.3.17\\\"\"
+DEFINES += STELLAR_QT_SDK_CLIENT_VERSION=\"\\\"0.3.19\\\"\"
 
 #DEFINES += STELLAR_QT_AUTOSET_BASE_FEE
 
@@ -17,6 +17,13 @@ CONFIG *= c++11
 
 TEMPLATE = app
 
+
+greaterThan(QT_MAJOR_VERSION, 5) {
+    DEFINES +=  QIODeviceEnums=QIODeviceBase
+} else {
+    DEFINES +=  QIODeviceEnums=QIODevice
+}
+
 INCLUDEPATH *=  $$PWD
 INCLUDEPATH *=  $$PWD/src/
 
@@ -24,6 +31,7 @@ INCLUDEPATH *=  $$PWD/src/
 SOURCES += \
     $$PWD/src/abstracttransaction.cpp \
     $$PWD/src/account.cpp \
+    $$PWD/src/accountconverter.cpp \
     $$PWD/src/accountmergeoperation.cpp \
     $$PWD/src/beginsponsoringfuturereservesoperation.cpp \
     $$PWD/src/claimant.cpp \
@@ -216,6 +224,7 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 HEADERS += \
     $$PWD/src/abstracttransaction.h \
+    $$PWD/src/accountconverter.h \
     $$PWD/src/beginsponsoringfuturereservesoperation.h \
     $$PWD/src/claimant.h \
     $$PWD/src/claimclaimablebalanceoperation.h \

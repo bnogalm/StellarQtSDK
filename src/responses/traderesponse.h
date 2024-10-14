@@ -159,6 +159,7 @@ public slots:
     void setCounterAssetIssuer(QString counter_asset_issuer);
 };
 
-#endif // TRADERESPONSE_H
 Q_DECLARE_METATYPE(TradeResponseAttach::Links)
 Q_DECLARE_METATYPE(TradeResponse*)
+#endif // TRADERESPONSE_H
+

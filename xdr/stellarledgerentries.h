@@ -4,6 +4,9 @@
 #include "xdrhelper.h"
 #include "stellartypes.h"
 #include <stdio.h>
+#include <exception>
+#include <stdexcept>
+
 namespace stellar
 {
     using namespace xdr;
@@ -258,6 +261,19 @@ namespace stellar
         union{
             AccountEntryExtensionV2 v2;//case 2 (ext)
         };
+        AccountEntryExtensionV1()
+        {
+//            ext.reserved=2;
+//            new (&v2) AccountEntryExtensionV2();
+        }
+        ~AccountEntryExtensionV1()
+        {
+            switch(ext.reserved){
+            case 2:
+                v2.~AccountEntryExtensionV2();break;
+            default:break;
+            }
+        }
     };
 
     inline QDataStream &operator<<(QDataStream &out, const  AccountEntryExtensionV1 &obj) {
@@ -278,6 +294,7 @@ namespace stellar
 
        switch(obj.ext.reserved){
        case 2:
+           new (&obj.v2) AccountEntryExtensionV2();
            in >> obj.v2 ; break;
        default: break;
        }
@@ -313,14 +330,26 @@ namespace stellar
         union{
             AccountEntryExtensionV1 v1;//case 1 (ext)
         };
-
+        AccountEntry()
+        {
+            //ext.reserved=1;
+            //new (&v1) AccountEntryExtensionV1();
+        }
+        ~AccountEntry()
+        {
+            switch(ext.reserved){
+            case 1:
+                v1.~AccountEntryExtensionV1();break;
+            default:break;
+            }
+        }
     };
 
     inline QDataStream &operator<<(QDataStream &out, const  AccountEntry &obj) {
         out << obj.accountID<< obj.balance << obj.seqNum << obj.numSubEntries << obj.inflationDest << obj.flags << obj.homeDomain << obj.thresholds << obj.signers << obj.ext;
 
         switch(obj.ext.reserved){
-        case 1:
+        case 1:            
             out << obj.v1.liabilities << obj.v1.ext ; break;
         default: break;
         }
@@ -330,10 +359,12 @@ namespace stellar
     }
 
     inline QDataStream &operator>>(QDataStream &in,  AccountEntry &obj) {
+
        in >> obj.accountID>> obj.balance >> obj.seqNum >> obj.numSubEntries >> obj.inflationDest >> obj.flags >> obj.homeDomain >> obj.thresholds >> obj.signers >> obj.ext;
 
        switch(obj.ext.reserved){
        case 1:
+           new (&obj.v1) AccountEntryExtensionV1();
            in >> obj.v1.liabilities >> obj.v1.ext ; break;
        default: break;
        }
@@ -593,6 +624,10 @@ namespace stellar
             //case CLAIMABLE_BALANCE_ID_TYPE_V0:
             Hash v0;
         };
+        ClaimableBalanceID()
+        {
+            new (&v0) Hash();
+        }
     };
 
     inline QDataStream &operator<<(QDataStream &out, const  ClaimableBalanceID &obj) {
