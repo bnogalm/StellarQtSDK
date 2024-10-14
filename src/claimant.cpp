@@ -54,12 +54,12 @@ Claimant Claimant::fromXdr(stellar::Claimant c)
                     ,Predicate::fromXdr(c.v0.predicate));
 }
 
-bool Claimant::operator==(const Claimant &other)
+bool Claimant::operator==(const Claimant &other) const
 {
     return m_destination==other.m_destination && m_predicate && other.m_predicate && m_predicate->equals(other.m_predicate);
 }
 
-bool Claimant::operator!=(const Claimant &other)
+bool Claimant::operator!=(const Claimant &other) const
 {
     return m_destination!=other.m_destination || !m_predicate || !other.m_predicate || !m_predicate->equals(other.m_predicate);
 }

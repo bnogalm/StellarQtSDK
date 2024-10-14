@@ -5,7 +5,7 @@ DEFINES += STELLAR_QT_REPLY_TIMEOUT=30000
 DEFINES *= ED25519_NO_SEED
 
 DEFINES += STELLAR_QT_SDK_CLIENT_NAME=\"\\\"qtcpp-stellar-sdk\\\"\"
-DEFINES += STELLAR_QT_SDK_CLIENT_VERSION=\"\\\"0.3.18\\\"\"
+DEFINES += STELLAR_QT_SDK_CLIENT_VERSION=\"\\\"0.3.19\\\"\"
 
 #DEFINES += STELLAR_QT_AUTOSET_BASE_FEE
 
@@ -16,6 +16,13 @@ QT *= core network
 CONFIG *= c++11
 
 TEMPLATE = app
+
+
+greaterThan(QT_MAJOR_VERSION, 5) {
+    DEFINES +=  QIODeviceEnums=QIODeviceBase
+} else {
+    DEFINES +=  QIODeviceEnums=QIODevice
+}
 
 INCLUDEPATH *=  $$PWD
 INCLUDEPATH *=  $$PWD/src/

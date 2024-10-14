@@ -59,7 +59,7 @@ private slots:
     }
     void cleanupTestCase()
     {
-
+        qApp->processEvents();
     }
     void testForSponsor() {
         Server* server = new Server("https://horizon-testnet.stellar.org");
@@ -103,8 +103,8 @@ private slots:
 
       void testSingleClaimableBalance() {
 
-          FakeServer fakeServer;
-          fakeServer.addGet("/claimable_balances/00000000ae76f49e8513d0922b6bcbc8a3f5c4c0a5161871f27924e08724646acab56cd2",json);
+          FakeServer* fakeServer= new FakeServer();
+          fakeServer->addGet("/claimable_balances/00000000ae76f49e8513d0922b6bcbc8a3f5c4c0a5161871f27924e08724646acab56cd2",json);
 
           Server* server = new Server("http://localhost:8080");
           QString id = "00000000ae76f49e8513d0922b6bcbc8a3f5c4c0a5161871f27924e08724646acab56cd2";
@@ -117,7 +117,7 @@ private slots:
 
           QCOMPARE(response->getID(), id);
           QCOMPARE(response->getAmount(), "1000.0000000");
-
+          fakeServer->deleteLater();
       }
 
 };

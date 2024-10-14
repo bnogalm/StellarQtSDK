@@ -53,7 +53,7 @@ public:
         case stellar::CryptoKeyType::KEY_TYPE_MUXED_ED25519:
         {
             QByteArray data((const char*)muxedAccount.med25519.ed25519,sizeof(stellar::uint256));
-            QDataStream stream(&data,QIODevice::Append);
+            QDataStream stream(&data,QIODeviceEnums::Append);
             stream << muxedAccount.med25519.id;
             return encodeCheck(VersionByte::MUXED_ACCOUNT, data);
         }

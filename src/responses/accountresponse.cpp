@@ -192,7 +192,7 @@ int Balance::getLastModifiedLedger() const
     return m_lastModifiedLedger;
 }
 
-bool Balance::operator !=(Balance &b)
+bool Balance::operator !=(const Balance &b) const
 {
     return (this->m_assetType!=b.m_assetType)
             || (this->m_assetCode!=b.m_assetCode)
@@ -207,7 +207,7 @@ bool Balance::operator !=(Balance &b)
             || (this->m_sponsor!=b.m_sponsor);
 }
 
-bool Balance::operator ==(Balance &b)
+bool Balance::operator ==(const Balance &b) const
 {
     return (this->m_assetType==b.m_assetType)
             && (this->m_assetCode==b.m_assetCode)
@@ -252,7 +252,7 @@ int Signer::getWeight() const{
     return m_weight;
 }
 
-bool Signer::operator !=(Signer &s)
+bool Signer::operator !=(const Signer &s) const
 {
     return (this->m_accountId!=s.m_accountId)
                 || (this->m_type!=s.m_type)
@@ -260,7 +260,7 @@ bool Signer::operator !=(Signer &s)
                 || (this->m_sponsor!=s.m_sponsor);
 }
 
-bool Signer::operator ==(Signer &s)
+bool Signer::operator ==(const Signer &s) const
 {
     return (this->m_accountId==s.m_accountId)
             && (this->m_type==s.m_type)
@@ -293,7 +293,7 @@ Link AccountResponseAttach::Links::getTransactions() {
     return m_transactions;
 }
 
-bool Links::operator !=(Links &links)
+bool Links::operator !=(const Links &links) const
 {
     return  (m_effects!= links.m_effects)
             || (m_offers!= links.m_offers)
@@ -302,7 +302,7 @@ bool Links::operator !=(Links &links)
             || (m_transactions!= links.m_transactions);
 }
 
-bool Links::operator ==(Links &links)
+bool Links::operator ==(const Links &links) const
 {
     return  (m_effects== links.m_effects)
             && (m_offers== links.m_offers)
@@ -331,14 +331,14 @@ bool Flags::getAuthImmutable() const{
     return m_authImmutable;
 }
 
-bool Flags::operator !=(Flags &f)
+bool Flags::operator !=(const Flags &f) const
 {
     return (m_authRequired!=f.m_authRequired)
             || (m_authRevocable != f.m_authRevocable)
             || (m_authImmutable != f.m_authImmutable);
 }
 
-bool Flags::operator ==(Flags &f)
+bool Flags::operator ==(const Flags &f) const
 {
     return (m_authRequired==f.m_authRequired)
             && (m_authRevocable== f.m_authRevocable)
@@ -365,14 +365,14 @@ int Thresholds::getHighThreshold() const{
     return m_highThreshold;
 }
 
-bool Thresholds::operator !=(Thresholds &t)
+bool Thresholds::operator !=(const Thresholds &t) const
 {
     return (m_lowThreshold!=t.m_lowThreshold)
             || (m_medThreshold!=t.m_medThreshold)
             || (m_highThreshold!=t.m_highThreshold);
 }
 
-bool Thresholds::operator ==(Thresholds &t)
+bool Thresholds::operator ==(const Thresholds &t) const
 {
     return (m_lowThreshold==t.m_lowThreshold)
             && (m_medThreshold==t.m_medThreshold)
@@ -406,12 +406,12 @@ QByteArray Data::getRaw(QString key) const{
     return m_data.value(key);
 }
 
-bool Data::operator !=(Data &data)
+bool Data::operator !=(const Data &data) const
 {
     return (this->m_data!=data.m_data);
 }
 
-bool Data::operator ==(Data &data)
+bool Data::operator ==(const Data &data) const
 {
     return (this->m_data==data.m_data);
 }

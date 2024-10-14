@@ -85,9 +85,10 @@ inline void compareBase64(QString a,QString b)
 	{\
     int wait=1;\
     while(EXP){\
-       QTest::qWait(100*wait);\
+       QTest::qWait(10);\
+       qApp->processEvents();\
        wait++;\
-       if(wait>10)\
+       if(wait>300)\
            break;\
     }\
 	}

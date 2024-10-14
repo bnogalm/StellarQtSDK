@@ -25,8 +25,8 @@ public:
 
     static Claimant fromXdr(stellar::Claimant c);
 
-    bool operator==(const Claimant& other);
-    bool operator!=(const Claimant& other);
+    bool operator==(const Claimant& other) const;
+    bool operator!=(const Claimant& other) const;
 public slots:
     void setDestination(QString destination);
     void setPredicate(Predicate& predicate);

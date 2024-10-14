@@ -66,7 +66,12 @@ private slots:
     {        
         QTcpSocket* socket = (QTcpSocket*)sender();
         while (socket->canReadLine()) {
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
             QStringList tokens = QString(socket->readLine()).split(QRegExp("[ \r\n][ \r\n]*"));
+#else
+            QRegularExpression exp(QRegularExpression::anchoredPattern(QLatin1String("[ \r\n][ \r\n]*")));
+            QStringList tokens = QString(socket->readLine()).split(exp);
+#endif
             //qDebug() << "TOKENS "<< tokens;
             if(tokens.size()>=2){
 

@@ -103,7 +103,7 @@ private slots:
     }
     void cleanupTestCase()
     {
-
+        qApp->processEvents();
     }
 
     void testBuildTransaction()
@@ -197,9 +197,9 @@ private slots:
 
      void testCheckMemoRequiredWithMemo() {
 
-         FakeServer fakeServer;
+         FakeServer* fakeServer = new FakeServer();
 
-         fakeServer.addPost("/transactions",successTransactionResponse);
+         fakeServer->addPost("/transactions",successTransactionResponse);
          m_server = new Server("http://localhost:8080");
 
          KeyPair* source = KeyPair::fromSecretSeed(QString("SDQXFKA32UVQHUTLYJ42N56ZUEM5PNVVI4XE7EA5QFMLA2DHDCQX3GPY"));
@@ -233,15 +233,16 @@ private slots:
          WAIT_FOR(!r)
 
          QVERIFY(r);
+         fakeServer->deleteLater();
 
      }
 
 
      void testCheckMemoRequiredWithMemoIdAddress()
      {
-         FakeServer fakeServer;
+         FakeServer* fakeServer = new FakeServer();
 
-         fakeServer.addPost("/transactions",successTransactionResponse);
+         fakeServer->addPost("/transactions",successTransactionResponse);
          m_server = new Server("http://localhost:8080");
 
          KeyPair* source = KeyPair::fromSecretSeed(QString("SDQXFKA32UVQHUTLYJ42N56ZUEM5PNVVI4XE7EA5QFMLA2DHDCQX3GPY"));
@@ -285,13 +286,14 @@ private slots:
 //         WAIT_FOR(!r)
 
 //         QVERIFY(r);
+         fakeServer->deleteLater();
 
      }
 
      void testCheckMemoRequiredWithSkipCheck(){
-         FakeServer fakeServer;
+         FakeServer* fakeServer = new FakeServer();
 
-         fakeServer.addPost("/transactions",successTransactionResponse);
+         fakeServer->addPost("/transactions",successTransactionResponse);
          m_server = new Server("http://localhost:8080");
 
          KeyPair* source = KeyPair::fromSecretSeed(QString("SDQXFKA32UVQHUTLYJ42N56ZUEM5PNVVI4XE7EA5QFMLA2DHDCQX3GPY"));
@@ -324,12 +326,13 @@ private slots:
          WAIT_FOR(!r)
 
          QVERIFY(r);
+         fakeServer->deleteLater();
      }
 
      void testCheckMemoRequiredWithPaymentOperationNoMemo() {
-         FakeServer fakeServer;
+         FakeServer* fakeServer = new FakeServer();
 
-         fakeServer.addPost("/transactions",successTransactionResponse);
+         fakeServer->addPost("/transactions",successTransactionResponse);
          m_server = new Server("http://localhost:8080");
 
          KeyPair* source = KeyPair::fromSecretSeed(QString("SDQXFKA32UVQHUTLYJ42N56ZUEM5PNVVI4XE7EA5QFMLA2DHDCQX3GPY"));
@@ -363,12 +366,13 @@ private slots:
          WAIT_FOR(!r)
 
          QVERIFY(r);
+         fakeServer->deleteLater();
 
      }
      void testCheckMemoRequiredWithPathPaymentStrictReceiveOperationNoMemo() {
-         FakeServer fakeServer;
+         FakeServer* fakeServer = new FakeServer();
 
-         fakeServer.addPost("/transactions",successTransactionResponse);
+         fakeServer->addPost("/transactions",successTransactionResponse);
          m_server = new Server("http://localhost:8080");
 
          KeyPair* source = KeyPair::fromSecretSeed(QString("SDQXFKA32UVQHUTLYJ42N56ZUEM5PNVVI4XE7EA5QFMLA2DHDCQX3GPY"));
@@ -402,13 +406,14 @@ private slots:
          WAIT_FOR(!r)
 
          QVERIFY(r);
+         fakeServer->deleteLater();
      }
 
 
      void testCheckMemoRequiredWithPathPaymentStrictSendOperationNoMemo(){
-         FakeServer fakeServer;
+         FakeServer* fakeServer = new FakeServer();
 
-         fakeServer.addPost("/transactions",successTransactionResponse);
+         fakeServer->addPost("/transactions",successTransactionResponse);
          m_server = new Server("http://localhost:8080");
 
          KeyPair* source = KeyPair::fromSecretSeed(QString("SDQXFKA32UVQHUTLYJ42N56ZUEM5PNVVI4XE7EA5QFMLA2DHDCQX3GPY"));
@@ -442,12 +447,13 @@ private slots:
          WAIT_FOR(!r)
 
          QVERIFY(r);
+         fakeServer->deleteLater();
      }
 
      void testCheckMemoRequiredWithAccountMergeOperationNoMemo() {
-         FakeServer fakeServer;
+         FakeServer* fakeServer = new FakeServer();
 
-         fakeServer.addPost("/transactions",successTransactionResponse);
+         fakeServer->addPost("/transactions",successTransactionResponse);
          m_server = new Server("http://localhost:8080");
 
          KeyPair* source = KeyPair::fromSecretSeed(QString("SDQXFKA32UVQHUTLYJ42N56ZUEM5PNVVI4XE7EA5QFMLA2DHDCQX3GPY"));
@@ -481,12 +487,13 @@ private slots:
          WAIT_FOR(!r)
 
          QVERIFY(r);
+         fakeServer->deleteLater();
      }
 
      void testCheckMemoRequiredTwoOperationsWithSameDestination(){
-         FakeServer fakeServer;
+         FakeServer* fakeServer = new FakeServer();
 
-         fakeServer.addPost("/transactions",successTransactionResponse);
+         fakeServer->addPost("/transactions",successTransactionResponse);
          m_server = new Server("http://localhost:8080");
 
          KeyPair* source = KeyPair::fromSecretSeed(QString("SDQXFKA32UVQHUTLYJ42N56ZUEM5PNVVI4XE7EA5QFMLA2DHDCQX3GPY"));
@@ -520,13 +527,14 @@ private slots:
          WAIT_FOR(!r)
 
          QVERIFY(r);
+         fakeServer->deleteLater();
      }
 
 
      void testCheckMemoRequiredNoDestinationOperation() {
-         FakeServer fakeServer;
+         FakeServer* fakeServer = new FakeServer();
 
-         fakeServer.addPost("/transactions",successTransactionResponse);
+         fakeServer->addPost("/transactions",successTransactionResponse);
          m_server = new Server("http://localhost:8080");
 
          KeyPair* source = KeyPair::fromSecretSeed(QString("SDQXFKA32UVQHUTLYJ42N56ZUEM5PNVVI4XE7EA5QFMLA2DHDCQX3GPY"));
@@ -561,14 +569,15 @@ private slots:
          WAIT_FOR(!r)
 
          QVERIFY(r);
+         fakeServer->deleteLater();
      }
 
 
      void testCheckMemoRequiredAccountNotFound(){
-         FakeServer fakeServer;
+         FakeServer* fakeServer = new FakeServer();
 
-         fakeServer.addPost("/transactions",successTransactionResponse);
-         fakeServer.addGet("/accounts/"+DESTINATION_ACCOUNT_NO_FOUND,resourceMissingResponse,"404 Not Found");
+         fakeServer->addPost("/transactions",successTransactionResponse);
+         fakeServer->addGet("/accounts/"+DESTINATION_ACCOUNT_NO_FOUND,resourceMissingResponse,"404 Not Found");
          m_server = new Server("http://localhost:8080");
 
          KeyPair* source = KeyPair::fromSecretSeed(QString("SDQXFKA32UVQHUTLYJ42N56ZUEM5PNVVI4XE7EA5QFMLA2DHDCQX3GPY"));
@@ -596,14 +605,15 @@ private slots:
 
 
          QVERIFY(r);
+         fakeServer->deleteLater();
 
      }
 
      void testCheckMemoRequiredAccountNotFoundBump(){
-         FakeServer fakeServer;
+         FakeServer* fakeServer = new FakeServer();
 
-         fakeServer.addPost("/transactions",successTransactionResponse);
-         fakeServer.addGet("/accounts/"+DESTINATION_ACCOUNT_NO_FOUND,resourceMissingResponse,"404 Not Found");
+         fakeServer->addPost("/transactions",successTransactionResponse);
+         fakeServer->addGet("/accounts/"+DESTINATION_ACCOUNT_NO_FOUND,resourceMissingResponse,"404 Not Found");
          m_server = new Server("http://localhost:8080");
 
          KeyPair* source = KeyPair::fromSecretSeed(QString("SDQXFKA32UVQHUTLYJ42N56ZUEM5PNVVI4XE7EA5QFMLA2DHDCQX3GPY"));
@@ -630,18 +640,19 @@ private slots:
          WAIT_FOR(!r)
 
          QVERIFY(r);
+         fakeServer->deleteLater();
      }
 
 
      void testCheckMemoRequiredFetchAccountError() {
-         FakeServer fakeServer;
+         FakeServer* fakeServer = new FakeServer();
 
-         fakeServer.addPost("/transactions",successTransactionResponse);
-         fakeServer.addGet("/accounts/"+DESTINATION_ACCOUNT_NO_FOUND,resourceMissingResponse,"404 Not Found");
-         fakeServer.addGet("/accounts/"+DESTINATION_ACCOUNT_MEMO_REQUIRED_A,memoRequiredResponse);
-         fakeServer.addGet("/accounts/"+DESTINATION_ACCOUNT_MEMO_REQUIRED_B,memoRequiredResponse);
-         fakeServer.addGet("/accounts/"+DESTINATION_ACCOUNT_MEMO_REQUIRED_C,memoRequiredResponse);
-         fakeServer.addGet("/accounts/"+DESTINATION_ACCOUNT_MEMO_REQUIRED_D,memoRequiredResponse);
+         fakeServer->addPost("/transactions",successTransactionResponse);
+         fakeServer->addGet("/accounts/"+DESTINATION_ACCOUNT_NO_FOUND,resourceMissingResponse,"404 Not Found");
+         fakeServer->addGet("/accounts/"+DESTINATION_ACCOUNT_MEMO_REQUIRED_A,memoRequiredResponse);
+         fakeServer->addGet("/accounts/"+DESTINATION_ACCOUNT_MEMO_REQUIRED_B,memoRequiredResponse);
+         fakeServer->addGet("/accounts/"+DESTINATION_ACCOUNT_MEMO_REQUIRED_C,memoRequiredResponse);
+         fakeServer->addGet("/accounts/"+DESTINATION_ACCOUNT_MEMO_REQUIRED_D,memoRequiredResponse);
 
          m_server = new Server("http://localhost:8080");
 
@@ -677,6 +688,7 @@ private slots:
          WAIT_FOR(!r)
 
          QVERIFY(r);
+         fakeServer->deleteLater();
      }
 
 

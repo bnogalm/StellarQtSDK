@@ -24,13 +24,13 @@ QUrl Link::getUri() {
     return uri;
 }
 
-bool Link::operator !=(Link &link)
+bool Link::operator !=(const Link &link) const
 {
     return (m_href!=link.m_href)
             || (m_templated != link.m_templated);
 }
 
-bool Link::operator ==(Link &link)
+bool Link::operator ==(const Link &link) const
 {
     return (m_href==link.m_href)
             && (m_templated == link.m_templated);

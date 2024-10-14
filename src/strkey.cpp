@@ -57,7 +57,9 @@ QByteArray StrKey::encodeCheck(StrKey::VersionByte versionByte, QByteArray data)
     {
         bytesEncoded.resize(requiresTrim);
     }
-
+    if (bytesEncoded[bytesEncoded.size() - 1] == '\0') {
+        bytesEncoded.chop(1);
+    }
     if (VersionByte::SEED == versionByte) {
         payload.fill('\0',payload.length());
     }
