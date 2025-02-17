@@ -76,6 +76,16 @@ QList<QString> Server::checkMemoRequired(AbstractTransaction *abstractTransactio
     return destinations.values();
 }
 
+QByteArray Server::clientName()
+{
+    return STELLAR_QT_SDK_CLIENT_NAME;
+}
+
+QByteArray Server::clientVersion()
+{
+    return STELLAR_QT_SDK_CLIENT_VERSION;
+}
+
 Server::Server(QString uri) {
     m_serverURI = QUrl(uri);
     if(!m_serverURI.isValid())

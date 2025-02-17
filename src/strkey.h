@@ -48,23 +48,7 @@ public:
           return encodeStellarAccountId(data);
     }
 
-    static QString encodeStellarMuxedAccount(const stellar::MuxedAccount& muxedAccount) {
-        switch (muxedAccount.type) {
-        case stellar::CryptoKeyType::KEY_TYPE_MUXED_ED25519:
-        {
-            QByteArray data((const char*)muxedAccount.med25519.ed25519,sizeof(stellar::uint256));
-            QDataStream stream(&data,QIODeviceEnums::Append);
-            stream << muxedAccount.med25519.id;
-            return encodeCheck(VersionByte::MUXED_ACCOUNT, data);
-        }
-        case stellar::CryptoKeyType::KEY_TYPE_ED25519:
-        {
-            return encodeCheck(VersionByte::ACCOUNT_ID, QByteArray::fromRawData((const char*)(muxedAccount.ed25519),sizeof(muxedAccount.ed25519)));
-        }
-        default:
-            throw std::runtime_error("invalid discriminant");
-        }
-    }
+    static QString encodeStellarMuxedAccount(const stellar::MuxedAccount& muxedAccount);
 
     static stellar::AccountID muxedAccountToAccountId(const stellar::MuxedAccount& account) {
         stellar::AccountID accountID;
