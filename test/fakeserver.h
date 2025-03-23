@@ -68,11 +68,9 @@ private slots:
         while (socket->canReadLine()) {
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
             QStringList tokens = QString(socket->readLine()).split(QRegExp("[ \r\n][ \r\n]*"));
-#else
-            QRegularExpression exp(QRegularExpression::anchoredPattern(QLatin1String("[ \r\n][ \r\n]*")));
-            QStringList tokens = QString(socket->readLine()).split(exp);
+#else            
+            QStringList tokens = QString(socket->readLine()).split(QRegularExpression("[ \\r\\n][ \\r\\n]*"));
 #endif
-            //qDebug() << "TOKENS "<< tokens;
             if(tokens.size()>=2){
 
                 QPair<QString, QString>  response("","");
@@ -82,7 +80,6 @@ private slots:
                     response=m_postResponses.value(tokens[1]);
                 else
                 {
-
                     continue;
                 }
                 if(response.second=="")
@@ -93,7 +90,7 @@ private slots:
                                           "Content-Length: %2\r\n"
                                           "Content-Type: application/hal+json; charset=\"utf-8\"\r\n"
                                           "\r\n%3").arg(response.second).arg(0).arg(response.first).toUtf8());
-                    socket->waitForBytesWritten(1000);
+                    socket->waitForBytesWritten(1000);                    
                     continue;
                 }
                   //  qDebug()<< QString("No response for %1").arg(tokens.join(","));
@@ -109,7 +106,7 @@ private slots:
                                       "Content-Length: %2\r\n"
                                       "Content-Type: application/hal+json; charset=\"utf-8\"\r\n"
                                       "\r\n%3").arg(response.second).arg(contentLength).arg(response.first).toUtf8());
-                socket->waitForBytesWritten(1000);
+                socket->waitForBytesWritten(1000);                
                 //qDebug() << "FAKE SERVER REPLY "<<response.first;
 
 

@@ -110,6 +110,7 @@ private slots:
     {
         qint64 sequenceNumber=5026524780560386;
         KeyPair *source = KeyPair::fromSecretSeed(QString("SDPK5IBB57JY5SMMBUBOFSAHNNCETCZWLTKKDPWBDYXBX3B4ZAFOQYD5"));
+
         KeyPair *destination = KeyPair::fromSecretSeed(QByteArray::fromHex("268486538a268486538f268486538a268486538f268486538a268486538feedd"));
 
 
@@ -130,6 +131,7 @@ private slots:
 
     }
 #ifndef STELLAR_SKIP_LIVE_TESTS
+    //it will fail because sequence number, it should be catched before creating the transaction
      void testSubmitTransactionSuccess()  {
          QVERIFY(m_transaction);
          SubmitTransactionResponse *r=nullptr;
@@ -137,9 +139,8 @@ private slots:
              qDebug() << "RECEIVED ANSWER";
              r = response;
 
-         });
-         m_server->submitTransaction(this->m_transaction,true);
-
+         });         
+         m_server->submitTransaction(this->m_transaction,true);         
          WAIT_FOR(!r)
          QObject::disconnect(c);
          QVERIFY(r!=nullptr);
@@ -219,7 +220,6 @@ private slots:
          SubmitTransactionResponse *r=nullptr;
          QMetaObject::Connection c = QObject::connect(m_server,&Server::transactionResponse,[&r](SubmitTransactionResponse *response){
              r = response;
-
          });
          m_server->submitTransaction(transaction);
 

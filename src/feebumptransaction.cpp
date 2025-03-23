@@ -131,11 +131,10 @@ FeeBumpTransaction::Builder &FeeBumpTransaction::Builder::setBaseFee(qint64 base
     if (baseFee < innerBaseFee) {
         throw std::runtime_error("base fee cannot be lower than provided inner transaction base fee");
     }
-
-    qint64 maxFee = baseFee * (numOperations + 1);
-    if (maxFee < 0) {
+    if (baseFee > std::numeric_limits<qint64>::max() / (numOperations + 1)) {
         throw std::runtime_error("fee overflows 64 bit int");
     }
+    qint64 maxFee = baseFee * (numOperations + 1);        
 
     m_baseFee = maxFee;
     return *this;
