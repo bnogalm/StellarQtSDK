@@ -55,7 +55,7 @@ private slots:
         }
     }
     void testMemoId() {
-        MemoId* memo = Memo::id(9223372036854775807L);
+        MemoId* memo = Memo::id(quint64(9223372036854775807UL));
         QCOMPARE(9223372036854775807UL, memo->getId());
         QCOMPARE(stellar::MemoType::MEMO_ID, memo->toXdr().type);
         QCOMPARE(9223372036854775807UL, quint64(memo->toXdr().id));
@@ -119,7 +119,7 @@ private slots:
     void testMemoSerializeDeserialize() {
         MemoNone* memoObjectNone = Memo::none();
         MemoText* memoObjectText = Memo::text("test");
-        MemoId* memoObjectId = Memo::id(9223372036854775807L);
+        MemoId* memoObjectId = Memo::id(quint64(9223372036854775807UL));
         MemoHash* memoObjectHash = Memo::hash(QString("4142434445464748494a4b4c"));
         MemoReturnHash* memoObjectReturnHash = Memo::returnHash(QString("4142434445464748494a4b4c"));
 
