@@ -123,8 +123,13 @@ void OfferResponse::setSelling(QVariantMap selling)
     m_selling = selling;
 }
 
-bool OfferResponseAttach::Links::operator !=(OfferResponseAttach::Links &links)
+bool OfferResponseAttach::Links::operator ==(const OfferResponseAttach::Links &links) const
 {
-    Q_UNUSED(links)
-    return true;
+    return m_self == links.m_self
+            && m_offerMaker == links.m_offerMaker;
+}
+
+bool OfferResponseAttach::Links::operator !=(const OfferResponseAttach::Links &links) const
+{
+    return !(*this == links);
 }

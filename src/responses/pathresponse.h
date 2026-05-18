@@ -19,10 +19,13 @@ public:
     Link& getSelf() {
         return m_self;
     }
-    bool operator !=(Links& links)
+    bool operator ==(const Links& links) const
     {
-        Q_UNUSED(links)
-        return true;
+        return m_self == links.m_self;
+    }
+    bool operator !=(const Links& links) const
+    {
+        return !(*this == links);
     }
 };
 

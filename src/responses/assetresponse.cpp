@@ -108,10 +108,15 @@ bool AssetResponseAttach::Flags::isAuthRevocable(){
     return m_authRevocable;
 }
 
-bool AssetResponseAttach::Flags::operator !=(AssetResponseAttach::Flags &t)
+bool AssetResponseAttach::Flags::operator ==(const AssetResponseAttach::Flags &t) const
 {
-    Q_UNUSED(t)
-    return true;
+    return m_authRequired == t.m_authRequired
+            && m_authRevocable == t.m_authRevocable;
+}
+
+bool AssetResponseAttach::Flags::operator !=(const AssetResponseAttach::Flags &t) const
+{
+    return !(*this == t);
 }
 
 AssetResponseAttach::Links::Links() {
@@ -120,10 +125,14 @@ AssetResponseAttach::Links::Links() {
 Link AssetResponseAttach::Links::getToml() {
     return m_toml;
 }
-bool AssetResponseAttach::Links::operator !=(AssetResponseAttach::Links& t)
+bool AssetResponseAttach::Links::operator ==(const AssetResponseAttach::Links& t) const
 {
-    Q_UNUSED(t)
-    return true;
+    return m_toml == t.m_toml;
+}
+
+bool AssetResponseAttach::Links::operator !=(const AssetResponseAttach::Links& t) const
+{
+    return !(*this == t);
 }
 
 AssetResponseAttach::Accounts::Accounts():m_authorized(0),m_authorizedToMaintainLiabilities(0),m_unauthorized(0) {
@@ -142,10 +151,16 @@ int AssetResponseAttach::Accounts::unauthorized() {
     return m_unauthorized;
 }
 
-bool AssetResponseAttach::Accounts::operator !=(Accounts &t)
+bool AssetResponseAttach::Accounts::operator ==(const Accounts &t) const
 {
-    Q_UNUSED(t)
-    return true;
+    return m_authorized == t.m_authorized
+            && m_authorizedToMaintainLiabilities == t.m_authorizedToMaintainLiabilities
+            && m_unauthorized == t.m_unauthorized;
+}
+
+bool AssetResponseAttach::Accounts::operator !=(const Accounts &t) const
+{
+    return !(*this == t);
 }
 
 AssetResponseAttach::Balances::Balances() {
@@ -164,8 +179,14 @@ QString AssetResponseAttach::Balances::unauthorized() {
     return m_unauthorized;
 }
 
-bool AssetResponseAttach::Balances::operator !=(Balances &t)
+bool AssetResponseAttach::Balances::operator ==(const Balances &t) const
 {
-    Q_UNUSED(t)
-    return true;
+    return m_authorized == t.m_authorized
+            && m_authorizedToMaintainLiabilities == t.m_authorizedToMaintainLiabilities
+            && m_unauthorized == t.m_unauthorized;
+}
+
+bool AssetResponseAttach::Balances::operator !=(const Balances &t) const
+{
+    return !(*this == t);
 }

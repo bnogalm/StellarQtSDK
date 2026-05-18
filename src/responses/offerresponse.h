@@ -24,7 +24,8 @@ public:
     Link& getOfferMager(){
         return m_offerMaker;
     }
-    bool operator !=(Links& links);
+    bool operator ==(const Links& links) const;
+    bool operator !=(const Links& links) const;
 };
 }
 class KeyPair;

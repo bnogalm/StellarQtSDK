@@ -22,10 +22,14 @@ public:
     QStringList getOperationsResultCodes() {
         return m_operations;
     }
-    bool operator !=(ResultCodes& rc)
+    bool operator ==(const ResultCodes& rc) const
     {
-        Q_UNUSED(rc)
-        return true;
+        return m_transaction == rc.m_transaction
+                && m_operations == rc.m_operations;
+    }
+    bool operator !=(const ResultCodes& rc) const
+    {
+        return !(*this == rc);
     }
 };
 
@@ -68,10 +72,15 @@ public:
         return m_resultCodes;
     }
 
-    bool operator !=(Extras& rc)
+    bool operator ==(const Extras& rc) const
     {
-        Q_UNUSED(rc)
-        return true;
+        return m_envelopeXdr == rc.m_envelopeXdr
+                && m_resultXdr == rc.m_resultXdr
+                && m_resultCodes == rc.m_resultCodes;
+    }
+    bool operator !=(const Extras& rc) const
+    {
+        return !(*this == rc);
     }
 };
 

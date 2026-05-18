@@ -26,7 +26,8 @@ public:
     int authorized();
     int authorizedToMaintainLiabilities();
     int unauthorized();
-    bool operator !=(Accounts& t);
+    bool operator ==(const Accounts& t) const;
+    bool operator !=(const Accounts& t) const;
 };
 
 /**
@@ -47,7 +48,8 @@ public:
     QString authorized();
     QString authorizedToMaintainLiabilities();
     QString unauthorized();
-    bool operator !=(Balances& t);
+    bool operator ==(const Balances& t) const;
+    bool operator !=(const Balances& t) const;
 };
 /**
  * Flags describe asset flags.
@@ -64,7 +66,8 @@ public:
     bool isAuthRequired();
 
     bool isAuthRevocable();
-    bool operator !=(Flags& t);
+    bool operator ==(const Flags& t) const;
+    bool operator !=(const Flags& t) const;
 };
 
 /**
@@ -78,7 +81,8 @@ public:
     Links();
 
     Link getToml();
-    bool operator !=(Links& t);
+    bool operator ==(const Links& t) const;
+    bool operator !=(const Links& t) const;
 };
 
 }

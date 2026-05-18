@@ -52,15 +52,19 @@ public:
     Link getSucceeds() {
         return m_succeeds;
     }
-    bool operator !=(Links& links)
+    bool operator ==(const Links& links) const
     {
-        return m_account!= links.m_account
-                || m_effects!= links.m_effects
-                || m_ledger!= links.m_ledger
-                || m_operations!= links.m_operations
-                || m_precedes!= links.m_precedes
-                || m_self!= links.m_self
-                || m_succeeds!= links.m_succeeds;
+        return m_account == links.m_account
+                && m_effects == links.m_effects
+                && m_ledger == links.m_ledger
+                && m_operations == links.m_operations
+                && m_precedes == links.m_precedes
+                && m_self == links.m_self
+                && m_succeeds == links.m_succeeds;
+    }
+    bool operator !=(const Links& links) const
+    {
+        return !(*this == links);
     }
 };
 
@@ -84,9 +88,13 @@ public:
     {
         return m_signatures;
     }
-    bool operator !=(FeeBumpTransaction& obj)
+    bool operator ==(const FeeBumpTransaction& obj) const
     {
-        return m_hash!=obj.m_hash || m_signatures != obj.m_signatures;
+        return m_hash == obj.m_hash && m_signatures == obj.m_signatures;
+    }
+    bool operator !=(const FeeBumpTransaction& obj) const
+    {
+        return !(*this == obj);
     }
 };
 
@@ -118,9 +126,15 @@ public:
     {
         return m_maxFee;
     }
-    bool operator !=(InnerTransaction& obj)
+    bool operator ==(const InnerTransaction& obj) const
     {
-        return m_hash!=obj.m_hash || m_signatures != obj.m_signatures || m_maxFee != obj.m_maxFee;
+        return m_hash == obj.m_hash
+                && m_signatures == obj.m_signatures
+                && m_maxFee == obj.m_maxFee;
+    }
+    bool operator !=(const InnerTransaction& obj) const
+    {
+        return !(*this == obj);
     }
 
 };

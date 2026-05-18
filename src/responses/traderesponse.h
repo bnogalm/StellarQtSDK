@@ -23,10 +23,15 @@ public:
     Link& getBase();
     Link& getCounter();
     Link& getOperation();
-    bool operator !=(Links& links)
+    bool operator ==(const Links& links) const
     {
-        Q_UNUSED(links)
-        return true;
+        return m_base == links.m_base
+                && m_counter == links.m_counter
+                && m_operation == links.m_operation;
+    }
+    bool operator !=(const Links& links) const
+    {
+        return !(*this == links);
     }
 };
 }

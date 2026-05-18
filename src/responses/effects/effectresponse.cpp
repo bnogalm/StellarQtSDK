@@ -56,8 +56,14 @@ void EffectResponse::setAccount(QString account)
     m_account = account;
 }
 
-bool EffectResponseAttach::Links::operator !=(EffectResponseAttach::Links &links)
+bool EffectResponseAttach::Links::operator ==(const EffectResponseAttach::Links &links) const
 {
-    Q_UNUSED(links)
-    return true;
+    return m_operation == links.m_operation
+            && m_precedes == links.m_precedes
+            && m_succeeds == links.m_succeeds;
+}
+
+bool EffectResponseAttach::Links::operator !=(const EffectResponseAttach::Links &links) const
+{
+    return !(*this == links);
 }

@@ -31,7 +31,8 @@ public:
     Link& getSucceeds() {
         return m_succeeds;
     }
-    bool operator !=(Links& links);
+    bool operator ==(const Links& links) const;
+    bool operator !=(const Links& links) const;
 };
 }
 

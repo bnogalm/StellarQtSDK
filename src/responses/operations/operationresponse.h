@@ -45,10 +45,17 @@ namespace OperationResponseAttach
     Link& getTransaction() {
       return m_transaction;
     }
-    bool operator !=(Links& links)
+    bool operator ==(const Links& links) const
     {
-        Q_UNUSED(links)
-        return true;
+        return m_effects == links.m_effects
+                && m_precedes == links.m_precedes
+                && m_self == links.m_self
+                && m_succeeds == links.m_succeeds
+                && m_transaction == links.m_transaction;
+    }
+    bool operator !=(const Links& links) const
+    {
+        return !(*this == links);
     }
   };
 }

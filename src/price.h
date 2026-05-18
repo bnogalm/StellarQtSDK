@@ -58,11 +58,13 @@ public:
 
     bool equals(Price* price);
 
-    bool operator !=(Price& price)
+    bool operator ==(const Price& price) const
     {
-        return (price.m_d!=this->m_d)
-                || (price.m_n !=this->m_n)
-                || (price.toString()!=this->toString());
+        return m_d == price.m_d && m_n == price.m_n;
+    }
+    bool operator !=(const Price& price) const
+    {
+        return !(*this == price);
     }
 };
 Q_DECLARE_METATYPE(Price)
