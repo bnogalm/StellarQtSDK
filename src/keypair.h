@@ -19,10 +19,12 @@ private:
 public:
     KeyPair();
     /**
-     * @brief KeyPair constructor to make a copy
+     * @brief KeyPair constructor to make a deep copy
      * @param keypair
      */
-    KeyPair(KeyPair &keypair);
+    // FIX §1.7: const-correct copy ctor + assignment op (Rule of Three).
+    KeyPair(const KeyPair &keypair);
+    KeyPair& operator=(const KeyPair &other);
 
     ~KeyPair();
 

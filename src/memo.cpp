@@ -77,7 +77,9 @@ Memo *Memo::parse(QString type, QByteArray memo)
             else
                 return Memo::text("");//null!=empty
         } else if (type=="id") {
-            return Memo::id(QString::fromUtf8(memo).toLongLong());
+            // FIX §9.8: Memo Id is uint64. toLongLong() rejected IDs > 2^63;
+            // toULongLong() covers the full range.
+            return Memo::id(QString::fromUtf8(memo).toULongLong());
         } else if (type=="hash") {
             return Memo::hash(QByteArray::fromBase64(memo,XDR_BASE64ENCODING));
         } else if (type=="return") {

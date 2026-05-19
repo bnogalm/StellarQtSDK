@@ -148,6 +148,26 @@ qt_add_library(StellarQtSDK STATIC
     src/requests/tradesrequestbuilder.h
     src/requests/transactionsrequestbuilder.cpp
     src/requests/transactionsrequestbuilder.h
+    src/stellardeprecated.h
+    src/transactionbuilder.cpp
+    src/transactionbuilder.h
+    src/feebumptransactionbuilder.cpp
+    src/feebumptransactionbuilder.h
+    src/exception/sdkexception.h
+    src/exception/networkexception.h
+    src/exception/toomanyrequestsexception.h
+    src/exception/badrequestexception.h
+    src/exception/badresponseexception.h
+    src/exception/requesttimeoutexception.h
+    src/exception/connectionerrorexception.h
+    src/exception/accountnotfoundexception.h
+    src/exception/accountrequiresmemoexception.h
+    src/exception/invalidsep10challengeexception.h
+    src/exception/unexpectedexception.h
+    src/exception/unknownresponseexception.h
+    src/exception/formatexception.h
+    src/responses/problem.cpp
+    src/responses/problem.h
     src/responses/accountresponse.cpp
     src/responses/accountresponse.h
     src/responses/assetresponse.cpp
@@ -378,7 +398,7 @@ target_include_directories(StellarQtSDK PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} src)
 
 add_compile_definitions(
     STELLAR_QT_SDK_CLIENT_NAME=\"\\\"qtcpp-stellar-sdk\\\"\"
-    STELLAR_QT_SDK_CLIENT_VERSION=\"\\\"0.3.17\\\"\"
+    STELLAR_QT_SDK_CLIENT_VERSION=\"\\\"0.4.0\\\"\"
 )
 
 target_compile_definitions(StellarQtSDK PRIVATE

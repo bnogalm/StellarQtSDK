@@ -10,7 +10,10 @@ FeeBumpTransaction::FeeBumpTransaction(AccountConverter accountConverter, QStrin
 
 FeeBumpTransaction::~FeeBumpTransaction()
 {
-
+    // FIX §1.1: empty destructor leaked the inner Transaction (and its ops,
+    // memo, timeBounds). Builder transferred ownership; nothing freed it.
+    if (m_inner)
+        delete m_inner;
 }
 
 qint64 FeeBumpTransaction::getFee() const
@@ -86,76 +89,5 @@ stellar::TransactionEnvelope FeeBumpTransaction::toEnvelopeXdr()
     return stellar::TransactionEnvelope(envelope);
 }
 
-FeeBumpTransaction::Builder::Builder(AccountConverter accountConverter, Transaction *inner) {
-    m_inner = checkNotNull(inner, "inner cannot be null");
-    m_baseFee = 0;
-    m_accountConverter = accountConverter;
-
-    stellar::EnvelopeType txType = inner->toEnvelopeXdr().type;
-    if (txType == stellar::EnvelopeType::ENVELOPE_TYPE_TX_V0) {
-        m_inner = new Transaction(
-                    accountConverter,
-                    inner->getSourceAccount(),
-                    inner->getFee(),
-                    inner->getSequenceNumber(),
-                    inner->getOperations(),
-                    inner->getMemo(),
-                    inner->getTimeBounds(),
-                    inner->getNetwork()
-                    );
-        m_inner->m_signatures = inner->getSignatures();
-    }
-}
-
-FeeBumpTransaction::Builder::~Builder()
-{
-    if(m_inner)
-        delete m_inner;
-}
-
-FeeBumpTransaction::Builder &FeeBumpTransaction::Builder::setBaseFee(qint64 baseFee) {
-    if (m_baseFee != 0) {
-        throw std::runtime_error("base fee has been already set.");
-    }
-
-    if (baseFee < AbstractTransaction::MIN_BASE_FEE) {
-        throw std::runtime_error("baseFee cannot be smaller than the BASE_FEE");
-    }
-
-    qint64 innerBaseFee = m_inner->getFee();
-    qint64 numOperations = m_inner->getOperations().length();
-    if (numOperations > 0) {
-        innerBaseFee = innerBaseFee / numOperations;
-    }
-
-    if (baseFee < innerBaseFee) {
-        throw std::runtime_error("base fee cannot be lower than provided inner transaction base fee");
-    }
-    if (baseFee > std::numeric_limits<qint64>::max() / (numOperations + 1)) {
-        throw std::runtime_error("fee overflows 64 bit int");
-    }
-    qint64 maxFee = baseFee * (numOperations + 1);        
-
-    m_baseFee = maxFee;
-    return *this;
-}
-
-FeeBumpTransaction::Builder &FeeBumpTransaction::Builder::setFeeAccount(QString feeAccount) {
-    if (!m_feeAccount.isEmpty()) {
-        throw std::runtime_error("fee account has been already been set.");
-    }
-
-    m_feeAccount = checkNotNull(feeAccount, "feeAccount cannot be null");
-    return *this;
-}
-
-FeeBumpTransaction *FeeBumpTransaction::Builder::build() {
-    FeeBumpTransaction* result = new FeeBumpTransaction(
-                m_accountConverter,
-                checkNotNull(m_feeAccount, "fee account has to be set. you must call setFeeAccount()."),
-                checkNotNull(m_baseFee, "base fee has to be set. you must call setBaseFee()."),
-                m_inner
-                );
-    m_inner = nullptr;
-    return result;
-}
+// FeeBumpTransactionBuilder lives in feebumptransactionbuilder.cpp.
+// FeeBumpTransaction::Builder is now a deprecated alias (see header).

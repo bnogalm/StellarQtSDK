@@ -5,7 +5,7 @@ DEFINES += STELLAR_QT_REPLY_TIMEOUT=30000
 DEFINES *= ED25519_NO_SEED
 
 DEFINES += STELLAR_QT_SDK_CLIENT_NAME=\"\\\"qtcpp-stellar-sdk\\\"\"
-DEFINES += STELLAR_QT_SDK_CLIENT_VERSION=\"\\\"0.3.20\\\"\"
+DEFINES += STELLAR_QT_SDK_CLIENT_VERSION=\"\\\"0.4.0\\\"\"
 
 #DEFINES += STELLAR_QT_AUTOSET_BASE_FEE
 
@@ -29,6 +29,9 @@ INCLUDEPATH *=  $$PWD/src/
 
 
 SOURCES += \
+    $$PWD/src/responses/problem.cpp \
+    $$PWD/src/transactionbuilder.cpp \
+    $$PWD/src/feebumptransactionbuilder.cpp \
     $$PWD/src/abstracttransaction.cpp \
     $$PWD/src/account.cpp \
     $$PWD/src/accountconverter.cpp \
@@ -223,6 +226,23 @@ DEFINES += QT_DEPRECATED_WARNINGS
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 HEADERS += \
+    $$PWD/src/stellardeprecated.h \
+    $$PWD/src/transactionbuilder.h \
+    $$PWD/src/feebumptransactionbuilder.h \
+    $$PWD/src/exception/sdkexception.h \
+    $$PWD/src/exception/networkexception.h \
+    $$PWD/src/exception/toomanyrequestsexception.h \
+    $$PWD/src/exception/badrequestexception.h \
+    $$PWD/src/exception/badresponseexception.h \
+    $$PWD/src/exception/requesttimeoutexception.h \
+    $$PWD/src/exception/connectionerrorexception.h \
+    $$PWD/src/exception/accountnotfoundexception.h \
+    $$PWD/src/exception/accountrequiresmemoexception.h \
+    $$PWD/src/exception/invalidsep10challengeexception.h \
+    $$PWD/src/exception/unexpectedexception.h \
+    $$PWD/src/exception/unknownresponseexception.h \
+    $$PWD/src/exception/formatexception.h \
+    $$PWD/src/responses/problem.h \
     $$PWD/src/abstracttransaction.h \
     $$PWD/src/accountconverter.h \
     $$PWD/src/beginsponsoringfuturereservesoperation.h \

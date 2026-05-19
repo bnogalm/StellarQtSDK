@@ -4,6 +4,16 @@
 #ifndef TESTCOLLECTOR_H
 #define TESTCOLLECTOR_H
 
+// The SDK's own tests intentionally exercise [[deprecated]] APIs to verify
+// backward compat. Silence C4996 / -Wdeprecated-declarations for the whole
+// suite. Downstream consumers still see the warnings normally.
+#ifdef _MSC_VER
+#pragma warning(disable: 4996)
+#endif
+#if defined(__GNUC__) || defined(__clang__)
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#endif
+
 #include <QtTest>
 #include <memory>
 #include <map>

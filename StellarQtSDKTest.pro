@@ -34,6 +34,9 @@ HEADERS += \
     test/operationtest.h \
     test/transactiontest.h \
     test/requests/accountsrequestbuildertest.h \
+    test/requests/responsehandlertest.h \
+    test/transactionbuildertest.h \
+    test/xdrhelpertest.h \
     test/servertest.h \
     test/responses/submittransactionresponsetest.h \
     test/networktest.h \

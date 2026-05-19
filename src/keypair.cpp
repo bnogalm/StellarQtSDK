@@ -29,8 +29,36 @@ KeyPair::KeyPair():m_publicKey(nullptr),m_privateKey(nullptr)
 
 }
 
-KeyPair::KeyPair(KeyPair &keypair):KeyPair(keypair.m_publicKey,keypair.m_privateKey){
+// FIX §1.7: deep copy (delegates to the raw-pointer ctor).
+KeyPair::KeyPair(const KeyPair &keypair):KeyPair(keypair.m_publicKey,keypair.m_privateKey){
+    m_secretSeed = keypair.m_secretSeed;
+}
 
+// FIX §1.7: assignment op (Rule of Three). Without this, the default
+// shallow copy caused double-free when releasing raw pointers.
+KeyPair& KeyPair::operator=(const KeyPair &other) {
+    if (this == &other) return *this;
+    // Limpiar estado actual
+    if (m_publicKey) {
+        delete[] m_publicKey;
+        m_publicKey = nullptr;
+    }
+    if (m_privateKey) {
+        memset_s((char*)m_privateKey, 0, keyLength*2);
+        delete[] m_privateKey;
+        m_privateKey = nullptr;
+    }
+    // Copia profunda
+    if (other.m_publicKey) {
+        m_publicKey = new quint8[keyLength];
+        memcpy(m_publicKey, other.m_publicKey, keyLength);
+    }
+    if (other.m_privateKey) {
+        m_privateKey = new quint8[keyLength*2];
+        memcpy(m_privateKey, other.m_privateKey, keyLength*2);
+    }
+    m_secretSeed = other.m_secretSeed;
+    return *this;
 }
 
 KeyPair::~KeyPair()
@@ -111,12 +139,12 @@ KeyPair *KeyPair::fromBip39Seed(QByteArray bip39Seed, int accountNumber) {
 
 
 KeyPair *KeyPair::random() {
+    // FIX §2.8: use the system RNG (crypto-secure). The old comment
+    // promised manual entropy mixing that the implementation never did.
     QByteArray seed;
     seed.resize(keyLength);
-    //you MUST mix random generated keypair with some other source of random as random_device is not random in many platforms
-    //and even if they are randoms you shouldnt trust anybody... so mix them, if they are random, they will stay random.
-    QRandomGenerator randomDevice = QRandomGenerator::securelySeeded();
-    randomDevice.fillRange((quint32*)seed.data(),keyLength/sizeof(quint32));
+    QRandomGenerator *randomDevice = QRandomGenerator::system();
+    randomDevice->fillRange((quint32*)seed.data(), keyLength/sizeof(quint32));
     return fromSecretSeed(seed);
 }
 
@@ -126,8 +154,8 @@ KeyPair *KeyPair::random(QByteArray rand)
         throw std::runtime_error("rand should be 32 random bytes");
     QByteArray seed;
     seed.resize(keyLength);
-    QRandomGenerator randomDevice = QRandomGenerator::securelySeeded();
-    randomDevice.fillRange((quint32*)seed.data(),keyLength/sizeof(quint32));
+    QRandomGenerator *randomDevice = QRandomGenerator::system();
+    randomDevice->fillRange((quint32*)seed.data(), keyLength/sizeof(quint32));
     for(int i=0;i<keyLength;i++){
         seed[i] = rand[i] ^ seed[i];
     }
@@ -147,19 +175,15 @@ QByteArray KeyPair::getPublicKey() const {
 }
 
 stellar::SignatureHint KeyPair::getSignatureHint() {
-    try {
-        QByteArray publicKeyBytesStream;
-        QDataStream xdrOutputStream(&publicKeyBytesStream,QIODevice::WriteOnly);
-        xdrOutputStream<< this->getXdrPublicKey();
-        QByteArray signatureHintBytes = publicKeyBytesStream.mid(publicKeyBytesStream.length()-4,4);
-        stellar::SignatureHint signatureHint;
-        memcpy(signatureHint.signatureHint,signatureHintBytes.data(),4);
-        return signatureHint;
-    } catch (const std::exception& e) {
-        Q_UNUSED(e)
-        //throw new AssertionError(e);
-    }
-    return stellar::SignatureHint();
+    // FIX §2.6: the silent try/catch returned an uninitialized hint,
+    // producing signatures with garbage hint bytes. Let exceptions propagate.
+    QByteArray publicKeyBytesStream;
+    QDataStream xdrOutputStream(&publicKeyBytesStream, QIODevice::WriteOnly);
+    xdrOutputStream << this->getXdrPublicKey();
+    QByteArray signatureHintBytes = publicKeyBytesStream.mid(publicKeyBytesStream.length()-4, 4);
+    stellar::SignatureHint signatureHint;
+    memcpy(signatureHint.signatureHint, signatureHintBytes.data(), 4);
+    return signatureHint;
 }
 
 stellar::PublicKey KeyPair::getXdrPublicKey() {
@@ -185,15 +209,35 @@ stellar::SignerKey KeyPair::getXdrSignerKey() {
 }
 
 KeyPair *KeyPair::fromXdrPublicKey(const stellar::PublicKey &key) {
+    // PublicKey currently only has type=PUBLIC_KEY_TYPE_ED25519.
+    if (key.type != stellar::PublicKeyType::PUBLIC_KEY_TYPE_ED25519)
+        throw std::runtime_error("unsupported public key type");
     return new KeyPair(key.ed25519);
 }
 
 KeyPair *KeyPair::fromXdrMutexPublicKey(const stellar::MuxedAccount &key)
 {
-    return new KeyPair(key.ed25519);
+    // FIX §2.4: discriminate on the union tag. Muxed bytes live in
+    // key.med25519.ed25519; reading key.ed25519 for a muxed input yielded
+    // the wrong destination account.
+    switch (key.type) {
+    case stellar::CryptoKeyType::KEY_TYPE_ED25519:
+        return new KeyPair(key.ed25519);
+    case stellar::CryptoKeyType::KEY_TYPE_MUXED_ED25519:
+        // muxedId is dropped here — KeyPair models the base account only.
+        // Use MuxedAccount (arriving in 0.8.0) when the muxedId matters.
+        return new KeyPair(key.med25519.ed25519);
+    default:
+        throw std::runtime_error("unsupported muxed account key type");
+    }
 }
 
 KeyPair *KeyPair::fromXdrSignerKey(const stellar::SignerKey key) {
+    // FIX §2.5: PRE_AUTH_TX / HASH_X aren't ed25519 accounts; deriving a
+    // G-strkey from their bytes was identity confusion. Unified SignerKey
+    // class is coming in 0.7.0; for now only ED25519 is accepted.
+    if (key.type != stellar::SignerKeyType::SIGNER_KEY_TYPE_ED25519)
+        throw std::runtime_error("KeyPair only supports SIGNER_KEY_TYPE_ED25519; use SignerKey for PRE_AUTH_TX/HASH_X");
     return new KeyPair(key.ed25519);
 }
 
@@ -201,16 +245,12 @@ QByteArray KeyPair::sign(QByteArray data) {
     if (!m_privateKey) {
         throw std::runtime_error("KeyPair does not contain secret key. Use KeyPair::fromSecretSeed method to create a new KeyPair with a secret key.");
     }
-    try {
-        quint8 signature[64];
-        memset(signature,0,64);
-        ed25519_sign(signature,(const uchar*) data.constData(), data.length(), this->m_publicKey, this->m_privateKey);
-        return QByteArray((char*)signature,64);
-    } catch (const std::exception& e) {
-        Q_UNUSED(e)
-        throw std::runtime_error("error signing");
-    }
-    return QByteArray();
+    // FIX §2.7: ed25519_sign is C and doesn't throw; the try/catch only
+    // hid std::bad_alloc from the QByteArray. Dropped.
+    quint8 signature[64];
+    memset(signature, 0, 64);
+    ed25519_sign(signature, (const uchar*) data.constData(), data.length(), this->m_publicKey, this->m_privateKey);
+    return QByteArray((char*)signature, 64);
 }
 
 stellar::DecoratedSignature KeyPair::signDecorated(QByteArray data) {
@@ -232,16 +272,20 @@ bool KeyPair::verify(QByteArray data, QByteArray signature) {
 }
 
 bool KeyPair::equals(const KeyPair *obj) const{
-    if((obj->m_privateKey && !this->m_privateKey) || (!obj->m_privateKey &&this->m_privateKey))
+    if (!obj) return false;
+    if ((obj->m_privateKey && !this->m_privateKey) || (!obj->m_privateKey && this->m_privateKey))
         return false;
-    if(obj->m_privateKey&& this->m_privateKey)
+    if (obj->m_privateKey && this->m_privateKey)
     {
-        if(memcmp(obj->m_privateKey,this->m_privateKey,KeyPair::keyLength)!=0)
+        // FIX §2.3: m_privateKey is keyLength*2 bytes (ed25519 expanded
+        // private key = secret + pubkey). Comparing just keyLength gave
+        // false positives.
+        if (memcmp(obj->m_privateKey, this->m_privateKey, KeyPair::keyLength * 2) != 0)
             return false;
     }
-    if(obj->m_publicKey&& this->m_publicKey)
+    if (obj->m_publicKey && this->m_publicKey)
     {
-        if(memcmp(obj->m_publicKey,this->m_publicKey,KeyPair::keyLength)!=0)
+        if (memcmp(obj->m_publicKey, this->m_publicKey, KeyPair::keyLength) != 0)
             return false;
     }
     return true;

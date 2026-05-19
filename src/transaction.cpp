@@ -1,9 +1,11 @@
 #include "transaction.h"
 #include <QDateTime>
+#include <limits>
 #include "createclaimablebalanceoperation.h"
 #include "accountconverter.h"
 
-quint32 Transaction::Builder::s_defaultOperationFee = Transaction::Builder::BASE_FEE;
+// TransactionBuilder lives in transactionbuilder.cpp.
+// Transaction::Builder is now a deprecated alias (see header).
 
 Transaction::Transaction(AccountConverter accountConverter, QString sourceAccount, qint64 fee, qint64 sequenceNumber, QVector<Operation *> operations, Memo *memo, TimeBounds *timeBounds, Network *network)
     :AbstractTransaction(accountConverter, network),m_envelopeType(stellar::EnvelopeType::ENVELOPE_TYPE_TX)
@@ -234,144 +236,6 @@ stellar::TransactionEnvelope Transaction::toEnvelopeXdr(){
         throw std::runtime_error("invalid envelope type");
     }
     }
-}
-
-Transaction::Builder::Builder(AccountConverter accountConverter, TransactionBuilderAccount *sourceAccount, Network *network) {
-    m_accountConverter = accountConverter;
-    m_sourceAccount = checkNotNull(sourceAccount, "sourceAccount cannot be null");
-    m_memo=nullptr;
-    m_timeBounds=nullptr;
-#ifdef STELLAR_QT_AUTOSET_BASE_FEE
-    m_baseFee = s_defaultOperationFee;
-#else
-    m_baseFee = 0;
-#endif
-    m_timeoutSet=false;
-    m_network= network;
-}
-
-Transaction::Builder::Builder(Builder &other): m_accountConverter(other.m_accountConverter)
-    ,m_sourceAccount(other.m_sourceAccount)
-    ,m_network(other.m_network)
-    ,m_memo(other.m_memo)
-    ,m_timeBounds(other.m_timeBounds)
-    ,m_operations(other.m_operations)
-    ,m_timeoutSet(other.m_timeoutSet)
-    ,m_baseFee(other.m_baseFee)
-{
-    other.m_memo=nullptr;
-    other.m_timeBounds=nullptr;
-    other.m_operations.clear();
-}
-
-Transaction::Builder::~Builder()
-{
-    //it will not destroy the account object
-    if(m_memo)
-        delete m_memo;
-    if(m_timeBounds)
-        delete m_timeBounds;
-    for(Operation * o : m_operations){
-        delete o;
-    }
-}
-
-int Transaction::Builder::getOperationsCount() {
-    return m_operations.size();
-}
-
-void Transaction::Builder::setDefaultOperationFee(quint32 opFee) {
-    if (opFee < Builder::BASE_FEE) {
-        throw std::runtime_error(QString("DefaultOperationFee cannot be smaller than the BASE_FEE (\" %1 \"): %2").arg(Builder::BASE_FEE).arg(opFee).toStdString());
-    }
-    s_defaultOperationFee = opFee;
-}
-
-Transaction::Builder &Transaction::Builder::addOperation(Operation *operation) {
-    checkNotNull(operation, "operation cannot be null");
-    m_operations.append(operation);
-    return *this;
-}
-
-Transaction::Builder &Transaction::Builder::addMemo(Memo *memo) {
-    if (this->m_memo) {
-        throw std::runtime_error("Memo has been already added.");
-    }
-    m_memo = checkNotNull(memo, "memo cannot be null");
-    return *this;
-}
-
-Transaction::Builder &Transaction::Builder::addTimeBounds(TimeBounds *timeBounds) {
-    if (this->m_timeBounds) {
-        throw std::runtime_error("TimeBounds has been already added.");
-    }
-    checkNotNull(reinterpret_cast<intptr_t>(timeBounds), "timeBounds cannot be null");
-    m_timeBounds = timeBounds;
-    m_timeoutSet = true;
-    return *this;
-}
-
-Transaction::Builder &Transaction::Builder::setTimeout(qint64 timeout) {
-    if (m_timeBounds && m_timeBounds->getMaxTime() > 0) {
-        throw std::runtime_error("TimeBounds.max_time has been already set - setting timeout would overwrite it.");
-    }
-
-    if (timeout < 0) {
-        throw std::runtime_error("timeout cannot be negative");
-    }
-
-    m_timeoutSet = true;
-    if (timeout > 0) {
-        qint64 timeoutTimestamp = QDateTime::currentMSecsSinceEpoch()/ 1000L + timeout;
-        if (!m_timeBounds) {
-            m_timeBounds = new TimeBounds(0, timeoutTimestamp);
-        } else {
-            qint64 min = m_timeBounds->getMinTime();
-            delete m_timeBounds;
-            m_timeBounds = new TimeBounds(min, timeoutTimestamp);
-        }
-    }
-
-    return *this;
-}
-
-Transaction::Builder &Transaction::Builder::setBaseFee(quint32 baseFee) {
-    if (baseFee < Builder::BASE_FEE) {
-        throw std::runtime_error(QString("BaseFee cannot be smaller than the BASE_FEE (\" %1 \"): %2").arg(Builder::BASE_FEE).arg(baseFee).toStdString());
-    }
-
-    m_baseFee = baseFee;
-    return *this;
-}
-
-Transaction *Transaction::Builder::build() {
-    // Ensure setTimeout called or maxTime is set
-    if ((!m_timeBounds || (m_timeBounds  && m_timeBounds->getMaxTime() == 0)) && !m_timeoutSet) {
-      throw std::runtime_error("TimeBounds has to be set or you must call setTimeout(TIMEOUT_INFINITE).");
-    }
-
-    if (m_baseFee == 0) {
-#ifdef STELLAR_QT_AUTOSET_BASE_FEE
-        qDebug()<< "[TransactionBuilder] The `baseFee` parameter of `TransactionBuilder` is required. Setting to BASE_FEE=" << Builder::BASE_FEE << ". Future versions of this library will error if not provided.";
-        m_baseFee = Builder::BASE_FEE;
-#else
-        throw std::runtime_error("The `baseFee` parameter of `TransactionBuilder` is required.");
-#endif
-    }    
-
-    Transaction *transaction = new Transaction(m_accountConverter, m_sourceAccount->getKeypair()->getAccountId()
-                                               , static_cast<quint32>(m_operations.length()) * m_baseFee
-                                               , m_sourceAccount->getIncrementedSequenceNumber()
-                                               , m_operations, m_memo, m_timeBounds,m_network);
-    // Increment sequence number when there were no exceptions when creating a transaction
-    m_sourceAccount->incrementSequenceNumber();
-
-    //so objects dont get destroyed with the builder, all the checks were done already
-    m_memo=nullptr;
-    m_timeBounds=nullptr;
-    m_operations.clear();
-
-    return transaction;
 }
 
 Transaction *checkNotNull(Transaction *transaction, const char *error)

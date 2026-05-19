@@ -103,20 +103,28 @@ struct Array{
      */
     void set(T* v, int amount)
     {
-        int allowed = qMin(amount + value.length(),max);
+        // FIX §3.3: old code had two bugs — (a) memcpy copied `allowed`
+        // bytes instead of `allowed * sizeof(T)` (only worked for sizeof(T)==1),
+        // and (b) the size formula suggested append but memcpy overwrote
+        // from the start. New semantics: replace with the first `amount`
+        // elements, truncating to `max`.
+        int allowed = qMin(amount, max);
         value.resize(allowed);
-        memcpy(value.data(),v,allowed);
+        if (allowed > 0)
+            memcpy(value.data(), v, static_cast<size_t>(allowed) * sizeof(T));
     }
     //returns continuos data
     QByteArray binary() const
     {
-        QByteArray ba(sizeof (T)*value.size(),Qt::Uninitialized);
-        #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
-        QDataStream stream(&ba,QIODeviceBase::WriteOnly);
-        #elif
-        QDataStream stream(&ba,QIODevice::WriteOnly);
-        #endif
-        for(int i=0;i<value.size();i++){
+        QByteArray ba(sizeof(T) * value.size(), Qt::Uninitialized);
+        // FIX §3.4: was `#elif` with no condition → on Qt 5 `stream` was
+        // never declared and the code didn't compile. Use `#else`.
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+        QDataStream stream(&ba, QIODeviceBase::WriteOnly);
+#else
+        QDataStream stream(&ba, QIODevice::WriteOnly);
+#endif
+        for (int i = 0; i < value.size(); i++) {
             stream << static_cast<T>(value[i]);
         }
         return ba;
@@ -141,25 +149,35 @@ inline QDataStream &operator<<(QDataStream &out, const  Array<T,max> &obj) {
 
 template <class T, int max=std::numeric_limits<int>::max()>
 inline QDataStream &operator>>(QDataStream &in,  Array<T,max> &obj) {
-    //we take care of reading the max
     qint32 n;
-    auto pos =in.device()->pos();
-    in>> n;
-    while(n>0 && !in.atEnd()){
+    auto pos = in.device()->pos();
+    in >> n;
+    // FIX §3.5: previously read N elements with no max check. A hostile
+    // stream could request GB allocations and OOM the app. Reject upfront.
+    if (n < 0 || n > max) {
+        throw std::runtime_error("xdr array length out of bounds");
+    }
+    obj.value.reserve(n);
+    while (n > 0 && !in.atEnd()) {
         n--;
         T v;
         in >> v;
         obj.value.append(v);
     }
     auto diff = in.device()->pos() - pos;
-    int missingBytes = 4-(diff&3);
-    if(missingBytes<4){
-        qint32 zero=0;
-        in.readRawData(reinterpret_cast<char*>(&zero),missingBytes);
-        if(zero!=0)
-            throw std::runtime_error("padding must be zero");
+    int missingBytes = 4 - (diff & 3);
+    if (missingBytes < 4) {
+        // FIX §3.6: previous code read into a qint32 and compared as int —
+        // worked by accident on little-endian, false-positive on big-endian.
+        // Compare byte-by-byte now.
+        char pad[4] = {0, 0, 0, 0};
+        in.readRawData(pad, missingBytes);
+        for (int i = 0; i < missingBytes; ++i) {
+            if (pad[i] != 0)
+                throw std::runtime_error("padding must be zero");
+        }
     }
-   return in;
+    return in;
 }
 
 

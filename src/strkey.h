@@ -7,13 +7,15 @@
 #include <stdexcept>
 #include <QDataStream>
 #include "xdr/stellartransaction.h"
+#include "exception/formatexception.h"
 
 /**
  * Indicates that there was a problem decoding strkey encoded string.
+ * Kept as alias for source-compatibility through the 0.x series. The canonical
+ * symbol is `qstellar::exception::FormatException`.
  * @see KeyPair
  */
-class FormatException :public std::exception {
-};
+using FormatException = ::qstellar::exception::FormatException;
 
 class StrKey
 {

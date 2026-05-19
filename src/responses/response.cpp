@@ -1,4 +1,13 @@
 #include "response.h"
+#include "problem.h"
+#include "../exception/sdkexception.h"
+#include "../exception/networkexception.h"
+#include "../exception/toomanyrequestsexception.h"
+#include "../exception/badrequestexception.h"
+#include "../exception/badresponseexception.h"
+#include "../exception/requesttimeoutexception.h"
+#include "../exception/unknownresponseexception.h"
+#include "../exception/connectionerrorexception.h"
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QMetaProperty>
@@ -74,14 +83,26 @@ void Response::loadFromReply(QNetworkReply * reply)
 
 void Response::reset()
 {
-    m_lastErrorCode=QNetworkReply::NetworkError::NoError;
+    m_lastErrorCode = QNetworkReply::NetworkError::NoError;
+    m_lastException.reset();
     const QMetaObject * mo = this->metaObject();
     for(int i=0;i<mo->propertyCount();i++)
     {
         if(mo->property(i).isWritable()){
             mo->property(i).write(this,QVariant());
         }
-    }    
+    }
+}
+
+qstellar::exception::SdkException* Response::lastException() const
+{
+    return m_lastException.get();
+}
+
+void Response::emitError(qstellar::exception::SdkException* ex)
+{
+    m_lastException.reset(ex);
+    emit error();
 }
 
 bool Response::isStreamingResponse() const
@@ -194,10 +215,16 @@ void Response::reconnectStream()
 }
 void Response::reconnectStreamDelayed()
 {
-    QNetworkAccessManager* manager = m_reply->manager();    
+    // FIX §4.3: m_reply may be null after clearReply() (triggered by the
+    // `destroyed` signal of a previous reply). Crash without this guard.
+    if (!m_reply) {
+        emit error();
+        return;
+    }
+    QNetworkAccessManager* manager = m_reply->manager();
     QNetworkRequest request(m_reply->request());
-    if(!m_lastID.isEmpty())
-        request.setRawHeader("Last-Event-ID",m_lastID);
+    if (!m_lastID.isEmpty())
+        request.setRawHeader("Last-Event-ID", m_lastID);
     request.setRawHeader("X-Client-Name", STELLAR_QT_SDK_CLIENT_NAME);
     request.setRawHeader("X-Client-Version", STELLAR_QT_SDK_CLIENT_VERSION);
 
@@ -238,33 +265,87 @@ void Response::timerEvent(QTimerEvent *event)
 }
 bool Response::preprocessResponse(QNetworkReply *response)
 {
-    QNetworkReply::NetworkError errorCode= response->error();
-    m_lastErrorCode=errorCode;
-    m_rateLimitLimit  =response->rawHeader("X-Ratelimit-Limit").toInt();
-    m_rateLimitRemaining =response->rawHeader("X-Ratelimit-Remaining").toInt();
-    m_rateLimitReset =response->rawHeader("X-Ratelimit-Reset").toInt();
+    using namespace qstellar::exception;
+
+    QNetworkReply::NetworkError errorCode = response->error();
+    m_lastErrorCode = errorCode;
+    m_rateLimitLimit     = response->rawHeader("X-Ratelimit-Limit").toInt();
+    m_rateLimitRemaining = response->rawHeader("X-Ratelimit-Remaining").toInt();
+    m_rateLimitReset     = response->rawHeader("X-Ratelimit-Reset").toInt();
     emit rateLimitChanged();
-    // Too Many Requests
-    if (errorCode == 429) {        
-        int retryAfter = response->rawHeader("Retry-After").toInt();
-        m_retryTime=qMax(retryAfter,m_retryTime);
-        reconnectStream();
-        //QString err = QString("too many request exception %1").arg(retryAfter);
-        //throw std::runtime_error(err.toStdString());
-        //qDebug() << err;
 
-        emit error();
+    // FIX §4.1: old code compared QNetworkReply::NetworkError against HTTP
+    // status codes (429, >=300). That enum is unrelated (e.g.
+    // ContentNotFoundError=203) — broken. Use HttpStatusCodeAttribute.
+    const QVariant statusAttr = response->attribute(QNetworkRequest::HttpStatusCodeAttribute);
+    const int httpStatus = statusAttr.isValid() ? statusAttr.toInt() : -1;
 
+    // 2xx → success; caller reads the body.
+    if (httpStatus >= 200 && httpStatus < 300) {
+        return true;
+    }
+
+    // Connection-level failure: no HTTP status but QNetworkReply errored.
+    if (httpStatus == -1) {
+        if (errorCode != QNetworkReply::NoError) {
+            emitError(new ConnectionErrorException(response->errorString()));
+            return false;
+        }
+        // No status and no error — improbable; treat as unknown.
+        emitError(new UnknownResponseException(-1, response->errorString()));
         return false;
     }
-    // Other errors
-    if (errorCode >= 300) {        
-        //throw std::runtime_error(response->errorString().toStdString());
-        //qDebug() << response->errorString();
-        emit error();
+
+    // Snapshot body if available.
+    QByteArray body;
+    if (response->isOpen()) {
+        body = response->readAll();
+    }
+    const QString bodyStr = QString::fromUtf8(body);
+
+    // application/problem+json → try to parse.
+    const QByteArray contentType = response->header(QNetworkRequest::ContentTypeHeader).toByteArray();
+    Problem* problem = nullptr;
+    if (contentType.startsWith("application/problem+json") && !body.isEmpty()) {
+        problem = Problem::tryParse(body);
+    }
+
+    // Map by HTTP status. Exceptions take ownership of `problem`.
+    if (httpStatus == 429) {
+        delete problem; problem = nullptr;
+        const QByteArray retryHdr = response->rawHeader("Retry-After");
+        int retryAfter = -1;
+        if (!retryHdr.isEmpty()) {
+            bool ok = false;
+            int v = retryHdr.toInt(&ok);
+            if (ok) retryAfter = v;
+        }
+        if (retryAfter > 0)
+            m_retryTime = qMax(retryAfter, m_retryTime);
+        if (isStreamingResponse())
+            reconnectStream();
+        emitError(new TooManyRequestsException(retryAfter));
         return false;
     }
-    return true;
+    if (httpStatus == 504) {
+        emitError(new RequestTimeoutException(httpStatus, bodyStr, problem));
+        return false;
+    }
+    if (httpStatus >= 500) {
+        emitError(new BadResponseException(httpStatus, bodyStr, problem));
+        return false;
+    }
+    if (httpStatus >= 400 && httpStatus < 500) {
+        // Generic 4xx → BadRequestException. AccountNotFoundException etc.
+        // are built at specific call sites in the SDK, not here.
+        emitError(new BadRequestException(httpStatus, bodyStr, problem));
+        return false;
+    }
+
+    // Unexpected 1xx / 3xx.
+    delete problem; problem = nullptr;
+    emitError(new UnknownResponseException(httpStatus, bodyStr));
+    return false;
 }
 
 void Response::processPartialResponse()
@@ -353,38 +434,48 @@ void Response::processPartialResponse()
 }
 void Response::processResponse()
 {
+    using namespace qstellar::exception;
+
     QNetworkReply* response = static_cast<QNetworkReply*>(sender());
 
-
+    // NOTE: preprocessResponse() now reads the body to map errors to Problem,
+    // but only for non-2xx. For 2xx the body remains available — read it here.
     QByteArray entity;
-    if(response->isOpen())
-        entity= response->readAll();
 #ifdef STELLAR_QT_DEBUG_NETWORK_REQUESTS
     qDebug() << "QUERY : " <<  response->request().url();
-    qDebug() << "RESPONSE : "<< QString::fromLatin1(entity);
     qDebug() << "ERROR CODE : "<< response->error() << response->errorString();
 #endif
-    if(!preprocessResponse(response)){
+    if (!preprocessResponse(response)) {
+        // Typed exception already dispatched via emitError().
         return;
     }
+    // 2xx — read full body
+    if (response->isOpen())
+        entity = response->readAll();
+#ifdef STELLAR_QT_DEBUG_NETWORK_REQUESTS
+    qDebug() << "RESPONSE : "<< QString::fromLatin1(entity);
+#endif
 
-    // No content
     if (entity.isNull()) {
-        //throw std::runtime_error("Response contains no content");
-        //qDebug() << "Response contains no content";
-        emit error();
+        emitError(new UnknownResponseException(200, QStringLiteral("Empty response body")));
         return;
     }
-    try{
+    try {
         this->loadFromJson(entity);
     }
-    catch(std::runtime_error& err)
-    {
-        Q_UNUSED(err)
+    catch (const std::exception& err) {
+        // FIX §4.2: was silent `return;` — caller hung waiting for
+        // ready()/error(). Now emit error() with an UnknownResponseException
+        // for diagnostics. Broad catch in case parsing throws something
+        // other than std::runtime_error.
+        emitError(new UnknownResponseException(200,
+            QStringLiteral("JSON parse failed: %1").arg(QString::fromLatin1(err.what()))));
         return;
     }
-
-
+    catch (...) {
+        emitError(new UnknownResponseException(200, QStringLiteral("Unknown exception while parsing JSON")));
+        return;
+    }
 
     emit ready();
 }

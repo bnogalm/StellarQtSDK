@@ -165,11 +165,13 @@ QByteArray StrKey::decodeCheck(StrKey::VersionByte versionByte, QByteArray encod
 QByteArray StrKey::calculateChecksum(QByteArray bytes) {
     // This code calculates CRC16-XModem checksum
     // Ported from https://github.com/alexgorbatchev/node-crc
-    qint16 crc = 0x0000;
+    // FIX §7.4: use quint16. Right-shift of signed values with the top bit
+    // set is implementation-defined in C++; unsigned is well-defined.
+    quint16 crc = 0x0000;
 
     int count = bytes.length();
     int i = 0;
-    int code =0;
+    int code = 0;
 
     while (count > 0) {
         code = (crc >> 8) & 0xFF;
@@ -185,8 +187,8 @@ QByteArray StrKey::calculateChecksum(QByteArray bytes) {
     }
 
     // little-endian
-    crc=qToLittleEndian(crc);
-    return QByteArray((const char*)&crc,sizeof(qint16));
+    crc = qToLittleEndian(crc);
+    return QByteArray((const char*)&crc, sizeof(quint16));
 }
 
 

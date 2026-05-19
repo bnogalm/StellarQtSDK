@@ -2,6 +2,8 @@
 #define FEEBUMPTRANSACTION_H
 #include "abstracttransaction.h"
 #include "transaction.h"
+#include "stellardeprecated.h"
+#include "feebumptransactionbuilder.h"
 
 class FeeBumpTransaction : public AbstractTransaction
 {
@@ -12,7 +14,7 @@ class FeeBumpTransaction : public AbstractTransaction
 
 
 public:
-    friend class Builder;
+    friend class ::FeeBumpTransactionBuilder;
     FeeBumpTransaction(AccountConverter accountConverter, QString feeAccount, qint64 fee, Transaction* innerTransaction);
     virtual ~FeeBumpTransaction();
     qint64 getFee() const;
@@ -31,30 +33,11 @@ public:
 
 
     /**
-       * Builds a new FeeBumpTransaction object.
-       */
-      class Builder {
-        Transaction* m_inner;
-        qint64 m_baseFee;
-        QString m_feeAccount;
-        AccountConverter m_accountConverter;
-
-      public:
-        /**
-         * Construct a new fee bump transaction builder.
-         *
-         * @param inner The inner transaction which will be fee bumped.
-         */
-        Builder(AccountConverter accountConverter, Transaction* inner);
-        ~Builder();
-
-        Builder& setBaseFee(qint64 baseFee);
-
-        Builder& setFeeAccount(QString feeAccount);
-
-        FeeBumpTransaction* build();
-
-      };
+     * @deprecated Use the free-standing ::FeeBumpTransactionBuilder class instead.
+     * Kept as a type alias for source-compatibility during the 0.x series.
+     * Will be removed in 1.0.0.
+     */
+    using Builder STELLAR_DEPRECATED("Use ::FeeBumpTransactionBuilder instead. Removed in 1.0.0") = ::FeeBumpTransactionBuilder;
 };
 
 #endif // FEEBUMPTRANSACTION_H

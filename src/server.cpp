@@ -200,7 +200,13 @@ SubmitTransactionResponse *Server::submitTransaction(AbstractTransaction *transa
         response = new SubmitTransactionResponse(nullptr,transaction);
         //we will generate the request only after all the destination address are validated.
 
-        CheckAccountRequiresMemo * check = new CheckAccountRequiresMemo(this,pendingCheckAddressMemos);
+        // NOTE (§1.3): the report flagged this as a leak, but
+        // CheckAccountRequiresMemo is constructed with QObject(server) as its
+        // parent (see checkaccountrequiresmemo.cpp:18) and uses parent() as
+        // its internal Server*. It also self-destructs via this->deleteLater()
+        // at every terminal path. No leak: the server parent is a safety net.
+        // Overriding the parent breaks the internal static_cast<Server*>(parent()).
+        CheckAccountRequiresMemo * check = new CheckAccountRequiresMemo(this, pendingCheckAddressMemos);
 
         connect(check, &CheckAccountRequiresMemo::error, response, &SubmitTransactionResponse::error);
         connect(check, &CheckAccountRequiresMemo::validated, [this,response,submitTransactionRequest,uri](){

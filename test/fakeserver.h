@@ -14,9 +14,17 @@
 class FakeServer : public QObject{
 
     Q_OBJECT
+public:
+    struct Reply {
+        QString body;
+        QString responseCode = "200 OK";
+        QString contentType = "application/hal+json; charset=\"utf-8\"";
+        QString extraHeaders; // each line must end with \r\n
+    };
+private:
     QTcpServer* m_server;
-    QHash<QString,QPair<QString, QString> > m_getResponses;
-    QHash<QString,QPair<QString, QString> > m_postResponses;
+    QHash<QString, Reply> m_getResponses;
+    QHash<QString, Reply> m_postResponses;
     QList<QTcpSocket*> m_clients;
 public:
     FakeServer(quint16 port=8080, QObject* parent = nullptr):QObject(parent)
@@ -43,11 +51,26 @@ public:
 
     void addGet(QString key, QString value, QString responseCode="200 OK")
     {
-        m_getResponses.insert(key,QPair<QString, QString> (value,responseCode));
+        Reply r;
+        r.body = value;
+        r.responseCode = responseCode;
+        m_getResponses.insert(key, r);
     }
     void addPost(QString key, QString value, QString responseCode="200 OK")
     {
-        m_postResponses.insert(key,QPair<QString, QString> (value,responseCode));
+        Reply r;
+        r.body = value;
+        r.responseCode = responseCode;
+        m_postResponses.insert(key, r);
+    }
+    /** Add GET reply with custom Content-Type and additional headers (each line ending in \r\n). */
+    void addGetFull(QString key, Reply reply)
+    {
+        m_getResponses.insert(key, reply);
+    }
+    void addPostFull(QString key, Reply reply)
+    {
+        m_postResponses.insert(key, reply);
     }
 
 private slots:
@@ -73,29 +96,37 @@ private slots:
 #endif
             if(tokens.size()>=2){
 
-                QPair<QString, QString>  response("","");
+                Reply response;
+                response.responseCode = "";
                 if (tokens[0] == "GET")
-                    response=m_getResponses.value(tokens[1]);
+                    response = m_getResponses.value(tokens[1]);
                 else if (tokens[0].endsWith("POST"))
-                    response=m_postResponses.value(tokens[1]);
+                    response = m_postResponses.value(tokens[1]);
                 else
                 {
                     continue;
                 }
-                if(response.second=="")
+                if(response.responseCode.isEmpty())
                 {
+                    // 404-like default
                     socket->write(QString("HTTP/1.1 %1\r\n"
                                           "Cache-Control: no-cache, no-store, max-age=0\r\n"
                                           "Vary: Origin\r\n"
                                           "Content-Length: %2\r\n"
-                                          "Content-Type: application/hal+json; charset=\"utf-8\"\r\n"
-                                          "\r\n%3").arg(response.second).arg(0).arg(response.first).toUtf8());
-                    socket->waitForBytesWritten(1000);                    
+                                          "Content-Type: %3\r\n"
+                                          "%4"
+                                          "\r\n%5")
+                                  .arg(QString(""))
+                                  .arg(0)
+                                  .arg(response.contentType)
+                                  .arg(response.extraHeaders)
+                                  .arg(response.body)
+                                  .toUtf8());
+                    socket->waitForBytesWritten(1000);
                     continue;
                 }
-                  //  qDebug()<< QString("No response for %1").arg(tokens.join(","));
 
-                int contentLength = response.first.toUtf8().size();
+                int contentLength = response.body.toUtf8().size();
 
                 while (socket->canReadLine()) {
                     socket->readLine();
@@ -104,10 +135,17 @@ private slots:
                                       "Cache-Control: no-cache, no-store, max-age=0\r\n"
                                       "Vary: Origin\r\n"
                                       "Content-Length: %2\r\n"
-                                      "Content-Type: application/hal+json; charset=\"utf-8\"\r\n"
-                                      "\r\n%3").arg(response.second).arg(contentLength).arg(response.first).toUtf8());
-                socket->waitForBytesWritten(1000);                
-                //qDebug() << "FAKE SERVER REPLY "<<response.first;
+                                      "Content-Type: %3\r\n"
+                                      "%4"
+                                      "\r\n%5")
+                              .arg(response.responseCode)
+                              .arg(contentLength)
+                              .arg(response.contentType)
+                              .arg(response.extraHeaders)
+                              .arg(response.body)
+                              .toUtf8());
+                socket->waitForBytesWritten(1000);
+                //qDebug() << "FAKE SERVER REPLY "<<response.body;
 
 
             }

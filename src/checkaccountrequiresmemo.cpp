@@ -1,5 +1,6 @@
 #include "checkaccountrequiresmemo.h"
 #include "keypair.h"
+#include "exception/networkexception.h"
 #include <QTimer>
 
 
@@ -44,7 +45,21 @@ void CheckAccountRequiresMemo::checkNext()
 }
 bool CheckAccountRequiresMemo::processNotFound(AccountResponse* accountResponse)
 {
-    if(accountResponse->lastErrorCode()==404|| accountResponse->getStatus()==404)//not found is considered valid destination
+    // Detect "account not found" from any of three sources:
+    //  - 404 attached as NetworkException (new path after §4.1 fix).
+    //  - status==404 deserialized from JSON body (legacy path via ready()).
+    //  - lastErrorCode==404 (historical; QNetworkReply::NetworkError rarely
+    //    matches HTTP 404 but kept for safety).
+    bool is404 = (accountResponse->lastErrorCode() == 404)
+              || (accountResponse->getStatus() == 404);
+    if (!is404) {
+        if (auto* ex = accountResponse->lastException()) {
+            if (auto* netEx = dynamic_cast<qstellar::exception::NetworkException*>(ex)) {
+                is404 = (netEx->getCode() == 404);
+            }
+        }
+    }
+    if (is404) // not found is treated as a valid destination
     {
         m_pendingCheckAddressMemos.removeLast();
         if(!m_pendingCheckAddressMemos.isEmpty())

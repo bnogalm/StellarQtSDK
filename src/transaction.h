@@ -9,6 +9,8 @@
 #include "transactionbuilderaccount.h"
 #include "timebounds.h"
 #include "abstracttransaction.h"
+#include "stellardeprecated.h"
+#include "transactionbuilder.h"
 
 class FeeBumpTransaction;
 /**
@@ -24,7 +26,7 @@ class Transaction : public AbstractTransaction
     TimeBounds *m_timeBounds;
 
     stellar::EnvelopeType m_envelopeType;
-    friend class Builder;
+    friend class ::TransactionBuilder;
     friend class FeeBumpTransaction;
     Transaction(AccountConverter accountConverter, QString sourceAccount, qint64 fee, qint64 sequenceNumber, QVector<Operation*> operations, Memo* memo, TimeBounds *timeBounds, Network* network);
 
@@ -102,95 +104,15 @@ public:
 
 
      /**
-      * Builds a new Transaction object.
+      * @deprecated Use the free-standing ::TransactionBuilder class instead.
+      * `Transaction::Builder` is kept as a type alias for source-compatibility
+      * during the 0.x series and will be removed in 1.0.0.
+      *
+      * The alias is functionally identical — all the existing builder code
+      * (`Transaction::Builder b(...); b.addOperation(...).build();`) keeps
+      * compiling and behaving as before.
       */
-     class Builder {
-
-         AccountConverter m_accountConverter;
-         TransactionBuilderAccount *m_sourceAccount;
-         Network* m_network;
-         Memo *m_memo;
-         TimeBounds *m_timeBounds;
-         QVector<Operation*> m_operations;
-         bool m_timeoutSet;
-
-         quint32 m_baseFee;
-         static quint32 s_defaultOperationFee;
-        void clear();
-     public:
-        static const quint32 BASE_FEE = 100;
-        static const qint64 TIMEOUT_INFINITE = 0;
-         /**
-        * Construct a new transaction builder.
-        * @param sourceAccount The source account for this transaction. This account is the account
-        * who will use a sequence number. When build() is called, the account object's sequence number
-        * will be incremented.        
-        */
-        Builder(AccountConverter accountConverter, TransactionBuilderAccount *sourceAccount, Network* network= Network::current());
-
-        /**
-         * @brief Builder
-         * @param other
-         *
-         * Copy constructor defined so we it releases ownership of created objects, the copy will own these resources.
-         */
-        Builder(Builder& other);
-        ~Builder();
-
-         int getOperationsCount();
-
-         static void setDefaultOperationFee(quint32 opFee);
-
-         /**
-        * Adds a new <a href="https://www.stellar.org/developers/learn/concepts/list-of-operations.html" target="_blank">operation</a> to this transaction.
-        * @param operation, you lose the ownership of the object, don't delete it.
-        * @return Builder object so you can chain methods.
-        * @see Operation
-        */
-         Builder& addOperation(Operation* operation);
-
-         /**
-        * Adds a <a href="https://www.stellar.org/developers/learn/concepts/transactions.html" target="_blank">memo</a> to this transaction.
-        * @param memo, you lose the ownership of the object, don't delete it.
-        * @return Builder object so you can chain methods.
-        * @see Memo
-        */
-         Builder& addMemo(Memo* memo);
-
-         /**
-          * Adds a <a href="https://www.stellar.org/developers/learn/concepts/transactions.html" target="_blank">time-bounds</a> to this transaction.
-          * @param timeBounds
-          * @return Builder object so you can chain methods.
-          * @see TimeBounds
-          */
-         Builder& addTimeBounds(TimeBounds* timeBounds);
-
-         /**
-          * Because of the distributed nature of the Stellar network it is possible that the status of your transaction
-          * will be determined after a long time if the network is highly congested.
-          * If you want to be sure to receive the status of the transaction within a given period you should set the
-          * {@link TimeBounds} with <code>maxTime</code> on the transaction (this is what <code>setTimeout</code> does
-          * internally; if there's <code>minTime</code> set but no <code>maxTime</code> it will be added).
-          * Call to <code>Builder.setTimeout</code> is required if Transaction does not have <code>max_time</code> set.
-          * If you don't want to set timeout, use <code>TIMEOUT_INFINITE</code>. In general you should set
-          * <code>TIMEOUT_INFINITE</code> only in smart contracts.
-          * Please note that Horizon may still return <code>504 Gateway Timeout</code> error, even for short timeouts.
-          * In such case you need to resubmit the same transaction again without making any changes to receive a status.
-          * This method is using the machine system time (UTC), make sure it is set correctly.
-          * @param timeout Timeout in seconds.
-          * @see TimeBounds
-          * @return
-          */
-         Builder& setTimeout(qint64 timeout);
-
-         Builder& setBaseFee(quint32 baseFee);
-
-         /**
-        * Builds a transaction. It will increment sequence number of the source account.
-        * You take ownership of the object so delete it when you don't need anymore.
-        */
-         Transaction* build();
-     };
+     using Builder STELLAR_DEPRECATED("Use ::TransactionBuilder instead. Removed in 1.0.0") = ::TransactionBuilder;
 };
 Transaction* checkNotNull(Transaction* transaction, const char *error);
 

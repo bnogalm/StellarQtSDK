@@ -136,7 +136,9 @@ QUrl RequestBuilder::buildUri() {
         this->setRequestUri(uri);
         return uri;
     }
-    throw new std::runtime_error("invalid uri");
+    // FIX §1.11: was `throw new std::runtime_error(...)` — threw a pointer,
+    // not caught by catch-by-value, and leaked. Throw by value.
+    throw std::runtime_error("invalid uri");
 
 }
 

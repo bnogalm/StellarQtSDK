@@ -3,6 +3,7 @@
 #include "account.h"
 #include <QDateTime>
 #include <QRandomGenerator>
+#include <memory>
 #include "strkey.h"
 #include "memo.h"
 
@@ -17,58 +18,73 @@ const QString Sep10Challenge::WEB_AUTH_DOMAIN_MANAGER_DATA_NAME = "web_auth_doma
 Transaction* Sep10Challenge::buildChallengeTx(KeyPair *serverSignerSecret, QString clientAccountID, QString domainName, QString webAuthDomain, qint64 timebound, Network* network
                                               , QString clientDomain, QString clientSigningKey, Memo *memo)
 {
-    TimeBounds *timeBounds;
-    if(timebound>0)
-    {
-        qint64 now = QDateTime::currentMSecsSinceEpoch()/ 1000L;
-        qint64 timeoutTimestamp = now + timebound;
-        timeBounds = new TimeBounds(now,timeoutTimestamp);
-    }
-    else
-        timeBounds= new TimeBounds(0,0);
-    return buildChallengeTx(serverSignerSecret, clientAccountID, domainName, webAuthDomain, timeBounds, network, clientDomain, clientSigningKey,memo);
+    // FIX §5.1: timebound<=0 used to build TimeBounds(0,0), which
+    // readChallengeTransaction itself rejects ("non-infinite timebounds").
+    // SEP-10 forbids expiring-never challenges: fail fast.
+    if (timebound <= 0)
+        throw std::runtime_error("timebound must be > 0 (SEP-10 requires non-infinite timebounds)");
+    qint64 now = QDateTime::currentMSecsSinceEpoch() / 1000L;
+    qint64 timeoutTimestamp = now + timebound;
+    TimeBounds *timeBounds = new TimeBounds(now, timeoutTimestamp);
+    return buildChallengeTx(serverSignerSecret, clientAccountID, domainName, webAuthDomain, timeBounds, network, clientDomain, clientSigningKey, memo);
 }
 
 
 Transaction* Sep10Challenge::buildChallengeTx(KeyPair* serverSignerSecret, QString clientAccountID, QString domainName, QString webAuthDomain, TimeBounds* timeBounds, Network *network
                                          , QString clientDomain, QString clientSigningKey, Memo *memo)
 {
+    // FIX §1.6: previously, any exception after creating `sa`, `timeBounds`,
+    // or the ManageDataOperation instances leaked them. Now they live under
+    // std::unique_ptr until release() transfers ownership to the Builder.
     if (clientDomain.isEmpty() != clientSigningKey.isEmpty()) {
         throw std::runtime_error("clientDomain is required if clientSigningKey is provided");
     }
-    if(StrKey::decodeVersionByte(clientAccountID)!=StrKey::VersionByte::ACCOUNT_ID)
+    if (StrKey::decodeVersionByte(clientAccountID) != StrKey::VersionByte::ACCOUNT_ID)
         throw std::runtime_error("Version byte is invalid");
-    QByteArray randomNonce = Util::generateRandomNonce(NONCE_SIZE);//48 random bytes converted to base64 is 64 bytes
-    randomNonce = randomNonce.toBase64(QByteArray::Base64Option::Base64UrlEncoding| QByteArray::OmitTrailingEquals);    
-    // represent server signing account
-    Account *sa = new Account(new KeyPair(*serverSignerSecret),-1);//as is a temporal account, we use a keypair copy.
-
-    ManageDataOperation* domainNameOperation = new ManageDataOperation(domainName + " " +HOME_DOMAIN_MANAGER_DATA_NAME_FLAG,randomNonce);
-    domainNameOperation->setSourceAccount(clientAccountID);
-
-    ManageDataOperation* webAuthDomainOperation = new ManageDataOperation(WEB_AUTH_DOMAIN_MANAGER_DATA_NAME,webAuthDomain.toUtf8());
-    webAuthDomainOperation->setSourceAccount(serverSignerSecret->getAccountId());
-
-    auto builder = Transaction::Builder(AccountConverter().enableMuxed(), sa, network).addOperation(domainNameOperation).addOperation(webAuthDomainOperation).addTimeBounds(timeBounds).setBaseFee(Transaction::Builder::BASE_FEE);
-
-    if (!clientSigningKey.isEmpty()) {
-        if (StrKey::decodeVersionByte(clientSigningKey) != StrKey::VersionByte::ACCOUNT_ID) {
-            throw std::runtime_error("clientSigningKey is not a valid account id");
-        }
-        builder.addOperation((new ManageDataOperation(CLIENT_DOMAIN_DATA_NAME, clientDomain.toLatin1()))->setSourceAccount(clientSigningKey));
+    // Validate clientSigningKey early so we don't have to clean up later.
+    if (!clientSigningKey.isEmpty() &&
+        StrKey::decodeVersionByte(clientSigningKey) != StrKey::VersionByte::ACCOUNT_ID) {
+        throw std::runtime_error("clientSigningKey is not a valid account id");
+    }
+    // Validate memo (only MemoId allowed) before allocating.
+    if (memo && !dynamic_cast<MemoId*>(memo)) {
+        throw std::runtime_error("only memo type `id` is supported");
     }
 
-    if(memo)
-    {
-        if(!(dynamic_cast<MemoId*>(memo))) {
-            throw std::runtime_error("only memo type `id` is supported");
-        }
+    QByteArray randomNonce = Util::generateRandomNonce(NONCE_SIZE); // 48 bytes → base64 64 chars
+    randomNonce = randomNonce.toBase64(QByteArray::Base64Option::Base64UrlEncoding | QByteArray::OmitTrailingEquals);
+
+    // Temporary server account (sequence -1; build() bumps it to 0).
+    std::unique_ptr<Account> sa(new Account(new KeyPair(*serverSignerSecret), -1));
+
+    std::unique_ptr<ManageDataOperation> domainNameOperation(
+        new ManageDataOperation(domainName + " " + HOME_DOMAIN_MANAGER_DATA_NAME_FLAG, randomNonce));
+    domainNameOperation->setSourceAccount(clientAccountID);
+
+    std::unique_ptr<ManageDataOperation> webAuthDomainOperation(
+        new ManageDataOperation(WEB_AUTH_DOMAIN_MANAGER_DATA_NAME, webAuthDomain.toUtf8()));
+    webAuthDomainOperation->setSourceAccount(serverSignerSecret->getAccountId());
+
+    auto builder = Transaction::Builder(AccountConverter().enableMuxed(), sa.get(), network)
+        .addOperation(domainNameOperation.release())
+        .addOperation(webAuthDomainOperation.release())
+        .addTimeBounds(timeBounds)
+        .setBaseFee(Transaction::Builder::BASE_FEE);
+
+    if (!clientSigningKey.isEmpty()) {
+        std::unique_ptr<ManageDataOperation> clientDomainOp(
+            new ManageDataOperation(CLIENT_DOMAIN_DATA_NAME, clientDomain.toLatin1()));
+        clientDomainOp->setSourceAccount(clientSigningKey);
+        builder.addOperation(clientDomainOp.release());
+    }
+
+    if (memo) {
         builder.addMemo(memo);
     }
 
     Transaction *tx = builder.build();
     tx->sign(serverSignerSecret);
-    delete sa;
+    // `sa` released by unique_ptr at scope exit (Builder doesn't own Account).
     return tx;
 }
 
@@ -105,13 +121,15 @@ Sep10Challenge::ChallengeTransaction * Sep10Challenge::readChallengeTransaction(
         throw std::runtime_error("Transaction requires timebounds.");
     }
 
-    long maxTime = transaction->getTimeBounds()->getMaxTime();
-    long minTime = transaction->getTimeBounds()->getMinTime();
-    if (maxTime == 0L) {
+    // FIX §5.4: TimeBounds returns qint64; `long` is 32-bit on MSVC (LLP64)
+    // and truncates post-2038 on Windows.
+    qint64 maxTime = transaction->getTimeBounds()->getMaxTime();
+    qint64 minTime = transaction->getTimeBounds()->getMinTime();
+    if (maxTime == 0) {
         throw std::runtime_error("Transaction requires non-infinite timebounds.");
     }
 
-    long currentTime = QDateTime::currentMSecsSinceEpoch() / 1000L;
+    qint64 currentTime = QDateTime::currentMSecsSinceEpoch() / 1000L;
     if ((currentTime + GRACE_PERIOD_SECONDS) < minTime || currentTime > maxTime) {
         throw std::runtime_error("Transaction is not within range of the specified timebounds.");
     }
@@ -129,7 +147,11 @@ Sep10Challenge::ChallengeTransaction * Sep10Challenge::readChallengeTransaction(
 
     // verify that transaction envelope has a correct signature by server's signing key
     QString clientAccountId = manageDataOperation->getSourceAccount();
-    if (clientAccountId == nullptr) {
+    // FIX §5.2 + §5.3: QString == nullptr is always false (QString constructs
+    // an empty string from nullptr). The check was silently skipped — an
+    // attacker could pass an op with no source account. Use isEmpty() to
+    // match the subsequent-ops check below.
+    if (clientAccountId.isEmpty()) {
         throw std::runtime_error("Operation should have a source account.");
     }
     QString matchedDomainName;
@@ -207,11 +229,15 @@ QSet<QString> Sep10Challenge::verifyChallengeTransactionSigners(QString challeng
     }
 
     // Read the transaction which validates its structure.
-    ChallengeTransaction* parsedChallengeTransaction = readChallengeTransaction(challengeXdr, serverAccountId, domainNames, webAuthDomain, network);
+    // FIX §1.5: parsedChallengeTransaction and serverKeyPair used to leak.
+    // unique_ptr frees both on any return / exception path. ChallengeTransaction
+    // owns its inner Transaction; getTransaction() returns a raw observer.
+    std::unique_ptr<ChallengeTransaction> parsedChallengeTransaction(
+        readChallengeTransaction(challengeXdr, serverAccountId, domainNames, webAuthDomain, network));
     Transaction* transaction = parsedChallengeTransaction->getTransaction();
 
     // Ensure the server account ID is an address and not a seed.
-    KeyPair* serverKeyPair = KeyPair::fromAccountId(serverAccountId);
+    std::unique_ptr<KeyPair> serverKeyPair(KeyPair::fromAccountId(serverAccountId));
 
     // Deduplicate the client signers and ensure the server is not included
     // anywhere we check or output the list of signers.
@@ -356,7 +382,9 @@ QSet<QString> Sep10Challenge::verifyTransactionSignatures(Transaction *transacti
     }
 
     for (const QString& signer : signers) {
-        KeyPair* keyPair = KeyPair::fromAccountId(signer);
+        // FIX §1.4: leaked one KeyPair per signer (DoS via public SEP-10
+        // endpoint). std::unique_ptr frees it at scope exit.
+        std::unique_ptr<KeyPair> keyPair(KeyPair::fromAccountId(signer));
         stellar::SignatureHint hint = keyPair->getSignatureHint();
 
         auto signaturesFiltered = signatures.values(hint);
@@ -381,6 +409,13 @@ bool Sep10Challenge::verifyTransactionSignature(Transaction *transaction, QStrin
 Sep10Challenge::ChallengeTransaction::ChallengeTransaction(Transaction *transaction, QString clientAccountId, QString matchedHomeDomain)
     :m_transaction(transaction),m_clientAccountId(clientAccountId),m_matchedHomeDomain(matchedHomeDomain)
 {
+}
+
+Sep10Challenge::ChallengeTransaction::~ChallengeTransaction()
+{
+    // Takes real ownership of m_transaction (used to leak whenever the
+    // caller didn't manually delete getTransaction()).
+    delete m_transaction;
 }
 
 Transaction *Sep10Challenge::ChallengeTransaction::getTransaction() const

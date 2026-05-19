@@ -36,6 +36,8 @@ public:
         QString m_matchedHomeDomain;
     public:
         ChallengeTransaction(Transaction* transaction, QString clientAccountId, QString matchedHomeDomain);
+        // Owns and frees m_transaction (was leaked previously).
+        ~ChallengeTransaction();
         Transaction* getTransaction() const;
         QString getClientAccountId() const;
         QString getMatchedHomeDomain() const;

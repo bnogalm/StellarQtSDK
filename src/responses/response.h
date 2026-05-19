@@ -4,6 +4,9 @@
 #include <QNetworkReply>
 #include <QMetaProperty>
 #include <QVariantMap>
+#include <memory>
+
+namespace qstellar { namespace exception { class SdkException; } }
 namespace ResponseConverters{
 template<class T>
 inline QList<T> convert(QVariantList source)
@@ -63,6 +66,10 @@ class Response : public QObject
     int m_reconnectTimerID;//used for streamed request
     int m_retryTime;//for streamed responses SSE
     QByteArray m_lastID;//last id received
+
+    // Last typed exception, set just before emit error(). Cleared on each
+    // successful loadFromReply / reset().
+    std::unique_ptr<qstellar::exception::SdkException> m_lastException;
 protected:
     QNetworkReply * m_reply;
     int m_rateLimitLimit;
@@ -73,6 +80,8 @@ protected:
 
     virtual void reset();
     bool isStreamingResponse() const;
+    /** Stores `ex` (takes ownership) and emits error(). */
+    void emitError(qstellar::exception::SdkException* ex);
 public:
     explicit Response(QNetworkReply* reply=nullptr);
 
@@ -100,6 +109,12 @@ private slots:
     void clearReply(QObject *obj);
 public:
     QNetworkReply::NetworkError lastErrorCode() const;
+    /**
+     * @brief Typed exception attached to the last error() emission, if any.
+     * The Response retains ownership; do not delete the returned pointer.
+     * Returns nullptr if no error has happened.
+     */
+    qstellar::exception::SdkException* lastException() const;
     int getStatus() const;
     /**
      * Returns X-RateLimit-Limit header from the response.
