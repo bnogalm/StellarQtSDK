@@ -54,6 +54,8 @@ public:
      OffersRequestBuilder& order(RequestBuilder::Order direction);
 
      OffersRequestBuilder& seller(KeyPair *accountId);
+     /** Java-aligned alias for `seller`. */
+     OffersRequestBuilder& forSeller(const QString& accountId);
      OffersRequestBuilder& selling(Asset* asset);
      OffersRequestBuilder& buying(Asset* asset);
      /**

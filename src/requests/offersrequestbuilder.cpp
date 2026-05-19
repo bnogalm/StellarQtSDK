@@ -53,6 +53,12 @@ OffersRequestBuilder &OffersRequestBuilder::seller(KeyPair *accountId)
     return *this;
 }
 
+OffersRequestBuilder &OffersRequestBuilder::forSeller(const QString& accountId)
+{
+    RequestBuilder::addParameter("seller", accountId);
+    return *this;
+}
+
 OffersRequestBuilder &OffersRequestBuilder::selling(Asset *asset)
 {
     RequestBuilder::addParameter("selling_asset_type",asset->getType());

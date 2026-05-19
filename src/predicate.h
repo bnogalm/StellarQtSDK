@@ -189,15 +189,15 @@ public:
     }
     int hashCode() const
     {
-        return qHash(m_inner)^0xbb;
+        return static_cast<int>(qHash(m_inner))^0xbb;
     }
 
     stellar::ClaimPredicate toXdr()  const {
         stellar::ClaimPredicate xdr;
         stellar::Array<stellar::ClaimPredicate,2>& predicates = xdr.fillOrPredicates();
-        for (int i = 0; i < m_inner.size(); i++) {
+        for (qsizetype i = 0; i < m_inner.size(); i++) {
             predicates.append(m_inner[i]->toXdr());
-        }        
+        }
         return xdr;
     }
 };
@@ -263,13 +263,13 @@ public:
 
     int hashCode() const
     {
-        return qHash(m_inner)^0xcc;
+        return static_cast<int>(qHash(m_inner))^0xcc;
     }
 
     stellar::ClaimPredicate toXdr()  const {
         stellar::ClaimPredicate xdr;
         stellar::Array<stellar::ClaimPredicate,2>& predicates= xdr.fillAndPredicates();
-        for (int i = 0; i < m_inner.size(); i++) {
+        for (qsizetype i = 0; i < m_inner.size(); i++) {
             predicates.append(m_inner[i]->toXdr());
         }
         return xdr;
@@ -295,7 +295,7 @@ public:
     }
 
     QDateTime getDate() {
-        return QDateTime::fromSecsSinceEpoch(m_epochSeconds,Qt::UTC);
+        return QDateTime::fromSecsSinceEpoch(m_epochSeconds, QTimeZone::UTC);
     }
 
     bool equals(Predicate* o) const
@@ -312,7 +312,7 @@ public:
     }
     int hashCode() const
     {
-        return qHash(m_epochSeconds)^0xdd;
+        return static_cast<int>(qHash(m_epochSeconds))^0xdd;
     }
 
 
@@ -354,7 +354,7 @@ public:
     }
     int hashCode() const
     {
-        return qHash(m_secondsSinceClose)^0xee;
+        return static_cast<int>(qHash(m_secondsSinceClose))^0xee;
     }
 
 

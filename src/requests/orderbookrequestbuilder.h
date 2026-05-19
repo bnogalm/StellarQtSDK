@@ -29,12 +29,13 @@ public:
 
      OrderBookResponse* execute();
 
-     //marked as unimplemented in java sdk, no tested
-     RequestBuilder& cursor(QString cursor);
-    //marked as unimplemented in java sdk, no tested
-     RequestBuilder& limit(int number);
-    //marked as unimplemented in java sdk, no tested
-     RequestBuilder& order(RequestBuilder::Order direction);
+     // Horizon /order_book accepts cursor, limit and order as standard
+     // pagination/ordering params (see
+     // https://developers.stellar.org/docs/data/apis/horizon/api-reference/retrieve-an-order-book).
+     // Implemented natively (forward to the base RequestBuilder).
+     OrderBookRequestBuilder& cursor(QString cursor);
+     OrderBookRequestBuilder& limit(int number);
+     OrderBookRequestBuilder& order(RequestBuilder::Order direction);
 };
 
 #endif // ORDERBOOKREQUESTBUILDER_H

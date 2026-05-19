@@ -23,6 +23,18 @@ public:
     * @param account Account for which to get trades
     */
     TradesRequestBuilder& forAccount(KeyPair *account);
+    /** String overload for forAccount. */
+    TradesRequestBuilder& forAccount(const QString& accountId);
+
+    /**
+     * Builds request to <code>GET /liquidity_pools/{pool_id}/trades</code>.
+     */
+    TradesRequestBuilder& forLiquidityPool(const QString& liquidityPoolId);
+
+    /**
+     * Adds a `trade_type` filter (e.g. "orderbook" / "liquidity_pool" / "all").
+     */
+    TradesRequestBuilder& tradeType(const QString& type);
 
     /**
      * Requests specific <code>uri</code> and returns {@link TradeResponse}.

@@ -5,7 +5,7 @@ DEFINES += STELLAR_QT_REPLY_TIMEOUT=30000
 DEFINES *= ED25519_NO_SEED
 
 DEFINES += STELLAR_QT_SDK_CLIENT_NAME=\"\\\"qtcpp-stellar-sdk\\\"\"
-DEFINES += STELLAR_QT_SDK_CLIENT_VERSION=\"\\\"0.4.0\\\"\"
+DEFINES += STELLAR_QT_SDK_CLIENT_VERSION=\"\\\"0.5.0\\\"\"
 
 #DEFINES += STELLAR_QT_AUTOSET_BASE_FEE
 
@@ -30,6 +30,9 @@ INCLUDEPATH *=  $$PWD/src/
 
 SOURCES += \
     $$PWD/src/responses/problem.cpp \
+    $$PWD/src/responses/effects/liquiditypooleffectsresponses.cpp \
+    $$PWD/src/responses/liquiditypoolresponse.cpp \
+    $$PWD/src/requests/liquiditypoolsrequestbuilder.cpp \
     $$PWD/src/transactionbuilder.cpp \
     $$PWD/src/feebumptransactionbuilder.cpp \
     $$PWD/src/abstracttransaction.cpp \
@@ -226,6 +229,17 @@ DEFINES += QT_DEPRECATED_WARNINGS
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 HEADERS += \
+    $$PWD/src/responses/assetamount.h \
+    $$PWD/src/responses/liquiditypool.h \
+    $$PWD/src/responses/liquiditypoolclaimableassetamount.h \
+    $$PWD/src/responses/liquiditypoolresponse.h \
+    $$PWD/src/requests/liquiditypoolsrequestbuilder.h \
+    $$PWD/src/responses/effects/liquiditypoolcreatedeffectresponse.h \
+    $$PWD/src/responses/effects/liquiditypooldepositedeffectresponse.h \
+    $$PWD/src/responses/effects/liquiditypoolwithdreweffectresponse.h \
+    $$PWD/src/responses/effects/liquiditypooltradeeffectresponse.h \
+    $$PWD/src/responses/effects/liquiditypoolremovedeffectresponse.h \
+    $$PWD/src/responses/effects/liquiditypoolrevokedeffectresponse.h \
     $$PWD/src/stellardeprecated.h \
     $$PWD/src/transactionbuilder.h \
     $$PWD/src/feebumptransactionbuilder.h \

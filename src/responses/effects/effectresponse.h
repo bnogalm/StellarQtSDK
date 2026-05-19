@@ -49,6 +49,8 @@ class EffectResponse : public Response
     Q_OBJECT
     Q_PROPERTY(QString id MEMBER m_id)
     Q_PROPERTY(QString account READ account WRITE setAccount)
+    Q_PROPERTY(QString account_muxed MEMBER m_accountMuxed)
+    Q_PROPERTY(QString account_muxed_id MEMBER m_accountMuxedId)
     Q_PROPERTY(QString type MEMBER m_type)
     Q_PROPERTY(QString created_at MEMBER m_createdAt)
     Q_PROPERTY(QString paging_token MEMBER m_pagingToken)
@@ -56,6 +58,8 @@ class EffectResponse : public Response
 
     QString m_id;
     QString m_account;
+    QString m_accountMuxed;       // M-strkey (Horizon 14+ for muxed source ops)
+    QString m_accountMuxedId;     // decimal string (uint64 too big for qint64 safely)
     KeyPair *m_accountKeypair;
     QString m_type;
     QString m_createdAt;
@@ -106,6 +110,11 @@ public:
     EffectResponseAttach::Links& getLinks();
 
     QString account() const;
+
+    /** M-strkey if the account was used in a muxed source op. Empty otherwise. */
+    QString getAccountMuxed() const   { return m_accountMuxed; }
+    /** Decimal-string uint64 of the muxed id. Empty if not muxed. */
+    QString getAccountMuxedId() const { return m_accountMuxedId; }
 public slots:
     void setAccount(QString account);
 };

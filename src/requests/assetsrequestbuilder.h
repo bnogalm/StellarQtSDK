@@ -5,6 +5,9 @@
 #include "../responses/effectspage.h"
 #include "../responses/page.h"
 #include "../responses/assetresponse.h"
+
+class Asset;
+
 /**
  * Builds requests connected to assets.
  */
@@ -14,8 +17,13 @@ class AssetsRequestBuilder : public RequestBuilder
 public:
     AssetsRequestBuilder(Server *server);
     AssetsRequestBuilder& assetCode(QString assetCode);
-
     AssetsRequestBuilder& assetIssuer(QString assetIssuer);
+    /**
+     * Shortcut for `assetCode(asset.code).assetIssuer(asset.issuer)`.
+     * Native asset is not a valid filter here (Horizon would 400).
+     */
+    AssetsRequestBuilder& forAsset(Asset* asset);
+
     Page<AssetResponse>* execute(QUrl uri);
     Page<AssetResponse>* execute();
     AssetsRequestBuilder& cursor(QString token);

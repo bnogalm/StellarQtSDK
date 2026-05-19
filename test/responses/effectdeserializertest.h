@@ -36,6 +36,12 @@
 #include "../../src/responses/effects/sequencebumpedeffectresponse.h"
 #include "../../src/responses/effects/claimablebalanceclawedbackeffectresponse.h"
 #include "../../src/responses/effects/trustlineflagsupdatedeffectresponse.h"
+#include "../../src/responses/effects/liquiditypoolcreatedeffectresponse.h"
+#include "../../src/responses/effects/liquiditypooldepositedeffectresponse.h"
+#include "../../src/responses/effects/liquiditypoolwithdreweffectresponse.h"
+#include "../../src/responses/effects/liquiditypooltradeeffectresponse.h"
+#include "../../src/responses/effects/liquiditypoolremovedeffectresponse.h"
+#include "../../src/responses/effects/liquiditypoolrevokedeffectresponse.h"
 #include "../../src/asset.h"
 #include "../../src/assettypenative.h"
 #include "../../src/keypair.h"
@@ -884,6 +890,126 @@ private slots:
          QCOMPARE(effect.getCreatedAt(), QString("2018-06-06T10:23:57Z"));
          QCOMPARE(effect.getBalanceID(), QString("00000000178826fbfe339e1f5c53417c6fedfe2c05e8bec14303143ec46b38981b09c3f9"));
          QCOMPARE(effect.getType(), QString("claimable_balance_clawed_back"));
+       }
+
+       void testDeserializeLiquidityPoolCreatedEffect() {
+         QByteArray json = "{"
+           "\"id\":\"0001\",\"paging_token\":\"1\","
+           "\"account\":\"GDPFGP4IPE5DXG6XRXC4ZBUI43PAGRQ5VVNJ3LJTBXDBZ4ITO6HBHNSF\","
+           "\"type\":\"liquidity_pool_created\",\"type_i\":93,"
+           "\"created_at\":\"2021-11-08T01:46:38Z\","
+           "\"liquidity_pool\":{"
+             "\"id\":\"abc\",\"fee_bp\":30,\"type\":\"constant_product\","
+             "\"total_trustlines\":\"1\",\"total_shares\":\"100\","
+             "\"reserves\":[{\"asset\":\"native\",\"amount\":\"50.0000000\"},"
+                           "{\"asset\":\"USDC:GA5\",\"amount\":\"50.0000000\"}]"
+           "}}";
+         LiquidityPoolCreatedEffectResponse effect;
+         effect.loadFromJson(json);
+         QCOMPARE(effect.getType(), QString("liquidity_pool_created"));
+         QCOMPARE(effect.getLiquidityPool().getId(), QString("abc"));
+         QCOMPARE(effect.getLiquidityPool().getFeeBp(), (qint32)30);
+         QCOMPARE(effect.getLiquidityPool().getType(), QString("constant_product"));
+         QCOMPARE(effect.getLiquidityPool().getReserves().size(), 2);
+         QCOMPARE(effect.getLiquidityPool().getReserves()[0].getAsset(), QString("native"));
+         QCOMPARE(effect.getLiquidityPool().getReserves()[0].getAmount(), QString("50.0000000"));
+       }
+
+       void testDeserializeLiquidityPoolDepositedEffect() {
+         QByteArray json = "{"
+           "\"id\":\"0001\",\"paging_token\":\"1\","
+           "\"account\":\"GDPFGP4IPE5DXG6XRXC4ZBUI43PAGRQ5VVNJ3LJTBXDBZ4ITO6HBHNSF\","
+           "\"type\":\"liquidity_pool_deposited\",\"type_i\":90,"
+           "\"created_at\":\"2021-11-08T01:46:38Z\","
+           "\"liquidity_pool\":{\"id\":\"pid\",\"fee_bp\":30,\"type\":\"constant_product\","
+             "\"total_trustlines\":\"1\",\"total_shares\":\"100\",\"reserves\":[]},"
+           "\"reserves_deposited\":[{\"asset\":\"native\",\"amount\":\"10\"},"
+                                  "{\"asset\":\"USDC:GA5\",\"amount\":\"20\"}],"
+           "\"shares_received\":\"5.0\""
+           "}";
+         LiquidityPoolDepositedEffectResponse effect;
+         effect.loadFromJson(json);
+         QCOMPARE(effect.getType(), QString("liquidity_pool_deposited"));
+         QCOMPARE(effect.getLiquidityPool().getId(), QString("pid"));
+         QCOMPARE(effect.getReservesDeposited().size(), 2);
+         QCOMPARE(effect.getReservesDeposited()[0].getAsset(), QString("native"));
+         QCOMPARE(effect.getReservesDeposited()[0].getAmount(), QString("10"));
+         QCOMPARE(effect.getReservesDeposited()[1].getAsset(), QString("USDC:GA5"));
+         QCOMPARE(effect.getSharesReceived(), QString("5.0"));
+       }
+
+       void testDeserializeLiquidityPoolWithdrewEffect() {
+         QByteArray json = "{"
+           "\"id\":\"0001\",\"paging_token\":\"1\","
+           "\"account\":\"GDPFGP4IPE5DXG6XRXC4ZBUI43PAGRQ5VVNJ3LJTBXDBZ4ITO6HBHNSF\","
+           "\"type\":\"liquidity_pool_withdrew\",\"type_i\":91,"
+           "\"created_at\":\"2021-11-08T01:46:38Z\","
+           "\"liquidity_pool\":{\"id\":\"pid\",\"fee_bp\":30,\"type\":\"constant_product\","
+             "\"total_trustlines\":\"1\",\"total_shares\":\"95\",\"reserves\":[]},"
+           "\"reserves_received\":[{\"asset\":\"native\",\"amount\":\"5\"}],"
+           "\"shares_redeemed\":\"5.0\""
+           "}";
+         LiquidityPoolWithdrewEffectResponse effect;
+         effect.loadFromJson(json);
+         QCOMPARE(effect.getType(), QString("liquidity_pool_withdrew"));
+         QCOMPARE(effect.getLiquidityPool().getTotalShares(), QString("95"));
+         QCOMPARE(effect.getReservesReceived().size(), 1);
+         QCOMPARE(effect.getSharesRedeemed(), QString("5.0"));
+       }
+
+       void testDeserializeLiquidityPoolTradeEffect() {
+         QByteArray json = "{"
+           "\"id\":\"0001\",\"paging_token\":\"1\","
+           "\"account\":\"GDPFGP4IPE5DXG6XRXC4ZBUI43PAGRQ5VVNJ3LJTBXDBZ4ITO6HBHNSF\","
+           "\"type\":\"liquidity_pool_trade\",\"type_i\":92,"
+           "\"created_at\":\"2021-11-08T01:46:38Z\","
+           "\"liquidity_pool\":{\"id\":\"pid\",\"fee_bp\":30,\"type\":\"constant_product\","
+             "\"total_trustlines\":\"1\",\"total_shares\":\"100\",\"reserves\":[]},"
+           "\"sold\":{\"asset\":\"native\",\"amount\":\"1\"},"
+           "\"bought\":{\"asset\":\"USDC:GA5\",\"amount\":\"2\"}"
+           "}";
+         LiquidityPoolTradeEffectResponse effect;
+         effect.loadFromJson(json);
+         QCOMPARE(effect.getType(), QString("liquidity_pool_trade"));
+         QCOMPARE(effect.getSold().getAsset(), QString("native"));
+         QCOMPARE(effect.getSold().getAmount(), QString("1"));
+         QCOMPARE(effect.getBought().getAsset(), QString("USDC:GA5"));
+         QCOMPARE(effect.getBought().getAmount(), QString("2"));
+       }
+
+       void testDeserializeLiquidityPoolRemovedEffect() {
+         QByteArray json = "{"
+           "\"id\":\"0001\",\"paging_token\":\"1\","
+           "\"account\":\"GDPFGP4IPE5DXG6XRXC4ZBUI43PAGRQ5VVNJ3LJTBXDBZ4ITO6HBHNSF\","
+           "\"type\":\"liquidity_pool_removed\",\"type_i\":94,"
+           "\"created_at\":\"2021-11-08T01:46:38Z\","
+           "\"liquidity_pool_id\":\"abc1234\""
+           "}";
+         LiquidityPoolRemovedEffectResponse effect;
+         effect.loadFromJson(json);
+         QCOMPARE(effect.getType(), QString("liquidity_pool_removed"));
+         QCOMPARE(effect.getLiquidityPoolId(), QString("abc1234"));
+       }
+
+       void testDeserializeLiquidityPoolRevokedEffect() {
+         QByteArray json = "{"
+           "\"id\":\"0001\",\"paging_token\":\"1\","
+           "\"account\":\"GDPFGP4IPE5DXG6XRXC4ZBUI43PAGRQ5VVNJ3LJTBXDBZ4ITO6HBHNSF\","
+           "\"type\":\"liquidity_pool_revoked\",\"type_i\":95,"
+           "\"created_at\":\"2021-11-08T01:46:38Z\","
+           "\"liquidity_pool\":{\"id\":\"pid\",\"fee_bp\":30,\"type\":\"constant_product\","
+             "\"total_trustlines\":\"0\",\"total_shares\":\"0\",\"reserves\":[]},"
+           "\"reserves_revoked\":[{\"asset\":\"native\",\"amount\":\"5\","
+                                  "\"claimable_balance_id\":\"00abcd\"}],"
+           "\"shares_revoked\":\"5.0\""
+           "}";
+         LiquidityPoolRevokedEffectResponse effect;
+         effect.loadFromJson(json);
+         QCOMPARE(effect.getType(), QString("liquidity_pool_revoked"));
+         QCOMPARE(effect.getReservesRevoked().size(), 1);
+         QCOMPARE(effect.getReservesRevoked()[0].getAsset(), QString("native"));
+         QCOMPARE(effect.getReservesRevoked()[0].getClaimableBalanceId(), QString("00abcd"));
+         QCOMPARE(effect.getSharesRevoked(), QString("5.0"));
        }
 
        void testDeserializeTrustlineFlagsUpdatedEffect() {

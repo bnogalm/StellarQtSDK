@@ -15,6 +15,7 @@
 #endif
 
 #include <QtTest>
+#include <QSet>
 #include <memory>
 #include <map>
 #include <string>
@@ -28,13 +29,39 @@ inline TestList& GetTestList()
    return list;
 }
 
+// Counts private slots named test*() (QTest's discovery rule), excluding the
+// fixture helpers initTestCase/cleanupTestCase/init/cleanup and *_data
+// companions. Mirrors what QTest::qExec will actually run on this object.
+inline int countTestMethods(const QMetaObject* mo)
+{
+    static const QSet<QByteArray> reserved = {
+        "initTestCase", "cleanupTestCase", "init", "cleanup",
+        "initTestCase_data"
+    };
+    int count = 0;
+    for (int m = mo->methodOffset(); m < mo->methodCount(); ++m) {
+        QMetaMethod method = mo->method(m);
+        if (method.methodType() != QMetaMethod::Slot) continue;
+        if (method.access() != QMetaMethod::Private) continue;
+        const QByteArray name = method.name();
+        if (reserved.contains(name)) continue;
+        if (name.endsWith("_data")) continue;
+        ++count;
+    }
+    return count;
+}
+
 inline int RunAllTests(int argc, char **argv) {
     int result = 0;
+    int totalTests = 0;
     QList<std::string> failedTests;
     QMap<std::string, std::string> failedTestsWithExceptions;
     for (const auto&i:GetTestList()) {
+        QObject* obj = i.second.get();
+        const int classTestCount = countTestMethods(obj->metaObject());
+        totalTests += classTestCount;
         try{
-        int res = QTest::qExec(i.second.get(), argc, argv);
+        int res = QTest::qExec(obj, argc, argv);
         result += res;
         printf("\n");
         if(res)
@@ -55,6 +82,13 @@ inline int RunAllTests(int argc, char **argv) {
         else
             std::cout<<s<< " throwed exception: " << failedTestsWithExceptions.value(s) << std::endl;
     }
+    std::cout << "================================================================\n"
+              << "Test classes: " << GetTestList().size()
+              << "    Test methods: " << totalTests
+              << "    Passed: " << (totalTests - result)
+              << "    Failed: " << result
+              << "\n================================================================"
+              << std::endl;
     return result;
 }
 

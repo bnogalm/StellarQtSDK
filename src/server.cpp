@@ -124,6 +124,10 @@ ClaimableBalancesRequestBuilder Server::claimableBalances() {
     return ClaimableBalancesRequestBuilder(this);
 }
 
+LiquidityPoolsRequestBuilder Server::liquidityPools() {
+    return LiquidityPoolsRequestBuilder(this);
+}
+
 EffectsRequestBuilder Server::effects() {
     return EffectsRequestBuilder(this);
 }

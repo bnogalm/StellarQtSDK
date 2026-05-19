@@ -204,7 +204,8 @@ bool Balance::operator !=(const Balance &b) const
             || (this->m_isAuthorized!=b.m_isAuthorized)
             || (this->m_isAuthorizedToMaintainLiabilities!=b.m_isAuthorizedToMaintainLiabilities)
             || (this->m_lastModifiedLedger!=b.m_lastModifiedLedger)
-            || (this->m_sponsor!=b.m_sponsor);
+            || (this->m_sponsor!=b.m_sponsor)
+            || (this->m_liquidityPoolId!=b.m_liquidityPoolId);
 }
 
 bool Balance::operator ==(const Balance &b) const
@@ -219,7 +220,8 @@ bool Balance::operator ==(const Balance &b) const
             && (this->m_isAuthorized==b.m_isAuthorized)
             && (this->m_isAuthorizedToMaintainLiabilities==b.m_isAuthorizedToMaintainLiabilities)
             && (this->m_lastModifiedLedger==b.m_lastModifiedLedger)
-            && (this->m_sponsor==b.m_sponsor);
+            && (this->m_sponsor==b.m_sponsor)
+            && (this->m_liquidityPoolId==b.m_liquidityPoolId);
 }
 
 QString Balance::getSponsor() const

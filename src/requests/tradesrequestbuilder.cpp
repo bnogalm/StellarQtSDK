@@ -39,6 +39,21 @@ TradesRequestBuilder &TradesRequestBuilder::forAccount(KeyPair* account) {
     return *this;
 }
 
+TradesRequestBuilder &TradesRequestBuilder::forAccount(const QString& accountId) {
+    setSegments(QStringList() << "accounts" << accountId << "trades");
+    return *this;
+}
+
+TradesRequestBuilder &TradesRequestBuilder::forLiquidityPool(const QString& liquidityPoolId) {
+    setSegments(QStringList() << "liquidity_pools" << liquidityPoolId << "trades");
+    return *this;
+}
+
+TradesRequestBuilder &TradesRequestBuilder::tradeType(const QString& type) {
+    addParameter("trade_type", type);
+    return *this;
+}
+
 Page<TradeResponse>* TradesRequestBuilder::execute(QUrl uri)
 {
     this->setRequestUri(uri);//we overwrite the uri

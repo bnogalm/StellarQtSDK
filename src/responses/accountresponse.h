@@ -69,6 +69,7 @@ class Balance {
     Q_PROPERTY(bool is_authorized_to_maintain_liabilities MEMBER m_isAuthorizedToMaintainLiabilities)
     Q_PROPERTY(int last_modified_ledger MEMBER m_lastModifiedLedger)
     Q_PROPERTY(QString sponsor READ getSponsor MEMBER m_sponsor)
+    Q_PROPERTY(QString liquidity_pool_id MEMBER m_liquidityPoolId)
 
 
 
@@ -87,6 +88,7 @@ class Balance {
     KeyPair *m_assetIssuerKeypair;
     Asset *m_asset;
     QString m_sponsor;
+    QString m_liquidityPoolId;
 
 public:
     Balance();
@@ -109,6 +111,8 @@ public:
     bool operator ==(const Balance &b) const;
 
     QString getSponsor() const;
+    /** Set only when `asset_type == "liquidity_pool_shares"`. */
+    QString getLiquidityPoolId() const { return m_liquidityPoolId; }
 };
 
 /**

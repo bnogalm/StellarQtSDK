@@ -65,6 +65,15 @@ AccountsRequestBuilder &AccountsRequestBuilder::forAsset(Asset *asset)
     return *this;
 }
 
+AccountsRequestBuilder &AccountsRequestBuilder::forLiquidityPool(const QString& liquidityPoolId)
+{
+    if (!parameter("signer").isNull() || !parameter("sponsor").isNull() || !parameter("asset").isNull()) {
+        throw std::runtime_error("forLiquidityPool cannot be combined with signer/sponsor/asset");
+    }
+    addParameter("liquidity_pool", liquidityPoolId);
+    return *this;
+}
+
 AccountsRequestBuilder &AccountsRequestBuilder::cursor(QString token) {
     RequestBuilder::cursor(token);
     return *this;

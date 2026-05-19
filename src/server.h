@@ -18,6 +18,7 @@
 #include "requests/effectsrequestbuilder.h"
 #include "requests/feestatsrequestbuilder.h"
 #include "requests/claimablebalancesrequestbuilder.h"
+#include "requests/liquiditypoolsrequestbuilder.h"
 #include <QTimer>
 #include <QHash>
 class Transaction;
@@ -86,6 +87,11 @@ public:
      * Returns {@link ClaimableBalancesRequestBuilder} instance.
      */
     ClaimableBalancesRequestBuilder claimableBalances();
+
+    /**
+     * Returns a builder for the `/liquidity_pools` endpoint.
+     */
+    LiquidityPoolsRequestBuilder liquidityPools();
 
     /**
          * Returns {@link EffectsRequestBuilder} instance.

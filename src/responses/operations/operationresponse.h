@@ -77,6 +77,7 @@ class OperationResponse : public Response
     Q_PROPERTY(QString transaction_hash MEMBER m_transactionHash)
     Q_PROPERTY(QVariant transaction_successful MEMBER m_transactionSuccessful WRITE setTransactionSuccessful)//we use a custom set method to filter non Bool types
     Q_PROPERTY(QString type MEMBER m_type)
+    Q_PROPERTY(QString sponsor MEMBER m_sponsor)
     Q_PROPERTY(OperationResponseAttach::Links _links MEMBER m_links)
     qint64 m_id;
     QString m_sourceAccount;
@@ -86,6 +87,7 @@ class OperationResponse : public Response
     QString m_transactionHash;
     QVariant m_transactionSuccessful;
     QString m_type;
+    QString m_sponsor;
     OperationResponseAttach::Links m_links;
 
 
@@ -120,6 +122,9 @@ public:
        * </ul>
        */
       QString getType() const;
+
+      /** Sponsor account id when the op is sponsored (Horizon 15+). Empty if not sponsored. */
+      QString getSponsor() const { return m_sponsor; }
 
       Boolean isTransactionSuccessful() const;
 

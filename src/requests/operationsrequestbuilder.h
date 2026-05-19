@@ -68,6 +68,12 @@ public:
      * @param claimableBalance Claimable Balance for which to get operations
      */
     OperationsRequestBuilder& forClaimableBalance(QString claimableBalance);
+
+    /**
+     * Builds request to <code>GET /liquidity_pools/{pool_id}/operations</code>.
+     * @param liquidityPoolId 64-char hex pool id.
+     */
+    OperationsRequestBuilder& forLiquidityPool(const QString& liquidityPoolId);
     OperationsRequestBuilder &stream();
     /**
        * Requests specific <code>uri</code> and returns {@link Page} of {@link OperationResponse}.

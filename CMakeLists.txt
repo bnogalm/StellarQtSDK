@@ -168,6 +168,20 @@ qt_add_library(StellarQtSDK STATIC
     src/exception/formatexception.h
     src/responses/problem.cpp
     src/responses/problem.h
+    src/responses/assetamount.h
+    src/responses/liquiditypool.h
+    src/responses/liquiditypoolclaimableassetamount.h
+    src/responses/effects/liquiditypoolcreatedeffectresponse.h
+    src/responses/effects/liquiditypooldepositedeffectresponse.h
+    src/responses/effects/liquiditypoolwithdreweffectresponse.h
+    src/responses/effects/liquiditypooltradeeffectresponse.h
+    src/responses/effects/liquiditypoolremovedeffectresponse.h
+    src/responses/effects/liquiditypoolrevokedeffectresponse.h
+    src/responses/effects/liquiditypooleffectsresponses.cpp
+    src/responses/liquiditypoolresponse.h
+    src/responses/liquiditypoolresponse.cpp
+    src/requests/liquiditypoolsrequestbuilder.h
+    src/requests/liquiditypoolsrequestbuilder.cpp
     src/responses/accountresponse.cpp
     src/responses/accountresponse.h
     src/responses/assetresponse.cpp
@@ -398,7 +412,7 @@ target_include_directories(StellarQtSDK PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} src)
 
 add_compile_definitions(
     STELLAR_QT_SDK_CLIENT_NAME=\"\\\"qtcpp-stellar-sdk\\\"\"
-    STELLAR_QT_SDK_CLIENT_VERSION=\"\\\"0.4.0\\\"\"
+    STELLAR_QT_SDK_CLIENT_VERSION=\"\\\"0.5.0\\\"\"
 )
 
 target_compile_definitions(StellarQtSDK PRIVATE

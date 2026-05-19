@@ -45,6 +45,11 @@ OperationsRequestBuilder &OperationsRequestBuilder::forClaimableBalance(QString 
     return *this;
 }
 
+OperationsRequestBuilder &OperationsRequestBuilder::forLiquidityPool(const QString& liquidityPoolId) {
+    setSegments(QStringList() << "liquidity_pools" << liquidityPoolId << "operations");
+    return *this;
+}
+
 OperationsRequestBuilder &OperationsRequestBuilder::stream()
 {
     setStreamMode();

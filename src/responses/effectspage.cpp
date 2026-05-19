@@ -50,6 +50,12 @@
 #include "effects/signersponsorshipupdatedeffectresponse.h"
 #include "effects/trustlineflagsupdatedeffectresponse.h"
 #include "effects/claimablebalanceclawedbackeffectresponse.h"
+#include "effects/liquiditypoolcreatedeffectresponse.h"
+#include "effects/liquiditypooldepositedeffectresponse.h"
+#include "effects/liquiditypoolwithdreweffectresponse.h"
+#include "effects/liquiditypooltradeeffectresponse.h"
+#include "effects/liquiditypoolremovedeffectresponse.h"
+#include "effects/liquiditypoolrevokedeffectresponse.h"
 
 
 EffectsPage::EffectsPage(QNetworkReply *reply)
@@ -164,6 +170,19 @@ void EffectsPage::processRecords(const QJsonArray &records)
           effect= new SignerSponsorshipRemovedEffectResponse();break;
         case 80:
           effect= new ClaimableBalanceClawedBackEffectResponse();break;
+        // liquidity pool effects
+        case 90:
+          effect= new LiquidityPoolDepositedEffectResponse();break;
+        case 91:
+          effect= new LiquidityPoolWithdrewEffectResponse();break;
+        case 92:
+          effect= new LiquidityPoolTradeEffectResponse();break;
+        case 93:
+          effect= new LiquidityPoolCreatedEffectResponse();break;
+        case 94:
+          effect= new LiquidityPoolRemovedEffectResponse();break;
+        case 95:
+          effect= new LiquidityPoolRevokedEffectResponse();break;
         default:
             throw std::runtime_error("Invalid effect type");
         }

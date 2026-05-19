@@ -68,6 +68,12 @@ public:
 
      AccountsRequestBuilder& forAsset(Asset* asset);
 
+     /**
+      * Returns all accounts holding shares of the given liquidity pool.
+      * @param liquidityPoolId 64-char hex liquidity pool id.
+      */
+     AccountsRequestBuilder& forLiquidityPool(const QString& liquidityPoolId);
+
 
      AccountsRequestBuilder& cursor(QString token);
 

@@ -41,17 +41,17 @@ OrderBookResponse *OrderBookRequestBuilder::execute() {
     return execute(this->buildUri());
 }
 
-RequestBuilder& OrderBookRequestBuilder::order(RequestBuilder::Order direction) {
+OrderBookRequestBuilder& OrderBookRequestBuilder::order(RequestBuilder::Order direction) {
     RequestBuilder::order(direction);
     return *this;
 }
 
-RequestBuilder& OrderBookRequestBuilder::limit(int number) {
+OrderBookRequestBuilder& OrderBookRequestBuilder::limit(int number) {
     RequestBuilder::limit(number);
     return *this;
 }
 
-RequestBuilder& OrderBookRequestBuilder::cursor(QString cursor) {
+OrderBookRequestBuilder& OrderBookRequestBuilder::cursor(QString cursor) {
     RequestBuilder::cursor(cursor);
     return *this;
 }

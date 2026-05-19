@@ -59,6 +59,7 @@ class LedgerResponse : public Response
     Q_PROPERTY(qint32 successful_transaction_count MEMBER m_successfulTransactionCount)
     Q_PROPERTY(qint32 failed_transaction_count MEMBER m_failedTransactionCount)
     Q_PROPERTY(qint32 operation_count MEMBER m_operationCount)
+    Q_PROPERTY(qint32 tx_set_operation_count MEMBER m_txSetOperationCount)
     Q_PROPERTY(QString closed_at MEMBER m_closedAt)
     Q_PROPERTY(QString total_coins MEMBER m_totalCoins)
     Q_PROPERTY(QString fee_pool MEMBER m_feePool)
@@ -80,6 +81,7 @@ class LedgerResponse : public Response
     qint32 m_successfulTransactionCount;
     qint32 m_failedTransactionCount;
     qint32 m_operationCount;
+    qint32 m_txSetOperationCount = 0;
     QString m_closedAt;
     QString m_totalCoins;
     QString m_feePool;
@@ -105,6 +107,8 @@ public:
     qint32 getSuccessfulTransactionCount() const;
     qint32 getFailedTransactionCount() const;
     qint32 getOperationCount() const;
+    /** Total operations in the tx set (Horizon 15+). 0 if absent. */
+    qint32 getTxSetOperationCount() const { return m_txSetOperationCount; }
     QString getClosedAt() const;
     QString getTotalCoins() const;
     QString getFeePool() const;
