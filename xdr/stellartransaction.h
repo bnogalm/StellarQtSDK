@@ -1077,6 +1077,157 @@ namespace stellar
         in >> obj.minTime >> obj.maxTime;;
        return in;
     }
+
+    // CAP-21 — generalized transaction preconditions.
+    typedef quint64 Duration;
+
+    struct LedgerBounds
+    {
+        quint32 minLedger;
+        quint32 maxLedger; // 0 here means no maxLedger
+    };
+    inline QDataStream &operator<<(QDataStream &out, const LedgerBounds &obj) {
+        out << obj.minLedger << obj.maxLedger;
+        return out;
+    }
+    inline QDataStream &operator>>(QDataStream &in, LedgerBounds &obj) {
+        in >> obj.minLedger >> obj.maxLedger;
+        return in;
+    }
+
+    enum class PreconditionType : qint32
+    {
+        PRECOND_NONE = 0,
+        PRECOND_TIME = 1,
+        PRECOND_V2 = 2
+    };
+
+    // CAP-21 PreconditionsV2. Extra signers are stored as a length-prefixed
+    // bounded array (max 2 entries per the spec).
+    struct PreconditionsV2
+    {
+        Optional<TimeBounds> timeBounds;
+        Optional<LedgerBounds> ledgerBounds;
+        Optional<SequenceNumber> minSeqNum;
+        Duration minSeqAge = 0;       // 0 means no constraint
+        quint32 minSeqLedgerGap = 0;  // 0 means no constraint
+        Array<SignerKey, 2> extraSigners;
+    };
+    inline QDataStream &operator<<(QDataStream &out, const PreconditionsV2 &obj) {
+        out << obj.timeBounds << obj.ledgerBounds << obj.minSeqNum
+            << obj.minSeqAge << obj.minSeqLedgerGap << obj.extraSigners;
+        return out;
+    }
+    inline QDataStream &operator>>(QDataStream &in, PreconditionsV2 &obj) {
+        in >> obj.timeBounds >> obj.ledgerBounds >> obj.minSeqNum
+           >> obj.minSeqAge >> obj.minSeqLedgerGap >> obj.extraSigners;
+        return in;
+    }
+
+    /**
+     * Preconditions union — wraps TimeBounds (legacy) or PreconditionsV2.
+     * Wire-compatible with the legacy Optional<TimeBounds> field: PRECOND_NONE
+     * has the same on-wire encoding as Optional{filled=0}, and PRECOND_TIME has
+     * the same encoding as Optional{filled=1, TimeBounds}.
+     */
+    /**
+     * Invariant: storage always holds a live variant matching `type`. For
+     * PRECOND_NONE, the `timeBounds` slot is live (trivial, ignored).
+     * After `clear()`, no variant is live until the caller placement-news a
+     * new one (always done as part of a transition).
+     */
+    struct Preconditions
+    {
+        PreconditionType type;
+        union {
+            TimeBounds timeBounds;
+            PreconditionsV2 v2;
+        };
+
+        Preconditions() : type(PreconditionType::PRECOND_NONE)
+        {
+            new (&timeBounds) TimeBounds();
+        }
+        Preconditions(const Preconditions &other) : type(other.type)
+        {
+            switch (type) {
+            case PreconditionType::PRECOND_NONE:
+                new (&timeBounds) TimeBounds(); break;
+            case PreconditionType::PRECOND_TIME:
+                new (&timeBounds) TimeBounds(other.timeBounds); break;
+            case PreconditionType::PRECOND_V2:
+                new (&v2) PreconditionsV2(other.v2); break;
+            }
+        }
+        ~Preconditions() { clear(); }
+        Preconditions& operator=(const Preconditions &other)
+        {
+            if (this == &other) return *this;
+            clear();
+            type = other.type;
+            switch (type) {
+            case PreconditionType::PRECOND_NONE:
+                new (&timeBounds) TimeBounds(); break;
+            case PreconditionType::PRECOND_TIME:
+                new (&timeBounds) TimeBounds(other.timeBounds); break;
+            case PreconditionType::PRECOND_V2:
+                new (&v2) PreconditionsV2(other.v2); break;
+            }
+            return *this;
+        }
+        TimeBounds& fillTimeBounds()
+        {
+            clear();
+            type = PreconditionType::PRECOND_TIME;
+            new (&timeBounds) TimeBounds();
+            return timeBounds;
+        }
+        PreconditionsV2& fillV2()
+        {
+            clear();
+            type = PreconditionType::PRECOND_V2;
+            new (&v2) PreconditionsV2();
+            return v2;
+        }
+    private:
+        // Destroys the currently-live variant. Caller must placement-new a new
+        // one before this object is read or destroyed again.
+        void clear()
+        {
+            switch (type) {
+            case PreconditionType::PRECOND_NONE:
+            case PreconditionType::PRECOND_TIME:
+                timeBounds.~TimeBounds(); break;
+            case PreconditionType::PRECOND_V2:
+                v2.~PreconditionsV2(); break;
+            }
+        }
+        friend inline QDataStream &operator>>(QDataStream &in, Preconditions &obj);
+    };
+    inline QDataStream &operator<<(QDataStream &out, const Preconditions &obj) {
+        out << obj.type;
+        switch (obj.type) {
+        case PreconditionType::PRECOND_NONE: break;
+        case PreconditionType::PRECOND_TIME: out << obj.timeBounds; break;
+        case PreconditionType::PRECOND_V2:   out << obj.v2; break;
+        }
+        return out;
+    }
+    inline QDataStream &operator>>(QDataStream &in, Preconditions &obj) {
+        obj.clear();
+        in >> obj.type;
+        switch (obj.type) {
+        case PreconditionType::PRECOND_NONE:
+            new (&obj.timeBounds) TimeBounds(); break;
+        case PreconditionType::PRECOND_TIME:
+            new (&obj.timeBounds) TimeBounds();
+            in >> obj.timeBounds; break;
+        case PreconditionType::PRECOND_V2:
+            new (&obj.v2) PreconditionsV2();
+            in >> obj.v2; break;
+        }
+        return in;
+    }
     // maximum number of operations per transaction
     const int MAX_OPS_PER_TX = 100;
 
@@ -1156,8 +1307,9 @@ namespace stellar
         // sequence number to consume in the account
         SequenceNumber seqNum;
 
-        // validity range (inclusive) for the last ledger close time
-        Optional<TimeBounds> timeBounds;
+        // CAP-21 — was Optional<TimeBounds>. Wire-compat for the
+        // PRECOND_NONE and PRECOND_TIME variants (same byte sequence).
+        Preconditions cond;
 
         Memo memo;
 
@@ -1167,12 +1319,12 @@ namespace stellar
         Reserved ext;
     };
     inline QDataStream &operator<<(QDataStream &out, const  Transaction &obj) {
-        out << obj.sourceAccount << obj.fee << obj.seqNum << obj.timeBounds << obj.memo<< obj.operations<< obj.ext;
+        out << obj.sourceAccount << obj.fee << obj.seqNum << obj.cond << obj.memo<< obj.operations<< obj.ext;
        return out;
     }
 
     inline QDataStream &operator>>(QDataStream &in,  Transaction &obj) {
-       in >> obj.sourceAccount >> obj.fee >> obj.seqNum >> obj.timeBounds >> obj.memo>> obj.operations >> obj.ext;
+       in >> obj.sourceAccount >> obj.fee >> obj.seqNum >> obj.cond >> obj.memo>> obj.operations >> obj.ext;
        return in;
     }
 

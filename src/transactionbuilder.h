@@ -6,6 +6,9 @@
 #include "accountconverter.h"
 #include "transactionbuilderaccount.h"
 #include "timebounds.h"
+#include "ledgerbounds.h"
+#include "transactionpreconditions.h"
+#include "signerkey.h"
 #include "memo.h"
 #include "network.h"
 #include "operation.h"
@@ -20,13 +23,11 @@ class Transaction;
  * are owners of the operations / memo / timeBounds passed in; on a successful
  * `build()` ownership is transferred to the resulting `Transaction`.
  *
- * The API and ownership semantics are deliberately identical to the legacy
- * nested builder so that downstream code can switch over by simply renaming
- * `Transaction::Builder` → `TransactionBuilder`.
- *
- * Java SDK alignment: a constructor without `AccountConverter` (muxed always
- * on) will be added in 0.4.0 Iter 3 together with the desingletonization of
- * `Network`.
+ * 0.7.0 (CAP-21): the legacy TimeBounds slot has been generalized into a
+ * full `TransactionPreconditions` bundle. `addTimeBounds(TimeBounds*)` and
+ * `setTimeout(...)` continue to work; the new setters below let callers
+ * populate the V2-only fields (ledger bounds, minSeqNumber, minSeqAge,
+ * minSeqLedgerGap, extraSigners).
  */
 class TransactionBuilder
 {
@@ -34,7 +35,7 @@ class TransactionBuilder
     TransactionBuilderAccount* m_sourceAccount;
     Network* m_network;
     Memo* m_memo;
-    TimeBounds* m_timeBounds;
+    TransactionPreconditions m_preconditions;
     QVector<Operation*> m_operations;
     bool m_timeoutSet;
     quint32 m_baseFee;
@@ -99,6 +100,26 @@ public:
      * Convenience: sets a relative timeout (in seconds) from now.
      */
     TransactionBuilder& setTimeout(qint64 timeout);
+
+    // ─── CAP-21 setters ──────────────────────────────────────────────────
+
+    /** Replaces the entire preconditions bundle. Copies the input. */
+    TransactionBuilder& addPreconditions(const TransactionPreconditions& preconditions);
+
+    /** @param ledgerBounds ownership transferred. */
+    TransactionBuilder& setLedgerBounds(LedgerBounds* ledgerBounds);
+
+    /** Sets the minimum source account sequence number. */
+    TransactionBuilder& setMinSeqNumber(qint64 seqNum);
+
+    /** Sets the minimum source account sequence age (seconds). */
+    TransactionBuilder& setMinSeqAge(quint64 minSeqAge);
+
+    /** Sets the minimum source account sequence ledger gap. */
+    TransactionBuilder& setMinSeqLedgerGap(quint32 gap);
+
+    /** Adds an extra signer (max 2 per CAP-21). */
+    TransactionBuilder& addExtraSigner(const SignerKey& key);
 
     TransactionBuilder& setBaseFee(quint32 baseFee);
 

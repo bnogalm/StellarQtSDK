@@ -5,7 +5,7 @@ DEFINES += STELLAR_QT_REPLY_TIMEOUT=30000
 DEFINES *= ED25519_NO_SEED
 
 DEFINES += STELLAR_QT_SDK_CLIENT_NAME=\"\\\"qtcpp-stellar-sdk\\\"\"
-DEFINES += STELLAR_QT_SDK_CLIENT_VERSION=\"\\\"0.6.0\\\"\"
+DEFINES += STELLAR_QT_SDK_CLIENT_VERSION=\"\\\"0.7.0\\\"\"
 
 #DEFINES += STELLAR_QT_AUTOSET_BASE_FEE
 
@@ -34,6 +34,8 @@ SOURCES += \
     $$PWD/src/trustlineasset.cpp \
     $$PWD/src/liquiditypooldepositoperation.cpp \
     $$PWD/src/liquiditypoolwithdrawoperation.cpp \
+    $$PWD/src/signerkey.cpp \
+    $$PWD/src/transactionpreconditions.cpp \
     $$PWD/src/responses/problem.cpp \
     $$PWD/src/responses/effects/liquiditypooleffectsresponses.cpp \
     $$PWD/src/responses/liquiditypoolresponse.cpp \
@@ -239,6 +241,9 @@ HEADERS += \
     $$PWD/src/trustlineasset.h \
     $$PWD/src/liquiditypooldepositoperation.h \
     $$PWD/src/liquiditypoolwithdrawoperation.h \
+    $$PWD/src/signerkey.h \
+    $$PWD/src/ledgerbounds.h \
+    $$PWD/src/transactionpreconditions.h \
     $$PWD/src/responses/assetamount.h \
     $$PWD/src/responses/liquiditypool.h \
     $$PWD/src/responses/liquiditypoolclaimableassetamount.h \

@@ -26,6 +26,14 @@ QString StrKey::encodeStellarMuxedAccount(const stellar::MuxedAccount &muxedAcco
 }
 
 StrKey::VersionByte StrKey::decodeVersionByte(QByteArray encoded) {
+    // CyoEncode's Base32::GetLength expects padded (multiple of 8) inputs;
+    // unpadded strkeys like M / P (69 chars) would otherwise yield length 0.
+    int cyoWorkaroundPaddingLength = encoded.size() % 8;
+    if (cyoWorkaroundPaddingLength > 0) {
+        cyoWorkaroundPaddingLength = 8 - cyoWorkaroundPaddingLength;
+        encoded.append(cyoWorkaroundPaddingLength, '=');
+    }
+
     QByteArray decoded(CyoDecode::Base32::GetLength(encoded.length()),'\0');
 
     if(decoded.isEmpty())
@@ -37,11 +45,12 @@ StrKey::VersionByte StrKey::decodeVersionByte(QByteArray encoded) {
 
     switch(decodedVersionByte)
     {
-    case StrKey::VersionByte::ACCOUNT_ID:    
+    case StrKey::VersionByte::ACCOUNT_ID:
     case StrKey::VersionByte::MUXED_ACCOUNT:
     case StrKey::VersionByte::SEED:
     case StrKey::VersionByte::PRE_AUTH_TX:
     case StrKey::VersionByte::SHA256_HASH:
+    case StrKey::VersionByte::SIGNED_PAYLOAD:
         return decodedVersionByte;
     default:
         throw std::runtime_error("Version byte is invalid");
@@ -160,6 +169,60 @@ QByteArray StrKey::decodeCheck(StrKey::VersionByte versionByte, QByteArray encod
     }
 
     return data;
+}
+
+QString StrKey::encodeSignedPayload(QByteArray ed25519, QByteArray payload)
+{
+    if (ed25519.size() != 32) {
+        throw std::runtime_error("ed25519 must be 32 bytes");
+    }
+    if (payload.isEmpty() || payload.size() > 64) {
+        throw std::runtime_error("signed payload length must be in [1, 64]");
+    }
+    QByteArray body;
+    QDataStream s(&body, QIODevice::WriteOnly);
+    s.writeRawData(ed25519.constData(), 32);
+    s << static_cast<quint32>(payload.size());
+    s.writeRawData(payload.constData(), payload.size());
+    const int pad = (4 - (payload.size() % 4)) % 4;
+    if (pad) {
+        char zero[4] = {0,0,0,0};
+        s.writeRawData(zero, pad);
+    }
+    return QString::fromLatin1(encodeCheck(VersionByte::SIGNED_PAYLOAD, body));
+}
+
+QPair<QByteArray, QByteArray> StrKey::decodeSignedPayload(QString data)
+{
+    QByteArray body = decodeCheck(VersionByte::SIGNED_PAYLOAD, data.toLatin1());
+    // body layout: 32 ed25519 + 4 len + payload + 0-3 padding
+    if (body.size() < 32 + 4) {
+        throw std::runtime_error("signed payload strkey too short");
+    }
+    QByteArray ed25519 = body.left(32);
+    QDataStream s(body);
+    s.skipRawData(32);
+    quint32 payloadLen = 0;
+    s >> payloadLen;
+    if (payloadLen == 0 || payloadLen > 64) {
+        throw std::runtime_error("signed payload length out of range");
+    }
+    if (body.size() < static_cast<int>(32 + 4 + payloadLen)) {
+        throw std::runtime_error("signed payload truncated");
+    }
+    QByteArray payload(payloadLen, '\0');
+    s.readRawData(payload.data(), static_cast<int>(payloadLen));
+    const quint32 pad = (4 - (payloadLen % 4)) % 4;
+    if (static_cast<int>(32 + 4 + payloadLen + pad) != body.size()) {
+        throw std::runtime_error("signed payload padding invalid");
+    }
+    if (pad) {
+        char zero[4] = {0,0,0,0};
+        s.readRawData(zero, static_cast<int>(pad));
+        for (quint32 i = 0; i < pad; ++i)
+            if (zero[i] != 0) throw std::runtime_error("non-zero padding");
+    }
+    return qMakePair(ed25519, payload);
 }
 
 QByteArray StrKey::calculateChecksum(QByteArray bytes) {

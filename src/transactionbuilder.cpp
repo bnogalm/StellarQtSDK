@@ -14,7 +14,6 @@ TransactionBuilder::TransactionBuilder(AccountConverter accountConverter,
     m_accountConverter = accountConverter;
     m_sourceAccount = checkNotNull(sourceAccount, "sourceAccount cannot be null");
     m_memo = nullptr;
-    m_timeBounds = nullptr;
 #ifdef STELLAR_QT_AUTOSET_BASE_FEE
     m_baseFee = s_defaultOperationFee;
 #else
@@ -37,13 +36,14 @@ TransactionBuilder::TransactionBuilder(TransactionBuilder& other)
     , m_sourceAccount(other.m_sourceAccount)
     , m_network(other.m_network)
     , m_memo(other.m_memo)
-    , m_timeBounds(other.m_timeBounds)
+    , m_preconditions(std::move(other.m_preconditions))
     , m_operations(other.m_operations)
     , m_timeoutSet(other.m_timeoutSet)
     , m_baseFee(other.m_baseFee)
 {
+    // "move-like" copy: transfer ownership of owned resources so the original
+    // can be safely destroyed. m_preconditions was already moved above.
     other.m_memo = nullptr;
-    other.m_timeBounds = nullptr;
     other.m_operations.clear();
 }
 
@@ -52,8 +52,6 @@ TransactionBuilder::~TransactionBuilder()
     // Does not destroy the source account.
     if (m_memo)
         delete m_memo;
-    if (m_timeBounds)
-        delete m_timeBounds;
     for (Operation* o : m_operations) {
         delete o;
     }
@@ -92,18 +90,19 @@ TransactionBuilder& TransactionBuilder::addMemo(Memo* memo)
 
 TransactionBuilder& TransactionBuilder::addTimeBounds(TimeBounds* timeBounds)
 {
-    if (this->m_timeBounds) {
+    if (m_preconditions.getTimeBounds()) {
         throw std::runtime_error("TimeBounds has been already added.");
     }
     checkNotNull(reinterpret_cast<intptr_t>(timeBounds), "timeBounds cannot be null");
-    m_timeBounds = timeBounds;
+    m_preconditions.setTimeBounds(timeBounds);
     m_timeoutSet = true;
     return *this;
 }
 
 TransactionBuilder& TransactionBuilder::setTimeout(qint64 timeout)
 {
-    if (m_timeBounds && m_timeBounds->getMaxTime() > 0) {
+    TimeBounds* current = m_preconditions.getTimeBounds();
+    if (current && current->getMaxTime() > 0) {
         throw std::runtime_error("TimeBounds.max_time has been already set - setting timeout would overwrite it.");
     }
     if (timeout < 0) {
@@ -112,14 +111,54 @@ TransactionBuilder& TransactionBuilder::setTimeout(qint64 timeout)
     m_timeoutSet = true;
     if (timeout > 0) {
         qint64 timeoutTimestamp = QDateTime::currentMSecsSinceEpoch() / 1000L + timeout;
-        if (!m_timeBounds) {
-            m_timeBounds = new TimeBounds(0, timeoutTimestamp);
+        if (!current) {
+            m_preconditions.setTimeBounds(new TimeBounds(0, timeoutTimestamp));
         } else {
-            qint64 min = m_timeBounds->getMinTime();
-            delete m_timeBounds;
-            m_timeBounds = new TimeBounds(min, timeoutTimestamp);
+            qint64 min = current->getMinTime();
+            m_preconditions.setTimeBounds(new TimeBounds(min, timeoutTimestamp));
         }
     }
+    return *this;
+}
+
+TransactionBuilder& TransactionBuilder::addPreconditions(const TransactionPreconditions& preconditions)
+{
+    m_preconditions = preconditions;
+    // Match the legacy invariant: presence of TimeBounds (with or without
+    // a real maxTime) flags the timeout as deliberately handled.
+    if (m_preconditions.getTimeBounds()) {
+        m_timeoutSet = true;
+    }
+    return *this;
+}
+
+TransactionBuilder& TransactionBuilder::setLedgerBounds(LedgerBounds* ledgerBounds)
+{
+    m_preconditions.setLedgerBounds(ledgerBounds);
+    return *this;
+}
+
+TransactionBuilder& TransactionBuilder::setMinSeqNumber(qint64 seqNum)
+{
+    m_preconditions.setMinSeqNumber(new qint64(seqNum));
+    return *this;
+}
+
+TransactionBuilder& TransactionBuilder::setMinSeqAge(quint64 minSeqAge)
+{
+    m_preconditions.setMinSeqAge(minSeqAge);
+    return *this;
+}
+
+TransactionBuilder& TransactionBuilder::setMinSeqLedgerGap(quint32 gap)
+{
+    m_preconditions.setMinSeqLedgerGap(gap);
+    return *this;
+}
+
+TransactionBuilder& TransactionBuilder::addExtraSigner(const SignerKey& key)
+{
+    m_preconditions.addExtraSigner(key);
     return *this;
 }
 
@@ -137,7 +176,8 @@ TransactionBuilder& TransactionBuilder::setBaseFee(quint32 baseFee)
 Transaction* TransactionBuilder::build()
 {
     // Ensure setTimeout was called or maxTime is set.
-    if ((!m_timeBounds || (m_timeBounds && m_timeBounds->getMaxTime() == 0)) && !m_timeoutSet) {
+    TimeBounds* tb = m_preconditions.getTimeBounds();
+    if ((!tb || (tb && tb->getMaxTime() == 0)) && !m_timeoutSet) {
         throw std::runtime_error("TimeBounds has to be set or you must call setTimeout(TIMEOUT_INFINITE).");
     }
 
@@ -167,7 +207,7 @@ Transaction* TransactionBuilder::build()
         m_sourceAccount->getIncrementedSequenceNumber(),
         m_operations,
         m_memo,
-        m_timeBounds,
+        std::move(m_preconditions),
         m_network);
 
     // Bump sequence only after Transaction ctor succeeded.
@@ -175,7 +215,8 @@ Transaction* TransactionBuilder::build()
 
     // Resources now owned by the Transaction.
     m_memo = nullptr;
-    m_timeBounds = nullptr;
+    // m_preconditions was already moved-from above; ensure it's reset for reuse.
+    m_preconditions = TransactionPreconditions();
     m_operations.clear();
 
     return transaction;

@@ -30,8 +30,8 @@ public:
         MUXED_ACCOUNT = (12 << 3), //M
         SEED = (18 << 3), // S
         PRE_AUTH_TX = (19 << 3), // T
-        SHA256_HASH = (23 << 3) // X
-
+        SHA256_HASH = (23 << 3), // X
+        SIGNED_PAYLOAD = (15 << 3) // P — SEP-23 / CAP-40
     };
 
     static QString encodeStellarAccountId(QByteArray data) {
@@ -143,6 +143,16 @@ public:
     static QByteArray decodeSha256Hash(QString data) {
         return decodeCheck(VersionByte::SHA256_HASH, data.toLatin1());
     }
+
+    /**
+     * SEP-23 / CAP-40 signed payload signer (P-strkey).
+     *
+     * Encoded body = ed25519 pubkey (32) || payloadLen (uint32 BE) ||
+     *                payload bytes (0..64) || zero padding to multiple of 4.
+     */
+    static QString encodeSignedPayload(QByteArray ed25519, QByteArray payload);
+    /** Returns a pair {ed25519 (32 bytes), payload (0..64 bytes)}. */
+    static QPair<QByteArray, QByteArray> decodeSignedPayload(QString data);
 
     static QByteArray encodeCheck(VersionByte versionByte, QByteArray data);
 

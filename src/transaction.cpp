@@ -18,15 +18,27 @@ Transaction::Transaction(AccountConverter accountConverter, QString sourceAccoun
     m_operations = operations;
     m_fee = fee;
     m_memo =(memo) ? memo : Memo::none();
-    m_timeBounds = timeBounds;
+    // Wrap legacy TimeBounds* into the preconditions bundle (takes ownership).
+    m_preconditions.setTimeBounds(timeBounds);
+}
+
+Transaction::Transaction(AccountConverter accountConverter, QString sourceAccount, qint64 fee, qint64 sequenceNumber, QVector<Operation *> operations, Memo *memo, TransactionPreconditions preconditions, Network *network)
+    :AbstractTransaction(accountConverter, network),m_envelopeType(stellar::EnvelopeType::ENVELOPE_TYPE_TX)
+{
+    m_sourceAccount = checkNotNull(sourceAccount, "sourceAccount cannot be null");
+    m_sequenceNumber=sequenceNumber;
+    checkArgument(operations.length() > 0, "At least one operation required");
+    m_operations = operations;
+    m_fee = fee;
+    m_memo = (memo) ? memo : Memo::none();
+    // Move-assign so any owned pointers (TimeBounds etc.) keep their identity.
+    m_preconditions = std::move(preconditions);
 }
 
 Transaction::~Transaction(){
     m_sourceAccount.fill('\0');
     if(m_memo)
         delete m_memo;
-    if(m_timeBounds)
-        delete m_timeBounds;
     for(Operation * o : m_operations){
         delete o;
     }
@@ -67,7 +79,7 @@ Network *Transaction::getNetwork() const
 
 TimeBounds *Transaction::getTimeBounds() const
 {
-    return m_timeBounds;
+    return m_preconditions.getTimeBounds();
 }
 
 QVector<Operation *> Transaction::getOperations() const{
@@ -121,11 +133,13 @@ stellar::TransactionV0 Transaction::toV0Xdr(AccountConverter accountConverter) c
     stellar::TransactionV0 transaction;
 
     transaction.memo = m_memo->toXdr();
-    if(m_timeBounds)
-    {
+    // TransactionV0 only carries TimeBounds (no V2 preconditions). If the
+    // caller set V2-only fields, they're silently dropped on the V0 path.
+    TimeBounds* tb = m_preconditions.getTimeBounds();
+    if (tb) {
         stellar::TimeBounds& tm = transaction.timeBounds.filler();
-        tm.minTime=static_cast<quint64>(m_timeBounds->getMinTime());
-        tm.maxTime=static_cast<quint64>(m_timeBounds->getMaxTime());
+        tm.minTime=static_cast<quint64>(tb->getMinTime());
+        tm.maxTime=static_cast<quint64>(tb->getMaxTime());
     }
     // fee
     transaction.fee = m_fee;
@@ -146,12 +160,8 @@ stellar::Transaction Transaction::toV1Xdr(AccountConverter accountConverter) con
     stellar::Transaction transaction;
 
     transaction.memo = m_memo->toXdr();
-    if(m_timeBounds)
-    {
-        stellar::TimeBounds& tm = transaction.timeBounds.filler();
-        tm.minTime=static_cast<quint64>(m_timeBounds->getMinTime());
-        tm.maxTime=static_cast<quint64>(m_timeBounds->getMaxTime());
-    }
+    // CAP-21 — emits PRECOND_NONE / TIME / V2 based on which fields are set.
+    transaction.cond = m_preconditions.toXdr();
     // fee
     transaction.fee = m_fee;
     // sequenceNumber
@@ -200,7 +210,7 @@ Transaction *Transaction::fromV1EnvelopeXdr(AccountConverter accountConverter, s
     {
         ops.append(Operation::fromXdr(accountConverter, op));
     }
-    Transaction * t = new Transaction(accountConverter, sourceAccount,envelope.tx.fee,envelope.tx.seqNum,ops,Memo::fromXdr(envelope.tx.memo), envelope.tx.timeBounds.filled ? TimeBounds::fromXdr(envelope.tx.timeBounds.value) : nullptr, network);
+    Transaction * t = new Transaction(accountConverter, sourceAccount,envelope.tx.fee,envelope.tx.seqNum,ops,Memo::fromXdr(envelope.tx.memo), TransactionPreconditions::fromXdr(envelope.tx.cond), network);
     t->m_envelopeType = stellar::EnvelopeType::ENVELOPE_TYPE_TX;
     for (stellar::DecoratedSignature& signature : envelope.signatures.value) {
         t->m_signatures.append(signature);

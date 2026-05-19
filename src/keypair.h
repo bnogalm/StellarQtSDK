@@ -145,6 +145,13 @@ public:
      stellar::DecoratedSignature signDecorated(QByteArray data);
 
      /**
+      * CAP-40 — signs an arbitrary payload and produces a DecoratedSignature
+      * whose `hint` is the standard hint XORed with the last 4 bytes of the
+      * payload (right-padded with zeros if shorter than 4 bytes).
+      */
+     stellar::DecoratedSignature signPayloadDecorated(QByteArray signerPayload);
+
+     /**
       * Verify the provided data and signature match this keypair's public key.
       * @param data The data that was signed.
       * @param signature The signature.

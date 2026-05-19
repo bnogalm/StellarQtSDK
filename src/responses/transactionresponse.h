@@ -100,6 +100,77 @@ public:
 
 
 /**
+ * CAP-21 — preconditions block exposed by Horizon for V2-wrapped transactions.
+ * Numeric uint64 fields (min_time, max_time, min_account_sequence,
+ * min_account_sequence_age) are kept as strings to preserve full precision.
+ */
+class TimeBounds {
+    Q_GADGET
+    Q_PROPERTY(QString min_time MEMBER m_minTime)
+    Q_PROPERTY(QString max_time MEMBER m_maxTime)
+    QString m_minTime;
+    QString m_maxTime;
+public:
+    QString getMinTime() const { return m_minTime; }
+    QString getMaxTime() const { return m_maxTime; }
+    bool operator==(const TimeBounds& other) const
+    {
+        return m_minTime == other.m_minTime && m_maxTime == other.m_maxTime;
+    }
+    bool operator!=(const TimeBounds& other) const { return !(*this == other); }
+};
+
+class LedgerBounds {
+    Q_GADGET
+    Q_PROPERTY(quint32 min_ledger MEMBER m_minLedger)
+    Q_PROPERTY(quint32 max_ledger MEMBER m_maxLedger)
+    quint32 m_minLedger = 0;
+    quint32 m_maxLedger = 0;
+public:
+    quint32 getMinLedger() const { return m_minLedger; }
+    quint32 getMaxLedger() const { return m_maxLedger; }
+    bool operator==(const LedgerBounds& other) const
+    {
+        return m_minLedger == other.m_minLedger && m_maxLedger == other.m_maxLedger;
+    }
+    bool operator!=(const LedgerBounds& other) const { return !(*this == other); }
+};
+
+class Preconditions {
+    Q_GADGET
+    Q_PROPERTY(TimeBounds timebounds MEMBER m_timeBounds)
+    Q_PROPERTY(LedgerBounds ledgerbounds MEMBER m_ledgerBounds)
+    Q_PROPERTY(QString min_account_sequence MEMBER m_minAccountSequence)
+    Q_PROPERTY(QString min_account_sequence_age MEMBER m_minAccountSequenceAge)
+    Q_PROPERTY(quint32 min_account_sequence_ledger_gap MEMBER m_minAccountSequenceLedgerGap)
+    Q_PROPERTY(QStringList extra_signers MEMBER m_extraSigners)
+    TimeBounds m_timeBounds;
+    LedgerBounds m_ledgerBounds;
+    QString m_minAccountSequence;
+    QString m_minAccountSequenceAge;
+    quint32 m_minAccountSequenceLedgerGap = 0;
+    QStringList m_extraSigners;
+public:
+    const TimeBounds& getTimeBounds() const { return m_timeBounds; }
+    const LedgerBounds& getLedgerBounds() const { return m_ledgerBounds; }
+    QString getMinAccountSequence() const { return m_minAccountSequence; }
+    QString getMinAccountSequenceAge() const { return m_minAccountSequenceAge; }
+    quint32 getMinAccountSequenceLedgerGap() const { return m_minAccountSequenceLedgerGap; }
+    QStringList getExtraSigners() const { return m_extraSigners; }
+    bool operator==(const Preconditions& other) const
+    {
+        return m_timeBounds == other.m_timeBounds
+            && m_ledgerBounds == other.m_ledgerBounds
+            && m_minAccountSequence == other.m_minAccountSequence
+            && m_minAccountSequenceAge == other.m_minAccountSequenceAge
+            && m_minAccountSequenceLedgerGap == other.m_minAccountSequenceLedgerGap
+            && m_extraSigners == other.m_extraSigners;
+    }
+    bool operator!=(const Preconditions& other) const { return !(*this == other); }
+};
+
+
+/**
  * InnerTransaction is only present in a TransactionResponse if the transaction is a fee bump transaction or is
  * wrapped by a fee bump transaction. The object has three fields: the hash of the inner transaction wrapped by the
  * fee bump transaction, the max fee set in the inner transaction, and the signatures present in the inner
@@ -171,6 +242,7 @@ class TransactionResponse : public Response
     Q_PROPERTY(QStringList signatures MEMBER m_signatures)
     Q_PROPERTY(TransactionResponseAttach::FeeBumpTransaction fee_bump_transaction MEMBER m_feeBumpTransaction)
     Q_PROPERTY(TransactionResponseAttach::InnerTransaction  inner_transaction MEMBER m_innerTransaction)
+    Q_PROPERTY(TransactionResponseAttach::Preconditions preconditions MEMBER m_preconditions)
 
     Q_PROPERTY(QString memo_type READ memoType WRITE setMemoType)
     Q_PROPERTY(QByteArray memo READ memo WRITE setMemo)
@@ -195,6 +267,7 @@ class TransactionResponse : public Response
     QStringList m_signatures;
     TransactionResponseAttach::FeeBumpTransaction m_feeBumpTransaction;
     TransactionResponseAttach::InnerTransaction m_innerTransaction;
+    TransactionResponseAttach::Preconditions m_preconditions;
 
 
     QString m_sourceAccount;
@@ -243,6 +316,7 @@ public:
 
       TransactionResponseAttach::FeeBumpTransaction& getFeeBump();
       TransactionResponseAttach::InnerTransaction& getInner();
+      const TransactionResponseAttach::Preconditions& getPreconditions() const { return m_preconditions; }
 
       QString sourceAccount() const;
       QString memoType() const;
@@ -259,6 +333,9 @@ public:
 Q_DECLARE_METATYPE(TransactionResponseAttach::Links)
 Q_DECLARE_METATYPE(TransactionResponseAttach::FeeBumpTransaction)
 Q_DECLARE_METATYPE(TransactionResponseAttach::InnerTransaction )
+Q_DECLARE_METATYPE(TransactionResponseAttach::TimeBounds)
+Q_DECLARE_METATYPE(TransactionResponseAttach::LedgerBounds)
+Q_DECLARE_METATYPE(TransactionResponseAttach::Preconditions)
 Q_DECLARE_METATYPE(TransactionResponse*)
 #endif // TRANSACTIONRESPONSE_H
 

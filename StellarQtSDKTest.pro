@@ -41,6 +41,10 @@ HEADERS += \
     test/changetrustassettest.h \
     test/operations/liquiditypooldepositoperationtest.h \
     test/operations/liquiditypoolwithdrawoperationtest.h \
+    test/signerkeytest.h \
+    test/transactionpreconditionstest.h \
+    test/transactionbuilderpreconditionstest.h \
+    test/responses/transactionresponsepreconditionstest.h \
     test/responses/liquiditypoolresponsetest.h \
     test/requests/liquiditypoolsrequestbuildertest.h \
     test/requests/horizon15filterstest.h \

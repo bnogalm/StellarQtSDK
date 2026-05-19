@@ -265,6 +265,24 @@ stellar::DecoratedSignature KeyPair::signDecorated(QByteArray data) {
     return decoratedSignature;
 }
 
+stellar::DecoratedSignature KeyPair::signPayloadDecorated(QByteArray signerPayload) {
+    stellar::DecoratedSignature signature = this->signDecorated(signerPayload);
+    // CAP-40: hint = pubkey_hint XOR last 4 bytes of payload (zero-padded).
+    quint8 payloadTail[4] = {0, 0, 0, 0};
+    const int n = signerPayload.size();
+    if (n >= 4) {
+        std::memcpy(payloadTail,
+                    signerPayload.constData() + (n - 4),
+                    4);
+    } else if (n > 0) {
+        std::memcpy(payloadTail, signerPayload.constData(), n);
+    }
+    for (int i = 0; i < 4; ++i) {
+        signature.hint.signatureHint[i] = signature.hint.signatureHint[i] ^ payloadTail[i];
+    }
+    return signature;
+}
+
 bool KeyPair::verify(QByteArray data, QByteArray signature) {
     if(signature.size()>=64)
         return ed25519_verify((uchar*)signature.data(),(uchar*)data.data(),data.length(),this->m_publicKey);

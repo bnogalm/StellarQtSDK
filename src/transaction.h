@@ -8,6 +8,7 @@
 #include <exception>
 #include "transactionbuilderaccount.h"
 #include "timebounds.h"
+#include "transactionpreconditions.h"
 #include "abstracttransaction.h"
 #include "stellardeprecated.h"
 #include "transactionbuilder.h"
@@ -17,18 +18,21 @@ class FeeBumpTransaction;
  * Represents <a href="https://www.stellar.org/developers/learn/concepts/transactions.html" target="_blank">Transaction</a> in Stellar network.
  */
 class Transaction : public AbstractTransaction
-{    
+{
     qint64 m_fee;
     QString m_sourceAccount;
     qint64 m_sequenceNumber;
     QVector<Operation*> m_operations;
     Memo *m_memo;
-    TimeBounds *m_timeBounds;
+    TransactionPreconditions m_preconditions;
 
     stellar::EnvelopeType m_envelopeType;
     friend class ::TransactionBuilder;
     friend class FeeBumpTransaction;
+    /** Legacy ctor — only time bounds. The TimeBounds* is consumed (TransactionPreconditions takes ownership). */
     Transaction(AccountConverter accountConverter, QString sourceAccount, qint64 fee, qint64 sequenceNumber, QVector<Operation*> operations, Memo* memo, TimeBounds *timeBounds, Network* network);
+    /** CAP-21 ctor — full preconditions bundle. Pass via std::move to preserve pointer identity. */
+    Transaction(AccountConverter accountConverter, QString sourceAccount, qint64 fee, qint64 sequenceNumber, QVector<Operation*> operations, Memo* memo, TransactionPreconditions preconditions, Network* network);
 
 
 public:
@@ -55,6 +59,9 @@ public:
       * @return TimeBounds, or null (representing no time restrictions)
       */
      TimeBounds* getTimeBounds() const;
+
+     /** Full CAP-21 preconditions bundle (covers TimeBounds plus all V2 fields). */
+     const TransactionPreconditions& getPreconditions() const { return m_preconditions; }
 
      /**
       * Returns operations in this transaction.

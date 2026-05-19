@@ -158,8 +158,13 @@ private slots:
 
 
 
-        QCOMPARE(decodedTransaction.timeBounds.value.minTime, 42UL);
-        QCOMPARE(decodedTransaction.timeBounds.value.maxTime, 1337UL);
+        // CAP-21: tx.timeBounds was generalized to tx.cond. For a plain
+        // time-bounded transaction the discriminant is PRECOND_TIME and the
+        // TimeBounds lives in the `timeBounds` union member.
+        QCOMPARE(static_cast<int>(decodedTransaction.cond.type),
+                 static_cast<int>(stellar::PreconditionType::PRECOND_TIME));
+        QCOMPARE(decodedTransaction.cond.timeBounds.minTime, 42UL);
+        QCOMPARE(decodedTransaction.cond.timeBounds.maxTime, 1337UL);
         auto xdrEnvelope = transaction->toEnvelopeXdr();
         Transaction* transaction2 = dynamic_cast<Transaction*>(Transaction::fromEnvelopeXdr(xdrEnvelope));
         //qDebug() << "HASH "<<dynamic_cast<MemoHash*>(transaction->getMemo())->getHexValue();
@@ -291,8 +296,10 @@ private slots:
       QDataStream streamRead(&data,QIODevice::ReadOnly);
       stellar::Transaction decodedTransaction;
       streamRead >> decodedTransaction;
-      QCOMPARE(decodedTransaction.timeBounds.value.minTime, 42UL);
-      QCOMPARE(decodedTransaction.timeBounds.value.maxTime, 0UL);
+      QCOMPARE(static_cast<int>(decodedTransaction.cond.type),
+               static_cast<int>(stellar::PreconditionType::PRECOND_TIME));
+      QCOMPARE(decodedTransaction.cond.timeBounds.minTime, 42UL);
+      QCOMPARE(decodedTransaction.cond.timeBounds.maxTime, 0UL);
     }
 
     void testBuilderSuccessPublic() {

@@ -36,7 +36,8 @@ namespace stellar
     {
         SIGNER_KEY_TYPE_ED25519 = static_cast<qint32>(CryptoKeyType::KEY_TYPE_ED25519),
         SIGNER_KEY_TYPE_PRE_AUTH_TX = static_cast<qint32>(CryptoKeyType::KEY_TYPE_PRE_AUTH_TX),  // SHA-256 Hash of TransactionSignaturePayload structure
-        SIGNER_KEY_TYPE_HASH_X = static_cast<qint32>(CryptoKeyType::KEY_TYPE_HASH_X)
+        SIGNER_KEY_TYPE_HASH_X = static_cast<qint32>(CryptoKeyType::KEY_TYPE_HASH_X),
+        SIGNER_KEY_TYPE_ED25519_SIGNED_PAYLOAD = 3  // CAP-40 — pubkey + opaque<=64> payload
     };
 
     typedef quint8 Key[32];
@@ -81,6 +82,17 @@ namespace stellar
        return in;
     }
 
+    // CAP-40 — ed25519 + signed payload variant of SignerKey.
+    // Kept as a trivial fixed-size struct so the enclosing SignerKey union
+    // stays POD-like. payloadLen tracks the active length (0..MAX_PAYLOAD).
+    struct Ed25519SignedPayload
+    {
+        static const quint32 MAX_PAYLOAD = 64;
+        uint256 ed25519;
+        quint32 payloadLen;
+        quint8 payload[64];
+    };
+
     struct SignerKey
     {
         SignerKeyType type;
@@ -88,6 +100,7 @@ namespace stellar
         uint256 ed25519;
         uint256 preAuthTx;
         uint256 hashX;
+        Ed25519SignedPayload ed25519SignedPayload;
         };
 
         bool operator==(const SignerKey &other) const
@@ -101,6 +114,14 @@ namespace stellar
                     return memcmp(preAuthTx,other.preAuthTx,sizeof(preAuthTx))==0;
                 case SignerKeyType::SIGNER_KEY_TYPE_HASH_X:
                     return memcmp(hashX,other.hashX,sizeof(hashX))==0;
+                case SignerKeyType::SIGNER_KEY_TYPE_ED25519_SIGNED_PAYLOAD:
+                    return ed25519SignedPayload.payloadLen == other.ed25519SignedPayload.payloadLen
+                        && memcmp(ed25519SignedPayload.ed25519,
+                                  other.ed25519SignedPayload.ed25519,
+                                  sizeof(ed25519SignedPayload.ed25519)) == 0
+                        && memcmp(ed25519SignedPayload.payload,
+                                  other.ed25519SignedPayload.payload,
+                                  ed25519SignedPayload.payloadLen) == 0;
                 }
             }
             return false;
@@ -115,6 +136,19 @@ namespace stellar
             out << obj.preAuthTx; break;
         case SignerKeyType::SIGNER_KEY_TYPE_HASH_X:
             out << obj.hashX; break;
+        case SignerKeyType::SIGNER_KEY_TYPE_ED25519_SIGNED_PAYLOAD: {
+            out << obj.ed25519SignedPayload.ed25519;
+            out << obj.ed25519SignedPayload.payloadLen;
+            const quint32 n = obj.ed25519SignedPayload.payloadLen;
+            if (n > Ed25519SignedPayload::MAX_PAYLOAD)
+                throw std::runtime_error("signed payload exceeds 64 bytes");
+            out.writeRawData(reinterpret_cast<const char*>(obj.ed25519SignedPayload.payload), n);
+            // Pad to multiple of 4 bytes (XDR opaque<> convention).
+            quint8 zero[4] = {0,0,0,0};
+            const quint32 pad = (4 - (n % 4)) % 4;
+            if (pad) out.writeRawData(reinterpret_cast<const char*>(zero), pad);
+            break;
+        }
         default: break;
         }
        return out;
@@ -129,6 +163,21 @@ namespace stellar
             in >> obj.preAuthTx; break;
         case SignerKeyType::SIGNER_KEY_TYPE_HASH_X:
             in >> obj.hashX; break;
+        case SignerKeyType::SIGNER_KEY_TYPE_ED25519_SIGNED_PAYLOAD: {
+            in >> obj.ed25519SignedPayload.ed25519;
+            in >> obj.ed25519SignedPayload.payloadLen;
+            const quint32 n = obj.ed25519SignedPayload.payloadLen;
+            if (n > Ed25519SignedPayload::MAX_PAYLOAD)
+                throw std::runtime_error("signed payload exceeds 64 bytes");
+            in.readRawData(reinterpret_cast<char*>(obj.ed25519SignedPayload.payload),
+                           static_cast<int>(n));
+            const quint32 pad = (4 - (n % 4)) % 4;
+            if (pad) {
+                quint8 zero[4];
+                in.readRawData(reinterpret_cast<char*>(zero), static_cast<int>(pad));
+            }
+            break;
+        }
         default: break;
         }
        return in;
