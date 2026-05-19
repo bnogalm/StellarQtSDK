@@ -5,7 +5,7 @@ DEFINES += STELLAR_QT_REPLY_TIMEOUT=30000
 DEFINES *= ED25519_NO_SEED
 
 DEFINES += STELLAR_QT_SDK_CLIENT_NAME=\"\\\"qtcpp-stellar-sdk\\\"\"
-DEFINES += STELLAR_QT_SDK_CLIENT_VERSION=\"\\\"0.5.0\\\"\"
+DEFINES += STELLAR_QT_SDK_CLIENT_VERSION=\"\\\"0.6.0\\\"\"
 
 #DEFINES += STELLAR_QT_AUTOSET_BASE_FEE
 
@@ -29,6 +29,11 @@ INCLUDEPATH *=  $$PWD/src/
 
 
 SOURCES += \
+    $$PWD/src/liquiditypool.cpp \
+    $$PWD/src/changetrustasset.cpp \
+    $$PWD/src/trustlineasset.cpp \
+    $$PWD/src/liquiditypooldepositoperation.cpp \
+    $$PWD/src/liquiditypoolwithdrawoperation.cpp \
     $$PWD/src/responses/problem.cpp \
     $$PWD/src/responses/effects/liquiditypooleffectsresponses.cpp \
     $$PWD/src/responses/liquiditypoolresponse.cpp \
@@ -229,6 +234,11 @@ DEFINES += QT_DEPRECATED_WARNINGS
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 HEADERS += \
+    $$PWD/src/liquiditypool.h \
+    $$PWD/src/changetrustasset.h \
+    $$PWD/src/trustlineasset.h \
+    $$PWD/src/liquiditypooldepositoperation.h \
+    $$PWD/src/liquiditypoolwithdrawoperation.h \
     $$PWD/src/responses/assetamount.h \
     $$PWD/src/responses/liquiditypool.h \
     $$PWD/src/responses/liquiditypoolclaimableassetamount.h \

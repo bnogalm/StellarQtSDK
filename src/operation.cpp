@@ -31,6 +31,9 @@
 #include "clawbackclaimablebalanceoperation.h"
 #include "settrustlineflagsoperation.h"
 
+#include "liquiditypooldepositoperation.h"
+#include "liquiditypoolwithdrawoperation.h"
+
 
 Operation::Operation()
 {
@@ -183,6 +186,12 @@ Operation *Operation::fromXdr(AccountConverter accountConverter, stellar::Operat
       break;
     case stellar::OperationType::SET_TRUST_LINE_FLAGS:
       operation = SetTrustlineFlagsOperation::build(xdr.operationSetTrustLineFlags);
+      break;
+    case stellar::OperationType::LIQUIDITY_POOL_DEPOSIT:
+      operation = LiquidityPoolDepositOperation::build(xdr.operationLiquidityPoolDeposit);
+      break;
+    case stellar::OperationType::LIQUIDITY_POOL_WITHDRAW:
+      operation = LiquidityPoolWithdrawOperation::build(xdr.operationLiquidityPoolWithdraw);
       break;
     default:
         throw std::runtime_error("Unknown operation body");

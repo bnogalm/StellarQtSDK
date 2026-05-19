@@ -109,7 +109,9 @@ namespace stellar
         REVOKE_SPONSORSHIP = 18,
         CLAWBACK = 19,
         CLAWBACK_CLAIMABLE_BALANCE = 20,
-        SET_TRUST_LINE_FLAGS = 21
+        SET_TRUST_LINE_FLAGS = 21,
+        LIQUIDITY_POOL_DEPOSIT = 22,
+        LIQUIDITY_POOL_WITHDRAW = 23
     };
 
     /* CreateAccount
@@ -337,9 +339,14 @@ namespace stellar
         Threshold: med
         Result: ChangeTrustResult
     */
+    /**
+     * CAP-38: line is a ChangeTrustAsset union (adds POOL_SHARE variant).
+     * Wire format is identical to the legacy Asset union for the 3 pre-existing
+     * variants (NATIVE/ALPHANUM4/ALPHANUM12).
+     */
     struct ChangeTrustOp
     {
-        Asset line;
+        ChangeTrustAsset line;
 
         // if limit is set to 0, deletes the trust line
         qint64 limit;
@@ -743,6 +750,49 @@ namespace stellar
         return in;
     }
 
+    /* CAP-38 Protocol 18 — deposit into a liquidity pool.
+       Threshold: med
+       Result: LiquidityPoolDepositResult
+    */
+    struct LiquidityPoolDepositOp
+    {
+        PoolID liquidityPoolID;
+        qint64 maxAmountA;  // maximum amount of first asset to deposit
+        qint64 maxAmountB;  // maximum amount of second asset to deposit
+        Price minPrice;     // minimum depositA/depositB
+        Price maxPrice;     // maximum depositA/depositB
+    };
+    inline QDataStream &operator<<(QDataStream &out, const LiquidityPoolDepositOp &obj) {
+        out << obj.liquidityPoolID << obj.maxAmountA << obj.maxAmountB
+            << obj.minPrice << obj.maxPrice;
+        return out;
+    }
+    inline QDataStream &operator>>(QDataStream &in, LiquidityPoolDepositOp &obj) {
+        in >> obj.liquidityPoolID >> obj.maxAmountA >> obj.maxAmountB
+           >> obj.minPrice >> obj.maxPrice;
+        return in;
+    }
+
+    /* CAP-38 Protocol 18 — withdraw from a liquidity pool.
+       Threshold: med
+       Result: LiquidityPoolWithdrawResult
+    */
+    struct LiquidityPoolWithdrawOp
+    {
+        PoolID liquidityPoolID;
+        qint64 amount;      // amount of pool shares to withdraw
+        qint64 minAmountA;  // minimum amount of first asset to withdraw
+        qint64 minAmountB;  // minimum amount of second asset to withdraw
+    };
+    inline QDataStream &operator<<(QDataStream &out, const LiquidityPoolWithdrawOp &obj) {
+        out << obj.liquidityPoolID << obj.amount << obj.minAmountA << obj.minAmountB;
+        return out;
+    }
+    inline QDataStream &operator>>(QDataStream &in, LiquidityPoolWithdrawOp &obj) {
+        in >> obj.liquidityPoolID >> obj.amount >> obj.minAmountA >> obj.minAmountB;
+        return in;
+    }
+
     /* An operation is the lowest unit of work that a transaction does */
     struct Operation
     {
@@ -765,6 +815,8 @@ namespace stellar
         ClawbackOp operationClawback;
         ClawbackClaimableBalanceOp operationClawbackClaimableBalance;
         SetTrustLineFlagsOp operationSetTrustLineFlags;
+        LiquidityPoolDepositOp operationLiquidityPoolDeposit;
+        LiquidityPoolWithdrawOp operationLiquidityPoolWithdraw;
 
         //non trivials, you MUST call contructor explicity to use them
         PathPaymentStrictReceiveOp operationPathPaymentStrictReceive;
@@ -798,6 +850,7 @@ namespace stellar
         ManageDataOp& fillManageDataOp();
         PathPaymentStrictSendOp& fillPathPaymentStrictSendOp();
         RevokeSponsorshipOp& fillRevokeSponsorshipOp();
+        ChangeTrustOp& fillChangeTrustOp();
 
     };
     inline QDataStream &operator<<(QDataStream &out, const  Operation &obj) {
@@ -847,6 +900,10 @@ namespace stellar
             out << obj.operationClawbackClaimableBalance; break;
         case OperationType::SET_TRUST_LINE_FLAGS:
             out << obj.operationSetTrustLineFlags; break;
+        case OperationType::LIQUIDITY_POOL_DEPOSIT:
+            out << obj.operationLiquidityPoolDeposit; break;
+        case OperationType::LIQUIDITY_POOL_WITHDRAW:
+            out << obj.operationLiquidityPoolWithdraw; break;
 
         //default: break;
         }
@@ -873,6 +930,7 @@ namespace stellar
             new (&obj.operationSetOptions) SetOptionsOp();
             in >> obj.operationSetOptions; break;
         case OperationType::CHANGE_TRUST:
+            new (&obj.operationChangeTrust) ChangeTrustOp();
             in >> obj.operationChangeTrust; break;
         case OperationType::ALLOW_TRUST:
             in >> obj.operationAllowTrust; break;
@@ -908,6 +966,10 @@ namespace stellar
             in >> obj.operationClawbackClaimableBalance; break;
         case OperationType::SET_TRUST_LINE_FLAGS:
             in >> obj.operationSetTrustLineFlags; break;
+        case OperationType::LIQUIDITY_POOL_DEPOSIT:
+            in >> obj.operationLiquidityPoolDeposit; break;
+        case OperationType::LIQUIDITY_POOL_WITHDRAW:
+            in >> obj.operationLiquidityPoolWithdraw; break;
         //default: break;
         }
        return in;
@@ -2202,6 +2264,45 @@ namespace stellar
     }
 
 
+    /******* LiquidityPoolDeposit / LiquidityPoolWithdraw Result (CAP-38) ********/
+
+    enum class LiquidityPoolDepositResultCode : qint32
+    {
+        LIQUIDITY_POOL_DEPOSIT_SUCCESS = 0,
+        LIQUIDITY_POOL_DEPOSIT_MALFORMED = -1,
+        LIQUIDITY_POOL_DEPOSIT_NO_TRUST = -2,
+        LIQUIDITY_POOL_DEPOSIT_NOT_AUTHORIZED = -3,
+        LIQUIDITY_POOL_DEPOSIT_UNDERFUNDED = -4,
+        LIQUIDITY_POOL_DEPOSIT_LINE_FULL = -5,
+        LIQUIDITY_POOL_DEPOSIT_BAD_PRICE = -6,
+        LIQUIDITY_POOL_DEPOSIT_POOL_FULL = -7
+    };
+    XDR_SERIALIZER(LiquidityPoolDepositResultCode)
+
+    struct alignas(4) LiquidityPoolDepositResult
+    {
+        LiquidityPoolDepositResultCode code;
+    };
+    XDR_SERIALIZER(LiquidityPoolDepositResult)
+
+    enum class LiquidityPoolWithdrawResultCode : qint32
+    {
+        LIQUIDITY_POOL_WITHDRAW_SUCCESS = 0,
+        LIQUIDITY_POOL_WITHDRAW_MALFORMED = -1,
+        LIQUIDITY_POOL_WITHDRAW_NO_TRUST = -2,
+        LIQUIDITY_POOL_WITHDRAW_UNDERFUNDED = -3,
+        LIQUIDITY_POOL_WITHDRAW_LINE_FULL = -4,
+        LIQUIDITY_POOL_WITHDRAW_UNDER_MINIMUM = -5
+    };
+    XDR_SERIALIZER(LiquidityPoolWithdrawResultCode)
+
+    struct alignas(4) LiquidityPoolWithdrawResult
+    {
+        LiquidityPoolWithdrawResultCode code;
+    };
+    XDR_SERIALIZER(LiquidityPoolWithdrawResult)
+
+
     /* High level Operation Result */
 
     enum class OperationResultCode : qint32
@@ -2236,6 +2337,8 @@ namespace stellar
         BeginSponsoringFutureReservesResult beginSponsoringFutureReservesResult;
         EndSponsoringFutureReservesResult endSponsoringFutureReservesResult;
         RevokeSponsorshipResult revokeSponsorshipResult;
+        LiquidityPoolDepositResult liquidityPoolDepositResult;
+        LiquidityPoolWithdrawResult liquidityPoolWithdrawResult;
 
 
         //no trivial
@@ -2314,6 +2417,10 @@ namespace stellar
                 out << obj.endSponsoringFutureReservesResult; break;
             case OperationType::REVOKE_SPONSORSHIP:
                 out << obj.revokeSponsorshipResult; break;
+            case OperationType::LIQUIDITY_POOL_DEPOSIT:
+                out << obj.liquidityPoolDepositResult; break;
+            case OperationType::LIQUIDITY_POOL_WITHDRAW:
+                out << obj.liquidityPoolWithdrawResult; break;
             //default:break;
             }
             break;
@@ -2383,6 +2490,10 @@ namespace stellar
                 in >> obj.endSponsoringFutureReservesResult; break;
             case OperationType::REVOKE_SPONSORSHIP:
                 in >> obj.revokeSponsorshipResult; break;
+            case OperationType::LIQUIDITY_POOL_DEPOSIT:
+                in >> obj.liquidityPoolDepositResult; break;
+            case OperationType::LIQUIDITY_POOL_WITHDRAW:
+                in >> obj.liquidityPoolWithdrawResult; break;
             //default: break;
             }
             break;

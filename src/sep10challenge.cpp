@@ -435,7 +435,7 @@ QString Sep10Challenge::ChallengeTransaction::getMatchedHomeDomain() const
 
 int Sep10Challenge::ChallengeTransaction::hashCode() const
 {
-    return qHash(m_transaction->hash()) ^qHash(m_clientAccountId) ^qHash(m_matchedHomeDomain);
+    return static_cast<int>(qHash(m_transaction->hash()) ^ qHash(m_clientAccountId) ^ qHash(m_matchedHomeDomain));
 }
 
 bool Sep10Challenge::ChallengeTransaction::equals(const Sep10Challenge::ChallengeTransaction *other) const

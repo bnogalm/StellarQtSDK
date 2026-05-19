@@ -88,6 +88,16 @@ qt_add_library(StellarQtSDK STATIC
     src/inflationoperation.h
     src/keypair.cpp
     src/keypair.h
+    src/liquiditypool.cpp
+    src/liquiditypool.h
+    src/changetrustasset.cpp
+    src/changetrustasset.h
+    src/trustlineasset.cpp
+    src/trustlineasset.h
+    src/liquiditypooldepositoperation.cpp
+    src/liquiditypooldepositoperation.h
+    src/liquiditypoolwithdrawoperation.cpp
+    src/liquiditypoolwithdrawoperation.h
     src/managebuyofferoperation.cpp
     src/managebuyofferoperation.h
     src/managedataoperation.cpp
@@ -412,7 +422,7 @@ target_include_directories(StellarQtSDK PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} src)
 
 add_compile_definitions(
     STELLAR_QT_SDK_CLIENT_NAME=\"\\\"qtcpp-stellar-sdk\\\"\"
-    STELLAR_QT_SDK_CLIENT_VERSION=\"\\\"0.5.0\\\"\"
+    STELLAR_QT_SDK_CLIENT_VERSION=\"\\\"0.6.0\\\"\"
 )
 
 target_compile_definitions(StellarQtSDK PRIVATE

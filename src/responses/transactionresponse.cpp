@@ -3,7 +3,7 @@
 #include "../memo.h"
 TransactionResponse::TransactionResponse(QNetworkReply *reply)
     :Response(reply)
-    ,m_successful(QVariant::Bool)// we have to indicate the type or it will not be filled, it will stay returning isNull as true if it is not initialized
+    ,m_successful(QMetaType(QMetaType::Bool))// we have to indicate the type or it will not be filled, it will stay returning isNull as true if it is not initialized
     ,m_sourceAccountSequence(0)
     ,m_maxFee(0)
     ,m_feeCharged(0)
@@ -147,7 +147,7 @@ void TransactionResponse::setMemo(QByteArray memoData)
 
 void TransactionResponse::setSuccessful(QVariant successful)
 {
-    if(successful.type()==QVariant::Bool)
+    if(successful.userType()==QMetaType::Bool)
     {
         m_successful = successful;
     }

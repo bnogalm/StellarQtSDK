@@ -159,7 +159,7 @@ void Response::fillObject(const QMetaObject* mo, void* obj,const QJsonObject& js
 #ifdef STELLAR_QT_DEBUG_PARSER
             bool res;
 #endif
-            if(v.isNull()&& mp.type()==QVariant::String){
+            if(v.isNull()&& mp.userType()==QMetaType::QString){
                 v = QVariant::fromValue(QString());//null QString will fail if we dont do this
             }
             if(qobject){

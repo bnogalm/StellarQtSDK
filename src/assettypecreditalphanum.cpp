@@ -27,7 +27,7 @@ const KeyPair &AssetTypeCreditAlphaNum::getIssuer() const{
 }
 
 uint AssetTypeCreditAlphaNum::hashCode() const{
-    return qHash(m_issuer->getAccountId() + this->getCode());
+    return static_cast<uint>(qHash(m_issuer->getAccountId() + this->getCode()));
 }
 
 bool AssetTypeCreditAlphaNum::equals(Asset *object) {

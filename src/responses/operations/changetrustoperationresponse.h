@@ -22,6 +22,7 @@ class ChangeTrustOperationResponse : public OperationResponse
     Q_PROPERTY(QString asset_type READ assetType WRITE setAssetType)
     Q_PROPERTY(QString asset_code READ assetCode WRITE setAssetCode)
     Q_PROPERTY(QString asset_issuer READ assetIssuer WRITE setAssetIssuer)
+    Q_PROPERTY(QString liquidity_pool_id MEMBER m_liquidityPoolId)
     Q_PROPERTY(QString limit MEMBER m_limit)
 
     QString m_trustor;
@@ -32,6 +33,7 @@ class ChangeTrustOperationResponse : public OperationResponse
     KeyPair* m_trustorKeypair;
     KeyPair* m_trusteeKeypair;
     Asset *m_asset;
+    QString m_liquidityPoolId; // hex pool ID when asset_type=="liquidity_pool_shares"
     QString m_limit;
 
 public:
@@ -45,6 +47,8 @@ public:
     QString assetType() const;
     QString assetCode() const;
     QString assetIssuer() const;
+    /** Pool ID hex string when `asset_type=="liquidity_pool_shares"`. Empty otherwise. */
+    QString getLiquidityPoolId() const { return m_liquidityPoolId; }
     QString getLimit() const;
 public slots:
     void setTrustor(QString trustor);

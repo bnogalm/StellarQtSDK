@@ -23,6 +23,7 @@ stellar::Operation::Operation(const stellar::Operation &op){
         new (&operationSetOptions) SetOptionsOp();
         operationSetOptions = op.operationSetOptions; break;
     case OperationType::CHANGE_TRUST:
+        new (&operationChangeTrust) ChangeTrustOp();
         operationChangeTrust = op.operationChangeTrust; break;
     case OperationType::ALLOW_TRUST:
         operationAllowTrust = op.operationAllowTrust; break;
@@ -58,6 +59,10 @@ stellar::Operation::Operation(const stellar::Operation &op){
         operationClawbackClaimableBalance = op.operationClawbackClaimableBalance; break;
     case OperationType::SET_TRUST_LINE_FLAGS:
         operationSetTrustLineFlags = op.operationSetTrustLineFlags; break;
+    case OperationType::LIQUIDITY_POOL_DEPOSIT:
+        operationLiquidityPoolDeposit = op.operationLiquidityPoolDeposit; break;
+    case OperationType::LIQUIDITY_POOL_WITHDRAW:
+        operationLiquidityPoolWithdraw = op.operationLiquidityPoolWithdraw; break;
     //default: break;
     }
 }
@@ -83,6 +88,9 @@ void stellar::Operation::clear()
         break;
     case OperationType::CLAWBACK_CLAIMABLE_BALANCE:
         operationClawbackClaimableBalance.~ClawbackClaimableBalanceOp();
+        break;
+    case OperationType::CHANGE_TRUST:
+        operationChangeTrust.~ChangeTrustOp();
         break;
     default:
         break;
@@ -113,6 +121,7 @@ const stellar::Operation &stellar::Operation::operator =(const stellar::Operatio
         new (&operationSetOptions) SetOptionsOp();
         operationSetOptions = op.operationSetOptions; break;
     case OperationType::CHANGE_TRUST:
+        new (&operationChangeTrust) ChangeTrustOp();
         operationChangeTrust = op.operationChangeTrust; break;
     case OperationType::ALLOW_TRUST:
         operationAllowTrust = op.operationAllowTrust; break;
@@ -148,6 +157,10 @@ const stellar::Operation &stellar::Operation::operator =(const stellar::Operatio
         operationClawbackClaimableBalance = op.operationClawbackClaimableBalance; break;
     case OperationType::SET_TRUST_LINE_FLAGS:
         operationSetTrustLineFlags = op.operationSetTrustLineFlags; break;
+    case OperationType::LIQUIDITY_POOL_DEPOSIT:
+        operationLiquidityPoolDeposit = op.operationLiquidityPoolDeposit; break;
+    case OperationType::LIQUIDITY_POOL_WITHDRAW:
+        operationLiquidityPoolWithdraw = op.operationLiquidityPoolWithdraw; break;
     //default: break;
     }
     return *this;
@@ -206,6 +219,17 @@ stellar::RevokeSponsorshipOp &stellar::Operation::fillRevokeSponsorshipOp()
         new (&operationRevokeSponsorship) RevokeSponsorshipOp();
     }
     return operationRevokeSponsorship;
+}
+
+stellar::ChangeTrustOp &stellar::Operation::fillChangeTrustOp()
+{
+    if(type!=OperationType::CHANGE_TRUST)
+    {
+        clear();
+        type=OperationType::CHANGE_TRUST;
+        new (&operationChangeTrust) ChangeTrustOp();
+    }
+    return operationChangeTrust;
 }
 
 stellar::OperationResult::OperationResult():type(OperationType::CREATE_ACCOUNT)
@@ -283,6 +307,10 @@ stellar::OperationResult::OperationResult(const stellar::OperationResult &op)
         endSponsoringFutureReservesResult = op.endSponsoringFutureReservesResult; break;
     case OperationType::REVOKE_SPONSORSHIP:
         revokeSponsorshipResult = op.revokeSponsorshipResult; break;
+    case OperationType::LIQUIDITY_POOL_DEPOSIT:
+        liquidityPoolDepositResult = op.liquidityPoolDepositResult; break;
+    case OperationType::LIQUIDITY_POOL_WITHDRAW:
+        liquidityPoolWithdrawResult = op.liquidityPoolWithdrawResult; break;
     //default: break;
     }
 }
@@ -396,6 +424,10 @@ const stellar::OperationResult &stellar::OperationResult::operator =(const stell
         endSponsoringFutureReservesResult = op.endSponsoringFutureReservesResult; break;
     case OperationType::REVOKE_SPONSORSHIP:
         revokeSponsorshipResult = op.revokeSponsorshipResult; break;
+    case OperationType::LIQUIDITY_POOL_DEPOSIT:
+        liquidityPoolDepositResult = op.liquidityPoolDepositResult; break;
+    case OperationType::LIQUIDITY_POOL_WITHDRAW:
+        liquidityPoolWithdrawResult = op.liquidityPoolWithdrawResult; break;
 
     //default: break;
     }

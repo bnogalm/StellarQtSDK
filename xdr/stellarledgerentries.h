@@ -45,7 +45,8 @@ namespace stellar
     {
         ASSET_TYPE_NATIVE = 0,
         ASSET_TYPE_CREDIT_ALPHANUM4 = 1,
-        ASSET_TYPE_CREDIT_ALPHANUM12 = 2
+        ASSET_TYPE_CREDIT_ALPHANUM12 = 2,
+        ASSET_TYPE_POOL_SHARE = 3
     };
 
 
@@ -76,7 +77,7 @@ namespace stellar
             out << obj.alphaNum4.assetCode << obj.alphaNum4.issuer; break;
         case AssetType::ASSET_TYPE_CREDIT_ALPHANUM12:
             out << obj.alphaNum12.assetCode << obj.alphaNum12.issuer; break;
-        //default: break;
+        case AssetType::ASSET_TYPE_POOL_SHARE: break; // not valid for plain Asset
         }
 
        return out;
@@ -90,7 +91,7 @@ namespace stellar
             in >> obj.alphaNum4.assetCode  >> obj.alphaNum4.issuer; break;
         case AssetType::ASSET_TYPE_CREDIT_ALPHANUM12:
             in >> obj.alphaNum12.assetCode >> obj.alphaNum12.issuer; break;
-        //default: break;
+        case AssetType::ASSET_TYPE_POOL_SHARE: break; // not valid for plain Asset
         }
 
        return in;
@@ -116,7 +117,9 @@ namespace stellar
             out << obj.alphaNum4.assetCode << obj.alphaNum4.issuer; break;
         case AssetType::ASSET_TYPE_CREDIT_ALPHANUM12:
             out << obj.alphaNum12.assetCode << obj.alphaNum12.issuer; break;
-        default: throw std::runtime_error("invalid assed code"); break;
+        case AssetType::ASSET_TYPE_NATIVE:
+        case AssetType::ASSET_TYPE_POOL_SHARE:
+        default: throw std::runtime_error("invalid asset code"); break;
         }
 
        return out;
@@ -129,10 +132,250 @@ namespace stellar
             in >> obj.alphaNum4.assetCode  >> obj.alphaNum4.issuer; break;
         case AssetType::ASSET_TYPE_CREDIT_ALPHANUM12:
             in >> obj.alphaNum12.assetCode >> obj.alphaNum12.issuer; break;
-        default: throw std::runtime_error("invalid assed code"); break;//default: break;
+        case AssetType::ASSET_TYPE_NATIVE:
+        case AssetType::ASSET_TYPE_POOL_SHARE:
+        default: throw std::runtime_error("invalid asset code"); break;
         }
 
        return in;
+    }
+
+
+    // CAP-38 Protocol 18 — Liquidity Pools
+    typedef Hash PoolID;
+
+    enum class LiquidityPoolType : qint32
+    {
+        LIQUIDITY_POOL_CONSTANT_PRODUCT = 0
+    };
+
+    struct LiquidityPoolConstantProductParameters
+    {
+        Asset assetA;
+        Asset assetB;
+        qint32 fee; // basis points (LIQUIDITY_POOL_FEE_V18 = 30)
+    };
+    inline QDataStream &operator<<(QDataStream &out, const LiquidityPoolConstantProductParameters &obj) {
+        out << obj.assetA << obj.assetB << obj.fee;
+        return out;
+    }
+    inline QDataStream &operator>>(QDataStream &in, LiquidityPoolConstantProductParameters &obj) {
+        in >> obj.assetA >> obj.assetB >> obj.fee;
+        return in;
+    }
+
+    struct LiquidityPoolParameters
+    {
+        LiquidityPoolType type;
+        union {
+            LiquidityPoolConstantProductParameters constantProduct;
+        };
+
+        LiquidityPoolParameters() : type(LiquidityPoolType::LIQUIDITY_POOL_CONSTANT_PRODUCT)
+        {
+            new (&constantProduct) LiquidityPoolConstantProductParameters();
+        }
+        LiquidityPoolParameters(const LiquidityPoolParameters &other) : type(other.type)
+        {
+            switch(type) {
+            case LiquidityPoolType::LIQUIDITY_POOL_CONSTANT_PRODUCT:
+                new (&constantProduct) LiquidityPoolConstantProductParameters(other.constantProduct);
+                break;
+            }
+        }
+        ~LiquidityPoolParameters() { /* trivial — Asset has no destructor */ }
+        LiquidityPoolParameters& operator=(const LiquidityPoolParameters &other)
+        {
+            if (this == &other) return *this;
+            type = other.type;
+            switch(type) {
+            case LiquidityPoolType::LIQUIDITY_POOL_CONSTANT_PRODUCT:
+                constantProduct = other.constantProduct;
+                break;
+            }
+            return *this;
+        }
+        LiquidityPoolConstantProductParameters& fillConstantProduct()
+        {
+            type = LiquidityPoolType::LIQUIDITY_POOL_CONSTANT_PRODUCT;
+            new (&constantProduct) LiquidityPoolConstantProductParameters();
+            return constantProduct;
+        }
+    };
+    inline QDataStream &operator<<(QDataStream &out, const LiquidityPoolParameters &obj) {
+        out << obj.type;
+        switch(obj.type) {
+        case LiquidityPoolType::LIQUIDITY_POOL_CONSTANT_PRODUCT:
+            out << obj.constantProduct; break;
+        }
+        return out;
+    }
+    inline QDataStream &operator>>(QDataStream &in, LiquidityPoolParameters &obj) {
+        in >> obj.type;
+        switch(obj.type) {
+        case LiquidityPoolType::LIQUIDITY_POOL_CONSTANT_PRODUCT:
+            new (&obj.constantProduct) LiquidityPoolConstantProductParameters();
+            in >> obj.constantProduct; break;
+        }
+        return in;
+    }
+
+
+    /**
+     * ChangeTrustAsset — discriminated union used by ChangeTrustOp (Protocol 18+).
+     * Adds POOL_SHARE variant on top of the 3 plain-Asset variants. POOL_SHARE
+     * carries full LiquidityPoolParameters so the core can create the pool if
+     * it does not yet exist.
+     */
+    struct ChangeTrustAsset
+    {
+        AssetType type;
+        union {
+            struct {
+                AssetCode4 assetCode;
+                AccountID issuer;
+            } alphaNum4;
+            struct {
+                AssetCode12 assetCode;
+                AccountID issuer;
+            } alphaNum12;
+            // POOL_SHARE branch stored as plain bytes; constructed/destructed
+            // via the helper below to handle the non-trivial member.
+            quint8 liquidityPoolStorage[sizeof(LiquidityPoolParameters)];
+        };
+
+        ChangeTrustAsset() : type(AssetType::ASSET_TYPE_NATIVE) {}
+        ChangeTrustAsset(const ChangeTrustAsset& other) : type(other.type)
+        {
+            switch(type) {
+            case AssetType::ASSET_TYPE_NATIVE: break;
+            case AssetType::ASSET_TYPE_CREDIT_ALPHANUM4:
+                alphaNum4 = other.alphaNum4; break;
+            case AssetType::ASSET_TYPE_CREDIT_ALPHANUM12:
+                alphaNum12 = other.alphaNum12; break;
+            case AssetType::ASSET_TYPE_POOL_SHARE:
+                new (liquidityPoolStorage) LiquidityPoolParameters(other.liquidityPool());
+                break;
+            }
+        }
+        ~ChangeTrustAsset() { clear(); }
+        ChangeTrustAsset& operator=(const ChangeTrustAsset& other)
+        {
+            if (this == &other) return *this;
+            clear();
+            type = other.type;
+            switch(type) {
+            case AssetType::ASSET_TYPE_NATIVE: break;
+            case AssetType::ASSET_TYPE_CREDIT_ALPHANUM4:
+                alphaNum4 = other.alphaNum4; break;
+            case AssetType::ASSET_TYPE_CREDIT_ALPHANUM12:
+                alphaNum12 = other.alphaNum12; break;
+            case AssetType::ASSET_TYPE_POOL_SHARE:
+                new (liquidityPoolStorage) LiquidityPoolParameters(other.liquidityPool());
+                break;
+            }
+            return *this;
+        }
+        LiquidityPoolParameters& liquidityPool()
+        {
+            return *reinterpret_cast<LiquidityPoolParameters*>(liquidityPoolStorage);
+        }
+        const LiquidityPoolParameters& liquidityPool() const
+        {
+            return *reinterpret_cast<const LiquidityPoolParameters*>(liquidityPoolStorage);
+        }
+        LiquidityPoolParameters& fillLiquidityPool()
+        {
+            clear();
+            type = AssetType::ASSET_TYPE_POOL_SHARE;
+            return *new (liquidityPoolStorage) LiquidityPoolParameters();
+        }
+    private:
+        void clear()
+        {
+            if (type == AssetType::ASSET_TYPE_POOL_SHARE) {
+                liquidityPool().~LiquidityPoolParameters();
+            }
+        }
+        friend inline QDataStream &operator>>(QDataStream &in, ChangeTrustAsset &obj);
+    };
+    inline QDataStream &operator<<(QDataStream &out, const ChangeTrustAsset &obj) {
+        out << obj.type;
+        switch(obj.type) {
+        case AssetType::ASSET_TYPE_NATIVE: break;
+        case AssetType::ASSET_TYPE_CREDIT_ALPHANUM4:
+            out << obj.alphaNum4.assetCode << obj.alphaNum4.issuer; break;
+        case AssetType::ASSET_TYPE_CREDIT_ALPHANUM12:
+            out << obj.alphaNum12.assetCode << obj.alphaNum12.issuer; break;
+        case AssetType::ASSET_TYPE_POOL_SHARE:
+            out << obj.liquidityPool(); break;
+        }
+        return out;
+    }
+    inline QDataStream &operator>>(QDataStream &in, ChangeTrustAsset &obj) {
+        obj.clear();
+        in >> obj.type;
+        switch(obj.type) {
+        case AssetType::ASSET_TYPE_NATIVE: break;
+        case AssetType::ASSET_TYPE_CREDIT_ALPHANUM4:
+            in >> obj.alphaNum4.assetCode >> obj.alphaNum4.issuer; break;
+        case AssetType::ASSET_TYPE_CREDIT_ALPHANUM12:
+            in >> obj.alphaNum12.assetCode >> obj.alphaNum12.issuer; break;
+        case AssetType::ASSET_TYPE_POOL_SHARE:
+            new (obj.liquidityPoolStorage) LiquidityPoolParameters();
+            in >> obj.liquidityPool(); break;
+        }
+        return in;
+    }
+
+
+    /**
+     * TrustLineAsset — discriminated union used by TrustLineEntry / LedgerKey::TrustLine.
+     * Unlike ChangeTrustAsset, the POOL_SHARE branch carries only the PoolID
+     * (the ledger already knows the parameters once the pool exists).
+     */
+    struct TrustLineAsset
+    {
+        AssetType type;
+        union {
+            struct {
+                AssetCode4 assetCode;
+                AccountID issuer;
+            } alphaNum4;
+            struct {
+                AssetCode12 assetCode;
+                AccountID issuer;
+            } alphaNum12;
+            PoolID liquidityPoolID;
+        };
+
+        TrustLineAsset() : type(AssetType::ASSET_TYPE_NATIVE) {}
+    };
+    inline QDataStream &operator<<(QDataStream &out, const TrustLineAsset &obj) {
+        out << obj.type;
+        switch(obj.type) {
+        case AssetType::ASSET_TYPE_NATIVE: break;
+        case AssetType::ASSET_TYPE_CREDIT_ALPHANUM4:
+            out << obj.alphaNum4.assetCode << obj.alphaNum4.issuer; break;
+        case AssetType::ASSET_TYPE_CREDIT_ALPHANUM12:
+            out << obj.alphaNum12.assetCode << obj.alphaNum12.issuer; break;
+        case AssetType::ASSET_TYPE_POOL_SHARE:
+            out << obj.liquidityPoolID; break;
+        }
+        return out;
+    }
+    inline QDataStream &operator>>(QDataStream &in, TrustLineAsset &obj) {
+        in >> obj.type;
+        switch(obj.type) {
+        case AssetType::ASSET_TYPE_NATIVE: break;
+        case AssetType::ASSET_TYPE_CREDIT_ALPHANUM4:
+            in >> obj.alphaNum4.assetCode >> obj.alphaNum4.issuer; break;
+        case AssetType::ASSET_TYPE_CREDIT_ALPHANUM12:
+            in >> obj.alphaNum12.assetCode >> obj.alphaNum12.issuer; break;
+        case AssetType::ASSET_TYPE_POOL_SHARE:
+            in >> obj.liquidityPoolID; break;
+        }
+        return in;
     }
 
 

@@ -5,7 +5,7 @@ OperationResponse::OperationResponse(QNetworkReply* reply)
     : Response(reply)
   ,m_id(0)
   ,m_sourceAccountKeypair(nullptr)
-  ,m_transactionSuccessful(QVariant::Bool)// we have to indicate the type or it will not be filled, it will stay returning isNull as true if it is not initialized
+  ,m_transactionSuccessful(QMetaType(QMetaType::Bool))// we have to indicate the type or it will not be filled, it will stay returning isNull as true if it is not initialized
 {
 
 }
@@ -74,7 +74,7 @@ void OperationResponse::setSourceAccount(QString sourceAccount)
 
 void OperationResponse::setTransactionSuccessful(QVariant transactionSuccessful)
 {
-    if(transactionSuccessful.type()==QVariant::Bool)
+    if(transactionSuccessful.userType()==QMetaType::Bool)
     {
         m_transactionSuccessful = transactionSuccessful;
     }

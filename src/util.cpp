@@ -212,7 +212,7 @@ Boolean::Boolean(stellar::Optional<bool> optional){
 }
 
 Boolean::Boolean(const QVariant& v){
-    if(!v.isNull()&&v.type()==QVariant::Bool)
+    if(!v.isNull()&&v.userType()==QMetaType::Bool)
     {
         filled = 1;
         value = v.toBool();

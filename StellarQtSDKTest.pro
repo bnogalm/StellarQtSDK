@@ -37,6 +37,10 @@ HEADERS += \
     test/requests/responsehandlertest.h \
     test/transactionbuildertest.h \
     test/xdrhelpertest.h \
+    test/liquiditypooltest.h \
+    test/changetrustassettest.h \
+    test/operations/liquiditypooldepositoperationtest.h \
+    test/operations/liquiditypoolwithdrawoperationtest.h \
     test/responses/liquiditypoolresponsetest.h \
     test/requests/liquiditypoolsrequestbuildertest.h \
     test/requests/horizon15filterstest.h \
