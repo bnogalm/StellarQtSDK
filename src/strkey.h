@@ -31,7 +31,10 @@ public:
         SEED = (18 << 3), // S
         PRE_AUTH_TX = (19 << 3), // T
         SHA256_HASH = (23 << 3), // X
-        SIGNED_PAYLOAD = (15 << 3) // P — SEP-23 / CAP-40
+        SIGNED_PAYLOAD = (15 << 3), // P — SEP-23 / CAP-40
+        CONTRACT = (2 << 3),           // C — SEP-23 (Soroban contract address)
+        CLAIMABLE_BALANCE = (1 << 3),  // B — SEP-23 (claimable balance, body is 33 bytes)
+        LIQUIDITY_POOL = (11 << 3)     // L — SEP-23 (liquidity pool id)
     };
 
     static QString encodeStellarAccountId(QByteArray data) {
@@ -153,6 +156,33 @@ public:
     static QString encodeSignedPayload(QByteArray ed25519, QByteArray payload);
     /** Returns a pair {ed25519 (32 bytes), payload (0..64 bytes)}. */
     static QPair<QByteArray, QByteArray> decodeSignedPayload(QString data);
+
+    /** SEP-23 Contract (Soroban) — 32-byte body. */
+    static QString encodeContract(QByteArray data) {
+        return QString::fromLatin1(encodeCheck(VersionByte::CONTRACT, data));
+    }
+    static QByteArray decodeContract(QString data) {
+        return decodeCheck(VersionByte::CONTRACT, data.toLatin1());
+    }
+
+    /**
+     * SEP-23 ClaimableBalance — 33-byte body (1 byte ClaimableBalanceIDType
+     * discriminant + 32-byte balance hash). Caller assembles the 33 bytes.
+     */
+    static QString encodeClaimableBalance(QByteArray data) {
+        return QString::fromLatin1(encodeCheck(VersionByte::CLAIMABLE_BALANCE, data));
+    }
+    static QByteArray decodeClaimableBalance(QString data) {
+        return decodeCheck(VersionByte::CLAIMABLE_BALANCE, data.toLatin1());
+    }
+
+    /** SEP-23 LiquidityPool — 32-byte body (pool id). */
+    static QString encodeLiquidityPool(QByteArray data) {
+        return QString::fromLatin1(encodeCheck(VersionByte::LIQUIDITY_POOL, data));
+    }
+    static QByteArray decodeLiquidityPool(QString data) {
+        return decodeCheck(VersionByte::LIQUIDITY_POOL, data.toLatin1());
+    }
 
     static QByteArray encodeCheck(VersionByte versionByte, QByteArray data);
 

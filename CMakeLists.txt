@@ -103,6 +103,16 @@ qt_add_library(StellarQtSDK STATIC
     src/ledgerbounds.h
     src/transactionpreconditions.cpp
     src/transactionpreconditions.h
+    src/muxedaccount.cpp
+    src/muxedaccount.h
+    src/address.cpp
+    src/address.h
+    src/toid.cpp
+    src/toid.h
+    src/auth.cpp
+    src/auth.h
+    src/txrep.cpp
+    src/txrep.h
     src/managebuyofferoperation.cpp
     src/managebuyofferoperation.h
     src/managedataoperation.cpp
@@ -427,7 +437,7 @@ target_include_directories(StellarQtSDK PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} src)
 
 add_compile_definitions(
     STELLAR_QT_SDK_CLIENT_NAME=\"\\\"qtcpp-stellar-sdk\\\"\"
-    STELLAR_QT_SDK_CLIENT_VERSION=\"\\\"0.7.0\\\"\"
+    STELLAR_QT_SDK_CLIENT_VERSION=\"\\\"0.8.0\\\"\"
 )
 
 target_compile_definitions(StellarQtSDK PRIVATE

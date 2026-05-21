@@ -45,6 +45,11 @@ HEADERS += \
     test/transactionpreconditionstest.h \
     test/transactionbuilderpreconditionstest.h \
     test/responses/transactionresponsepreconditionstest.h \
+    test/muxedaccounttest.h \
+    test/addresstest.h \
+    test/toidtest.h \
+    test/authtest.h \
+    test/sep11txreptest.h \
     test/responses/liquiditypoolresponsetest.h \
     test/requests/liquiditypoolsrequestbuildertest.h \
     test/requests/horizon15filterstest.h \

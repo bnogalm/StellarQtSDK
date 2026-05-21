@@ -51,6 +51,9 @@ StrKey::VersionByte StrKey::decodeVersionByte(QByteArray encoded) {
     case StrKey::VersionByte::PRE_AUTH_TX:
     case StrKey::VersionByte::SHA256_HASH:
     case StrKey::VersionByte::SIGNED_PAYLOAD:
+    case StrKey::VersionByte::CONTRACT:
+    case StrKey::VersionByte::CLAIMABLE_BALANCE:
+    case StrKey::VersionByte::LIQUIDITY_POOL:
         return decodedVersionByte;
     default:
         throw std::runtime_error("Version byte is invalid");
