@@ -46,6 +46,10 @@ inline int countTestMethods(const QMetaObject* mo)
         const QByteArray name = method.name();
         if (reserved.contains(name)) continue;
         if (name.endsWith("_data")) continue;
+        // Only count methods named test*. Helpers declared inside `private
+        // slots:` (because they need to share `this`) are skipped here —
+        // QTest::qExec wouldn't invoke them as tests anyway.
+        if (!name.startsWith("test")) continue;
         ++count;
     }
     return count;

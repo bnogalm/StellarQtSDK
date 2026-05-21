@@ -428,7 +428,19 @@ namespace stellar
         TRUSTLINE = 1,
         OFFER = 2,
         DATA = 3,
-        CLAIMABLE_BALANCE = 4
+        CLAIMABLE_BALANCE = 4,
+        LIQUIDITY_POOL = 5,        // Protocol 18 (XDR slot reserved here)
+        CONTRACT_DATA = 6,         // CAP-46 Soroban
+        CONTRACT_CODE = 7,
+        CONFIG_SETTING = 8,
+        TTL = 9
+    };
+
+    /** CAP-46 — contract storage durability. */
+    enum class ContractDataDurability : qint32
+    {
+        TEMPORARY = 0,
+        PERSISTENT = 1
     };
 
 

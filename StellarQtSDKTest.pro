@@ -46,10 +46,15 @@ HEADERS += \
     test/transactionbuilderpreconditionstest.h \
     test/responses/transactionresponsepreconditionstest.h \
     test/muxedaccounttest.h \
-    test/addresstest.h \
+    test/stellaraddresstest.h \
     test/toidtest.h \
-    test/authtest.h \
+    test/messageauthtest.h \
     test/sep11txreptest.h \
+    test/scval/scvprimitivestest.h \
+    test/scval/scvbigintegerstest.h \
+    test/scval/scvveccolltest.h \
+    test/scval/scvaddresserrorinstancetest.h \
+    test/sorobandatabuildertest.h \
     test/responses/liquiditypoolresponsetest.h \
     test/requests/liquiditypoolsrequestbuildertest.h \
     test/requests/horizon15filterstest.h \

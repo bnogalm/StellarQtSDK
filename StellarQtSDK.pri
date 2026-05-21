@@ -5,7 +5,7 @@ DEFINES += STELLAR_QT_REPLY_TIMEOUT=30000
 DEFINES *= ED25519_NO_SEED
 
 DEFINES += STELLAR_QT_SDK_CLIENT_NAME=\"\\\"qtcpp-stellar-sdk\\\"\"
-DEFINES += STELLAR_QT_SDK_CLIENT_VERSION=\"\\\"0.8.0\\\"\"
+DEFINES += STELLAR_QT_SDK_CLIENT_VERSION=\"\\\"0.9.0\\\"\"
 
 #DEFINES += STELLAR_QT_AUTOSET_BASE_FEE
 
@@ -37,10 +37,12 @@ SOURCES += \
     $$PWD/src/signerkey.cpp \
     $$PWD/src/transactionpreconditions.cpp \
     $$PWD/src/muxedaccount.cpp \
-    $$PWD/src/address.cpp \
+    $$PWD/src/stellaraddress.cpp \
     $$PWD/src/toid.cpp \
-    $$PWD/src/auth.cpp \
+    $$PWD/src/messageauth.cpp \
     $$PWD/src/txrep.cpp \
+    $$PWD/src/scval/scv.cpp \
+    $$PWD/src/sorobandatabuilder.cpp \
     $$PWD/src/responses/problem.cpp \
     $$PWD/src/responses/effects/liquiditypooleffectsresponses.cpp \
     $$PWD/src/responses/liquiditypoolresponse.cpp \
@@ -250,10 +252,14 @@ HEADERS += \
     $$PWD/src/ledgerbounds.h \
     $$PWD/src/transactionpreconditions.h \
     $$PWD/src/muxedaccount.h \
-    $$PWD/src/address.h \
+    $$PWD/src/stellaraddress.h \
     $$PWD/src/toid.h \
-    $$PWD/src/auth.h \
+    $$PWD/src/messageauth.h \
     $$PWD/src/txrep.h \
+    $$PWD/src/scval/scv.h \
+    $$PWD/src/sorobandatabuilder.h \
+    $$PWD/xdr/scval.h \
+    $$PWD/xdr/sorobantxdata.h \
     $$PWD/src/responses/assetamount.h \
     $$PWD/src/responses/liquiditypool.h \
     $$PWD/src/responses/liquiditypoolclaimableassetamount.h \

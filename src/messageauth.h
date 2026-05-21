@@ -1,5 +1,5 @@
-#ifndef AUTH_H
-#define AUTH_H
+#ifndef MESSAGEAUTH_H
+#define MESSAGEAUTH_H
 
 #include <QByteArray>
 #include <QString>
@@ -13,8 +13,11 @@ class KeyPair;
  * prefix ("Stellar Signed Message:\n") before being passed to ed25519.
  * This prevents signed messages from being mistaken for transaction
  * signatures.
+ *
+ * Renamed from `Auth` in 0.9.0 to avoid collision with generic auth
+ * frameworks; the static helper class is otherwise unchanged.
  */
-class Auth
+class MessageAuth
 {
 public:
     /** Returns the ed25519 signature (64 bytes) over the SEP-53 hash. */
@@ -35,4 +38,4 @@ public:
     static QByteArray messageHash(const QByteArray& message);
 };
 
-#endif // AUTH_H
+#endif // MESSAGEAUTH_H

@@ -1,4 +1,4 @@
-#include "auth.h"
+#include "messageauth.h"
 
 #include <QCryptographicHash>
 #include <memory>
@@ -10,7 +10,7 @@ namespace {
 const char* kSep53Prefix = "Stellar Signed Message:\n";
 }
 
-QByteArray Auth::messageHash(const QByteArray& message)
+QByteArray MessageAuth::messageHash(const QByteArray& message)
 {
     QByteArray combined;
     combined.append(kSep53Prefix);
@@ -18,7 +18,7 @@ QByteArray Auth::messageHash(const QByteArray& message)
     return QCryptographicHash::hash(combined, QCryptographicHash::Sha256);
 }
 
-QByteArray Auth::signMessage(const QByteArray& message, KeyPair* keyPair)
+QByteArray MessageAuth::signMessage(const QByteArray& message, KeyPair* keyPair)
 {
     if (!keyPair) {
         throw std::runtime_error("keyPair cannot be null");
@@ -26,9 +26,9 @@ QByteArray Auth::signMessage(const QByteArray& message, KeyPair* keyPair)
     return keyPair->sign(messageHash(message));
 }
 
-bool Auth::verifyMessage(const QString& accountId,
-                         const QByteArray& message,
-                         const QByteArray& signature)
+bool MessageAuth::verifyMessage(const QString& accountId,
+                                const QByteArray& message,
+                                const QByteArray& signature)
 {
     std::unique_ptr<KeyPair> kp(KeyPair::fromAccountId(accountId));
     return kp->verify(messageHash(message), signature);
