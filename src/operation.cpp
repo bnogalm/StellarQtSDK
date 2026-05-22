@@ -34,6 +34,10 @@
 #include "liquiditypooldepositoperation.h"
 #include "liquiditypoolwithdrawoperation.h"
 
+#include "invokehostfunctionoperation.h"
+#include "extendfootprintttloperation.h"
+#include "restorefootprintoperation.h"
+
 
 Operation::Operation()
 {
@@ -192,6 +196,15 @@ Operation *Operation::fromXdr(AccountConverter accountConverter, stellar::Operat
       break;
     case stellar::OperationType::LIQUIDITY_POOL_WITHDRAW:
       operation = LiquidityPoolWithdrawOperation::build(xdr.operationLiquidityPoolWithdraw);
+      break;
+    case stellar::OperationType::INVOKE_HOST_FUNCTION:
+      operation = InvokeHostFunctionOperation::build(xdr.operationInvokeHostFunction);
+      break;
+    case stellar::OperationType::EXTEND_FOOTPRINT_TTL:
+      operation = ExtendFootprintTTLOperation::build(xdr.operationExtendFootprintTtl);
+      break;
+    case stellar::OperationType::RESTORE_FOOTPRINT:
+      operation = RestoreFootprintOperation::build(xdr.operationRestoreFootprint);
       break;
     default:
         throw std::runtime_error("Unknown operation body");

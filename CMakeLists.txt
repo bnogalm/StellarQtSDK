@@ -117,8 +117,21 @@ qt_add_library(StellarQtSDK STATIC
     src/scval/scv.h
     src/sorobandatabuilder.cpp
     src/sorobandatabuilder.h
+    src/invokehostfunctionoperation.cpp
+    src/invokehostfunctionoperation.h
+    src/extendfootprintttloperation.cpp
+    src/extendfootprintttloperation.h
+    src/restorefootprintoperation.cpp
+    src/restorefootprintoperation.h
+    src/responses/operations/invokehostfunctionoperationresponse.cpp
+    src/responses/operations/invokehostfunctionoperationresponse.h
+    src/responses/operations/extendfootprintttloperationresponse.cpp
+    src/responses/operations/extendfootprintttloperationresponse.h
+    src/responses/operations/restorefootprintoperationresponse.cpp
+    src/responses/operations/restorefootprintoperationresponse.h
     xdr/scval.h
     xdr/sorobantxdata.h
+    xdr/sorobanops.h
     src/managebuyofferoperation.cpp
     src/managebuyofferoperation.h
     src/managedataoperation.cpp
@@ -443,7 +456,7 @@ target_include_directories(StellarQtSDK PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} src)
 
 add_compile_definitions(
     STELLAR_QT_SDK_CLIENT_NAME=\"\\\"qtcpp-stellar-sdk\\\"\"
-    STELLAR_QT_SDK_CLIENT_VERSION=\"\\\"0.9.0\\\"\"
+    STELLAR_QT_SDK_CLIENT_VERSION=\"\\\"0.10.0\\\"\"
 )
 
 target_compile_definitions(StellarQtSDK PRIVATE

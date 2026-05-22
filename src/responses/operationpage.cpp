@@ -21,6 +21,9 @@
 #include "operations/beginsponsoringfuturereservesoperationresponse.h"
 #include "operations/endsponsoringfuturereservesoperationresponse.h"
 #include "operations/revokesponsorshipoperationresponse.h"
+#include "operations/invokehostfunctionoperationresponse.h"
+#include "operations/extendfootprintttloperationresponse.h"
+#include "operations/restorefootprintoperationresponse.h"
 
 OperationPage::OperationPage(QNetworkReply *reply):Page<OperationResponse>(reply)
 {
@@ -73,6 +76,12 @@ void OperationPage::processRecords(const QJsonArray &records)
             op = new EndSponsoringFutureReservesOperationResponse();break;
         case stellar::OperationType::REVOKE_SPONSORSHIP:
             op = new RevokeSponsorshipOperationResponse();break;
+        case stellar::OperationType::INVOKE_HOST_FUNCTION:
+            op = new InvokeHostFunctionOperationResponse();break;
+        case stellar::OperationType::EXTEND_FOOTPRINT_TTL:
+            op = new ExtendFootprintTTLOperationResponse();break;
+        case stellar::OperationType::RESTORE_FOOTPRINT:
+            op = new RestoreFootprintOperationResponse();break;
           default:
             throw std::runtime_error("Invalid operation type");
         }

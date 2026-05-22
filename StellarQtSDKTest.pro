@@ -55,6 +55,10 @@ HEADERS += \
     test/scval/scvveccolltest.h \
     test/scval/scvaddresserrorinstancetest.h \
     test/sorobandatabuildertest.h \
+    test/operations/sorobanopstest.h \
+    test/contractaddresstest.h \
+    test/transactionbuildersorobantest.h \
+    test/responses/sorobanopsresponsetest.h \
     test/responses/liquiditypoolresponsetest.h \
     test/requests/liquiditypoolsrequestbuildertest.h \
     test/requests/horizon15filterstest.h \

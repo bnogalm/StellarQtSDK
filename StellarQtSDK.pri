@@ -5,7 +5,7 @@ DEFINES += STELLAR_QT_REPLY_TIMEOUT=30000
 DEFINES *= ED25519_NO_SEED
 
 DEFINES += STELLAR_QT_SDK_CLIENT_NAME=\"\\\"qtcpp-stellar-sdk\\\"\"
-DEFINES += STELLAR_QT_SDK_CLIENT_VERSION=\"\\\"0.9.0\\\"\"
+DEFINES += STELLAR_QT_SDK_CLIENT_VERSION=\"\\\"0.10.0\\\"\"
 
 #DEFINES += STELLAR_QT_AUTOSET_BASE_FEE
 
@@ -43,6 +43,12 @@ SOURCES += \
     $$PWD/src/txrep.cpp \
     $$PWD/src/scval/scv.cpp \
     $$PWD/src/sorobandatabuilder.cpp \
+    $$PWD/src/invokehostfunctionoperation.cpp \
+    $$PWD/src/extendfootprintttloperation.cpp \
+    $$PWD/src/restorefootprintoperation.cpp \
+    $$PWD/src/responses/operations/invokehostfunctionoperationresponse.cpp \
+    $$PWD/src/responses/operations/extendfootprintttloperationresponse.cpp \
+    $$PWD/src/responses/operations/restorefootprintoperationresponse.cpp \
     $$PWD/src/responses/problem.cpp \
     $$PWD/src/responses/effects/liquiditypooleffectsresponses.cpp \
     $$PWD/src/responses/liquiditypoolresponse.cpp \
@@ -258,8 +264,15 @@ HEADERS += \
     $$PWD/src/txrep.h \
     $$PWD/src/scval/scv.h \
     $$PWD/src/sorobandatabuilder.h \
+    $$PWD/src/invokehostfunctionoperation.h \
+    $$PWD/src/extendfootprintttloperation.h \
+    $$PWD/src/restorefootprintoperation.h \
+    $$PWD/src/responses/operations/invokehostfunctionoperationresponse.h \
+    $$PWD/src/responses/operations/extendfootprintttloperationresponse.h \
+    $$PWD/src/responses/operations/restorefootprintoperationresponse.h \
     $$PWD/xdr/scval.h \
     $$PWD/xdr/sorobantxdata.h \
+    $$PWD/xdr/sorobanops.h \
     $$PWD/src/responses/assetamount.h \
     $$PWD/src/responses/liquiditypool.h \
     $$PWD/src/responses/liquiditypoolclaimableassetamount.h \

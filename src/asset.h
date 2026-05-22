@@ -66,6 +66,16 @@ public:
     virtual stellar::Asset toXdr() = 0;
 
     virtual QString toString() const = 0;
+
+    /**
+     * CAP-46-7 — returns the SAC (Stellar Asset Contract) 32-byte contract id
+     * for this asset on the given network. Equivalent to Java SDK's
+     * `Asset::toContractId(networkPassphrase)`.
+     */
+    QByteArray toSAC(const QString& networkPassphrase);
+
+    /** Convenience: returns the SAC contract id wrapped in a C-strkey StellarAddress. */
+    class StellarAddress toSACAddress(const QString& networkPassphrase);
 };
 
 Asset* checkNotNull(Asset* asset, const char *error);

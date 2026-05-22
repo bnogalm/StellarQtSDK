@@ -5,6 +5,7 @@
 #include "assettypenative.h"
 #include "util.h"
 #include "keypair.h"
+#include "stellaraddress.h"
 #include <stdexcept>
 
 Asset *Asset::createNonNativeAsset(QString code, KeyPair *issuer) {
@@ -88,6 +89,16 @@ Asset *Asset::fromXdr(const stellar::Asset &xdr) {
 bool Asset::equals(Asset *object) {
     Q_UNUSED(object)
     return false;
+}
+
+QByteArray Asset::toSAC(const QString& networkPassphrase)
+{
+    return Util::getContractAddressFromAsset(networkPassphrase, this->toXdr());
+}
+
+StellarAddress Asset::toSACAddress(const QString& networkPassphrase)
+{
+    return StellarAddress(StellarAddress::Type::CONTRACT, toSAC(networkPassphrase));
 }
 
 Asset *checkNotNull(Asset *asset, const char *error)

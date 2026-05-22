@@ -5,6 +5,7 @@
 
 #include "xdr/stellartransaction.h"
 
+#include <QSharedPointer>
 #include <exception>
 #include "transactionbuilderaccount.h"
 #include "timebounds.h"
@@ -25,6 +26,8 @@ class Transaction : public AbstractTransaction
     QVector<Operation*> m_operations;
     Memo *m_memo;
     TransactionPreconditions m_preconditions;
+    // CAP-46 — populated by the builder when setSorobanData() was called.
+    QSharedPointer<stellar::SorobanTransactionData> m_sorobanData;
 
     stellar::EnvelopeType m_envelopeType;
     friend class ::TransactionBuilder;
@@ -62,6 +65,10 @@ public:
 
      /** Full CAP-21 preconditions bundle (covers TimeBounds plus all V2 fields). */
      const TransactionPreconditions& getPreconditions() const { return m_preconditions; }
+
+     /** CAP-46 — Soroban transaction data if set (e.g. when this transaction
+      *  contains an Invoke / Extend / Restore op). Null otherwise. */
+     QSharedPointer<stellar::SorobanTransactionData> getSorobanData() const { return m_sorobanData; }
 
      /**
       * Returns operations in this transaction.

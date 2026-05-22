@@ -162,6 +162,12 @@ TransactionBuilder& TransactionBuilder::addExtraSigner(const SignerKey& key)
     return *this;
 }
 
+TransactionBuilder& TransactionBuilder::setSorobanData(const stellar::SorobanTransactionData& data)
+{
+    m_sorobanData = QSharedPointer<stellar::SorobanTransactionData>::create(data);
+    return *this;
+}
+
 TransactionBuilder& TransactionBuilder::setBaseFee(quint32 baseFee)
 {
     if (baseFee < TransactionBuilder::BASE_FEE) {
@@ -199,6 +205,17 @@ Transaction* TransactionBuilder::build()
         throw std::runtime_error("transaction fee overflows qint64");
     }
     qint64 totalFee = static_cast<qint64>(m_operations.length()) * static_cast<qint64>(m_baseFee);
+    // CAP-46 — Soroban resourceFee is added on top of the base inclusion fee.
+    if (m_sorobanData) {
+        const qint64 rfee = m_sorobanData->resourceFee;
+        if (rfee < 0) {
+            throw std::runtime_error("Soroban resourceFee must be non-negative");
+        }
+        if (totalFee > std::numeric_limits<qint64>::max() - rfee) {
+            throw std::runtime_error("transaction fee overflows qint64 when adding Soroban resource fee");
+        }
+        totalFee += rfee;
+    }
 
     Transaction* transaction = new Transaction(
         m_accountConverter,
@@ -209,6 +226,8 @@ Transaction* TransactionBuilder::build()
         m_memo,
         std::move(m_preconditions),
         m_network);
+    // Hand the Soroban data to the new Transaction.
+    transaction->m_sorobanData = m_sorobanData;
 
     // Bump sequence only after Transaction ctor succeeded.
     m_sourceAccount->incrementSequenceNumber();
@@ -218,6 +237,7 @@ Transaction* TransactionBuilder::build()
     // m_preconditions was already moved-from above; ensure it's reset for reuse.
     m_preconditions = TransactionPreconditions();
     m_operations.clear();
+    m_sorobanData.reset();
 
     return transaction;
 }

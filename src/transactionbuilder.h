@@ -12,6 +12,8 @@
 #include "memo.h"
 #include "network.h"
 #include "operation.h"
+#include "xdr/sorobantxdata.h"
+#include <QSharedPointer>
 
 class Transaction;
 
@@ -37,6 +39,7 @@ class TransactionBuilder
     Memo* m_memo;
     TransactionPreconditions m_preconditions;
     QVector<Operation*> m_operations;
+    QSharedPointer<stellar::SorobanTransactionData> m_sorobanData;
     bool m_timeoutSet;
     quint32 m_baseFee;
     static quint32 s_defaultOperationFee;
@@ -120,6 +123,14 @@ public:
 
     /** Adds an extra signer (max 2 per CAP-21). */
     TransactionBuilder& addExtraSigner(const SignerKey& key);
+
+    /**
+     * CAP-46 — attaches a `SorobanTransactionData` payload (footprint +
+     * resources + resourceFee). When set, `build()` adds the
+     * `resourceFee` to the transaction's total fee. Replaces any
+     * previously set Soroban data.
+     */
+    TransactionBuilder& setSorobanData(const stellar::SorobanTransactionData& data);
 
     TransactionBuilder& setBaseFee(quint32 baseFee);
 

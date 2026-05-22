@@ -95,6 +95,24 @@ public:
 
     static AssetTypeCreditAlphaNum* assertNonNativeAsset(Asset* asset);
 
+    /**
+     * CAP-46-7 — derive the contract id (32-byte hash) for a contract created
+     * from `fromAddress` + `salt` on the given network.
+     *
+     *   networkId        = SHA256(networkPassphrase)
+     *   contractIdHash   = SHA256(XDR(HashIDPreimage::ContractID(networkId,
+     *                                  FromAddress(fromAddress, salt))))
+     */
+    static QByteArray getContractAddress(const QString& networkPassphrase,
+                                         const stellar::SCAddress& fromAddress,
+                                         const QByteArray& salt32);
+
+    /**
+     * CAP-46-7 — derive the SAC (Stellar Asset Contract) contract id for an
+     * Asset on the given network. Mirrors `Asset::toSAC` in the Java SDK.
+     */
+    static QByteArray getContractAddressFromAsset(const QString& networkPassphrase,
+                                                  const stellar::Asset& asset);
 };
 
 

@@ -2,6 +2,7 @@
 #define STELLARTRANSACTION_H
 
 #include "stellarledgerentries.h"
+#include "sorobanops.h"
 #include "xdrhelper.h"
 
 namespace stellar
@@ -111,7 +112,10 @@ namespace stellar
         CLAWBACK_CLAIMABLE_BALANCE = 20,
         SET_TRUST_LINE_FLAGS = 21,
         LIQUIDITY_POOL_DEPOSIT = 22,
-        LIQUIDITY_POOL_WITHDRAW = 23
+        LIQUIDITY_POOL_WITHDRAW = 23,
+        INVOKE_HOST_FUNCTION = 24,
+        EXTEND_FOOTPRINT_TTL = 25,
+        RESTORE_FOOTPRINT = 26
     };
 
     /* CreateAccount
@@ -817,6 +821,9 @@ namespace stellar
         SetTrustLineFlagsOp operationSetTrustLineFlags;
         LiquidityPoolDepositOp operationLiquidityPoolDeposit;
         LiquidityPoolWithdrawOp operationLiquidityPoolWithdraw;
+        // Soroban — CAP-46-8 (0.10.0).
+        ExtendFootprintTTLOp operationExtendFootprintTtl;
+        RestoreFootprintOp operationRestoreFootprint;
 
         //non trivials, you MUST call contructor explicity to use them
         PathPaymentStrictReceiveOp operationPathPaymentStrictReceive;
@@ -829,6 +836,7 @@ namespace stellar
         BeginSponsoringFutureReservesOp operationBeginSponsoringFutureReserves;//case BEGIN_SPONSORING_FUTURE_RESERVES:
         //void;//case END_SPONSORING_FUTURE_RESERVES:
         RevokeSponsorshipOp operationRevokeSponsorship;//case REVOKE_SPONSORSHIP:
+        InvokeHostFunctionOp operationInvokeHostFunction;//case INVOKE_HOST_FUNCTION:
         };
 
         /**
@@ -851,6 +859,7 @@ namespace stellar
         PathPaymentStrictSendOp& fillPathPaymentStrictSendOp();
         RevokeSponsorshipOp& fillRevokeSponsorshipOp();
         ChangeTrustOp& fillChangeTrustOp();
+        InvokeHostFunctionOp& fillInvokeHostFunctionOp();
 
     };
     inline QDataStream &operator<<(QDataStream &out, const  Operation &obj) {
@@ -904,6 +913,12 @@ namespace stellar
             out << obj.operationLiquidityPoolDeposit; break;
         case OperationType::LIQUIDITY_POOL_WITHDRAW:
             out << obj.operationLiquidityPoolWithdraw; break;
+        case OperationType::INVOKE_HOST_FUNCTION:
+            out << obj.operationInvokeHostFunction; break;
+        case OperationType::EXTEND_FOOTPRINT_TTL:
+            out << obj.operationExtendFootprintTtl; break;
+        case OperationType::RESTORE_FOOTPRINT:
+            out << obj.operationRestoreFootprint; break;
 
         //default: break;
         }
@@ -970,6 +985,13 @@ namespace stellar
             in >> obj.operationLiquidityPoolDeposit; break;
         case OperationType::LIQUIDITY_POOL_WITHDRAW:
             in >> obj.operationLiquidityPoolWithdraw; break;
+        case OperationType::INVOKE_HOST_FUNCTION:
+            new (&obj.operationInvokeHostFunction) InvokeHostFunctionOp();
+            in >> obj.operationInvokeHostFunction; break;
+        case OperationType::EXTEND_FOOTPRINT_TTL:
+            in >> obj.operationExtendFootprintTtl; break;
+        case OperationType::RESTORE_FOOTPRINT:
+            in >> obj.operationRestoreFootprint; break;
         //default: break;
         }
        return in;
@@ -1296,6 +1318,26 @@ namespace stellar
        return in;
     }
 
+    /**
+     * Transaction::ext — discriminated union by `v`. v=0 is wire-identical
+     * to the legacy `Reserved ext`. v=1 carries CAP-46 SorobanTransactionData.
+     */
+    struct TransactionExt
+    {
+        qint32 v = 0;
+        SorobanTransactionData sorobanData;
+    };
+    inline QDataStream &operator<<(QDataStream &out, const TransactionExt &obj) {
+        out << obj.v;
+        if (obj.v == 1) out << obj.sorobanData;
+        return out;
+    }
+    inline QDataStream &operator>>(QDataStream &in, TransactionExt &obj) {
+        in >> obj.v;
+        if (obj.v == 1) in >> obj.sorobanData;
+        return in;
+    }
+
     struct Transaction
     {
         // account used to run the transaction
@@ -1315,8 +1357,9 @@ namespace stellar
 
         Array<Operation,MAX_OPS_PER_TX> operations; //max <100>;
 
-        // reserved for future use
-        Reserved ext;
+        // CAP-46 — discriminated union. v=0 is wire-identical to the legacy
+        // Reserved ext (4 zero bytes); v=1 carries SorobanTransactionData.
+        TransactionExt ext;
     };
     inline QDataStream &operator<<(QDataStream &out, const  Transaction &obj) {
         out << obj.sourceAccount << obj.fee << obj.seqNum << obj.cond << obj.memo<< obj.operations<< obj.ext;

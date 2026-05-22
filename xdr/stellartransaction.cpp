@@ -63,6 +63,13 @@ stellar::Operation::Operation(const stellar::Operation &op){
         operationLiquidityPoolDeposit = op.operationLiquidityPoolDeposit; break;
     case OperationType::LIQUIDITY_POOL_WITHDRAW:
         operationLiquidityPoolWithdraw = op.operationLiquidityPoolWithdraw; break;
+    case OperationType::INVOKE_HOST_FUNCTION:
+        new (&operationInvokeHostFunction) InvokeHostFunctionOp();
+        operationInvokeHostFunction = op.operationInvokeHostFunction; break;
+    case OperationType::EXTEND_FOOTPRINT_TTL:
+        operationExtendFootprintTtl = op.operationExtendFootprintTtl; break;
+    case OperationType::RESTORE_FOOTPRINT:
+        operationRestoreFootprint = op.operationRestoreFootprint; break;
     //default: break;
     }
 }
@@ -91,6 +98,9 @@ void stellar::Operation::clear()
         break;
     case OperationType::CHANGE_TRUST:
         operationChangeTrust.~ChangeTrustOp();
+        break;
+    case OperationType::INVOKE_HOST_FUNCTION:
+        operationInvokeHostFunction.~InvokeHostFunctionOp();
         break;
     default:
         break;
@@ -161,6 +171,13 @@ const stellar::Operation &stellar::Operation::operator =(const stellar::Operatio
         operationLiquidityPoolDeposit = op.operationLiquidityPoolDeposit; break;
     case OperationType::LIQUIDITY_POOL_WITHDRAW:
         operationLiquidityPoolWithdraw = op.operationLiquidityPoolWithdraw; break;
+    case OperationType::INVOKE_HOST_FUNCTION:
+        new (&operationInvokeHostFunction) InvokeHostFunctionOp();
+        operationInvokeHostFunction = op.operationInvokeHostFunction; break;
+    case OperationType::EXTEND_FOOTPRINT_TTL:
+        operationExtendFootprintTtl = op.operationExtendFootprintTtl; break;
+    case OperationType::RESTORE_FOOTPRINT:
+        operationRestoreFootprint = op.operationRestoreFootprint; break;
     //default: break;
     }
     return *this;
@@ -230,6 +247,17 @@ stellar::ChangeTrustOp &stellar::Operation::fillChangeTrustOp()
         new (&operationChangeTrust) ChangeTrustOp();
     }
     return operationChangeTrust;
+}
+
+stellar::InvokeHostFunctionOp &stellar::Operation::fillInvokeHostFunctionOp()
+{
+    if(type!=OperationType::INVOKE_HOST_FUNCTION)
+    {
+        clear();
+        type=OperationType::INVOKE_HOST_FUNCTION;
+        new (&operationInvokeHostFunction) InvokeHostFunctionOp();
+    }
+    return operationInvokeHostFunction;
 }
 
 stellar::OperationResult::OperationResult():type(OperationType::CREATE_ACCOUNT)

@@ -137,6 +137,53 @@ AssetTypeCreditAlphaNum *Util::assertNonNativeAsset(Asset *asset) {
     throw std::runtime_error("native assets are not supported");
 }
 
+namespace {
+
+// Serialize HashIDPreimage::ContractID and return SHA-256(bytes).
+// HashIDPreimage XDR layout:
+//   uint32 type (= ENVELOPE_TYPE_CONTRACT_ID = 8)
+//   Hash networkID
+//   ContractIDPreimage contractIDPreimage
+QByteArray hashContractIdPreimage(const QString& networkPassphrase,
+                                  const stellar::ContractIDPreimage& preimage)
+{
+    QByteArray networkId = Util::hash(networkPassphrase.toUtf8());
+    if (networkId.size() != 32) {
+        throw std::runtime_error("networkId hash must be 32 bytes");
+    }
+    QByteArray xdr;
+    QDataStream s(&xdr, QIODevice::WriteOnly);
+    s << stellar::EnvelopeType::ENVELOPE_TYPE_CONTRACT_ID;
+    s.writeRawData(networkId.constData(), 32);
+    s << preimage;
+    return Util::hash(xdr);
+}
+
+} // namespace
+
+QByteArray Util::getContractAddress(const QString& networkPassphrase,
+                                    const stellar::SCAddress& fromAddress,
+                                    const QByteArray& salt32)
+{
+    if (salt32.size() != 32) {
+        throw std::runtime_error("salt must be 32 bytes");
+    }
+    stellar::ContractIDPreimage preimage;
+    preimage.type = stellar::ContractIDPreimageType::CONTRACT_ID_PREIMAGE_FROM_ADDRESS;
+    preimage.fromAddressAddr = fromAddress;
+    std::memcpy(preimage.fromAddressSalt, salt32.constData(), 32);
+    return hashContractIdPreimage(networkPassphrase, preimage);
+}
+
+QByteArray Util::getContractAddressFromAsset(const QString& networkPassphrase,
+                                             const stellar::Asset& asset)
+{
+    stellar::ContractIDPreimage preimage;
+    preimage.type = stellar::ContractIDPreimageType::CONTRACT_ID_PREIMAGE_FROM_ASSET;
+    preimage.fromAssetAsset = asset;
+    return hashContractIdPreimage(networkPassphrase, preimage);
+}
+
 QString checkNotNull(QString p, const char *error)
 {
     if(p.isNull()){

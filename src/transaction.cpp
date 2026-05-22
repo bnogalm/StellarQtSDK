@@ -172,6 +172,11 @@ stellar::Transaction Transaction::toV1Xdr(AccountConverter accountConverter) con
     for (int i = 0; i < m_operations.length(); i++) {
         transaction.operations.append(m_operations.at(i)->toXdr(accountConverter));
     }
+    // CAP-46 — Soroban ext: v=1 + SorobanTransactionData when set.
+    if (m_sorobanData) {
+        transaction.ext.v = 1;
+        transaction.ext.sorobanData = *m_sorobanData;
+    }
     return transaction;
 }
 
@@ -212,6 +217,9 @@ Transaction *Transaction::fromV1EnvelopeXdr(AccountConverter accountConverter, s
     }
     Transaction * t = new Transaction(accountConverter, sourceAccount,envelope.tx.fee,envelope.tx.seqNum,ops,Memo::fromXdr(envelope.tx.memo), TransactionPreconditions::fromXdr(envelope.tx.cond), network);
     t->m_envelopeType = stellar::EnvelopeType::ENVELOPE_TYPE_TX;
+    if (envelope.tx.ext.v == 1) {
+        t->m_sorobanData = QSharedPointer<stellar::SorobanTransactionData>::create(envelope.tx.ext.sorobanData);
+    }
     for (stellar::DecoratedSignature& signature : envelope.signatures.value) {
         t->m_signatures.append(signature);
     }
