@@ -59,6 +59,10 @@ HEADERS += \
     test/contractaddresstest.h \
     test/transactionbuildersorobantest.h \
     test/responses/sorobanopsresponsetest.h \
+    test/responses/sorobanrpc/sorobanrpcdeserializertest.h \
+    test/responses/sorobanrpc/readonlyresponsestest.h \
+    test/responses/sorobanrpc/sendsimulatedeserializertest.h \
+    test/responses/sorobanrpc/sorobanserverhelperstest.h \
     test/responses/liquiditypoolresponsetest.h \
     test/requests/liquiditypoolsrequestbuildertest.h \
     test/requests/horizon15filterstest.h \

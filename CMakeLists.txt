@@ -129,6 +129,33 @@ qt_add_library(StellarQtSDK STATIC
     src/responses/operations/extendfootprintttloperationresponse.h
     src/responses/operations/restorefootprintoperationresponse.cpp
     src/responses/operations/restorefootprintoperationresponse.h
+    src/sorobanserver.cpp
+    src/sorobanserver.h
+    src/exception/sorobanrpcexception.h
+    src/responses/sorobanrpc/gethealthresponse.cpp
+    src/responses/sorobanrpc/gethealthresponse.h
+    src/responses/sorobanrpc/getnetworkresponse.cpp
+    src/responses/sorobanrpc/getnetworkresponse.h
+    src/responses/sorobanrpc/getversioninforesponse.cpp
+    src/responses/sorobanrpc/getversioninforesponse.h
+    src/responses/sorobanrpc/getlatestledgerresponse.cpp
+    src/responses/sorobanrpc/getlatestledgerresponse.h
+    src/responses/sorobanrpc/getfeestatsresponse.cpp
+    src/responses/sorobanrpc/getfeestatsresponse.h
+    src/responses/sorobanrpc/gettransactionresponse.cpp
+    src/responses/sorobanrpc/gettransactionresponse.h
+    src/responses/sorobanrpc/gettransactionsresponse.cpp
+    src/responses/sorobanrpc/gettransactionsresponse.h
+    src/responses/sorobanrpc/getledgerentriesresponse.cpp
+    src/responses/sorobanrpc/getledgerentriesresponse.h
+    src/responses/sorobanrpc/getledgersresponse.cpp
+    src/responses/sorobanrpc/getledgersresponse.h
+    src/responses/sorobanrpc/geteventsresponse.cpp
+    src/responses/sorobanrpc/geteventsresponse.h
+    src/responses/sorobanrpc/sendtransactionresponse.cpp
+    src/responses/sorobanrpc/sendtransactionresponse.h
+    src/responses/sorobanrpc/simulatetransactionresponse.cpp
+    src/responses/sorobanrpc/simulatetransactionresponse.h
     xdr/scval.h
     xdr/sorobantxdata.h
     xdr/sorobanops.h
@@ -456,7 +483,7 @@ target_include_directories(StellarQtSDK PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} src)
 
 add_compile_definitions(
     STELLAR_QT_SDK_CLIENT_NAME=\"\\\"qtcpp-stellar-sdk\\\"\"
-    STELLAR_QT_SDK_CLIENT_VERSION=\"\\\"0.10.0\\\"\"
+    STELLAR_QT_SDK_CLIENT_VERSION=\"\\\"0.11.0\\\"\"
 )
 
 target_compile_definitions(StellarQtSDK PRIVATE

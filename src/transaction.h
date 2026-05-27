@@ -32,6 +32,7 @@ class Transaction : public AbstractTransaction
     stellar::EnvelopeType m_envelopeType;
     friend class ::TransactionBuilder;
     friend class FeeBumpTransaction;
+    friend class SorobanServer;
     /** Legacy ctor — only time bounds. The TimeBounds* is consumed (TransactionPreconditions takes ownership). */
     Transaction(AccountConverter accountConverter, QString sourceAccount, qint64 fee, qint64 sequenceNumber, QVector<Operation*> operations, Memo* memo, TimeBounds *timeBounds, Network* network);
     /** CAP-21 ctor — full preconditions bundle. Pass via std::move to preserve pointer identity. */

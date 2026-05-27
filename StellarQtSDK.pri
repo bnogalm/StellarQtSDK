@@ -5,7 +5,7 @@ DEFINES += STELLAR_QT_REPLY_TIMEOUT=30000
 DEFINES *= ED25519_NO_SEED
 
 DEFINES += STELLAR_QT_SDK_CLIENT_NAME=\"\\\"qtcpp-stellar-sdk\\\"\"
-DEFINES += STELLAR_QT_SDK_CLIENT_VERSION=\"\\\"0.10.0\\\"\"
+DEFINES += STELLAR_QT_SDK_CLIENT_VERSION=\"\\\"0.11.0\\\"\"
 
 #DEFINES += STELLAR_QT_AUTOSET_BASE_FEE
 
@@ -49,6 +49,19 @@ SOURCES += \
     $$PWD/src/responses/operations/invokehostfunctionoperationresponse.cpp \
     $$PWD/src/responses/operations/extendfootprintttloperationresponse.cpp \
     $$PWD/src/responses/operations/restorefootprintoperationresponse.cpp \
+    $$PWD/src/sorobanserver.cpp \
+    $$PWD/src/responses/sorobanrpc/gethealthresponse.cpp \
+    $$PWD/src/responses/sorobanrpc/getnetworkresponse.cpp \
+    $$PWD/src/responses/sorobanrpc/getversioninforesponse.cpp \
+    $$PWD/src/responses/sorobanrpc/getlatestledgerresponse.cpp \
+    $$PWD/src/responses/sorobanrpc/getfeestatsresponse.cpp \
+    $$PWD/src/responses/sorobanrpc/gettransactionresponse.cpp \
+    $$PWD/src/responses/sorobanrpc/gettransactionsresponse.cpp \
+    $$PWD/src/responses/sorobanrpc/getledgerentriesresponse.cpp \
+    $$PWD/src/responses/sorobanrpc/getledgersresponse.cpp \
+    $$PWD/src/responses/sorobanrpc/geteventsresponse.cpp \
+    $$PWD/src/responses/sorobanrpc/sendtransactionresponse.cpp \
+    $$PWD/src/responses/sorobanrpc/simulatetransactionresponse.cpp \
     $$PWD/src/responses/problem.cpp \
     $$PWD/src/responses/effects/liquiditypooleffectsresponses.cpp \
     $$PWD/src/responses/liquiditypoolresponse.cpp \
@@ -270,6 +283,20 @@ HEADERS += \
     $$PWD/src/responses/operations/invokehostfunctionoperationresponse.h \
     $$PWD/src/responses/operations/extendfootprintttloperationresponse.h \
     $$PWD/src/responses/operations/restorefootprintoperationresponse.h \
+    $$PWD/src/sorobanserver.h \
+    $$PWD/src/exception/sorobanrpcexception.h \
+    $$PWD/src/responses/sorobanrpc/gethealthresponse.h \
+    $$PWD/src/responses/sorobanrpc/getnetworkresponse.h \
+    $$PWD/src/responses/sorobanrpc/getversioninforesponse.h \
+    $$PWD/src/responses/sorobanrpc/getlatestledgerresponse.h \
+    $$PWD/src/responses/sorobanrpc/getfeestatsresponse.h \
+    $$PWD/src/responses/sorobanrpc/gettransactionresponse.h \
+    $$PWD/src/responses/sorobanrpc/gettransactionsresponse.h \
+    $$PWD/src/responses/sorobanrpc/getledgerentriesresponse.h \
+    $$PWD/src/responses/sorobanrpc/getledgersresponse.h \
+    $$PWD/src/responses/sorobanrpc/geteventsresponse.h \
+    $$PWD/src/responses/sorobanrpc/sendtransactionresponse.h \
+    $$PWD/src/responses/sorobanrpc/simulatetransactionresponse.h \
     $$PWD/xdr/scval.h \
     $$PWD/xdr/sorobantxdata.h \
     $$PWD/xdr/sorobanops.h \
