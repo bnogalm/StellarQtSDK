@@ -5,7 +5,7 @@ DEFINES += STELLAR_QT_REPLY_TIMEOUT=30000
 DEFINES *= ED25519_NO_SEED
 
 DEFINES += STELLAR_QT_SDK_CLIENT_NAME=\"\\\"qtcpp-stellar-sdk\\\"\"
-DEFINES += STELLAR_QT_SDK_CLIENT_VERSION=\"\\\"0.11.0\\\"\"
+DEFINES += STELLAR_QT_SDK_CLIENT_VERSION=\"\\\"0.12.0\\\"\"
 
 #DEFINES += STELLAR_QT_AUTOSET_BASE_FEE
 
@@ -62,6 +62,9 @@ SOURCES += \
     $$PWD/src/responses/sorobanrpc/geteventsresponse.cpp \
     $$PWD/src/responses/sorobanrpc/sendtransactionresponse.cpp \
     $$PWD/src/responses/sorobanrpc/simulatetransactionresponse.cpp \
+    $$PWD/src/contract/sorobancredentialssigner.cpp \
+    $$PWD/src/contract/assembledtransaction.cpp \
+    $$PWD/src/contract/contractclient.cpp \
     $$PWD/src/responses/problem.cpp \
     $$PWD/src/responses/effects/liquiditypooleffectsresponses.cpp \
     $$PWD/src/responses/liquiditypoolresponse.cpp \
@@ -297,6 +300,9 @@ HEADERS += \
     $$PWD/src/responses/sorobanrpc/geteventsresponse.h \
     $$PWD/src/responses/sorobanrpc/sendtransactionresponse.h \
     $$PWD/src/responses/sorobanrpc/simulatetransactionresponse.h \
+    $$PWD/src/contract/sorobancredentialssigner.h \
+    $$PWD/src/contract/assembledtransaction.h \
+    $$PWD/src/contract/contractclient.h \
     $$PWD/xdr/scval.h \
     $$PWD/xdr/sorobantxdata.h \
     $$PWD/xdr/sorobanops.h \

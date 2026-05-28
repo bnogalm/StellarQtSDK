@@ -41,5 +41,15 @@ SimulateTransactionResponse SimulateTransactionResponse::fromJson(const QJsonObj
         sc.after  = o.value("after").toString();
         out.m_stateChanges.append(sc);
     }
+
+    QJsonValue rp = r.value("restorePreamble");
+    if (rp.isObject()) {
+        QJsonObject o = rp.toObject();
+        out.m_restorePreamble.transactionData = o.value("transactionData").toString();
+        out.m_restorePreamble.minResourceFee = o.value("minResourceFee").isString()
+            ? o.value("minResourceFee").toString()
+            : QString::number(o.value("minResourceFee").toInteger(0));
+        out.m_restorePreamble.present = true;
+    }
     return out;
 }

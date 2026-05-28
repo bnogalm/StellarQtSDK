@@ -138,8 +138,10 @@ public:
      * the final result.
      */
     SendTransactionResponse sendTransaction(AbstractTransaction* tx);
-    /** Overload that takes the base64 envelope directly. */
-    SendTransactionResponse sendTransactionXdr(const QString& envelopeXdrBase64);
+    /** Overload that takes the base64 envelope directly.
+     *  `virtual` so tests can subclass `SorobanServer` and feed scripted
+     *  responses without an actual RPC endpoint. */
+    virtual SendTransactionResponse sendTransactionXdr(const QString& envelopeXdrBase64);
 
     /**
      * `simulateTransaction` — runs the transaction in the host without
@@ -149,8 +151,10 @@ public:
      * `prepareTransaction()` (Iter 4).
      */
     SimulateTransactionResponse simulateTransaction(AbstractTransaction* tx);
-    /** Overload that takes the base64 envelope directly. */
-    SimulateTransactionResponse simulateTransactionXdr(const QString& envelopeXdrBase64);
+    /** Overload that takes the base64 envelope directly.
+     *  `virtual` so tests can subclass `SorobanServer` and feed scripted
+     *  responses without an actual RPC endpoint. */
+    virtual SimulateTransactionResponse simulateTransactionXdr(const QString& envelopeXdrBase64);
 
     /**
      * `prepareTransaction` — runs the transaction through `simulateTransaction`

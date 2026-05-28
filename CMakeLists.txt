@@ -156,6 +156,12 @@ qt_add_library(StellarQtSDK STATIC
     src/responses/sorobanrpc/sendtransactionresponse.h
     src/responses/sorobanrpc/simulatetransactionresponse.cpp
     src/responses/sorobanrpc/simulatetransactionresponse.h
+    src/contract/sorobancredentialssigner.cpp
+    src/contract/sorobancredentialssigner.h
+    src/contract/assembledtransaction.cpp
+    src/contract/assembledtransaction.h
+    src/contract/contractclient.cpp
+    src/contract/contractclient.h
     xdr/scval.h
     xdr/sorobantxdata.h
     xdr/sorobanops.h
@@ -483,7 +489,7 @@ target_include_directories(StellarQtSDK PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} src)
 
 add_compile_definitions(
     STELLAR_QT_SDK_CLIENT_NAME=\"\\\"qtcpp-stellar-sdk\\\"\"
-    STELLAR_QT_SDK_CLIENT_VERSION=\"\\\"0.11.0\\\"\"
+    STELLAR_QT_SDK_CLIENT_VERSION=\"\\\"0.12.0\\\"\"
 )
 
 target_compile_definitions(StellarQtSDK PRIVATE

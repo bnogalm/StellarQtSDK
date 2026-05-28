@@ -23,6 +23,19 @@ struct SimulateStateChange
     QString after;       // base64 LedgerEntry (absent for "deleted")
 };
 
+/**
+ * Present when the simulation requires a RestoreFootprint operation to be
+ * applied first (because some of the contract's storage has been archived).
+ * `transactionData` is the SorobanTransactionData for the restore tx;
+ * `minResourceFee` is its resource fee.
+ */
+struct SimulateRestorePreamble
+{
+    QString transactionData;   // base64 SorobanTransactionData
+    QString minResourceFee;    // string to preserve uint64
+    bool present = false;
+};
+
 /** Soroban RPC `simulateTransaction` result. */
 class SimulateTransactionResponse
 {
@@ -33,6 +46,7 @@ class SimulateTransactionResponse
     QList<SimulateHostFunctionResult> m_results;
     QList<SimulateStateChange> m_stateChanges;
     QString m_error;               // present when simulation failed
+    SimulateRestorePreamble m_restorePreamble;
 public:
     static SimulateTransactionResponse fromJson(const QJsonObject& result);
 
@@ -43,9 +57,12 @@ public:
     const QList<SimulateHostFunctionResult>& getResults() const { return m_results; }
     const QList<SimulateStateChange>& getStateChanges() const { return m_stateChanges; }
     QString getError() const { return m_error; }
+    const SimulateRestorePreamble& getRestorePreamble() const { return m_restorePreamble; }
 
     /** True iff the simulation failed (carries an `error` payload). */
     bool isError() const { return !m_error.isEmpty(); }
+    /** True iff the simulation needs a RestoreFootprint applied first. */
+    bool needsRestore() const { return m_restorePreamble.present; }
 };
 
 #endif // SIMULATETRANSACTIONRESPONSE_H
