@@ -162,6 +162,9 @@ qt_add_library(StellarQtSDK STATIC
     src/contract/assembledtransaction.h
     src/contract/contractclient.cpp
     src/contract/contractclient.h
+    src/sep45challenge.cpp
+    src/sep45challenge.h
+    src/exception/invalidsep45challengeexception.h
     xdr/scval.h
     xdr/sorobantxdata.h
     xdr/sorobanops.h
@@ -489,7 +492,7 @@ target_include_directories(StellarQtSDK PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} src)
 
 add_compile_definitions(
     STELLAR_QT_SDK_CLIENT_NAME=\"\\\"qtcpp-stellar-sdk\\\"\"
-    STELLAR_QT_SDK_CLIENT_VERSION=\"\\\"0.12.0\\\"\"
+    STELLAR_QT_SDK_CLIENT_VERSION=\"\\\"0.13.0\\\"\"
 )
 
 target_compile_definitions(StellarQtSDK PRIVATE

@@ -67,6 +67,7 @@ HEADERS += \
     test/contract/assembledtransactiontest.h \
     test/contract/assembledtransactionauthtest.h \
     test/contract/contractclienttest.h \
+    test/sep45challengetest.h \
     test/responses/liquiditypoolresponsetest.h \
     test/requests/liquiditypoolsrequestbuildertest.h \
     test/requests/horizon15filterstest.h \
