@@ -3,6 +3,9 @@
 
 #include <QObject>
 #include <QUrl>
+#include "qstellar_namespace.h"
+
+QSTELLAR_BEGIN_NS
 
 /**
  * Represents links in responses.
@@ -24,5 +27,12 @@ public:
     bool operator !=(const Link& link) const;
     bool operator ==(const Link& link) const;
 };
-Q_DECLARE_METATYPE(Link)
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(Link)
+
+
+
+Q_DECLARE_METATYPE(qstellar::Link)
 #endif // LINK_H

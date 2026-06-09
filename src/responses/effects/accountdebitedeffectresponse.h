@@ -2,8 +2,10 @@
 #define ACCOUNTDEBITEDEFFECTRESPONSE_H
 
 #include "effectresponse.h"
-class Asset;
-/**
+#include "qstellar_namespace.h"
+QSTELLAR_BEGIN_NS
+
+class Asset;/**
  * Represents account_debited effect response.
  * @see <a href="https://www.stellar.org/developers/horizon/reference/resources/effect.html" target="_blank">Effect documentation</a>
  * @see org.stellar.sdk.requests.EffectsRequestBuilder
@@ -37,5 +39,12 @@ public slots:
     void setAssetCode(QString assetCode);
     void setAssetIssuer(QString assetIssuer);
 };
-Q_DECLARE_METATYPE(AccountDebitedEffectResponse*)
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(AccountDebitedEffectResponse)
+
+
+
+Q_DECLARE_METATYPE(qstellar::AccountDebitedEffectResponse*)
 #endif // ACCOUNTDEBITEDEFFECTRESPONSE_H

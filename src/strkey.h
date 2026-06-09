@@ -8,6 +8,7 @@
 #include <QDataStream>
 #include "xdr/stellartransaction.h"
 #include "exception/formatexception.h"
+#include "qstellar_namespace.h"
 
 /**
  * Indicates that there was a problem decoding strkey encoded string.
@@ -16,6 +17,8 @@
  * @see KeyPair
  */
 using FormatException = ::qstellar::exception::FormatException;
+
+QSTELLAR_BEGIN_NS
 
 class StrKey
 {
@@ -190,5 +193,9 @@ public:
 
     static QByteArray calculateChecksum(QByteArray bytes);
 };
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(StrKey)
 
 #endif // STRKEY_H

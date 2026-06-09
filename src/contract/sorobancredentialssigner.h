@@ -6,8 +6,10 @@
 #include <QtGlobal>
 
 #include "xdr/sorobanops.h"
+#include "../keypair.h"
+#include "../qstellar_namespace.h"
+QSTELLAR_BEGIN_NS
 
-class KeyPair;
 
 /**
  * CAP-46 — sign Soroban auth entries that use `SOROBAN_CREDENTIALS_ADDRESS`.
@@ -49,5 +51,9 @@ public:
     static stellar::SCVal buildSignatureSCVal(const QByteArray& publicKey32,
                                               const QByteArray& signature64);
 };
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(SorobanCredentialsSigner)
 
 #endif // SOROBANCREDENTIALSSIGNER_H

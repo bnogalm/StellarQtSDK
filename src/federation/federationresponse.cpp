@@ -1,5 +1,8 @@
 #include "federationresponse.h"
 
+QSTELLAR_BEGIN_NS
+
+
 
 FederationResponse::FederationResponse(QNetworkReply *reply):Response(reply) {
 }
@@ -26,3 +29,4 @@ QString FederationResponse::getMemoType() {
 QString FederationResponse::getMemo() {
     return m_memo;
 }
+QSTELLAR_END_NS

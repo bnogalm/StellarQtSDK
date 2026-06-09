@@ -1,5 +1,8 @@
 #include "beginsponsoringfuturereservesoperationresponse.h"
 
+QSTELLAR_BEGIN_NS
+
+
 BeginSponsoringFutureReservesOperationResponse::BeginSponsoringFutureReservesOperationResponse(QNetworkReply* reply)
     :OperationResponse(reply)
 {
@@ -24,3 +27,4 @@ void BeginSponsoringFutureReservesOperationResponse::setSponsoredID(QString spon
     m_sponsoredID = sponsoredID;
     emit sponsoredIDChanged();
 }
+QSTELLAR_END_NS

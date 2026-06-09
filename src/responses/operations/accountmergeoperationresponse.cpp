@@ -1,5 +1,8 @@
 #include "accountmergeoperationresponse.h"
 #include "../../keypair.h"
+
+QSTELLAR_BEGIN_NS
+
 AccountMergeOperationResponse::AccountMergeOperationResponse(QNetworkReply *reply)
     :OperationResponse(reply)
     ,m_accountKeypair(0)
@@ -50,3 +53,4 @@ void AccountMergeOperationResponse::setInto(QString into)
 {
     m_into = into;
 }
+QSTELLAR_END_NS

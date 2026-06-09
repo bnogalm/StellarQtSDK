@@ -2,6 +2,12 @@
 #define SUBMITTRANSACTIONRESPONSE_H
 
 #include "response.h"
+#include "qstellar_namespace.h"
+
+QSTELLAR_FWD(AbstractTransaction)
+
+QSTELLAR_BEGIN_NS
+
 namespace SubmitTransactionResponseAttach
 {
 /**
@@ -86,7 +92,7 @@ public:
 
 
 }
-class AbstractTransaction;
+
 class SubmitTransactionResponse : public Response
 {
     Q_OBJECT
@@ -130,8 +136,16 @@ signals:
     void responseReady();
 };
 
+QSTELLAR_END_NS
 
-Q_DECLARE_METATYPE(SubmitTransactionResponseAttach::ResultCodes)
-Q_DECLARE_METATYPE(SubmitTransactionResponseAttach::Extras)
+QSTELLAR_ALIAS(SubmitTransactionResponse)
+QSTELLAR_NS_ALIAS(SubmitTransactionResponseAttach)
+
+
+
+
+
+Q_DECLARE_METATYPE(qstellar::SubmitTransactionResponseAttach::ResultCodes)
+Q_DECLARE_METATYPE(qstellar::SubmitTransactionResponseAttach::Extras)
 
 #endif // SUBMITTRANSACTIONRESPONSE_H

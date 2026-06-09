@@ -2,6 +2,7 @@
 #include "util.h"
 #include "keypair.h"
 
+QSTELLAR_BEGIN_NS
 
 AssetTypeCreditAlphaNum12::AssetTypeCreditAlphaNum12(QString code, KeyPair *issuer)
     :AssetTypeCreditAlphaNum(code, issuer) {
@@ -29,3 +30,5 @@ stellar::Asset AssetTypeCreditAlphaNum12::toXdr() {
     xdr.alphaNum12.issuer = m_issuer->getXdrPublicKey();
     return xdr;
 }
+
+QSTELLAR_END_NS

@@ -1,5 +1,8 @@
 #include "pathpaymentstrictsendoperation.h"
 
+QSTELLAR_BEGIN_NS
+
+
 
 PathPaymentStrictSendOperation::PathPaymentStrictSendOperation()
 :m_sendAsset(nullptr)
@@ -123,3 +126,4 @@ PathPaymentStrictSendOperation *PathPaymentStrictSendOperation::setSourceAccount
     return this;
 }
 
+QSTELLAR_END_NS

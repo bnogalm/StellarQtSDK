@@ -27,14 +27,31 @@ private:
     QHash<QString, Reply> m_postResponses;
     QList<QTcpSocket*> m_clients;
 public:
-    FakeServer(quint16 port=8080, QObject* parent = nullptr):QObject(parent)
+    /**
+     * Default port = 0 → ask the OS for any free ephemeral port. The actually
+     * bound port is exposed via `port()`. Pass an explicit port if a test
+     * still wants a fixed one (no longer recommended; ports may stay in
+     * TIME_WAIT between consecutive tests on Windows).
+     *
+     * If `port != 0` and that port is already taken, falls back to 0 so the
+     * test still gets a working listener instead of binding silently failing.
+     */
+    FakeServer(quint16 port=0, QObject* parent = nullptr):QObject(parent)
     {
         m_server= new QTcpServer(this);
         m_server->setMaxPendingConnections(100);
         connect(m_server, &QTcpServer::newConnection, this, &FakeServer::incomingConnection);
-        m_server->listen(QHostAddress::LocalHost, port);
-
+        if (!m_server->listen(QHostAddress::LocalHost, port)) {
+            // Requested port busy — retry with ephemeral.
+            m_server->listen(QHostAddress::LocalHost, 0);
+        }
     }
+
+    /** Returns the actual port the listener is bound to (resolved when port=0). */
+    quint16 port() const { return m_server->serverPort(); }
+
+    /** Returns the canonical base URL (`http://localhost:<port>`) — pass to Server. */
+    QString baseUrl() const { return QStringLiteral("http://localhost:%1").arg(m_server->serverPort()); }
     virtual ~FakeServer()
     {
         for(QTcpSocket * c :m_clients)

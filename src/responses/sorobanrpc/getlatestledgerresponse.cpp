@@ -1,5 +1,8 @@
 #include "getlatestledgerresponse.h"
 
+QSTELLAR_BEGIN_NS
+
+
 GetLatestLedgerResponse GetLatestLedgerResponse::fromJson(const QJsonObject& r)
 {
     GetLatestLedgerResponse out;
@@ -12,3 +15,4 @@ GetLatestLedgerResponse GetLatestLedgerResponse::fromJson(const QJsonObject& r)
                                    : static_cast<quint32>(sq.toInteger(0));
     return out;
 }
+QSTELLAR_END_NS

@@ -6,6 +6,9 @@
 #include "../assettypecreditalphanum4.h"
 #include "../keypair.h"
 
+QSTELLAR_BEGIN_NS
+
+
 RequestBuilder::RequestBuilder(Server *server, QString defaultSegment):m_streamMode(false){
     m_server=server;
     m_uri = server->serverURI();
@@ -164,3 +167,4 @@ RequestBuilder::Order RequestBuilder::orderFromString(QString s)
         return Order::ASC;
     return Order::DESC;
 }
+QSTELLAR_END_NS

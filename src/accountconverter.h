@@ -2,6 +2,9 @@
 #define ACCOUNTCONVERTER_H
 #include "keypair.h"
 #include "strkey.h"
+#include "qstellar_namespace.h"
+
+QSTELLAR_BEGIN_NS
 
 class AccountConverter
 {
@@ -52,5 +55,9 @@ public:
     QString filter(QString account);
 
 };
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(AccountConverter)
 
 #endif // ACCOUNTCONVERTER_H

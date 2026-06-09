@@ -4,6 +4,9 @@
 #include "effectresponse.h"
 #include "../liquiditypool.h"
 #include "../liquiditypoolclaimableassetamount.h"
+#include "qstellar_namespace.h"
+
+QSTELLAR_BEGIN_NS
 
 /**
  * `liquidity_pool_revoked` (type_i = 95) effect.
@@ -30,6 +33,13 @@ public:
     QList<LiquidityPoolClaimableAssetAmount>   getReservesRevoked() const { return m_reservesRevoked; }
     QString                                    getSharesRevoked() const   { return m_sharesRevoked; }
 };
-Q_DECLARE_METATYPE(LiquidityPoolRevokedEffectResponse*)
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(LiquidityPoolRevokedEffectResponse)
+
+
+
+Q_DECLARE_METATYPE(qstellar::LiquidityPoolRevokedEffectResponse*)
 
 #endif // LIQUIDITYPOOLREVOKEDEFFECTRESPONSE_H

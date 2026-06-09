@@ -4,6 +4,9 @@
 #include <QObject>
 #include "response.h"
 #include "operations/operationresponse.h"
+#include "qstellar_namespace.h"
+QSTELLAR_BEGIN_NS
+
 /**
  * @brief The GenericOperation class
  * Helper class to deserialize correct OperationResponse
@@ -20,5 +23,12 @@ public:
 
     virtual void loadFromJson(QByteArray data);
 };
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(GenericOperation)
+
+
+
 
 #endif // GENERICOPERATION_H

@@ -5,6 +5,8 @@
 #include <QDebug>
 #include <limits>
 
+QSTELLAR_BEGIN_NS
+
 quint32 TransactionBuilder::s_defaultOperationFee = TransactionBuilder::BASE_FEE;
 
 TransactionBuilder::TransactionBuilder(AccountConverter accountConverter,
@@ -241,3 +243,5 @@ Transaction* TransactionBuilder::build()
 
     return transaction;
 }
+
+QSTELLAR_END_NS

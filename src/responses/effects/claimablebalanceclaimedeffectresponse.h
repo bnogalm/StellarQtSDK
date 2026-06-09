@@ -4,6 +4,9 @@
 #include "effectresponse.h"
 #include "asset.h"
 #include <QObject>
+#include "qstellar_namespace.h"
+
+QSTELLAR_BEGIN_NS
 
 /**
  * Represents claimable_balance_claimed effect response.
@@ -44,5 +47,12 @@ signals:
     void amountChanged();
     void balanceIDChanged();
 };
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(ClaimableBalanceClaimedEffectResponse)
+
+
+
 
 #endif // CLAIMABLEBALANCECLAIMEDEFFECTRESPONSE_H

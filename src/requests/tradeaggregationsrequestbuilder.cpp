@@ -3,6 +3,9 @@
 #include "../asset.h"
 #include "../assettypecreditalphanum.h"
 #include "../keypair.h"
+
+QSTELLAR_BEGIN_NS
+
 TradeAggregationsRequestBuilder::TradeAggregationsRequestBuilder(Server *server, Asset *baseAsset, Asset *counterAsset, qint64 startTime, qint64 endTime, qint64 resolution, qint64 offset)
     :RequestBuilder(server,"trade_aggregations")
 {
@@ -55,3 +58,4 @@ void TradeAggregationsRequestBuilder::counterAsset(Asset *asset) {
         addParameter("counter_asset_issuer", creditAlphaNumAsset->getIssuer().getAccountId());
     }
 }
+QSTELLAR_END_NS

@@ -2,6 +2,9 @@
 #include "../../keypair.h"
 #include "../../asset.h"
 #include "../../assettypenative.h"
+
+QSTELLAR_BEGIN_NS
+
 ChangeTrustOperationResponse::ChangeTrustOperationResponse(QNetworkReply *reply)
     :OperationResponse(reply),m_trustorKeypair(0),m_trusteeKeypair(0),m_asset(0)
 {
@@ -114,3 +117,4 @@ void ChangeTrustOperationResponse::setAssetIssuer(QString assetIssuer)
     }
     m_assetIssuer = assetIssuer;
 }
+QSTELLAR_END_NS

@@ -2,6 +2,7 @@
 
 #include <QMessageAuthenticationCode>
 
+QSTELLAR_BEGIN_NS
 
 SLIP10::SLIP10()
 {
@@ -29,3 +30,5 @@ QByteArray SLIP10::deriveEd25519PrivateKey(const QByteArray seed, const QVector<
     // copy head 32 bytes of I into Il
     return I.mid(0,32);
 }
+
+QSTELLAR_END_NS

@@ -5,6 +5,9 @@
 #include <QObject>
 #include "predicate.h"
 #include "asset.h"
+#include "qstellar_namespace.h"
+QSTELLAR_BEGIN_NS
+
 /**
  * Represents claimable_balance_claimed effect response.
  * @see <a href="https://www.stellar.org/developers/horizon/reference/resources/effect.html" target="_blank">Effect documentation</a>
@@ -48,5 +51,12 @@ signals:
     void balanceIDChanged();
     void predicateChanged();
 };
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(ClaimableBalanceClaimantCreatedEffectResponse)
+
+
+
 
 #endif // CLAIMABLEBALANCECLAIMANTCREATEDEFFECTRESPONSE_H

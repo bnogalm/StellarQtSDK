@@ -7,6 +7,9 @@
 #include "transaction.h"
 #include "managedataoperation.h"
 #include "network.h"
+#include "qstellar_namespace.h"
+QSTELLAR_BEGIN_NS
+
 
 
 class Sep10Challenge
@@ -216,5 +219,9 @@ inline uint qHash(const Sep10Challenge::Signer &t, uint seed)
     return t.hashCode() ^ seed;
 }
 
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(Sep10Challenge)
 
 #endif // SEP10CHALLENGE_H

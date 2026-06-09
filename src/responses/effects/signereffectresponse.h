@@ -1,7 +1,10 @@
 #ifndef SIGNEREFFECTRESPONSE_H
 #define SIGNEREFFECTRESPONSE_H
 #include "effectresponse.h"
+#include "qstellar_namespace.h"
 
+
+QSTELLAR_BEGIN_NS
 
 class SignerEffectResponse : public EffectResponse
 {
@@ -17,7 +20,14 @@ public:
 
     QString getPublicKey() const;
 };
-Q_DECLARE_METATYPE(SignerEffectResponse*)
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(SignerEffectResponse)
+
+
+
+Q_DECLARE_METATYPE(qstellar::SignerEffectResponse*)
 
 
 #endif // SIGNEREFFECTRESPONSE_H

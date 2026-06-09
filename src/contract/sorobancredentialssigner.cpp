@@ -8,6 +8,9 @@
 #include "scval/scv.h"
 #include "xdr/stellarledgerentries.h"
 
+QSTELLAR_BEGIN_NS
+
+
 QByteArray SorobanCredentialsSigner::hashedSignaturePayload(
     const stellar::SorobanAuthorizationEntry& entry,
     quint32 validUntilLedger,
@@ -91,3 +94,4 @@ stellar::SorobanAuthorizationEntry SorobanCredentialsSigner::authorizeEntry(
 
     return clone;
 }
+QSTELLAR_END_NS

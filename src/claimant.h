@@ -5,7 +5,9 @@
 
 
 #include "strkey.h"
+#include "qstellar_namespace.h"
 
+QSTELLAR_BEGIN_NS
 
 class Claimant
 {
@@ -42,4 +44,10 @@ namespace ClaimantConverter
 }
 
 QList<Claimant> checkNotNull(QList<Claimant> claimants, const char *error);
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(Claimant)
+QSTELLAR_NS_ALIAS(ClaimantConverter)
+
 #endif // CLAIMANT_H

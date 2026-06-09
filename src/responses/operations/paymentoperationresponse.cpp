@@ -3,6 +3,9 @@
 #include "../../assettypenative.h"
 #include "../../keypair.h"
 
+QSTELLAR_BEGIN_NS
+
+
 PaymentOperationResponse::PaymentOperationResponse(QNetworkReply *reply)
     :OperationResponse(reply),m_fromKeypair(0),m_toKeypair(0),m_asset(0)
 {
@@ -116,3 +119,4 @@ void PaymentOperationResponse::setAssetIssuer(QString assetIssuer)
     }
     m_assetIssuer = assetIssuer;
 }
+QSTELLAR_END_NS

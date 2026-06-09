@@ -1,5 +1,8 @@
 #include "revoketrustlinesponsorshipoperation.h"
 
+QSTELLAR_BEGIN_NS
+
+
 
 
 RevokeTrustlineSponsorshipOperation::RevokeTrustlineSponsorshipOperation(QString accountId, Asset *asset)
@@ -60,3 +63,4 @@ RevokeTrustlineSponsorshipOperation *RevokeTrustlineSponsorshipOperation::setSou
     Operation::setSourceAccount(sourceAccount);
     return this;
 }
+QSTELLAR_END_NS

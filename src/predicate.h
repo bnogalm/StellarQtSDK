@@ -2,6 +2,10 @@
 #define PREDICATE_H
 #include <QtCore>
 #include "xdr/stellarledgerentries.h"
+#include "qstellar_namespace.h"
+
+QSTELLAR_BEGIN_NS
+
 class Predicate;
 
 class Predicate
@@ -366,11 +370,17 @@ public:
     }
 };
 
-Q_DECLARE_METATYPE(Predicate::AbsBefore);
-Q_DECLARE_METATYPE(Predicate::And);
-Q_DECLARE_METATYPE(Predicate::Not);
-Q_DECLARE_METATYPE(Predicate::Or);
-Q_DECLARE_METATYPE(Predicate::RelBefore);
-Q_DECLARE_METATYPE(Predicate::Unconditional);
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(Predicate)
+
+// Q_DECLARE_METATYPE must be at global scope. The unqualified `Predicate`
+// resolves via the alias to `qstellar::Predicate`.
+Q_DECLARE_METATYPE(qstellar::Predicate::AbsBefore);
+Q_DECLARE_METATYPE(qstellar::Predicate::And);
+Q_DECLARE_METATYPE(qstellar::Predicate::Not);
+Q_DECLARE_METATYPE(qstellar::Predicate::Or);
+Q_DECLARE_METATYPE(qstellar::Predicate::RelBefore);
+Q_DECLARE_METATYPE(qstellar::Predicate::Unconditional);
 
 #endif // PREDICATE_H

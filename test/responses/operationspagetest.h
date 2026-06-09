@@ -9,6 +9,8 @@
 #include "../../src/responses/operations/createaccountoperationresponse.h"
 #include "../../src/responses/operations/paymentoperationresponse.h"
 #include "../../src/responses/operations/revokesponsorshipoperationresponse.h"
+#include "../../src/responses/operations/liquiditypooldepositoperationresponse.h"
+#include "../../src/responses/operations/liquiditypoolwithdrawoperationresponse.h"
 
 #include "../../src/keypair.h"
 #include "../../src/assettypenative.h"
@@ -340,6 +342,8 @@ private:
             "    ]\n"
             "  }\n"
             "}";
+
+private slots:
     void testDeserializeRevokeSponsorship() {
         QByteArray revokeSponsorshipJSON = "{\n"
             "  \"_links\": {\n"
@@ -388,7 +392,7 @@ private:
             "}";
 
         OperationPage operationsPage(0);
-        operationsPage.loadFromJson(json);
+        operationsPage.loadFromJson(revokeSponsorshipJSON);
 
         RevokeSponsorshipOperationResponse* revokeOp = (RevokeSponsorshipOperationResponse*) operationsPage.at(0);
 
@@ -403,6 +407,130 @@ private:
         QVERIFY(revokeOp->getTrustlineAsset().isNull());
         QCOMPARE(revokeOp->getOfferID(), "8822470");
         QCOMPARE(revokeOp->getSourceAccount().getAccountId(), "GB6QDNU47MYBR4NDTRP7M3FW27DAFOEADN5KDQI2DAVWW6YVKKG4QJS7");
+    }
+
+    void testDeserializeLiquidityPoolDepositOperation() {
+        QByteArray liquidityPoolDepositJSON = "{"
+            "  \"_links\": {"
+            "    \"self\": { \"href\": \"https://horizon-testnet.stellar.org/operations?cursor=\\u0026limit=10\\u0026order=asc\" },"
+            "    \"next\": { \"href\": \"https://horizon-testnet.stellar.org/operations?cursor=124042211741474817\\u0026limit=10\\u0026order=asc\" },"
+            "    \"prev\": { \"href\": \"https://horizon-testnet.stellar.org/operations?cursor=124042211741474817\\u0026limit=10\\u0026order=desc\" }"
+            "  },"
+            "  \"_embedded\": {"
+            "    \"records\": ["
+            "      {"
+            "        \"_links\": {"
+            "          \"self\": { \"href\": \"https://horizon-testnet.stellar.org/operations/124042211741474817\" },"
+            "          \"transaction\": { \"href\": \"https://horizon-testnet.stellar.org/transactions/abc\" },"
+            "          \"effects\": { \"href\": \"https://horizon-testnet.stellar.org/operations/124042211741474817/effects\" },"
+            "          \"succeeds\": { \"href\": \"https://horizon-testnet.stellar.org/effects?order=desc\\u0026cursor=124042211741474817\" },"
+            "          \"precedes\": { \"href\": \"https://horizon-testnet.stellar.org/effects?order=asc\\u0026cursor=124042211741474817\" }"
+            "        },"
+            "        \"id\": \"124042211741474817\","
+            "        \"paging_token\": \"124042211741474817\","
+            "        \"transaction_successful\": true,"
+            "        \"source_account\": \"GBS43BF24ENNS3KPACUZVKK2VYPOZVBQO2CISGZ777RYGOPYC2FT6S3K\","
+            "        \"type\": \"liquidity_pool_deposit\","
+            "        \"type_i\": 22,"
+            "        \"created_at\": \"2021-11-18T03:25:38Z\","
+            "        \"transaction_hash\": \"f0d2b8e8b3a3f1c1b5d6e7a8c9d0e1f2031425364758697a8b9c0d1e2f304150\","
+            "        \"liquidity_pool_id\": \"a468d41d8e9b8f3c7209d816eb46be1bff71c907dbf4540e6493f7d3d6e3b8d6\","
+            "        \"reserves_max\": ["
+            "          { \"asset\": \"native\", \"amount\": \"1000.0000000\" },"
+            "          { \"asset\": \"USDC:GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN\", \"amount\": \"2000.0000000\" }"
+            "        ],"
+            "        \"min_price\": \"0.4000000\","
+            "        \"min_price_r\": { \"n\": 2, \"d\": 5 },"
+            "        \"max_price\": \"0.6000000\","
+            "        \"max_price_r\": { \"n\": 3, \"d\": 5 },"
+            "        \"reserves_deposited\": ["
+            "          { \"asset\": \"native\", \"amount\": \"983.0000000\" },"
+            "          { \"asset\": \"USDC:GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN\", \"amount\": \"2000.0000000\" }"
+            "        ],"
+            "        \"shares_received\": \"1402.8005982\""
+            "      }"
+            "    ]"
+            "  }"
+            "}";
+
+        OperationPage operationsPage(0);
+        operationsPage.loadFromJson(liquidityPoolDepositJSON);
+
+        LiquidityPoolDepositOperationResponse* op =
+            (LiquidityPoolDepositOperationResponse*) operationsPage.at(0);
+
+        QVERIFY(op != nullptr);
+        QCOMPARE(op->getType(), QString("liquidity_pool_deposit"));
+        QCOMPARE(op->sourceAccount(), QString("GBS43BF24ENNS3KPACUZVKK2VYPOZVBQO2CISGZ777RYGOPYC2FT6S3K"));
+        QCOMPARE(op->getLiquidityPoolId(), QString("a468d41d8e9b8f3c7209d816eb46be1bff71c907dbf4540e6493f7d3d6e3b8d6"));
+        QCOMPARE(op->getMinPrice(), QString("0.4000000"));
+        QCOMPARE(op->getMaxPrice(), QString("0.6000000"));
+        QCOMPARE(op->getSharesReceived(), QString("1402.8005982"));
+        QCOMPARE(op->getReservesMax().size(), 2);
+        QCOMPARE(op->getReservesMax().at(0).getAsset(), QString("native"));
+        QCOMPARE(op->getReservesMax().at(0).getAmount(), QString("1000.0000000"));
+        QCOMPARE(op->getReservesDeposited().size(), 2);
+        QCOMPARE(op->getReservesDeposited().at(0).getAmount(), QString("983.0000000"));
+        QCOMPARE(op->getReservesDeposited().at(1).getAsset(), QString("USDC:GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN"));
+    }
+
+    void testDeserializeLiquidityPoolWithdrawOperation() {
+        QByteArray liquidityPoolWithdrawJSON = "{"
+            "  \"_links\": {"
+            "    \"self\": { \"href\": \"https://horizon-testnet.stellar.org/operations?cursor=\\u0026limit=10\\u0026order=asc\" },"
+            "    \"next\": { \"href\": \"https://horizon-testnet.stellar.org/operations?cursor=124042220331409409\\u0026limit=10\\u0026order=asc\" },"
+            "    \"prev\": { \"href\": \"https://horizon-testnet.stellar.org/operations?cursor=124042220331409409\\u0026limit=10\\u0026order=desc\" }"
+            "  },"
+            "  \"_embedded\": {"
+            "    \"records\": ["
+            "      {"
+            "        \"_links\": {"
+            "          \"self\": { \"href\": \"https://horizon-testnet.stellar.org/operations/124042220331409409\" },"
+            "          \"transaction\": { \"href\": \"https://horizon-testnet.stellar.org/transactions/def\" },"
+            "          \"effects\": { \"href\": \"https://horizon-testnet.stellar.org/operations/124042220331409409/effects\" },"
+            "          \"succeeds\": { \"href\": \"https://horizon-testnet.stellar.org/effects?order=desc\\u0026cursor=124042220331409409\" },"
+            "          \"precedes\": { \"href\": \"https://horizon-testnet.stellar.org/effects?order=asc\\u0026cursor=124042220331409409\" }"
+            "        },"
+            "        \"id\": \"124042220331409409\","
+            "        \"paging_token\": \"124042220331409409\","
+            "        \"transaction_successful\": true,"
+            "        \"source_account\": \"GBS43BF24ENNS3KPACUZVKK2VYPOZVBQO2CISGZ777RYGOPYC2FT6S3K\","
+            "        \"type\": \"liquidity_pool_withdraw\","
+            "        \"type_i\": 23,"
+            "        \"created_at\": \"2021-11-18T03:27:10Z\","
+            "        \"transaction_hash\": \"1122334455667788990011223344556677889900112233445566778899001122\","
+            "        \"liquidity_pool_id\": \"a468d41d8e9b8f3c7209d816eb46be1bff71c907dbf4540e6493f7d3d6e3b8d6\","
+            "        \"reserves_min\": ["
+            "          { \"asset\": \"native\", \"amount\": \"100.0000000\" },"
+            "          { \"asset\": \"USDC:GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN\", \"amount\": \"200.0000000\" }"
+            "        ],"
+            "        \"shares\": \"500.0000000\","
+            "        \"reserves_received\": ["
+            "          { \"asset\": \"native\", \"amount\": \"105.5000000\" },"
+            "          { \"asset\": \"USDC:GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN\", \"amount\": \"210.7000000\" }"
+            "        ]"
+            "      }"
+            "    ]"
+            "  }"
+            "}";
+
+        OperationPage operationsPage(0);
+        operationsPage.loadFromJson(liquidityPoolWithdrawJSON);
+
+        LiquidityPoolWithdrawOperationResponse* op =
+            (LiquidityPoolWithdrawOperationResponse*) operationsPage.at(0);
+
+        QVERIFY(op != nullptr);
+        QCOMPARE(op->getType(), QString("liquidity_pool_withdraw"));
+        QCOMPARE(op->sourceAccount(), QString("GBS43BF24ENNS3KPACUZVKK2VYPOZVBQO2CISGZ777RYGOPYC2FT6S3K"));
+        QCOMPARE(op->getLiquidityPoolId(), QString("a468d41d8e9b8f3c7209d816eb46be1bff71c907dbf4540e6493f7d3d6e3b8d6"));
+        QCOMPARE(op->getShares(), QString("500.0000000"));
+        QCOMPARE(op->getReservesMin().size(), 2);
+        QCOMPARE(op->getReservesMin().at(1).getAsset(), QString("USDC:GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN"));
+        QCOMPARE(op->getReservesMin().at(1).getAmount(), QString("200.0000000"));
+        QCOMPARE(op->getReservesReceived().size(), 2);
+        QCOMPARE(op->getReservesReceived().at(0).getAsset(), QString("native"));
+        QCOMPARE(op->getReservesReceived().at(0).getAmount(), QString("105.5000000"));
     }
 };
 

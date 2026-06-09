@@ -6,6 +6,9 @@
 #include "link.h"
 #include "claimant.h"
 #include "asset.h"
+#include "qstellar_namespace.h"
+QSTELLAR_BEGIN_NS
+
 namespace ClaimableBalanceResponseAttach
 {
 /**
@@ -107,5 +110,13 @@ private:
     ClaimableBalanceResponseAttach::Links m_links;
     QList<Claimant> m_claimants;
 };
-Q_DECLARE_METATYPE(ClaimableBalanceResponseAttach::Links)
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(ClaimableBalanceResponse)
+QSTELLAR_NS_ALIAS(ClaimableBalanceResponseAttach)
+
+
+
+Q_DECLARE_METATYPE(qstellar::ClaimableBalanceResponseAttach::Links)
 #endif // CLAIMABLEBALANCERESPONSE_H

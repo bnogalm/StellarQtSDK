@@ -2,6 +2,9 @@
 #define ACCOUNTFLAGSUPDATEDEFFECTRESPONSE_H
 
 #include "effectresponse.h"
+#include "qstellar_namespace.h"
+
+QSTELLAR_BEGIN_NS
 
 /**
  * Represents account_flags_updated effect response.
@@ -23,6 +26,13 @@ public:
     bool getAuthRevokableFlag() const;
 
 };
-Q_DECLARE_METATYPE(AccountFlagsUpdatedEffectResponse*)
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(AccountFlagsUpdatedEffectResponse)
+
+
+
+Q_DECLARE_METATYPE(qstellar::AccountFlagsUpdatedEffectResponse*)
 #endif // ACCOUNTFLAGSUPDATEDEFFECTRESPONSE_H
 

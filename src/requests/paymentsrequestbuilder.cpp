@@ -3,6 +3,9 @@
 #include "../server.h"
 #include "../responses/operationpage.h"
 #include "../util.h"
+
+QSTELLAR_BEGIN_NS
+
 PaymentsRequestBuilder::PaymentsRequestBuilder(Server *server):RequestBuilder(server,"payments")
 {
 
@@ -39,3 +42,4 @@ PaymentsRequestBuilder& PaymentsRequestBuilder::stream()
 OperationPage* PaymentsRequestBuilder::execute(){
     return execute(this->buildUri());
 }
+QSTELLAR_END_NS

@@ -2,6 +2,8 @@
 
 #include <stdexcept>
 
+QSTELLAR_BEGIN_NS
+
 TOID::TOID(quint32 ledger, quint32 txIndex, quint32 opIndex)
     : m_ledger(ledger), m_txIndex(txIndex), m_opIndex(opIndex)
 {
@@ -29,3 +31,5 @@ qint64 TOID::toInt64() const
                     | static_cast<quint64>(m_opIndex);
     return static_cast<qint64>(u);
 }
+
+QSTELLAR_END_NS

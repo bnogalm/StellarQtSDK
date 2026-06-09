@@ -20,6 +20,9 @@
 #include "xdr/scval.h"
 #include "xdr/sorobanops.h"
 
+QSTELLAR_BEGIN_NS
+
+
 const int Sep45Challenge::GRACE_PERIOD_SECONDS = 5 * 60;
 
 namespace {
@@ -248,3 +251,4 @@ Sep45Challenge::VerifiedChallenge Sep45Challenge::verifyChallenge(
     out.expirationUnix = static_cast<qint64>(expirationUnix);
     return out;
 }
+QSTELLAR_END_NS

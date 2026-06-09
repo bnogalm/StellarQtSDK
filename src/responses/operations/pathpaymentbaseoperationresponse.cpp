@@ -7,6 +7,9 @@
 
 #include "../common.h"
 
+QSTELLAR_BEGIN_NS
+
+
 
 PathPaymentBaseOperationResponse::PathPaymentBaseOperationResponse(QNetworkReply *reply)
     :OperationResponse(reply)
@@ -210,3 +213,4 @@ void PathPaymentBaseOperationResponse::setPath(QVariantList path)
     m_pathConverted.clear();
     m_path = path;
 }
+QSTELLAR_END_NS

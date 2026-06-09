@@ -11,6 +11,8 @@
 
 #include <QtNetwork/qpassworddigestor.h>
 
+QSTELLAR_BEGIN_NS
+
 Util::Util()
 {
 
@@ -294,3 +296,5 @@ qint64 get_power(quint32 a, quint32 b)
     }
     return res;
 }
+
+QSTELLAR_END_NS

@@ -1,6 +1,9 @@
 #include "traderesponse.h"
 #include "../keypair.h"
 #include "../asset.h"
+
+QSTELLAR_BEGIN_NS
+
 TradeResponse::TradeResponse(QNetworkReply *reply)
     :Response(reply)
     ,m_baseIsSeller(false)
@@ -230,3 +233,4 @@ Link &TradeResponseAttach::Links::getCounter() {
 Link &TradeResponseAttach::Links::getOperation() {
     return m_operation;
 }
+QSTELLAR_END_NS

@@ -1,8 +1,9 @@
 #ifndef CHANGETRUSTOPERATION_H
 #define CHANGETRUSTOPERATION_H
 #include "operation.h"
-class Asset;
-class ChangeTrustAsset;
+#include "qstellar_namespace.h"
+QSTELLAR_FWD(Asset)
+QSTELLAR_FWD(ChangeTrustAsset)
 
 /**
  * Represents <a href="https://www.stellar.org/developers/learn/concepts/list-of-operations.html#change-trust" target="_blank">ChangeTrust</a>
@@ -11,6 +12,8 @@ class ChangeTrustAsset;
  *
  * Neither `asset` nor `line` arguments are owned; the operation captures XDR.
  */
+QSTELLAR_BEGIN_NS
+
 class ChangeTrustOperation : public Operation
 {
     Asset* m_asset;                 // lazy cache for getAsset() (non-LP only)
@@ -47,5 +50,9 @@ public:
 
     ChangeTrustOperation* setSourceAccount(QString sourceAccount);
 };
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(ChangeTrustOperation)
 
 #endif // CHANGETRUSTOPERATION_H

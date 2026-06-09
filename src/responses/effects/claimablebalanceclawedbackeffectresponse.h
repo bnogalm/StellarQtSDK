@@ -2,6 +2,9 @@
 #define CLAIMABLEBALANCECLAWEDBACKEFFECTRESPONSE_H
 
 #include "effectresponse.h"
+#include "qstellar_namespace.h"
+
+QSTELLAR_BEGIN_NS
 
 /**
  * Represents claimable_balance_clawed_back effect response.
@@ -24,5 +27,12 @@ public:
 signals:
     void balanceIDChanged();
 };
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(ClaimableBalanceClawedBackEffectResponse)
+
+
+
 
 #endif // CLAIMABLEBALANCECLAWEDBACKEFFECTRESPONSE_H

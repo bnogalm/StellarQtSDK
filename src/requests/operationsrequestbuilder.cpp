@@ -2,6 +2,9 @@
 #include "../keypair.h"
 #include "../server.h"
 #include "../util.h"
+
+QSTELLAR_BEGIN_NS
+
 OperationsRequestBuilder::OperationsRequestBuilder(Server *server):RequestBuilder(server, "operations")
 {
 
@@ -79,3 +82,4 @@ OperationsRequestBuilder &OperationsRequestBuilder::order(RequestBuilder::Order 
     RequestBuilder::order(direction);
     return *this;
 }
+QSTELLAR_END_NS

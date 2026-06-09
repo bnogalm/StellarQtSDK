@@ -1,5 +1,8 @@
 #include "getnetworkresponse.h"
 
+QSTELLAR_BEGIN_NS
+
+
 GetNetworkResponse GetNetworkResponse::fromJson(const QJsonObject& r)
 {
     GetNetworkResponse out;
@@ -10,3 +13,4 @@ GetNetworkResponse GetNetworkResponse::fromJson(const QJsonObject& r)
                                           : static_cast<qint32>(pv.toInteger(0));
     return out;
 }
+QSTELLAR_END_NS

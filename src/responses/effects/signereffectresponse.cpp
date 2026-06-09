@@ -1,5 +1,8 @@
 #include "signereffectresponse.h"
 
+QSTELLAR_BEGIN_NS
+
+
 SignerEffectResponse::SignerEffectResponse(QNetworkReply *reply)
     :EffectResponse(reply),m_weight(0)
 {
@@ -18,3 +21,4 @@ qint32 SignerEffectResponse::getWeight() const{
 QString SignerEffectResponse::getPublicKey() const{
     return m_publicKey;
 }
+QSTELLAR_END_NS

@@ -1,5 +1,8 @@
 #include "claimablebalanceclaimedeffectresponse.h"
 
+QSTELLAR_BEGIN_NS
+
+
 
 ClaimableBalanceClaimedEffectResponse::ClaimableBalanceClaimedEffectResponse(QNetworkReply* reply):EffectResponse(reply),m_asset(nullptr)
 {
@@ -64,3 +67,4 @@ void ClaimableBalanceClaimedEffectResponse::setBalanceID(QString balance_id)
     m_balanceID = balance_id;
     emit balanceIDChanged();
 }
+QSTELLAR_END_NS

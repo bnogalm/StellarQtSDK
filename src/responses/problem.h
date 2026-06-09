@@ -4,6 +4,9 @@
 #include <QString>
 #include <QStringList>
 #include <QByteArray>
+#include "qstellar_namespace.h"
+
+QSTELLAR_BEGIN_NS
 
 /**
  * @brief RFC 7807 problem-details object returned by Horizon on errors.
@@ -99,5 +102,12 @@ private:
     QString m_detail;
     Extras  m_extras;
 };
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(Problem)
+
+
+
 
 #endif // PROBLEM_H

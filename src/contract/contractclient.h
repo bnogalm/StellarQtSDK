@@ -8,11 +8,15 @@
 #include "../stellaraddress.h"
 #include "xdr/scval.h"
 
-class Account;
-class AssembledTransaction;
-class KeyPair;
-class Network;
-class SorobanServer;
+#include "../keypair.h"
+#include "../network.h"
+#include "../qstellar_namespace.h"
+QSTELLAR_FWD(Account)
+QSTELLAR_FWD(AssembledTransaction)
+QSTELLAR_FWD(SorobanServer)
+
+QSTELLAR_BEGIN_NS
+
 
 /**
  * High-level facade over `SorobanServer` for a single Soroban contract.
@@ -67,5 +71,9 @@ public:
                         Account* sourceAccount,
                         qint64 baseFee = 100);
 };
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(ContractClient)
 
 #endif // CONTRACTCLIENT_H

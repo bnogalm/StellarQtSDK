@@ -5,6 +5,9 @@
 
 #include "scval/scv.h"
 
+QSTELLAR_BEGIN_NS
+
+
 namespace {
 
 stellar::SCAddress toScAddressXdr(const StellarAddress& addr)
@@ -140,3 +143,4 @@ InvokeHostFunctionOperation* InvokeHostFunctionOperation::setSourceAccount(QStri
     Operation::setSourceAccount(sourceAccount);
     return this;
 }
+QSTELLAR_END_NS

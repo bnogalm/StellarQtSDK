@@ -6,6 +6,10 @@
 #include <QtGlobal>
 
 #include "xdr/scval.h"
+#include "../stellaraddress.h"
+#include "../qstellar_namespace.h"
+QSTELLAR_BEGIN_NS
+
 
 /**
  * CAP-46 — factories and accessors for `stellar::SCVal`. Mirrors the
@@ -111,7 +115,7 @@ public:
     // ─── Address / Error / NonceKey / ContractInstance (CAP-46) ─────
 
     /** Builds SCV_ADDRESS from any SEP-23 strkey (G / M / C / B / L). */
-    static stellar::SCVal toAddress(const class StellarAddress& addr);
+    static stellar::SCVal toAddress(const StellarAddress& addr);
     static stellar::SCVal toAddress(const QString& strkey);
     static stellar::SCVal toAddress(const stellar::SCAddress& xdr);
     static stellar::SCAddress fromAddressXdr(const stellar::SCVal& v);
@@ -134,5 +138,9 @@ public:
                                              const stellar::SCVal& storage = stellar::SCVal());
     static stellar::SCContractInstance fromContractInstance(const stellar::SCVal& v);
 };
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(Scv)
 
 #endif // SCV_H

@@ -1,5 +1,8 @@
 #include "trustlinesponsorshipremovedeffectresponse.h"
 
+QSTELLAR_BEGIN_NS
+
+
 TrustlineSponsorshipRemovedEffectResponse::TrustlineSponsorshipRemovedEffectResponse(QNetworkReply* reply)
     :EffectResponse(reply),m_asset(nullptr)
 {
@@ -49,3 +52,4 @@ void TrustlineSponsorshipRemovedEffectResponse::setFormerSponsor(QString formerS
     m_formerSponsor = formerSponsor;
     emit formerSponsorChanged();
 }
+QSTELLAR_END_NS

@@ -9,6 +9,12 @@
 #include "../feebumptransaction.h"
 
 
+#include "../keypair.h"
+#include "../memo.h"
+#include "qstellar_namespace.h"
+
+QSTELLAR_BEGIN_NS
+
 namespace TransactionResponseAttach
 {
 /**
@@ -211,8 +217,6 @@ public:
 };
 
 }
-class KeyPair;
-class Memo;
 /**
  * Represents transaction response.
  * @see <a href="https://www.stellar.org/developers/horizon/reference/resources/transaction.html" target="_blank">Transaction documentation</a>
@@ -330,13 +334,21 @@ public:
       void setSuccessful(QVariant successful);
       void setFeeAccount(QString feeAccount);
 };
-Q_DECLARE_METATYPE(TransactionResponseAttach::Links)
-Q_DECLARE_METATYPE(TransactionResponseAttach::FeeBumpTransaction)
-Q_DECLARE_METATYPE(TransactionResponseAttach::InnerTransaction )
-Q_DECLARE_METATYPE(TransactionResponseAttach::TimeBounds)
-Q_DECLARE_METATYPE(TransactionResponseAttach::LedgerBounds)
-Q_DECLARE_METATYPE(TransactionResponseAttach::Preconditions)
-Q_DECLARE_METATYPE(TransactionResponse*)
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(TransactionResponse)
+
+
+
+QSTELLAR_NS_ALIAS(TransactionResponseAttach)
+Q_DECLARE_METATYPE(qstellar::TransactionResponseAttach::Links)
+Q_DECLARE_METATYPE(qstellar::TransactionResponseAttach::FeeBumpTransaction)
+Q_DECLARE_METATYPE(qstellar::TransactionResponseAttach::InnerTransaction)
+Q_DECLARE_METATYPE(qstellar::TransactionResponseAttach::TimeBounds)
+Q_DECLARE_METATYPE(qstellar::TransactionResponseAttach::LedgerBounds)
+Q_DECLARE_METATYPE(qstellar::TransactionResponseAttach::Preconditions)
+Q_DECLARE_METATYPE(qstellar::TransactionResponse*)
 #endif // TRANSACTIONRESPONSE_H
 
 

@@ -2,6 +2,9 @@
 #define TRUSTLINEUPDATEDEFFECTRESPONSE_H
 
 #include "trustlinecudresponse.h"
+#include "qstellar_namespace.h"
+
+QSTELLAR_BEGIN_NS
 
 /**
  * Represents trustline_updated effect response.
@@ -16,5 +19,12 @@ public:
     TrustlineUpdatedEffectResponse(QNetworkReply *reply=nullptr);
     virtual ~TrustlineUpdatedEffectResponse();
 };
-Q_DECLARE_METATYPE(TrustlineUpdatedEffectResponse*)
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(TrustlineUpdatedEffectResponse)
+
+
+
+Q_DECLARE_METATYPE(qstellar::TrustlineUpdatedEffectResponse*)
 #endif // TRUSTLINEUPDATEDEFFECTRESPONSE_H

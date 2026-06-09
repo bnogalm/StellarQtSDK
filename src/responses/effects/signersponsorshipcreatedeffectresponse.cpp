@@ -1,5 +1,8 @@
 #include "signersponsorshipcreatedeffectresponse.h"
 
+QSTELLAR_BEGIN_NS
+
+
 SignerSponsorshipCreatedEffectResponse::SignerSponsorshipCreatedEffectResponse(QNetworkReply *reply)
     :EffectResponse(reply)
 {
@@ -35,3 +38,4 @@ void SignerSponsorshipCreatedEffectResponse::setSigner(QString signer)
     m_signer = signer;
     emit signerChanged();
 }
+QSTELLAR_END_NS

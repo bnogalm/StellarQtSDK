@@ -2,11 +2,15 @@
 #define CLAWBACKOPERATION_H
 
 #include "operation.h"
+#include "qstellar_namespace.h"
+QSTELLAR_FWD(Asset)
 /**
  *
  * Represents a Clawback operation.
  * @see <a href="https://www.stellar.org/developers/learn/concepts/list-of-operations.html" target="_blank">List of Operations</a>
  */
+QSTELLAR_BEGIN_NS
+
 class ClawbackOperation : public Operation
 {
     stellar::ClawbackOp m_op;
@@ -40,5 +44,9 @@ public:
          */
     ClawbackOperation* setSourceAccount(QString sourceAccount);
 };
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(ClawbackOperation)
 
 #endif // CLAWBACKOPERATION_H

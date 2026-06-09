@@ -2,8 +2,11 @@
 #define CREATECLAIMABLEBALANCEOPERATION_H
 
 #include "operation.h"
+#include "qstellar_namespace.h"
 #include "asset.h"
 #include "claimant.h"
+
+QSTELLAR_BEGIN_NS
 
 class CreateClaimableBalanceOperation : public Operation
 {
@@ -35,5 +38,9 @@ public:
          */
     CreateClaimableBalanceOperation* setSourceAccount(QString sourceAccount);
 };
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(CreateClaimableBalanceOperation)
 
 #endif // CREATECLAIMABLEBALANCEOPERATION_H

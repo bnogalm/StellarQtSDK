@@ -2,6 +2,9 @@
 #define TRUSTLINEDEAUTHORIZEDEFFECTRESPONSE_H
 
 #include "trustlineauthorizationresponse.h"
+#include "qstellar_namespace.h"
+
+QSTELLAR_BEGIN_NS
 
 /**
  * @deprecated As of release 0.24.0, replaced by {@link TrustlineFlagsUpdatedEffectResponse}
@@ -19,5 +22,12 @@ public:
     TrustlineDeauthorizedEffectResponse(QNetworkReply *reply=nullptr);
     virtual ~TrustlineDeauthorizedEffectResponse();
 };
-Q_DECLARE_METATYPE(TrustlineDeauthorizedEffectResponse*)
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(TrustlineDeauthorizedEffectResponse)
+
+
+
+Q_DECLARE_METATYPE(qstellar::TrustlineDeauthorizedEffectResponse*)
 #endif // TRUSTLINEDEAUTHORIZEDEFFECTRESPONSE_H

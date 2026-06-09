@@ -13,6 +13,9 @@
 #include "abstracttransaction.h"
 #include "stellardeprecated.h"
 #include "transactionbuilder.h"
+#include "qstellar_namespace.h"
+
+QSTELLAR_BEGIN_NS
 
 class FeeBumpTransaction;
 /**
@@ -30,7 +33,7 @@ class Transaction : public AbstractTransaction
     QSharedPointer<stellar::SorobanTransactionData> m_sorobanData;
 
     stellar::EnvelopeType m_envelopeType;
-    friend class ::TransactionBuilder;
+    friend class TransactionBuilder;        // qstellar::TransactionBuilder
     friend class FeeBumpTransaction;
     friend class SorobanServer;
     /** Legacy ctor — only time bounds. The TimeBounds* is consumed (TransactionPreconditions takes ownership). */
@@ -127,10 +130,12 @@ public:
       * (`Transaction::Builder b(...); b.addOperation(...).build();`) keeps
       * compiling and behaving as before.
       */
-     using Builder STELLAR_DEPRECATED("Use ::TransactionBuilder instead. Removed in 1.0.0") = ::TransactionBuilder;
+     using Builder STELLAR_DEPRECATED("Use ::TransactionBuilder instead. Removed in 1.0.0") = TransactionBuilder;
 };
 Transaction* checkNotNull(Transaction* transaction, const char *error);
 
+QSTELLAR_END_NS
 
+QSTELLAR_ALIAS(Transaction)
 
 #endif // TRANSACTION_H

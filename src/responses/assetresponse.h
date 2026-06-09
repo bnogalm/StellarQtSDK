@@ -4,6 +4,9 @@
 #include "link.h"
 #include "../asset.h"
 #include "../assettypenative.h"
+#include "qstellar_namespace.h"
+
+QSTELLAR_BEGIN_NS
 
 namespace AssetResponseAttach
 {
@@ -159,8 +162,16 @@ public slots:
     void setAssetIssuer(QString asset_issuer);
 };
 
-Q_DECLARE_METATYPE(AssetResponseAttach::Accounts)
-Q_DECLARE_METATYPE(AssetResponseAttach::Balances)
-Q_DECLARE_METATYPE(AssetResponseAttach::Flags)
-Q_DECLARE_METATYPE(AssetResponseAttach::Links)
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(AssetResponse)
+QSTELLAR_NS_ALIAS(AssetResponseAttach)
+
+
+
+
+Q_DECLARE_METATYPE(qstellar::AssetResponseAttach::Accounts)
+Q_DECLARE_METATYPE(qstellar::AssetResponseAttach::Balances)
+Q_DECLARE_METATYPE(qstellar::AssetResponseAttach::Flags)
+Q_DECLARE_METATYPE(qstellar::AssetResponseAttach::Links)
 #endif // ASSETRESPONSE_H

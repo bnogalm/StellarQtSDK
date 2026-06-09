@@ -21,9 +21,13 @@
 #include "requests/liquiditypoolsrequestbuilder.h"
 #include <QTimer>
 #include <QHash>
-class Transaction;
-class FeeBumpTransaction;
-class SubmitTransactionResponse;
+#include "qstellar_namespace.h"
+QSTELLAR_FWD(Transaction)
+QSTELLAR_FWD(FeeBumpTransaction)
+QSTELLAR_FWD(SubmitTransactionResponse)
+
+QSTELLAR_BEGIN_NS
+
 /**
  * Main class used to connect to Horizon server.
  */
@@ -173,5 +177,8 @@ signals:
     void transactionError(SubmitTransactionResponse * response);
 };
 
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(Server)
 
 #endif // SERVER_H

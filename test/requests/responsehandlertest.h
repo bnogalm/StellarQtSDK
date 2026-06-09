@@ -39,8 +39,8 @@ class ResponseHandlerTest: public QObject
 
     void setUp()
     {
-        m_fakeServer = new FakeServer(PORT);
-        m_server = new Server(QString("http://localhost:%1").arg(PORT));
+        m_fakeServer = new FakeServer();
+        m_server = new Server(m_fakeServer->baseUrl());
         Network::useTestNetwork();
     }
 

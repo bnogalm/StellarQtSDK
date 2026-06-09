@@ -1,5 +1,8 @@
 #include "getfeestatsresponse.h"
 
+QSTELLAR_BEGIN_NS
+
+
 namespace {
 QString readStr(const QJsonObject& o, const QString& k) {
     return o.value(k).toString();
@@ -41,3 +44,4 @@ GetFeeStatsResponse GetFeeStatsResponse::fromJson(const QJsonObject& r)
     out.m_latestLedger        = readU32(r, "latestLedger");
     return out;
 }
+QSTELLAR_END_NS

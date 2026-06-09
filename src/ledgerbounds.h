@@ -4,6 +4,9 @@
 #include <QtGlobal>
 
 #include "xdr/stellartransaction.h"
+#include "qstellar_namespace.h"
+
+QSTELLAR_BEGIN_NS
 
 /**
  * CAP-21 — restricts the ledger range a transaction is valid for.
@@ -37,5 +40,9 @@ public:
     }
     bool operator!=(const LedgerBounds& other) const { return !(*this == other); }
 };
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(LedgerBounds)
 
 #endif // LEDGERBOUNDS_H

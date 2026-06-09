@@ -1,5 +1,8 @@
 #include "revokesponsorshipoperationresponse.h"
 
+QSTELLAR_BEGIN_NS
+
+
 RevokeSponsorshipOperationResponse::RevokeSponsorshipOperationResponse(QNetworkReply* reply)
     :OperationResponse(reply)
 {
@@ -136,3 +139,4 @@ void RevokeSponsorshipOperationResponse::setSignerKey(QString signerKey)
     m_signerKey = signerKey;
     emit signerKeyChanged();
 }
+QSTELLAR_END_NS

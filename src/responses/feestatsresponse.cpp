@@ -1,5 +1,8 @@
 #include "feestatsresponse.h"
 
+QSTELLAR_BEGIN_NS
+
+
 FeeStatsResponse::FeeStatsResponse(QNetworkReply* reply)
     :Response(reply)
     ,m_ledgerCapacityUsage(0)
@@ -151,3 +154,4 @@ bool FeeDistribution::operator ==(FeeDistribution &feeDistribution)
                 (m_p95 == feeDistribution.m_p95) &&
                 (m_p99 == feeDistribution.m_p99);
 }
+QSTELLAR_END_NS

@@ -4,6 +4,9 @@
 #include "effectresponse.h"
 #include "../liquiditypool.h"
 #include "../assetamount.h"
+#include "qstellar_namespace.h"
+
+QSTELLAR_BEGIN_NS
 
 /**
  * `liquidity_pool_trade` (type_i = 92) effect.
@@ -26,6 +29,13 @@ public:
     AssetAmount   getSold() const          { return m_sold; }
     AssetAmount   getBought() const        { return m_bought; }
 };
-Q_DECLARE_METATYPE(LiquidityPoolTradeEffectResponse*)
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(LiquidityPoolTradeEffectResponse)
+
+
+
+Q_DECLARE_METATYPE(qstellar::LiquidityPoolTradeEffectResponse*)
 
 #endif // LIQUIDITYPOOLTRADEEFFECTRESPONSE_H

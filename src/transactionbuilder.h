@@ -14,6 +14,9 @@
 #include "operation.h"
 #include "xdr/sorobantxdata.h"
 #include <QSharedPointer>
+#include "qstellar_namespace.h"
+
+QSTELLAR_BEGIN_NS
 
 class Transaction;
 
@@ -140,5 +143,9 @@ public:
      */
     Transaction* build();
 };
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(TransactionBuilder)
 
 #endif // TRANSACTIONBUILDER_H

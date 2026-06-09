@@ -1,5 +1,8 @@
 #include "trustlinesponsorshipupdatedeffectresponse.h"
 
+QSTELLAR_BEGIN_NS
+
+
 TrustlineSponsorshipUpdatedEffectResponse::TrustlineSponsorshipUpdatedEffectResponse(QNetworkReply* reply)
     :EffectResponse(reply),m_asset(nullptr)
 {
@@ -64,3 +67,4 @@ void TrustlineSponsorshipUpdatedEffectResponse::setNewSponsor(QString newSponsor
     m_newSponsor = newSponsor;
     emit newSponsorChanged();
 }
+QSTELLAR_END_NS

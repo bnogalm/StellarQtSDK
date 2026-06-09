@@ -6,6 +6,8 @@
 
 #include "asset.h"
 
+QSTELLAR_BEGIN_NS
+
 namespace {
 
 QByteArray assetToXdrBytes(Asset* a)
@@ -56,3 +58,5 @@ QByteArray LiquidityPool::getLiquidityPoolID(stellar::LiquidityPoolType type,
 
     return QCryptographicHash::hash(xdr, QCryptographicHash::Sha256);
 }
+
+QSTELLAR_END_NS

@@ -3,6 +3,9 @@
 #include "asset.h"
 #include <QCoreApplication>
 
+QSTELLAR_BEGIN_NS
+
+
 static void registerTypes()
 {
     qRegisterMetaType<QList<qint32> >();
@@ -134,3 +137,4 @@ Asset *SetTrustLineFlagsOperationResponse::getAsset()
     }
     return m_asset;
 }
+QSTELLAR_END_NS

@@ -6,6 +6,9 @@
 #include <QNetworkAccessManager>
 #include <stdexcept>
 
+QSTELLAR_BEGIN_NS
+
+
 PageBase::PageBase(QNetworkReply *reply):Response(reply), m_responseType(0)
 {
 }
@@ -95,3 +98,4 @@ PageBase *PageBase::getNextPage(){
     this->loadFromReply(reply);
     return this;//we reuse same object
 }
+QSTELLAR_END_NS

@@ -1,5 +1,8 @@
 #include "assetresponse.h"
 
+QSTELLAR_BEGIN_NS
+
+
 AssetResponse::AssetResponse(QNetworkReply *reply):Response(reply),m_asset(nullptr),m_numAccounts(0),m_numClaimableBalances(0)
 {
 
@@ -190,3 +193,4 @@ bool AssetResponseAttach::Balances::operator !=(const Balances &t) const
 {
     return !(*this == t);
 }
+QSTELLAR_END_NS

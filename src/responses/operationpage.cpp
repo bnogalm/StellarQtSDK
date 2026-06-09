@@ -24,6 +24,11 @@
 #include "operations/invokehostfunctionoperationresponse.h"
 #include "operations/extendfootprintttloperationresponse.h"
 #include "operations/restorefootprintoperationresponse.h"
+#include "operations/liquiditypooldepositoperationresponse.h"
+#include "operations/liquiditypoolwithdrawoperationresponse.h"
+
+QSTELLAR_BEGIN_NS
+
 
 OperationPage::OperationPage(QNetworkReply *reply):Page<OperationResponse>(reply)
 {
@@ -82,6 +87,10 @@ void OperationPage::processRecords(const QJsonArray &records)
             op = new ExtendFootprintTTLOperationResponse();break;
         case stellar::OperationType::RESTORE_FOOTPRINT:
             op = new RestoreFootprintOperationResponse();break;
+        case stellar::OperationType::LIQUIDITY_POOL_DEPOSIT:
+            op = new LiquidityPoolDepositOperationResponse();break;
+        case stellar::OperationType::LIQUIDITY_POOL_WITHDRAW:
+            op = new LiquidityPoolWithdrawOperationResponse();break;
           default:
             throw std::runtime_error("Invalid operation type");
         }
@@ -92,3 +101,4 @@ void OperationPage::processRecords(const QJsonArray &records)
         }
     }
 }
+QSTELLAR_END_NS

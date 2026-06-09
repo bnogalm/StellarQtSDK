@@ -4,9 +4,13 @@
 #include "../responses/page.h"
 #include "../responses/operations/operationresponse.h"
 
-class Server;
-class KeyPair;
-class OperationPage;
+#include "../keypair.h"
+#include "../qstellar_namespace.h"
+
+QSTELLAR_FWD(Server)
+QSTELLAR_FWD(OperationPage)
+QSTELLAR_BEGIN_NS
+
 /**
  * Builds requests connected to payments.
  */
@@ -83,5 +87,9 @@ public:
       return *this;
   }
 };
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(PaymentsRequestBuilder)
 
 #endif // PAYMENTSREQUESTBUILDER_H

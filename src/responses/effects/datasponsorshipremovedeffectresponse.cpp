@@ -1,5 +1,8 @@
 #include "datasponsorshipremovedeffectresponse.h"
 
+QSTELLAR_BEGIN_NS
+
+
 DataSponsorshipRemovedEffectResponse::DataSponsorshipRemovedEffectResponse(QNetworkReply *reply)
     :EffectResponse(reply)
 {
@@ -35,3 +38,4 @@ void DataSponsorshipRemovedEffectResponse::setDataName(QString dataName)
     m_dataName = dataName;
     emit dataNameChanged();
 }
+QSTELLAR_END_NS

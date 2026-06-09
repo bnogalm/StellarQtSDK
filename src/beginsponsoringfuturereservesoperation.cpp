@@ -1,5 +1,8 @@
 #include "beginsponsoringfuturereservesoperation.h"
 
+QSTELLAR_BEGIN_NS
+
+
 
 BeginSponsoringFutureReservesOperation::BeginSponsoringFutureReservesOperation(QString sponsoredId)
 {
@@ -38,3 +41,4 @@ BeginSponsoringFutureReservesOperation *BeginSponsoringFutureReservesOperation::
     Operation::setSourceAccount(sourceAccount);
     return this;
 }
+QSTELLAR_END_NS

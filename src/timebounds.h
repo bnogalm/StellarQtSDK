@@ -1,7 +1,9 @@
 #ifndef TIMEBOUNDS_H
 #define TIMEBOUNDS_H
 #include "xdr/stellartransaction.h"
+#include "qstellar_namespace.h"
 
+QSTELLAR_BEGIN_NS
 
 /**
  * <p>TimeBounds represents the time interval that a transaction is valid.</p>
@@ -30,5 +32,9 @@ public:
     bool equals(TimeBounds * other) const;
     bool operator==(const TimeBounds &other) const;
 };
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(TimeBounds)
 
 #endif // TIMEBOUNDS_H

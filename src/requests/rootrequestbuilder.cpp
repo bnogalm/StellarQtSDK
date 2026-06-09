@@ -1,6 +1,9 @@
 #include "rootrequestbuilder.h"
 #include "server.h"
 
+QSTELLAR_BEGIN_NS
+
+
 RootRequestBuilder::RootRequestBuilder(Server *server):RequestBuilder(server)
 {
 
@@ -17,3 +20,4 @@ QUrl RootRequestBuilder::buildUri()
 {
     return RequestBuilder::buildUri();
 }
+QSTELLAR_END_NS

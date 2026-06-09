@@ -3,6 +3,9 @@
 #include "../../assettypenative.h"
 #include "../../assettypecreditalphanum.h"
 
+QSTELLAR_BEGIN_NS
+
+
 TrustlineCUDResponse::TrustlineCUDResponse(QNetworkReply *reply)
     :EffectResponse(reply), m_asset(nullptr)
 {
@@ -72,3 +75,4 @@ void TrustlineCUDResponse::setAssetIssuer(QString assetIssuer)
     }
     m_assetIssuer = assetIssuer;
 }
+QSTELLAR_END_NS

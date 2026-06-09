@@ -4,7 +4,10 @@
 #include <QByteArray>
 #include <QString>
 
-class KeyPair;
+#include "keypair.h"
+#include "qstellar_namespace.h"
+
+QSTELLAR_BEGIN_NS
 
 /**
  * SEP-53 — Stellar Signed Message authentication.
@@ -37,5 +40,9 @@ public:
     /** SEP-53 domain-separated hash: SHA-256("Stellar Signed Message:\n" || message). */
     static QByteArray messageHash(const QByteArray& message);
 };
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(MessageAuth)
 
 #endif // MESSAGEAUTH_H

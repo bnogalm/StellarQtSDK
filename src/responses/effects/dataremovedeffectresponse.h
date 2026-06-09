@@ -2,7 +2,10 @@
 #define DATAREMOVEDEFFECTRESPONSE_H
 
 #include "effectresponse.h"
+#include "qstellar_namespace.h"
 
+
+QSTELLAR_BEGIN_NS
 
 /**
 * Represents data_removed effect response.
@@ -20,5 +23,12 @@ signals:
 
 public slots:
 };
-Q_DECLARE_METATYPE(DataRemovedEffectResponse*)
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(DataRemovedEffectResponse)
+
+
+
+Q_DECLARE_METATYPE(qstellar::DataRemovedEffectResponse*)
 #endif // DATAREMOVEDEFFECTRESPONSE_H

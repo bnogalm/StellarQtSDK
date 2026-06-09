@@ -5,6 +5,9 @@
 #include <QtGlobal>
 
 #include "xdr/stellartransaction.h"
+#include "qstellar_namespace.h"
+
+QSTELLAR_BEGIN_NS
 
 /**
  * First-class wrapper around stellar::MuxedAccount. SEP-23 — represents both
@@ -43,5 +46,9 @@ public:
     bool operator==(const MuxedAccount& other) const { return m_xdr == other.m_xdr; }
     bool operator!=(const MuxedAccount& other) const { return !(*this == other); }
 };
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(MuxedAccount)
 
 #endif // MUXEDACCOUNT_H

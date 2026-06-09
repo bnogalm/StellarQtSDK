@@ -2,6 +2,9 @@
 #include "signer.h"
 #include <QUrl>
 
+QSTELLAR_BEGIN_NS
+
+
 SetOptionsOperation::SetOptionsOperation(KeyPair *inflationDestination, Integer clearFlags
                                          , Integer setFlags, Integer masterKeyWeight, Integer lowThreshold
                                          , Integer mediumThreshold, Integer highThreshold, QString homeDomain
@@ -173,3 +176,4 @@ SetOptionsOperation *SetOptionsOperation::setSourceAccount(QString sourceAccount
     return this;
 }
 
+QSTELLAR_END_NS

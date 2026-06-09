@@ -8,11 +8,15 @@
 #include "../responses/sorobanrpc/gettransactionresponse.h"
 #include "xdr/scval.h"
 
-class Account;
-class Transaction;
-class SorobanServer;
-class KeyPair;
-class Network;
+#include "../keypair.h"
+#include "../network.h"
+#include "../qstellar_namespace.h"
+QSTELLAR_FWD(Account)
+QSTELLAR_FWD(Transaction)
+QSTELLAR_FWD(SorobanServer)
+
+QSTELLAR_BEGIN_NS
+
 
 /**
  * High-level wrapper around a built Soroban `Transaction`. Mirrors Java SDK
@@ -126,5 +130,9 @@ public:
     /** Internal `Transaction*` — ownership stays with this object. */
     Transaction* getTransaction() const { return m_tx; }
 };
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(AssembledTransaction)
 
 #endif // ASSEMBLEDTRANSACTION_H

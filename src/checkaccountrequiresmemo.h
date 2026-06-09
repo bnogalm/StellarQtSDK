@@ -2,6 +2,11 @@
 #define CHECKACCOUNTREQUIRESMEMO_H
 #include <QObject>
 #include "server.h"
+#include "qstellar_namespace.h"
+
+QSTELLAR_FWD(AccountResponse)
+
+QSTELLAR_BEGIN_NS
 
 /**
  * @brief The CheckAccountRequiresMemo class
@@ -31,5 +36,9 @@ private slots:
     void validateAccount();
     void validateAccountError();
 };
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(CheckAccountRequiresMemo)
 
 #endif // CHECKACCOUNTREQUIRESMEMO_H

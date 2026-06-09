@@ -3,6 +3,9 @@
 
 #include <QObject>
 #include "operationresponse.h"
+#include "qstellar_namespace.h"
+
+QSTELLAR_BEGIN_NS
 
 /**
  * Represents ExtendFootprintTTL operation response (CAP-46).
@@ -21,5 +24,12 @@ public:
     ~ExtendFootprintTTLOperationResponse() override = default;
     quint32 getExtendTo() const { return m_extendTo; }
 };
-Q_DECLARE_METATYPE(ExtendFootprintTTLOperationResponse*)
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(ExtendFootprintTTLOperationResponse)
+
+
+
+Q_DECLARE_METATYPE(qstellar::ExtendFootprintTTLOperationResponse*)
 #endif // EXTENDFOOTPRINTTTLOPERATIONRESPONSE_H

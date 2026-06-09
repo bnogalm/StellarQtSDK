@@ -3,6 +3,9 @@
 #include "requestbuilder.h"
 #include "../responses/ledgerresponse.h"
 #include "../responses/page.h"
+#include "../qstellar_namespace.h"
+QSTELLAR_BEGIN_NS
+
 /**
  * Builds requests connected to ledgers.
  */
@@ -58,5 +61,9 @@ public:
 
      LedgersRequestBuilder& order(Order direction);
 };
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(LedgersRequestBuilder)
 
 #endif // LEDGERSREQUESTBUILDER_H

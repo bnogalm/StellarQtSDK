@@ -2,8 +2,11 @@
 #define REVOKETRUSTLINESPONSORSHIPOPERATION_H
 
 #include "operation.h"
+#include "qstellar_namespace.h"
 #include <QObject>
 #include "asset.h"
+
+QSTELLAR_BEGIN_NS
 
 class RevokeTrustlineSponsorshipOperation : public Operation
 {
@@ -36,5 +39,9 @@ public:
      */
     RevokeTrustlineSponsorshipOperation *setSourceAccount(QString sourceAccount);
 };
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(RevokeTrustlineSponsorshipOperation)
 
 #endif // REVOKETRUSTLINESPONSORSHIPOPERATION_H

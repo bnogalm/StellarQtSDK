@@ -4,6 +4,9 @@
 #include "requestbuilder.h"
 #include "../responses/claimablebalanceresponse.h"
 #include "../responses/page.h"
+#include "../qstellar_namespace.h"
+QSTELLAR_BEGIN_NS
+
 
 /**
  * Builds requests connected to claimable balances.
@@ -71,5 +74,9 @@ public:
 
       ClaimableBalancesRequestBuilder& order(Order direction);
 };
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(ClaimableBalancesRequestBuilder)
 
 #endif // CLAIMABLEBALANCESREQUESTBUILDER_H

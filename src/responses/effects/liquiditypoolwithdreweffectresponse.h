@@ -4,6 +4,9 @@
 #include "effectresponse.h"
 #include "../liquiditypool.h"
 #include "../assetamount.h"
+#include "qstellar_namespace.h"
+
+QSTELLAR_BEGIN_NS
 
 /**
  * `liquidity_pool_withdrew` (type_i = 91) effect.
@@ -26,6 +29,13 @@ public:
     QList<AssetAmount>  getReservesReceived() const { return m_reservesReceived; }
     QString             getSharesRedeemed() const  { return m_sharesRedeemed; }
 };
-Q_DECLARE_METATYPE(LiquidityPoolWithdrewEffectResponse*)
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(LiquidityPoolWithdrewEffectResponse)
+
+
+
+Q_DECLARE_METATYPE(qstellar::LiquidityPoolWithdrewEffectResponse*)
 
 #endif // LIQUIDITYPOOLWITHDREWEFFECTRESPONSE_H

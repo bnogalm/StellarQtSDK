@@ -3,12 +3,15 @@
 
 
 
+#include "qstellar_namespace.h"
 #include "pathpaymentstrictreceiveoperation.h"
 
 /**
  * Represents <a href="https://www.stellar.org/developers/learn/concepts/list-of-operations.html#path-payment" target="_blank">PathPayment</a> operation.
  * @see <a href="https://www.stellar.org/developers/learn/concepts/list-of-operations.html" target="_blank">List of Operations</a>
  */
+QSTELLAR_BEGIN_NS
+
 class PathPaymentOperation : public Operation
 {
     Asset* m_sendAsset;    
@@ -77,5 +80,9 @@ public:
     PathPaymentOperation* setSourceAccount(QString sourceAccount);
 
 };
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(PathPaymentOperation)
 
 #endif // PATHPAYMENTOPERATION_H

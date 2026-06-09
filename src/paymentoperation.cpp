@@ -1,5 +1,8 @@
 #include "paymentoperation.h"
 
+QSTELLAR_BEGIN_NS
+
+
 
 PaymentOperation::PaymentOperation(QString destination, Asset *asset, QString amount)
     :m_asset(nullptr)
@@ -72,3 +75,4 @@ PaymentOperation *PaymentOperation::setSourceAccount(QString sourceAccount)
     Operation::setSourceAccount(sourceAccount);
     return this;
 }
+QSTELLAR_END_NS

@@ -2,7 +2,10 @@
 #define OFFERREMOVEDEFFECTRESPONSE_H
 
 #include "effectresponse.h"
+#include "qstellar_namespace.h"
 
+
+QSTELLAR_BEGIN_NS
 
 /**
  * Represents offer_removed effect response.
@@ -17,5 +20,12 @@ public:
     OfferRemovedEffectResponse(QNetworkReply * reply=nullptr);
     virtual ~OfferRemovedEffectResponse();
 };
-Q_DECLARE_METATYPE(OfferRemovedEffectResponse*)
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(OfferRemovedEffectResponse)
+
+
+
+Q_DECLARE_METATYPE(qstellar::OfferRemovedEffectResponse*)
 #endif // OFFERREMOVEDEFFECTRESPONSE_H

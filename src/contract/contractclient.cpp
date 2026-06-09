@@ -11,6 +11,9 @@
 #include "transaction.h"
 #include "transactionbuilder.h"
 
+QSTELLAR_BEGIN_NS
+
+
 ContractClient::ContractClient(const QString& contractId, SorobanServer* server, Network* network)
     : m_contract(StellarAddress::fromString(contractId)), m_server(server), m_network(network)
 {
@@ -65,3 +68,4 @@ stellar::SCVal ContractClient::read(const QString& functionName,
     delete at;
     return r;
 }
+QSTELLAR_END_NS

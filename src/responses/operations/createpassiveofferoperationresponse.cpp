@@ -4,6 +4,9 @@
 #include "../../asset.h"
 #include "../../assettypenative.h"
 
+QSTELLAR_BEGIN_NS
+
+
 CreatePassiveSellOfferOperationResponse::CreatePassiveSellOfferOperationResponse(QNetworkReply *reply)
     :OperationResponse(reply),m_offerID(0),m_buyingAsset(nullptr),m_sellingAsset(nullptr)
 {
@@ -137,3 +140,4 @@ void CreatePassiveSellOfferOperationResponse::setSellingAssetIssuer(QString sell
     }
     m_sellingAssetIssuer = sellingAssetIssuer;
 }
+QSTELLAR_END_NS

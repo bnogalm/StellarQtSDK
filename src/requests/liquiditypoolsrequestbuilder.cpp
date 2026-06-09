@@ -5,6 +5,9 @@
 #include "../assettypecreditalphanum.h"
 #include "../keypair.h"
 
+QSTELLAR_BEGIN_NS
+
+
 LiquidityPoolsRequestBuilder::LiquidityPoolsRequestBuilder(Server* server)
     : RequestBuilder(server, "liquidity_pools")
 {
@@ -65,3 +68,4 @@ Page<LiquidityPoolResponse>* LiquidityPoolsRequestBuilder::execute()
 {
     return server()->get<Page<LiquidityPoolResponse>>(this);
 }
+QSTELLAR_END_NS

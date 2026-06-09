@@ -4,6 +4,10 @@
 #include <QByteArray>
 #include <QString>
 
+#include "qstellar_namespace.h"
+
+QSTELLAR_BEGIN_NS
+
 /**
  * Polymorphic Stellar address that can hold any of the 5 SEP-23 strkey forms:
  * G (account), M (muxed), C (contract), B (claimable balance), L (liquidity pool).
@@ -52,5 +56,9 @@ public:
     }
     bool operator!=(const StellarAddress& other) const { return !(*this == other); }
 };
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(StellarAddress)
 
 #endif // STELLARADDRESS_H

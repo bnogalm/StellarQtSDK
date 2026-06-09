@@ -2,6 +2,9 @@
 #define DATACREATEDEFFECTRESPONSE_H
 
 #include "effectresponse.h"
+#include "qstellar_namespace.h"
+
+QSTELLAR_BEGIN_NS
 
 /**
 * Represents data_created effect response.
@@ -19,5 +22,12 @@ signals:
 
 public slots:
 };
-Q_DECLARE_METATYPE(DataCreatedEffectResponse*)
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(DataCreatedEffectResponse)
+
+
+
+Q_DECLARE_METATYPE(qstellar::DataCreatedEffectResponse*)
 #endif // DATACREATEDEFFECTRESPONSE_H

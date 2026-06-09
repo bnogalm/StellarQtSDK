@@ -2,6 +2,9 @@
 #include "../../asset.h"
 #include "../../assettypenative.h"
 #include "../../keypair.h"
+
+QSTELLAR_BEGIN_NS
+
 ManageBuyOfferOperationResponse::ManageBuyOfferOperationResponse(QNetworkReply * reply)
     :OperationResponse(reply)
   ,m_buyingAsset(nullptr),m_sellingAsset(nullptr)
@@ -137,3 +140,4 @@ void ManageBuyOfferOperationResponse::setSellingAssetIssuer(QString sellingAsset
     }
     m_sellingAssetIssuer = sellingAssetIssuer;
 }
+QSTELLAR_END_NS

@@ -3,6 +3,9 @@
 
 #include "operationresponse.h"
 #include <QObject>
+#include "qstellar_namespace.h"
+QSTELLAR_BEGIN_NS
+
 /**
  * Represents ClaimClaimableBalance operation response.
  * @see org.stellar.sdk.requests.OperationsRequestBuilder
@@ -32,5 +35,12 @@ signals:
     void balanceIDChanged();
     void claimantChanged();
 };
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(ClaimClaimableBalanceOperationResponse)
+
+
+
 
 #endif // CLAIMCLAIMABLEBALANCEOPERATIONRESPONSE_H

@@ -5,6 +5,8 @@
 
 #include "strkey.h"
 
+QSTELLAR_BEGIN_NS
+
 MuxedAccount::MuxedAccount()
 {
     m_xdr.type = stellar::CryptoKeyType::KEY_TYPE_ED25519;
@@ -69,3 +71,5 @@ QString MuxedAccount::toAddress() const
 {
     return StrKey::encodeStellarMuxedAccount(m_xdr);
 }
+
+QSTELLAR_END_NS

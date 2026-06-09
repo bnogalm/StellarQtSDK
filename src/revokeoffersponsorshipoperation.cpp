@@ -1,5 +1,8 @@
 #include "revokeoffersponsorshipoperation.h"
 
+QSTELLAR_BEGIN_NS
+
+
 RevokeOfferSponsorshipOperation::RevokeOfferSponsorshipOperation(QString seller, qint64 offerId)
 {
      auto& ledgerKey = m_op.fillRevokeSponsorshipLedgerEntry();
@@ -48,3 +51,4 @@ RevokeOfferSponsorshipOperation *RevokeOfferSponsorshipOperation::setSourceAccou
     Operation::setSourceAccount(sourceAccount);
     return this;
 }
+QSTELLAR_END_NS

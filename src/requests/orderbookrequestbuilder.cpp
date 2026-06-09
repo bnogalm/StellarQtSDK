@@ -3,6 +3,9 @@
 #include "../asset.h"
 #include "../assettypecreditalphanum.h"
 #include "../server.h"
+
+QSTELLAR_BEGIN_NS
+
 OrderBookRequestBuilder::OrderBookRequestBuilder(Server *server):RequestBuilder(server, "order_book")
 {
 
@@ -55,3 +58,4 @@ OrderBookRequestBuilder& OrderBookRequestBuilder::cursor(QString cursor) {
     RequestBuilder::cursor(cursor);
     return *this;
 }
+QSTELLAR_END_NS

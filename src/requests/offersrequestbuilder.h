@@ -3,8 +3,10 @@
 #include "requestbuilder.h"
 #include "../responses/page.h"
 #include "../responses/offerresponse.h"
+#include "../keypair.h"
+#include "../qstellar_namespace.h"
+QSTELLAR_BEGIN_NS
 
-class KeyPair;
 /**
  * Builds requests connected to offers.
  */
@@ -66,5 +68,9 @@ public:
       */
      OffersRequestBuilder& stream();
 };
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(OffersRequestBuilder)
 
 #endif // OFFERSREQUESTBUILDER_H

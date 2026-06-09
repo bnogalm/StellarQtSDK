@@ -2,6 +2,9 @@
 #include "asset.h"
 #include "keypair.h"
 
+QSTELLAR_BEGIN_NS
+
+
 
 TrustlineFlagsUpdatedEffectResponse::TrustlineFlagsUpdatedEffectResponse(QNetworkReply *reply):EffectResponse(reply)
   ,m_authorizedFlag(false)
@@ -116,3 +119,4 @@ void TrustlineFlagsUpdatedEffectResponse::setClawbackEnabled(bool newClawback_en
     m_clawbackEnabledFlag = newClawback_enabled_flag;
     emit clawbackEnabledChanged();
 }
+QSTELLAR_END_NS

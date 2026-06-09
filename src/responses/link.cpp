@@ -1,6 +1,9 @@
 #include "link.h"
 #include <stdexcept>
 
+QSTELLAR_BEGIN_NS
+
+
 Link::Link():m_templated(false)
 {
 
@@ -36,3 +39,4 @@ bool Link::operator ==(const Link &link) const
             && (m_templated == link.m_templated);
 }
 
+QSTELLAR_END_NS

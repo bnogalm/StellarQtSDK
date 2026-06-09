@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.16)
-project(StellarQtSDK VERSION 1.0 LANGUAGES C CXX)
+project(StellarQtSDK VERSION 1.0.0 LANGUAGES C CXX)
 
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 # Set up AUTOMOC and some sensible defaults for runtime execution
@@ -229,6 +231,7 @@ qt_add_library(StellarQtSDK STATIC
     src/requests/transactionsrequestbuilder.cpp
     src/requests/transactionsrequestbuilder.h
     src/stellardeprecated.h
+    src/qstellar_namespace.h
     src/transactionbuilder.cpp
     src/transactionbuilder.h
     src/feebumptransactionbuilder.cpp
@@ -391,6 +394,10 @@ qt_add_library(StellarQtSDK STATIC
     src/responses/operations/bumpsequenceoperationresponse.h
     src/responses/operations/changetrustoperationresponse.cpp
     src/responses/operations/changetrustoperationresponse.h
+    src/responses/operations/liquiditypooldepositoperationresponse.cpp
+    src/responses/operations/liquiditypooldepositoperationresponse.h
+    src/responses/operations/liquiditypoolwithdrawoperationresponse.cpp
+    src/responses/operations/liquiditypoolwithdrawoperationresponse.h
     src/responses/operations/claimclaimablebalanceoperationresponse.cpp
     src/responses/operations/claimclaimablebalanceoperationresponse.h
     src/responses/operations/clawbackclaimablebalanceoperationresponse.cpp
@@ -453,6 +460,8 @@ qt_add_library(StellarQtSDK STATIC
     src/revokeaccountsponsorshipoperation.h
     src/revokeclaimablebalancesponsorshipoperation.cpp
     src/revokeclaimablebalancesponsorshipoperation.h
+    src/revokeliquiditypoolsponsorshipoperation.cpp
+    src/revokeliquiditypoolsponsorshipoperation.h
     src/revokedatasponsorshipoperation.cpp
     src/revokedatasponsorshipoperation.h
     src/revokeoffersponsorshipoperation.cpp
@@ -492,7 +501,7 @@ target_include_directories(StellarQtSDK PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} src)
 
 add_compile_definitions(
     STELLAR_QT_SDK_CLIENT_NAME=\"\\\"qtcpp-stellar-sdk\\\"\"
-    STELLAR_QT_SDK_CLIENT_VERSION=\"\\\"0.13.0\\\"\"
+    STELLAR_QT_SDK_CLIENT_VERSION=\"\\\"1.0.0\\\"\"
 )
 
 target_compile_definitions(StellarQtSDK PRIVATE

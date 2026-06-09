@@ -4,6 +4,9 @@
 #include <QObject>
 #include "response.h"
 #include "link.h"
+#include "qstellar_namespace.h"
+QSTELLAR_BEGIN_NS
+
 namespace PathResponseAttach
 {
 /**
@@ -31,8 +34,7 @@ public:
 
 
 }
-class Asset;
-/**
+class Asset;/**
  * Represents path response.
  * @see <a href="https://www.stellar.org/developers/horizon/reference/resources/path.html" target="_blank">Path documentation</a>
  * @see org.stellar.sdk.requests.PathsRequestBuilder
@@ -104,7 +106,15 @@ public slots:
 private slots:
     void setPath(QVariantList path);
 };
-Q_DECLARE_METATYPE(PathResponseAttach::Links)
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(PathResponse)
+QSTELLAR_NS_ALIAS(PathResponseAttach)
+
+
+
+Q_DECLARE_METATYPE(qstellar::PathResponseAttach::Links)
 
 #endif // PATHRESPONSE_H
 

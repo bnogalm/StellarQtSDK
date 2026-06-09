@@ -4,6 +4,9 @@
 #include <QObject>
 #include "response.h"
 #include "link.h"
+#include "qstellar_namespace.h"
+
+QSTELLAR_BEGIN_NS
 
 namespace LedgerResponseAttach
 {
@@ -123,6 +126,14 @@ public:
     QString getHeaderXdr() const;
     LedgerResponseAttach::Links& getLinks();
 };
-Q_DECLARE_METATYPE(LedgerResponseAttach::Links)
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(LedgerResponse)
+QSTELLAR_NS_ALIAS(LedgerResponseAttach)
+
+
+
+Q_DECLARE_METATYPE(qstellar::LedgerResponseAttach::Links)
 
 #endif // LEDGERRESPONSE_H

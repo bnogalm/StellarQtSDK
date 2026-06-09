@@ -1,5 +1,8 @@
 #include "ledgersrequestbuilder.h"
 #include "../server.h"
+
+QSTELLAR_BEGIN_NS
+
 LedgersRequestBuilder::LedgersRequestBuilder(Server *server):RequestBuilder(server, "ledgers")
 {
 
@@ -43,3 +46,4 @@ LedgersRequestBuilder& LedgersRequestBuilder::order(RequestBuilder::Order direct
     RequestBuilder::order(direction);
     return *this;
 }
+QSTELLAR_END_NS

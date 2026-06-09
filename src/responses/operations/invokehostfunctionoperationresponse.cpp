@@ -3,6 +3,9 @@
 #include <QCoreApplication>
 #include "../response.h"
 
+QSTELLAR_BEGIN_NS
+
+
 static void registerInvokeHostFnTypes()
 {
     qRegisterMetaType<InvokeHostFunctionOperationResponseAttach::Parameter>();
@@ -78,3 +81,4 @@ QList<InvokeHostFunctionOperationResponseAttach::Parameter>
 InvokeHostFunctionOperationResponse::getParameters() const { return m_parameters; }
 QList<InvokeHostFunctionOperationResponseAttach::AssetBalanceChange>
 InvokeHostFunctionOperationResponse::getAssetBalanceChanges() const { return m_assetBalanceChanges; }
+QSTELLAR_END_NS

@@ -5,6 +5,9 @@
 #include "asset.h"
 
 #include <QObject>
+#include "qstellar_namespace.h"
+QSTELLAR_BEGIN_NS
+
 /**
  * Represents trustline_sponsorship_created effect response.
  * @see <a href="https://www.stellar.org/developers/horizon/reference/resources/effect.html" target="_blank">Effect documentation</a>
@@ -38,5 +41,12 @@ signals:
     void assetChanged();
     void sponsorChanged();
 };
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(TrustlineSponsorshipCreatedEffectResponse)
+
+
+
 
 #endif // TRUSTLINESPONSORSHIPCREATEDEFFECTRESPONSE_H

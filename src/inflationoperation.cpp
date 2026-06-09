@@ -1,5 +1,8 @@
 #include "inflationoperation.h"
 
+QSTELLAR_BEGIN_NS
+
+
 InflationOperation::InflationOperation()
 {
 
@@ -15,3 +18,4 @@ InflationOperation *InflationOperation::create()
 {
     return new InflationOperation();
 }
+QSTELLAR_END_NS

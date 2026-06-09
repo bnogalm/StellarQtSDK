@@ -4,6 +4,9 @@
 #include <QJsonObject>
 #include <QString>
 #include <QtGlobal>
+#include "qstellar_namespace.h"
+
+QSTELLAR_BEGIN_NS
 
 /** Soroban RPC `getVersionInfo` result. */
 class GetVersionInfoResponse
@@ -21,5 +24,12 @@ public:
     QString getCaptiveCoreVersion() const { return m_captiveCoreVersion; }
     qint32 getProtocolVersion() const { return m_protocolVersion; }
 };
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(GetVersionInfoResponse)
+
+
+
 
 #endif // GETVERSIONINFORESPONSE_H

@@ -1,6 +1,9 @@
 #include "effectresponse.h"
 #include "../../keypair.h"
 
+QSTELLAR_BEGIN_NS
+
+
 EffectResponse::EffectResponse(QNetworkReply *reply)
     :Response(reply),m_accountKeypair(nullptr)
 {
@@ -67,3 +70,4 @@ bool EffectResponseAttach::Links::operator !=(const EffectResponseAttach::Links 
 {
     return !(*this == links);
 }
+QSTELLAR_END_NS

@@ -1,5 +1,6 @@
 #include "predicate.h"
 
+QSTELLAR_BEGIN_NS
 
 Predicate *Predicate::fromXdr(stellar::ClaimPredicate &xdr) {
     switch (xdr.type) {
@@ -112,9 +113,12 @@ Predicate *Predicate::create(const QVariant &predicate)
 }
 
 Predicate::~Predicate(){}
+
+QSTELLAR_END_NS
+
 static void registerTypes()
 {
-
+    using namespace qstellar;
     qRegisterMetaType<Predicate::AbsBefore>();
     qRegisterMetaType<Predicate::And>();
     qRegisterMetaType<Predicate::Not>();

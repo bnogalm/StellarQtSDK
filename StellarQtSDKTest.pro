@@ -1,7 +1,7 @@
 QT += core testlib
 QT -= gui
 
-CONFIG += c++11 testcase
+CONFIG += c++17 testcase
 
 DEFINES += STELLAR_ALLOW_UNSECURE_RANDOM
 #live tests fails because sequence number, it should be fixed by accessing the current sequence number
@@ -9,6 +9,12 @@ DEFINES += STELLAR_SKIP_LIVE_TESTS
 
 DEFINES += STELLAR_ENABLE_TEST_METHODS
 #DEFINES += STELLAR_QT_DEBUG_NETWORK_REQUESTS
+
+# Test suite is written against the unqualified 0.x API (KeyPair, Server, ...).
+# Opt in to the global using-aliases so the tests compile without per-file
+# `using namespace qstellar;`. New SDK consumers should NOT define this — they
+# pick up the strict `qstellar::*` API.
+DEFINES += STELLAR_QT_LEGACY_GLOBAL_NS
 
 TARGET = StellarQtSDKTest
 CONFIG += console

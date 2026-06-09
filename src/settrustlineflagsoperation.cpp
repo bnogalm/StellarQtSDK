@@ -1,5 +1,8 @@
 #include "settrustlineflagsoperation.h"
 #include "assettypecreditalphanum.h"
+
+QSTELLAR_BEGIN_NS
+
 SetTrustlineFlagsOperation::SetTrustlineFlagsOperation(stellar::SetTrustLineFlagsOp& op):m_op(op),m_asset(nullptr)
 {
 
@@ -63,3 +66,4 @@ SetTrustlineFlagsOperation *SetTrustlineFlagsOperation::setSourceAccount(QString
     Operation::setSourceAccount(sourceAccount);
     return this;
 }
+QSTELLAR_END_NS

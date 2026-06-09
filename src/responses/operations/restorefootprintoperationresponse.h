@@ -3,6 +3,9 @@
 
 #include <QObject>
 #include "operationresponse.h"
+#include "qstellar_namespace.h"
+
+QSTELLAR_BEGIN_NS
 
 /**
  * Represents RestoreFootprint operation response (CAP-46).
@@ -17,5 +20,12 @@ public:
     explicit RestoreFootprintOperationResponse(QNetworkReply* reply = nullptr);
     ~RestoreFootprintOperationResponse() override = default;
 };
-Q_DECLARE_METATYPE(RestoreFootprintOperationResponse*)
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(RestoreFootprintOperationResponse)
+
+
+
+Q_DECLARE_METATYPE(qstellar::RestoreFootprintOperationResponse*)
 #endif // RESTOREFOOTPRINTOPERATIONRESPONSE_H

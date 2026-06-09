@@ -1,7 +1,10 @@
 #ifndef TRUSTLINEAUTHORIZATIONRESPONSE_H
 #define TRUSTLINEAUTHORIZATIONRESPONSE_H
 #include "effectresponse.h"
+#include "qstellar_namespace.h"
 
+
+QSTELLAR_BEGIN_NS
 
 class TrustlineAuthorizationResponse : public EffectResponse
 {
@@ -27,7 +30,14 @@ public:
 public slots:
     void setTrustor(QString trustor);
 };
-Q_DECLARE_METATYPE(TrustlineAuthorizationResponse*)
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(TrustlineAuthorizationResponse)
+
+
+
+Q_DECLARE_METATYPE(qstellar::TrustlineAuthorizationResponse*)
 #endif // TRUSTLINEAUTHORIZATIONRESPONSE_H
 
 

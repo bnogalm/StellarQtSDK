@@ -2,6 +2,9 @@
 #include "../keypair.h"
 #include "../server.h"
 #include "../assettypecreditalphanum.h"
+
+QSTELLAR_BEGIN_NS
+
 OffersRequestBuilder::OffersRequestBuilder(Server *server):RequestBuilder(server, "offers")
 {
 
@@ -83,3 +86,4 @@ OffersRequestBuilder &OffersRequestBuilder::stream() {
     setStreamMode();
     return *this;
 }
+QSTELLAR_END_NS

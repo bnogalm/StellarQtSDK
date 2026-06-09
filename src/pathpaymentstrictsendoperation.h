@@ -2,6 +2,7 @@
 #define PATHPAYMENTSTRICTSENDOPERATION_H
 
 #include "operation.h"
+#include "qstellar_namespace.h"
 
 #include "asset.h"
 /**
@@ -9,6 +10,8 @@
  *
  * @see <a href="https://www.stellar.org/developers/learn/concepts/list-of-operations.html" target="_blank">List of Operations</a>
  */
+QSTELLAR_BEGIN_NS
+
 class PathPaymentStrictSendOperation : public Operation
 {
     Asset* m_sendAsset;    
@@ -78,5 +81,9 @@ public:
 
 };
 
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(PathPaymentStrictSendOperation)
 
 #endif // PATHPAYMENTSTRICTSENDOPERATION_H

@@ -3,7 +3,10 @@
 #include "requestbuilder.h"
 #include "../responses/page.h"
 #include "../responses/tradeaggregationresponse.h"
-class Asset;
+#include "../qstellar_namespace.h"
+QSTELLAR_FWD(Asset)
+QSTELLAR_BEGIN_NS
+
 class TradeAggregationsRequestBuilder : public RequestBuilder
 {
 public:
@@ -21,5 +24,9 @@ private:
     void baseAsset(Asset* asset);
     void counterAsset(Asset* asset);
 };
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(TradeAggregationsRequestBuilder)
 
 #endif // TRADEAGGREGATIONSREQUESTBUILDER_H

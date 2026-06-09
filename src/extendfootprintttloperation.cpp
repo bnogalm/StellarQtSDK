@@ -1,5 +1,8 @@
 #include "extendfootprintttloperation.h"
 
+QSTELLAR_BEGIN_NS
+
+
 ExtendFootprintTTLOperation::ExtendFootprintTTLOperation(quint32 extendTo)
     : m_extendTo(extendTo)
 {
@@ -32,3 +35,4 @@ ExtendFootprintTTLOperation* ExtendFootprintTTLOperation::setSourceAccount(QStri
     Operation::setSourceAccount(sourceAccount);
     return this;
 }
+QSTELLAR_END_NS

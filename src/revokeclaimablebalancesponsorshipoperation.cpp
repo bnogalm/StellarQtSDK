@@ -1,6 +1,9 @@
 #include "revokeclaimablebalancesponsorshipoperation.h"
 #include "util.h"
 
+QSTELLAR_BEGIN_NS
+
+
 RevokeClaimableBalanceSponsorshipOperation::RevokeClaimableBalanceSponsorshipOperation(QString balanceID)
 {    
     auto& ledgerKey = m_op.fillRevokeSponsorshipLedgerEntry();
@@ -52,3 +55,4 @@ RevokeClaimableBalanceSponsorshipOperation *RevokeClaimableBalanceSponsorshipOpe
     Operation::setSourceAccount(sourceAccount);
     return this;
 }
+QSTELLAR_END_NS

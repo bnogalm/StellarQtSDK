@@ -3,6 +3,9 @@
 
 #include "requestbuilder.h"
 #include "../responses/feestatsresponse.h"
+#include "../qstellar_namespace.h"
+QSTELLAR_BEGIN_NS
+
 
 class FeeStatsRequestBuilder : public RequestBuilder
 {
@@ -19,6 +22,8 @@ public:
 
 };
 
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(FeeStatsRequestBuilder)
+
 #endif // OPERATIONFEESTATSREQUESTBUILDER_H
-
-

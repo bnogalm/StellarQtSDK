@@ -3,6 +3,9 @@
 #include "accountconverter.h"
 #include "keypair.h"
 #include "util.h"
+#include "qstellar_namespace.h"
+
+QSTELLAR_BEGIN_NS
 
 class Operation
 {
@@ -69,4 +72,9 @@ inline Operation * checkNotNull(Operation *t, const char *error)
         throw std::runtime_error(error);
     return t;
 }
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(Operation)
+
 #endif // OPERATION_H

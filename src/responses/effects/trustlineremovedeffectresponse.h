@@ -2,6 +2,9 @@
 #define TRUSTLINEREMOVEDEFFECTRESPONSE_H
 
 #include "trustlinecudresponse.h"
+#include "qstellar_namespace.h"
+QSTELLAR_BEGIN_NS
+
 /**
  * Represents trustline_removed effect response.
  * @see <a href="https://www.stellar.org/developers/horizon/reference/resources/effect.html" target="_blank">Effect documentation</a>
@@ -15,5 +18,12 @@ public:
     TrustlineRemovedEffectResponse(QNetworkReply * reply = nullptr);
     virtual ~TrustlineRemovedEffectResponse();
 };
-Q_DECLARE_METATYPE(TrustlineRemovedEffectResponse*)
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(TrustlineRemovedEffectResponse)
+
+
+
+Q_DECLARE_METATYPE(qstellar::TrustlineRemovedEffectResponse*)
 #endif // TRUSTLINEREMOVEDEFFECTRESPONSE_H

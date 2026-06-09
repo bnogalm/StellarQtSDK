@@ -5,6 +5,9 @@
 #include <QString>
 #include <QStringList>
 #include <QtGlobal>
+#include "qstellar_namespace.h"
+
+QSTELLAR_BEGIN_NS
 
 /** Soroban RPC `sendTransaction` result. */
 class SendTransactionResponse
@@ -30,5 +33,12 @@ public:
     QString getErrorResultXdr() const { return m_errorResultXdr; }
     QStringList getDiagnosticEventsXdr() const { return m_diagnosticEventsXdr; }
 };
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(SendTransactionResponse)
+
+
+
 
 #endif // SENDTRANSACTIONRESPONSE_H

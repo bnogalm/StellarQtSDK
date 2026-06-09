@@ -3,6 +3,9 @@
 
 #include <QObject>
 #include "operationresponse.h"
+#include "qstellar_namespace.h"
+
+QSTELLAR_BEGIN_NS
 
 /**
  * Represents ManageDataoperation response.
@@ -26,5 +29,12 @@ public:
 
     QString getValue() const;
 };
-Q_DECLARE_METATYPE(ManageDataOperationResponse*)
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(ManageDataOperationResponse)
+
+
+
+Q_DECLARE_METATYPE(qstellar::ManageDataOperationResponse*)
 #endif // MANAGEDATAOPERATIONRESPONSE_H

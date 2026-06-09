@@ -1,6 +1,9 @@
 #ifndef ROOTRESPONSE_H
 #define ROOTRESPONSE_H
 #include "response.h"
+#include "qstellar_namespace.h"
+
+QSTELLAR_BEGIN_NS
 
 /**
 * Represents root endpoint response.
@@ -52,6 +55,13 @@ public:
 
     qint32 getCoreSupportedProtocolVersion() const;
 };
-Q_DECLARE_METATYPE(RootResponse*)
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(RootResponse)
+
+
+
+Q_DECLARE_METATYPE(qstellar::RootResponse*)
 #endif // ROOTRESPONSE_H
 

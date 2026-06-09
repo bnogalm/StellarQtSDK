@@ -4,6 +4,7 @@
 #include <QList>
 
 #include "operation.h"
+#include "qstellar_namespace.h"
 #include "xdr/sorobanops.h"
 #include "stellaraddress.h"
 
@@ -20,6 +21,8 @@
  * invocations, leave the auth list empty (Stellar core implicitly applies a
  * SOURCE_ACCOUNT credentials entry).
  */
+QSTELLAR_BEGIN_NS
+
 class InvokeHostFunctionOperation : public Operation
 {
     stellar::HostFunction m_hostFunction;
@@ -72,5 +75,9 @@ public:
 
     InvokeHostFunctionOperation* setSourceAccount(QString sourceAccount);
 };
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(InvokeHostFunctionOperation)
 
 #endif // INVOKEHOSTFUNCTIONOPERATION_H

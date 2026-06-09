@@ -2,6 +2,9 @@
 #define ASSETTYPECREDITALPHANUM4_H
 
 #include "assettypecreditalphanum.h"
+
+QSTELLAR_BEGIN_NS
+
 /**
  * Represents all assets with codes 1-4 characters long.
  * @see <a href="https://www.stellar.org/developers/learn/concepts/assets.html" target="_blank">Assets</a>
@@ -22,5 +25,9 @@ public:
 
     stellar::Asset toXdr();
 };
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(AssetTypeCreditAlphaNum4)
 
 #endif // ASSETTYPECREDITALPHANUM4_H

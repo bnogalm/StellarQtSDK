@@ -3,6 +3,9 @@
 
 #include "response.h"
 #include "link.h"
+#include "qstellar_namespace.h"
+
+QSTELLAR_BEGIN_NS
 
 namespace PageAttach
 {
@@ -124,6 +127,15 @@ public:
         return static_cast<T*>(this->m_records[0]);
     }
 };
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(PageBase)
+QSTELLAR_ALIAS(Page)
+QSTELLAR_NS_ALIAS(PageAttach)
+
+
+
 
 #endif // PAGE_H
 

@@ -3,6 +3,9 @@
 
 #include "effectresponse.h"
 #include <QObject>
+#include "qstellar_namespace.h"
+QSTELLAR_BEGIN_NS
+
 /**
  * Represents account_sponsorship_created effect response.
  * @see <a href="https://www.stellar.org/developers/horizon/reference/resources/effect.html" target="_blank">Effect documentation</a>
@@ -24,5 +27,12 @@ public slots:
 signals:
     void sponsorChanged();
 };
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(AccountSponsorshipCreatedEffectResponse)
+
+
+
 
 #endif // ACCOUNTSPONSORSHIPCREATEDEFFECTRESPONSE_H

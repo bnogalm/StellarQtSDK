@@ -2,11 +2,15 @@
 #include <QCoreApplication>
 #include "responses/response.h"
 static void registerTypes()
-{    
+{
+    using namespace qstellar;
     QMetaType::registerConverter<QVariantList ,QList<Claimant> >(&ClaimantConverter::convertData);
 }
 
 Q_COREAPP_STARTUP_FUNCTION(registerTypes)
+
+QSTELLAR_BEGIN_NS
+
 Claimant::Claimant(QString destination, Predicate *predicate): m_destination(destination), m_predicate(predicate)
 {
  if(!predicate)
@@ -104,3 +108,5 @@ QList<Claimant> checkNotNull(QList<Claimant> claimants, const char *error)
     }
     return claimants;
 }
+
+QSTELLAR_END_NS

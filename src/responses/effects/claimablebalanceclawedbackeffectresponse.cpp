@@ -1,5 +1,8 @@
 #include "claimablebalanceclawedbackeffectresponse.h"
 
+QSTELLAR_BEGIN_NS
+
+
 ClaimableBalanceClawedBackEffectResponse::ClaimableBalanceClawedBackEffectResponse(QNetworkReply *reply):EffectResponse(reply)
 {
 
@@ -22,3 +25,4 @@ void ClaimableBalanceClawedBackEffectResponse::setBalanceID(const QString newBal
     m_balance_id = newBalance_id;
     emit balanceIDChanged();
 }
+QSTELLAR_END_NS

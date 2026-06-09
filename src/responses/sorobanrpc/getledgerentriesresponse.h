@@ -5,6 +5,9 @@
 #include <QList>
 #include <QString>
 #include <QtGlobal>
+#include "qstellar_namespace.h"
+
+QSTELLAR_BEGIN_NS
 
 /** Soroban RPC `getLedgerEntries` result. */
 struct LedgerEntryResult
@@ -24,5 +27,12 @@ public:
     const QList<LedgerEntryResult>& getEntries() const { return m_entries; }
     quint32 getLatestLedger() const { return m_latestLedger; }
 };
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(GetLedgerEntriesResponse)
+
+
+
 
 #endif // GETLEDGERENTRIESRESPONSE_H

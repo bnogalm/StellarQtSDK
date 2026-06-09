@@ -1,6 +1,9 @@
 #include "managebuyofferoperation.h"
 #include "asset.h"
 #include "price.h"
+
+QSTELLAR_BEGIN_NS
+
 ManageBuyOfferOperation::ManageBuyOfferOperation()
 {
 
@@ -84,3 +87,4 @@ ManageBuyOfferOperation *ManageBuyOfferOperation::setSourceAccount(QString sourc
     Operation::setSourceAccount(sourceAccount);
     return this;
 }
+QSTELLAR_END_NS

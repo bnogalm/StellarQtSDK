@@ -1,5 +1,8 @@
 #include "rootresponse.h"
 
+QSTELLAR_BEGIN_NS
+
+
 RootResponse::RootResponse(QNetworkReply *reply):Response(reply)
   ,m_historyLatestLedger(0),m_historyElderLedger(0),m_coreLatestLedger(0),m_protocolVersion(0)
   ,m_currentProtocolVersion(0)
@@ -50,3 +53,4 @@ qint32 RootResponse::getCoreSupportedProtocolVersion() const
 {
     return m_coreSupportedProtocolVersion;
 }
+QSTELLAR_END_NS

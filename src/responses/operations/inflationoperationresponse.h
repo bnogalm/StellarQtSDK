@@ -3,6 +3,9 @@
 
 #include <QObject>
 #include "operationresponse.h"
+#include "qstellar_namespace.h"
+QSTELLAR_BEGIN_NS
+
 /**
  * Represents Inflation operation response.
  * @see <a href="https://www.stellar.org/developers/horizon/reference/resources/operation.html" target="_blank">Operation documentation</a>
@@ -16,5 +19,12 @@ public:
     InflationOperationResponse(QNetworkReply* reply=nullptr);
     virtual ~InflationOperationResponse();
 };
-Q_DECLARE_METATYPE(InflationOperationResponse*)
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(InflationOperationResponse)
+
+
+
+Q_DECLARE_METATYPE(qstellar::InflationOperationResponse*)
 #endif // INFLATIONOPERATIONRESPONSE_H

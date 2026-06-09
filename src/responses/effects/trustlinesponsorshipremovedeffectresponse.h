@@ -4,6 +4,9 @@
 #include "effectresponse.h"
 #include <QObject>
 #include "asset.h"
+#include "qstellar_namespace.h"
+
+QSTELLAR_BEGIN_NS
 
 /**
  * Represents trustline_sponsorship_removed effect response.
@@ -37,5 +40,12 @@ signals:
     void assetChanged();
     void formerSponsorChanged();
 };
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(TrustlineSponsorshipRemovedEffectResponse)
+
+
+
 
 #endif // TRUSTLINESPONSORSHIPREMOVEDEFFECTRESPONSE_H

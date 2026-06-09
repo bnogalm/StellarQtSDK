@@ -1,5 +1,8 @@
 #include "claimablebalanceclaimantcreatedeffectresponse.h"
 
+QSTELLAR_BEGIN_NS
+
+
 ClaimableBalanceClaimantCreatedEffectResponse::ClaimableBalanceClaimantCreatedEffectResponse(QNetworkReply* reply)
     :EffectResponse(reply),m_asset(nullptr),m_predicate(nullptr)
 {
@@ -79,3 +82,4 @@ void ClaimableBalanceClaimantCreatedEffectResponse::setPredicate(Predicate *pred
     m_predicate = predicate;
     emit predicateChanged();
 }
+QSTELLAR_END_NS

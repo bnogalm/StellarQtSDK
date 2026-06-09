@@ -14,7 +14,7 @@ windows {
 }
 
 
-CONFIG += c++11 console
+CONFIG += c++17 console
 CONFIG -= app_bundle
 
 # The following define makes your compiler emit warnings if you use
@@ -22,6 +22,11 @@ CONFIG -= app_bundle
 # depend on your compiler). Please consult the documentation of the
 # deprecated API in order to know how to port your code away from it.
 DEFINES += QT_DEPRECATED_WARNINGS
+
+# This example uses the unqualified 0.x API (KeyPair, Server, Network, ...).
+# Opt in to the global using-aliases so it compiles unchanged. New consumers
+# should drop this and use the qualified `qstellar::*` API.
+DEFINES += STELLAR_QT_LEGACY_GLOBAL_NS
 
 # You can also make your code fail to compile if it uses deprecated APIs.
 # In order to do so, uncomment the following line.

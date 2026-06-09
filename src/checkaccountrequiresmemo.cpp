@@ -3,6 +3,7 @@
 #include "exception/networkexception.h"
 #include <QTimer>
 
+QSTELLAR_BEGIN_NS
 
 #define MAX_CHECK_ACCOUNT_RETRY 2
 /**
@@ -120,3 +121,5 @@ void CheckAccountRequiresMemo::validateAccountError()
     }
 
 }
+
+QSTELLAR_END_NS

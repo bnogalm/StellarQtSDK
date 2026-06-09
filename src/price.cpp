@@ -3,13 +3,14 @@
 
 #include <numeric>
 
+QSTELLAR_BEGIN_NS
 
 Price::Price(qint32 n, qint32 d) {
     m_n = n;
     m_d = d;
 }
 
-Price::Price(stellar::Price &price):m_n(price.n),m_d(price.n)
+Price::Price(stellar::Price &price):m_n(price.n),m_d(price.d)
 {
 
 }
@@ -112,3 +113,5 @@ bool Price::equals(Price *price) {
             this->getDenominator() == price->getDenominator();
 
 }
+
+QSTELLAR_END_NS

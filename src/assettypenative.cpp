@@ -1,6 +1,6 @@
 #include "assettypenative.h"
 
-
+QSTELLAR_BEGIN_NS
 
 AssetTypeNative::AssetTypeNative() {
 
@@ -28,3 +28,5 @@ QString AssetTypeNative::toString() const
 {
     return QString("native");
 }
+
+QSTELLAR_END_NS

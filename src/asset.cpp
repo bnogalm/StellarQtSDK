@@ -8,6 +8,8 @@
 #include "stellaraddress.h"
 #include <stdexcept>
 
+QSTELLAR_BEGIN_NS
+
 Asset *Asset::createNonNativeAsset(QString code, KeyPair *issuer) {
     if (code.length() >= 1 && code.length() <= 4) {
         return new AssetTypeCreditAlphaNum4(code, issuer);
@@ -108,3 +110,5 @@ Asset *checkNotNull(Asset *asset, const char *error)
     }
     return asset;
 }
+
+QSTELLAR_END_NS

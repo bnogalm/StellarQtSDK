@@ -10,11 +10,15 @@
 #include "slip10.h"
 
 
+// memset_s is a free function (NOT a member). Keep it in global scope so
+// it does not conflict with namespacing.
 void memset_s(char * data,int value, int size)
 {
     memset(data,value,size);
     *(volatile char *)data = *(volatile char *)data;
 }
+
+QSTELLAR_BEGIN_NS
 
 KeyPair* checkNotNull(KeyPair* keypair, const char *error)
 {
@@ -313,3 +317,5 @@ bool KeyPair::operator==(const KeyPair &other) const
 {
     return this->equals(&other);
 }
+
+QSTELLAR_END_NS

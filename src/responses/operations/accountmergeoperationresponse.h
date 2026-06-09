@@ -3,7 +3,10 @@
 
 #include <QObject>
 #include "operationresponse.h"
-class KeyPair;
+#include "../../keypair.h"
+#include "qstellar_namespace.h"
+QSTELLAR_BEGIN_NS
+
 /**
  * Represents AccountMerge operation response.
  * @see <a href="https://www.stellar.org/developers/horizon/reference/resources/operation.html" target="_blank">Operation documentation</a>
@@ -36,5 +39,12 @@ private:
     KeyPair *m_intoKeypair;
 
 };
-Q_DECLARE_METATYPE(AccountMergeOperationResponse*)
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(AccountMergeOperationResponse)
+
+
+
+Q_DECLARE_METATYPE(qstellar::AccountMergeOperationResponse*)
 #endif // ACCOUNTMERGEOPERATIONRESPONSE_Hs

@@ -5,8 +5,10 @@
 #include <QString>
 
 #include "xdr/stellartypes.h"
+#include "keypair.h"
+#include "qstellar_namespace.h"
 
-class KeyPair;
+QSTELLAR_BEGIN_NS
 
 /**
  * Unified value-type SignerKey covering all 4 variants:
@@ -49,5 +51,9 @@ public:
     bool operator==(const SignerKey& other) const { return m_xdr == other.m_xdr; }
     bool operator!=(const SignerKey& other) const { return !(*this == other); }
 };
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(SignerKey)
 
 #endif // SIGNERKEY_H

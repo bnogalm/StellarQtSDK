@@ -3,7 +3,10 @@
 #include "requestbuilder.h"
 #include "../responses/orderbookresponse.h"
 #include "../responses/page.h"
-class Asset;
+#include "../qstellar_namespace.h"
+QSTELLAR_FWD(Asset)
+QSTELLAR_BEGIN_NS
+
 /**
  * Builds requests connected to order book.
  */
@@ -37,5 +40,9 @@ public:
      OrderBookRequestBuilder& limit(int number);
      OrderBookRequestBuilder& order(RequestBuilder::Order direction);
 };
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(OrderBookRequestBuilder)
 
 #endif // ORDERBOOKREQUESTBUILDER_H

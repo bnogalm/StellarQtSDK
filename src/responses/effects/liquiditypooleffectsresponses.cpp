@@ -13,6 +13,7 @@
 
 static void registerLiquidityPoolEffectTypes()
 {
+    using namespace qstellar;
     qRegisterMetaType<AssetAmount>();
     qRegisterMetaType<LiquidityPool>();
     qRegisterMetaType<LiquidityPoolClaimableAssetAmount>();

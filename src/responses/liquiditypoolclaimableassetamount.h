@@ -4,6 +4,9 @@
 #include <QObject>
 #include <QString>
 #include <QMetaType>
+#include "qstellar_namespace.h"
+
+QSTELLAR_BEGIN_NS
 
 /**
  * Asset / amount pair plus the resulting claimable_balance_id, used by
@@ -33,6 +36,13 @@ public:
     }
     bool operator!=(const LiquidityPoolClaimableAssetAmount& o) const { return !(*this == o); }
 };
-Q_DECLARE_METATYPE(LiquidityPoolClaimableAssetAmount)
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(LiquidityPoolClaimableAssetAmount)
+
+
+
+Q_DECLARE_METATYPE(qstellar::LiquidityPoolClaimableAssetAmount)
 
 #endif // LIQUIDITYPOOLCLAIMABLEASSETAMOUNT_H

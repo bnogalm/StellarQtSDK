@@ -3,6 +3,7 @@
 
 #include "assettypecreditalphanum.h"
 
+QSTELLAR_BEGIN_NS
 
 /**
  * Represents all assets with codes 5-12 characters long.
@@ -26,5 +27,9 @@ public:
 
     stellar::Asset toXdr();
 };
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(AssetTypeCreditAlphaNum12)
 
 #endif // ASSETTYPECREDITALPHANUM12_H

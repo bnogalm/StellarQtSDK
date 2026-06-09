@@ -3,7 +3,10 @@
 #include "requestbuilder.h"
 #include "../responses/page.h"
 #include "../responses/transactionresponse.h"
-class KeyPair;
+#include "../keypair.h"
+#include "../qstellar_namespace.h"
+QSTELLAR_BEGIN_NS
+
 
 class TransactionsRequestBuilder : public RequestBuilder
 {
@@ -97,7 +100,8 @@ public:
     TransactionsRequestBuilder& order(Order direction);
 };
 
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(TransactionsRequestBuilder)
+
 #endif // TRANSACTIONSREQUESTBUILDER_H
-
-
-

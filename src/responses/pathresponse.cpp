@@ -5,6 +5,9 @@
 #include "../assettypecreditalphanum.h"
 #include "common.h"
 
+QSTELLAR_BEGIN_NS
+
+
 PathResponse::PathResponse(QNetworkReply *reply )
     : Response(reply),m_destinationAsset(nullptr),m_sourceAsset(nullptr)
 {
@@ -170,3 +173,4 @@ void PathResponse::setPath(QVariantList path)
     m_pathConverted.clear();
     m_path = path;
 }
+QSTELLAR_END_NS

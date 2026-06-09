@@ -1,6 +1,9 @@
 #ifndef ACCOUNT_H
 #define ACCOUNT_H
 #include "transactionbuilderaccount.h"
+#include "qstellar_namespace.h"
+
+QSTELLAR_BEGIN_NS
 
 /**
  * Represents an account in Stellar network with it's sequence number.
@@ -45,5 +48,9 @@ private:
 
 
 };
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(Account)
 
 #endif // ACCOUNT_H

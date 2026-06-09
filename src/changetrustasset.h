@@ -3,8 +3,10 @@
 
 #include <QByteArray>
 #include "xdr/stellarledgerentries.h"
+#include "asset.h"
+#include "qstellar_namespace.h"
 
-class Asset;
+QSTELLAR_BEGIN_NS
 
 /**
  * Abstract wrapper for the ChangeTrustAsset XDR union (CAP-38, Protocol 18+).
@@ -74,5 +76,11 @@ public:
     stellar::ChangeTrustAsset toXdr() const override;
     bool equals(const ChangeTrustAsset* other) const override;
 };
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(ChangeTrustAsset)
+QSTELLAR_ALIAS(ChangeTrustAssetWrapper)
+QSTELLAR_ALIAS(LiquidityPoolShareChangeTrustAsset)
 
 #endif // CHANGETRUSTASSET_H

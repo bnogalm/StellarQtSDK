@@ -2,6 +2,9 @@
 #define FEDERATION_H
 
 #include "federationresponse.h"
+#include "../qstellar_namespace.h"
+QSTELLAR_BEGIN_NS
+
 /**
  * Helper class for resolving Stellar addresses.
  *
@@ -30,5 +33,8 @@ signals:
 public slots:
 };
 
-#endif // FEDERATION_H
+QSTELLAR_END_NS
 
+QSTELLAR_ALIAS(Federation)
+
+#endif // FEDERATION_H

@@ -5,6 +5,9 @@
 #include "../keypair.h"
 #include "common.h"
 
+QSTELLAR_BEGIN_NS
+
+
 static void registerTypes()
 {
     qRegisterMetaType<OrderBookResponseAttach::Row>();
@@ -100,3 +103,4 @@ void OrderBookResponse::setCounter(QVariantMap counter)
     }
     m_counter = counter;
 }
+QSTELLAR_END_NS

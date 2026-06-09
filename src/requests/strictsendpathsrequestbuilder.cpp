@@ -5,6 +5,9 @@
 #include "../assettypecreditalphanum.h"
 #include "../server.h"
 
+QSTELLAR_BEGIN_NS
+
+
 StrictSendPathsRequestBuilder::StrictSendPathsRequestBuilder(Server *server):RequestBuilder(server,  "paths/strict-send")
 {
 }
@@ -47,3 +50,4 @@ Page<PathResponse>* StrictSendPathsRequestBuilder::execute(QUrl uri) {
 Page<PathResponse>* StrictSendPathsRequestBuilder::execute() {
     return execute(this->buildUri());
 }
+QSTELLAR_END_NS

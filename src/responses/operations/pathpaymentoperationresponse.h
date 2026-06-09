@@ -3,9 +3,11 @@
 
 #include <QObject>
 #include "pathpaymentstrictreceiveoperationresponse.h"
+#include "qstellar_namespace.h"
 
-class Asset;
-/**
+QSTELLAR_BEGIN_NS
+
+class Asset;/**
  * Represents PathPayment operation response.
  * @deprecated Will be removed in version 0.11.0, use {@link PathPaymentStrictReceiveOperationResponse}
  */
@@ -17,5 +19,12 @@ public:
 
 
 };
-Q_DECLARE_METATYPE(PathPaymentOperationResponse*)
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(PathPaymentOperationResponse)
+
+
+
+Q_DECLARE_METATYPE(qstellar::PathPaymentOperationResponse*)
 #endif // PATHPAYMENTOPERATIONRESPONSE_H

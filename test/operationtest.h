@@ -37,6 +37,7 @@
 #include "src/revokeaccountsponsorshipoperation.h"
 #include "src/revokedatasponsorshipoperation.h"
 #include "src/revokeclaimablebalancesponsorshipoperation.h"
+#include "src/revokeliquiditypoolsponsorshipoperation.h"
 #include "src/revokeoffersponsorshipoperation.h"
 #include "src/revokesignersponsorshipoperation.h"
 #include "src/revoketrustlinesponsorshipoperation.h"
@@ -844,6 +845,17 @@ private slots:
         stellar::Operation xdr = operation->toXdr();
         RevokeClaimableBalanceSponsorshipOperation* parsedOperation = (RevokeClaimableBalanceSponsorshipOperation*) Operation::fromXdr(xdr);
         QCOMPARE(balanceId, parsedOperation->getBalanceId());
+        QCOMPARE(source, parsedOperation->getSourceAccount());
+    }
+
+    void testRevokeLiquidityPoolSponsorshipOperation() {
+        QString source = "GA2N7NI5WEMJILMK4UPDTF2ZX2BIRQUM3HZUE27TRUNRFN5M5EXU6RQV";
+        QString liquidityPoolId = "dd7b1ab831c273a09e76784f4ff8df4b86bc0d8d6f4eef21d9bb5d6da7c2e6f1";
+        RevokeLiquidityPoolSponsorshipOperation* operation = RevokeLiquidityPoolSponsorshipOperation::create(liquidityPoolId)->setSourceAccount(source);
+
+        stellar::Operation xdr = operation->toXdr();
+        RevokeLiquidityPoolSponsorshipOperation* parsedOperation = (RevokeLiquidityPoolSponsorshipOperation*) Operation::fromXdr(xdr);
+        QCOMPARE(liquidityPoolId, parsedOperation->getLiquidityPoolId());
         QCOMPARE(source, parsedOperation->getSourceAccount());
     }
 

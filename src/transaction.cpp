@@ -7,6 +7,8 @@
 // TransactionBuilder lives in transactionbuilder.cpp.
 // Transaction::Builder is now a deprecated alias (see header).
 
+QSTELLAR_BEGIN_NS
+
 Transaction::Transaction(AccountConverter accountConverter, QString sourceAccount, qint64 fee, qint64 sequenceNumber, QVector<Operation *> operations, Memo *memo, TimeBounds *timeBounds, Network *network)
     :AbstractTransaction(accountConverter, network),m_envelopeType(stellar::EnvelopeType::ENVELOPE_TYPE_TX)
 {
@@ -263,3 +265,5 @@ Transaction *checkNotNull(Transaction *transaction, const char *error)
     }
     return transaction;
 }
+
+QSTELLAR_END_NS

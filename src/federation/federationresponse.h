@@ -3,6 +3,9 @@
 
 #include <QObject>
 #include "../responses/response.h"
+#include "../qstellar_namespace.h"
+QSTELLAR_BEGIN_NS
+
 
 /**
  * Object to hold a response from a federation server.
@@ -41,6 +44,8 @@ public:
     QString getMemo();
 };
 
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(FederationResponse)
+
 #endif // FEDERATIONRESPONSE_H
-
-

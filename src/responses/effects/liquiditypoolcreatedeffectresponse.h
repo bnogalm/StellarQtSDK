@@ -3,6 +3,9 @@
 
 #include "effectresponse.h"
 #include "../liquiditypool.h"
+#include "qstellar_namespace.h"
+
+QSTELLAR_BEGIN_NS
 
 /**
  * `liquidity_pool_created` (type_i = 93) effect.
@@ -18,6 +21,13 @@ public:
 
     LiquidityPool getLiquidityPool() const { return m_liquidityPool; }
 };
-Q_DECLARE_METATYPE(LiquidityPoolCreatedEffectResponse*)
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(LiquidityPoolCreatedEffectResponse)
+
+
+
+Q_DECLARE_METATYPE(qstellar::LiquidityPoolCreatedEffectResponse*)
 
 #endif // LIQUIDITYPOOLCREATEDEFFECTRESPONSE_H

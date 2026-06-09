@@ -4,6 +4,9 @@
 #include "response.h"
 #include "link.h"
 #include "assetamount.h"
+#include "qstellar_namespace.h"
+
+QSTELLAR_BEGIN_NS
 
 namespace LiquidityPoolResponseAttach
 {
@@ -75,7 +78,15 @@ public:
     QString             getLastModifiedTime() const    { return m_lastModifiedTime; }
     LiquidityPoolResponseAttach::Links getLinks() const { return m_links; }
 };
-Q_DECLARE_METATYPE(LiquidityPoolResponseAttach::Links)
-Q_DECLARE_METATYPE(LiquidityPoolResponse*)
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(LiquidityPoolResponse)
+QSTELLAR_NS_ALIAS(LiquidityPoolResponseAttach)
+
+
+
+Q_DECLARE_METATYPE(qstellar::LiquidityPoolResponseAttach::Links)
+Q_DECLARE_METATYPE(qstellar::LiquidityPoolResponse*)
 
 #endif // LIQUIDITYPOOLRESPONSE_H

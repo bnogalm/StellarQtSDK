@@ -2,12 +2,15 @@
 #define PAYMENTOPERATION_H
 
 #include "operation.h"
+#include "qstellar_namespace.h"
 #include "asset.h"
 
 /**
  * Represents <a href="https://www.stellar.org/developers/learn/concepts/list-of-operations.html#payment" target="_blank">Payment</a> operation.
  * @see <a href="https://www.stellar.org/developers/learn/concepts/list-of-operations.html" target="_blank">List of Operations</a>
  */
+QSTELLAR_BEGIN_NS
+
 class PaymentOperation : public Operation
 {    
     Asset* m_asset;
@@ -50,5 +53,9 @@ public:
     PaymentOperation* setSourceAccount(QString sourceAccount);
 
 };
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(PaymentOperation)
 
 #endif // PAYMENTOPERATION_H

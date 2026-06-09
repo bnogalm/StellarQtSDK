@@ -2,6 +2,9 @@
 #define LIQUIDITYPOOLREMOVEDEFFECTRESPONSE_H
 
 #include "effectresponse.h"
+#include "qstellar_namespace.h"
+
+QSTELLAR_BEGIN_NS
 
 /**
  * `liquidity_pool_removed` (type_i = 94) effect.
@@ -20,6 +23,13 @@ public:
 
     QString getLiquidityPoolId() const { return m_liquidityPoolId; }
 };
-Q_DECLARE_METATYPE(LiquidityPoolRemovedEffectResponse*)
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(LiquidityPoolRemovedEffectResponse)
+
+
+
+Q_DECLARE_METATYPE(qstellar::LiquidityPoolRemovedEffectResponse*)
 
 #endif // LIQUIDITYPOOLREMOVEDEFFECTRESPONSE_H

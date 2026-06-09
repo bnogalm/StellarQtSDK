@@ -1,6 +1,9 @@
 #include "transactionsrequestbuilder.h"
 #include "../keypair.h"
 #include "../../src/server.h"
+
+QSTELLAR_BEGIN_NS
+
 TransactionsRequestBuilder::TransactionsRequestBuilder(Server* server):RequestBuilder(server, "transactions")
 {
 }
@@ -67,3 +70,4 @@ TransactionsRequestBuilder &TransactionsRequestBuilder::order(RequestBuilder::Or
     RequestBuilder::order(direction);
     return *this;
 }
+QSTELLAR_END_NS

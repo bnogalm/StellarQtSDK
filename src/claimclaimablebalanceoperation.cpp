@@ -1,5 +1,8 @@
 #include "claimclaimablebalanceoperation.h"
 
+QSTELLAR_BEGIN_NS
+
+
 ClaimClaimableBalanceOperation::ClaimClaimableBalanceOperation(stellar::ClaimClaimableBalanceOp& op):m_op(op)
 {
 
@@ -37,3 +40,4 @@ ClaimClaimableBalanceOperation *ClaimClaimableBalanceOperation::setSourceAccount
     Operation::setSourceAccount(sourceAccount);
     return this;
 }
+QSTELLAR_END_NS

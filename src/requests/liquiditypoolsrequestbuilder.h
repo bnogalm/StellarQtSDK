@@ -6,8 +6,11 @@
 #include "../responses/page.h"
 #include <QStringList>
 
-class Asset;
-class KeyPair;
+#include "../keypair.h"
+#include "../qstellar_namespace.h"
+QSTELLAR_FWD(Asset)
+QSTELLAR_BEGIN_NS
+
 
 /**
  * Builds requests for the `/liquidity_pools` Horizon endpoint.
@@ -44,5 +47,9 @@ public:
     /** Build and execute. Returns a Page; caller owns it. */
     Page<LiquidityPoolResponse>* execute();
 };
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(LiquidityPoolsRequestBuilder)
 
 #endif // LIQUIDITYPOOLSREQUESTBUILDER_H

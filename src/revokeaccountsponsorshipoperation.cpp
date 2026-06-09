@@ -1,5 +1,8 @@
 #include "revokeaccountsponsorshipoperation.h"
 
+QSTELLAR_BEGIN_NS
+
+
 RevokeAccountSponsorshipOperation::RevokeAccountSponsorshipOperation(QString accountID)
 {    
     auto& ledgerKey = m_op.fillRevokeSponsorshipLedgerEntry();
@@ -39,3 +42,4 @@ RevokeAccountSponsorshipOperation *RevokeAccountSponsorshipOperation::setSourceA
     Operation::setSourceAccount(sourceAccount);
     return this;
 }
+QSTELLAR_END_NS

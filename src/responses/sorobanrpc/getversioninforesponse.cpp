@@ -1,5 +1,8 @@
 #include "getversioninforesponse.h"
 
+QSTELLAR_BEGIN_NS
+
+
 GetVersionInfoResponse GetVersionInfoResponse::fromJson(const QJsonObject& r)
 {
     GetVersionInfoResponse out;
@@ -12,3 +15,4 @@ GetVersionInfoResponse GetVersionInfoResponse::fromJson(const QJsonObject& r)
                                           : static_cast<qint32>(pv.toInteger(0));
     return out;
 }
+QSTELLAR_END_NS

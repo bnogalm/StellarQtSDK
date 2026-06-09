@@ -2,6 +2,7 @@
 #define ASSETTYPENATIVE_H
 #include "asset.h"
 
+QSTELLAR_BEGIN_NS
 
 /**
  * Represents Stellar native asset - <a href="https://www.stellar.org/developers/learn/concepts/assets.html" target="_blank">lumens (XLM)</a>
@@ -24,5 +25,9 @@ public:
 
     QString toString() const;
 };
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(AssetTypeNative)
 
 #endif // ASSETTYPENATIVE_H

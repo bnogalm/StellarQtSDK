@@ -3,6 +3,7 @@
 #include "keypair.h"
 #include "transaction.h"
 
+QSTELLAR_BEGIN_NS
 
 stellar::SignerKey Signer::ed25519PublicKey(KeyPair *keyPair) {
     checkNotNull(keyPair, "keyPair cannot be null");
@@ -47,3 +48,5 @@ void checkNotNull(stellar::SignerKey *key, const char *error)
         throw std::runtime_error(error);
     }
 }
+
+QSTELLAR_END_NS

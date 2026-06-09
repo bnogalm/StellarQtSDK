@@ -1,5 +1,8 @@
 #include "createclaimablebalanceoperation.h"
 
+QSTELLAR_BEGIN_NS
+
+
 CreateClaimableBalanceOperation::CreateClaimableBalanceOperation(QString amount, Asset *asset, QList<Claimant> claimants):m_asset(nullptr)
 {
     checkNotNull(amount, "amount cannot be null");
@@ -65,3 +68,4 @@ CreateClaimableBalanceOperation *CreateClaimableBalanceOperation::setSourceAccou
     Operation::setSourceAccount(sourceAccount);
     return this;
 }
+QSTELLAR_END_NS

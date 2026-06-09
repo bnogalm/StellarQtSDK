@@ -1,5 +1,8 @@
 #include "inflationoperationresponse.h"
 
+QSTELLAR_BEGIN_NS
+
+
 InflationOperationResponse::InflationOperationResponse(QNetworkReply *reply)
     :OperationResponse(reply)
 {
@@ -7,3 +10,4 @@ InflationOperationResponse::InflationOperationResponse(QNetworkReply *reply)
 }
 
 InflationOperationResponse::~InflationOperationResponse(){}
+QSTELLAR_END_NS

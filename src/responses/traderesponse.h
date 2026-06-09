@@ -6,6 +6,11 @@
 #include "link.h"
 #include "price.h"
 
+#include "../keypair.h"
+#include "qstellar_namespace.h"
+
+QSTELLAR_BEGIN_NS
+
 namespace TradeResponseAttach
 {
 /**
@@ -35,9 +40,7 @@ public:
     }
 };
 }
-class KeyPair;
-class Asset;
-/**
+class Asset;/**
  * Represents trades response.
  * @see <a href="https://www.stellar.org/developers/horizon/reference/endpoints/trades.html" target="_blank">Trades documentation</a>
  * @see org.stellar.sdk.requests.TradesRequestBuilder
@@ -164,7 +167,15 @@ public slots:
     void setCounterAssetIssuer(QString counter_asset_issuer);
 };
 
-Q_DECLARE_METATYPE(TradeResponseAttach::Links)
-Q_DECLARE_METATYPE(TradeResponse*)
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(TradeResponse)
+
+
+
+
+QSTELLAR_NS_ALIAS(TradeResponseAttach)
+Q_DECLARE_METATYPE(qstellar::TradeResponseAttach::Links)
+Q_DECLARE_METATYPE(qstellar::TradeResponse*)
 #endif // TRADERESPONSE_H
 

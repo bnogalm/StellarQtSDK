@@ -2,7 +2,10 @@
 #define ACCOUNTCREATEDEFFECTRESPONSE_H
 
 #include "effectresponse.h"
+#include "qstellar_namespace.h"
 
+
+QSTELLAR_BEGIN_NS
 
 /**
  * Represents account_created effect response.
@@ -20,6 +23,13 @@ public:
     virtual ~AccountCreatedEffectResponse();
     QString getStartingBalance() const;
 };
-Q_DECLARE_METATYPE(AccountCreatedEffectResponse*)
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(AccountCreatedEffectResponse)
+
+
+
+Q_DECLARE_METATYPE(qstellar::AccountCreatedEffectResponse*)
 #endif // ACCOUNTCREATEDEFFECTRESPONSE_H
 

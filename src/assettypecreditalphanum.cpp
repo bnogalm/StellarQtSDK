@@ -3,6 +3,8 @@
 #include "keypair.h"
 #include "util.h"
 
+QSTELLAR_BEGIN_NS
+
 AssetTypeCreditAlphaNum::AssetTypeCreditAlphaNum(QString code, KeyPair *issuer) {
     m_code =checkNotNull(code, "code cannot be null");
     m_issuer = checkNotNull(issuer, "issuer cannot be null");
@@ -50,3 +52,5 @@ AssetTypeCreditAlphaNum *checkNotNull(AssetTypeCreditAlphaNum *asset, const char
     }
     return asset;
 }
+
+QSTELLAR_END_NS

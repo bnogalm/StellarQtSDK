@@ -1,5 +1,8 @@
 #include "managedataoperationresponse.h"
 
+QSTELLAR_BEGIN_NS
+
+
 ManageDataOperationResponse::ManageDataOperationResponse(QNetworkReply *reply)
     : OperationResponse(reply)
 {
@@ -17,3 +20,4 @@ QString ManageDataOperationResponse::getValue() const
 {
     return m_value;
 }
+QSTELLAR_END_NS

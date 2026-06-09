@@ -2,11 +2,14 @@
 #define EXTENDFOOTPRINTTTLOPERATION_H
 
 #include "operation.h"
+#include "qstellar_namespace.h"
 
 /**
  * CAP-46 — extends the TTL of the ledger entries listed in the transaction's
  * Soroban footprint (read-only) to at least `extendTo` ledgers in the future.
  */
+QSTELLAR_BEGIN_NS
+
 class ExtendFootprintTTLOperation : public Operation
 {
     quint32 m_extendTo;
@@ -24,5 +27,9 @@ public:
 
     ExtendFootprintTTLOperation* setSourceAccount(QString sourceAccount);
 };
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(ExtendFootprintTTLOperation)
 
 #endif // EXTENDFOOTPRINTTTLOPERATION_H

@@ -4,6 +4,9 @@
 #include <QByteArray>
 #include "xdr/stellartransaction.h"
 #include "util.h"
+#include "qstellar_namespace.h"
+
+QSTELLAR_BEGIN_NS
 /**
  * <p>The memo contains optional extra information. It is the responsibility of the client to interpret this value. Memos can be one of the following types:</p>
  * <ul>
@@ -57,10 +60,12 @@ public:
 
     /**
       * Creates new {@link MemoId} instance.
-      * @param id
+      * @param id  unsigned 64-bit memo id.
+      *
+      * NOTE: the historical `id(qint64)` overload was removed in 1.0.0 —
+      * MemoId only carries a 64-bit unsigned value. Pass a `quint64` (or
+      * any positive integer literal, which converts implicitly).
       */
-    static MemoId* id(qint64 id);
-
     static MemoId* id(quint64 id);
 
     /**
@@ -171,7 +176,6 @@ private:
     quint64 m_id;
 
 public:
-    MemoId(qint64 id);
     MemoId(quint64 id);
     virtual ~MemoId();
 
@@ -227,4 +231,15 @@ inline Memo * checkNotNull(Memo *t, const char *error)
         throw std::runtime_error(error);
     return t;
 }
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(Memo)
+QSTELLAR_ALIAS(MemoHashAbstract)
+QSTELLAR_ALIAS(MemoNone)
+QSTELLAR_ALIAS(MemoText)
+QSTELLAR_ALIAS(MemoId)
+QSTELLAR_ALIAS(MemoHash)
+QSTELLAR_ALIAS(MemoReturnHash)
+
 #endif // MEMO_H

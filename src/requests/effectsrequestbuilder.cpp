@@ -2,6 +2,9 @@
 #include "../keypair.h"
 #include "../util.h"
 #include "../server.h"
+
+QSTELLAR_BEGIN_NS
+
 EffectsRequestBuilder::EffectsRequestBuilder(Server *server):RequestBuilder(server, "effects")
 {
 
@@ -58,3 +61,4 @@ EffectsRequestBuilder &EffectsRequestBuilder::order(RequestBuilder::Order direct
     RequestBuilder::order(direction);
     return *this;
 }
+QSTELLAR_END_NS

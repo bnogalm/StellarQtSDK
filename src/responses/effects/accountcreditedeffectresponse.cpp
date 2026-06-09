@@ -3,6 +3,9 @@
 #include "../../assettypenative.h"
 #include "../../assettypecreditalphanum.h"
 
+QSTELLAR_BEGIN_NS
+
+
 AccountCreditedEffectResponse::AccountCreditedEffectResponse(QNetworkReply *reply)
     :EffectResponse(reply),m_asset(nullptr)
 {
@@ -79,3 +82,4 @@ void AccountCreditedEffectResponse::setAssetIssuer(QString assetIssuer)
     }
     m_assetIssuer = assetIssuer;
 }
+QSTELLAR_END_NS

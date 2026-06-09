@@ -5,6 +5,9 @@
 #include <exception>
 #include <QMap>
 #include "stellardeprecated.h"
+#include "qstellar_namespace.h"
+
+QSTELLAR_BEGIN_NS
 
 /**
  * Indicates that no network was selected.
@@ -131,5 +134,15 @@ public:
 };
 
 Network* checkNotNull(Network* network, const char *error);
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(NoNetworkSelectedException)
+QSTELLAR_ALIAS(Network)
+// `checkNotNull(Network*, const char*)` lives in the namespace too; bring it
+// to global so legacy calls keep resolving without ADL surprises.
+#ifndef STELLAR_QT_LEGACY_GLOBAL_NS
+using ::qstellar::checkNotNull;
+#endif
 
 #endif // NETWORK_H

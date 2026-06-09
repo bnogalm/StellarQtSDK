@@ -1,5 +1,8 @@
 #include "clawbackclaimablebalanceoperation.h"
 
+QSTELLAR_BEGIN_NS
+
+
 ClawbackClaimableBalanceOperation::ClawbackClaimableBalanceOperation(stellar::ClawbackClaimableBalanceOp &op):m_op(op)
 {
 
@@ -44,3 +47,4 @@ ClawbackClaimableBalanceOperation *ClawbackClaimableBalanceOperation::setSourceA
     return this;
 }
 
+QSTELLAR_END_NS

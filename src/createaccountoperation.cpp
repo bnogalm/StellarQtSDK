@@ -1,5 +1,8 @@
 #include "createaccountoperation.h"
 
+QSTELLAR_BEGIN_NS
+
+
 
 CreateAccountOperation::CreateAccountOperation(KeyPair *destination, QString startingBalance)
     :m_destination(nullptr)
@@ -65,3 +68,4 @@ CreateAccountOperation *CreateAccountOperation::setSourceAccount(QString sourceA
     Operation::setSourceAccount(sourceAccount);
     return this;
 }
+QSTELLAR_END_NS

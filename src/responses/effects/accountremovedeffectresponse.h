@@ -2,6 +2,9 @@
 #define ACCOUNTREMOVEDEFFECTRESPONSE_H
 
 #include "effectresponse.h"
+#include "qstellar_namespace.h"
+
+QSTELLAR_BEGIN_NS
 
 /**
  * Represents account_removed effect response.
@@ -16,5 +19,12 @@ public:
     AccountRemovedEffectResponse(QNetworkReply * reply=nullptr);
     virtual ~AccountRemovedEffectResponse();
 };
-Q_DECLARE_METATYPE(AccountRemovedEffectResponse*)
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(AccountRemovedEffectResponse)
+
+
+
+Q_DECLARE_METATYPE(qstellar::AccountRemovedEffectResponse*)
 #endif // ACCOUNTREMOVEDEFFECTRESPONSE_H

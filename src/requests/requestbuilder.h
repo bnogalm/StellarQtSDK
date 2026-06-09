@@ -8,8 +8,11 @@
 #include <QVector>
 
 
-class Server;
-class Asset;
+#include "../qstellar_namespace.h"
+QSTELLAR_FWD(Asset)
+QSTELLAR_FWD(Server)
+QSTELLAR_BEGIN_NS
+
 
 class RequestBuilder
 {
@@ -88,5 +91,9 @@ protected:
      RequestBuilder& setAssetParameter(QString name, Asset *asset);
 };
 
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(RequestBuilder)
 
 #endif // REQUESTBUILDER_H

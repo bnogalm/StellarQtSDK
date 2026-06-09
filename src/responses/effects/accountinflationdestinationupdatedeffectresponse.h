@@ -1,7 +1,10 @@
 #ifndef ACCOUNTINFLATIONDESTINATIONUPDATEDEFFECTRESPONSE_H
 #define ACCOUNTINFLATIONDESTINATIONUPDATEDEFFECTRESPONSE_H
 #include "effectresponse.h"
+#include "qstellar_namespace.h"
 
+
+QSTELLAR_BEGIN_NS
 
 /**
 * Represents account_inflation_destination_updated effect response.
@@ -17,6 +20,13 @@ public:
     virtual ~AccountInflationDestinationUpdatedEffectResponse();
 };
 
-Q_DECLARE_METATYPE(AccountInflationDestinationUpdatedEffectResponse*)
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(AccountInflationDestinationUpdatedEffectResponse)
+
+
+
+
+Q_DECLARE_METATYPE(qstellar::AccountInflationDestinationUpdatedEffectResponse*)
 
 #endif // ACCOUNTINFLATIONDESTINATIONUPDATEDEFFECTRESPONSE_H

@@ -23,10 +23,15 @@
 #include "responses/sorobanrpc/sendtransactionresponse.h"
 #include "responses/sorobanrpc/simulatetransactionresponse.h"
 
-class AbstractTransaction;
-class Network;
+#include "network.h"
+
+#include "qstellar_namespace.h"
+QSTELLAR_FWD(AbstractTransaction)
+QSTELLAR_FWD(Transaction)
 class QNetworkAccessManager;
 namespace stellar { struct Asset; }
+
+QSTELLAR_BEGIN_NS
 
 /**
  * Stellar Asset Contract (SAC) balance entry for one holder of one asset.
@@ -166,7 +171,7 @@ public:
      *   - bumps the fee by `minResourceFee`
      * Throws on simulation error.
      */
-    void prepareTransaction(class Transaction* tx);
+    void prepareTransaction(Transaction* tx);
 
     /**
      * Pure helper used by `prepareTransaction` once it has the simulation
@@ -174,7 +179,7 @@ public:
      * the assembly logic with a hand-crafted `SimulateTransactionResponse`
      * (no RPC endpoint needed).
      */
-    static void applyTransactionSimulation(class Transaction* tx,
+    static void applyTransactionSimulation(Transaction* tx,
                                            const SimulateTransactionResponse& sim);
 
     /**
@@ -223,5 +228,10 @@ public:
 private:
     quint64 m_nextId = 1;
 };
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(SACBalance)
+QSTELLAR_ALIAS(SorobanServer)
 
 #endif // SOROBANSERVER_H

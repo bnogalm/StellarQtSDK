@@ -2,9 +2,13 @@
 #define TRUSTLINEFLAGSUPDATEDEFFECTRESPONSE_H
 
 #include "effectresponse.h"
+#include "qstellar_namespace.h"
 
 
-class Asset;
+QSTELLAR_FWD(Asset)
+
+QSTELLAR_BEGIN_NS
+
 /**
  * Represents trustline_flags_updated effect response.
  *
@@ -77,5 +81,12 @@ signals:
     void authorizedToMaintainLiabilitiesChanged();
     void clawbackEnabledChanged();
 };
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(TrustlineFlagsUpdatedEffectResponse)
+
+
+
 
 #endif // TRUSTLINEFLAGSUPDATEDEFFECTRESPONSE_H

@@ -3,7 +3,12 @@
 
 #include <QString>
 
-class Transaction;
+#include "network.h"
+
+#include "qstellar_namespace.h"
+QSTELLAR_FWD(Transaction)
+QSTELLAR_BEGIN_NS
+
 
 /**
  * SEP-11 — Txrep, the human-readable text representation of Stellar
@@ -34,7 +39,11 @@ public:
      * takes ownership of the returned pointer. The `network` parameter is
      * required because SEP-11 doesn't encode the network passphrase.
      */
-    static Transaction* fromTxrep(const QString& txrep, class Network* network);
+    static Transaction* fromTxrep(const QString& txrep, Network* network);
 };
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(Txrep)
 
 #endif // TXREP_H

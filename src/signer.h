@@ -1,9 +1,15 @@
 #ifndef SIGNER_H
 #define SIGNER_H
 #include "xdr/stellarledger.h"
-class KeyPair;
-class Transaction;
+#include "keypair.h"
+#include "qstellar_namespace.h"
 
+// Transaction is not yet migrated into qstellar::; forward-declare it
+// in global scope so the signature `preAuthTx(Transaction*)` below stays
+// referring to ::Transaction.
+QSTELLAR_FWD(Transaction)
+
+QSTELLAR_BEGIN_NS
 
 /**
  * Signer is a helper class that creates {@link org.stellar.sdk.xdr.SignerKey} objects.
@@ -47,4 +53,15 @@ public:
 };
 
 void checkNotNull(stellar::SignerKey* key,const char *error);
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(Signer)
+// The Horizon JSON-deserialize type with the same name lives in
+// `AccountResponseAttach::Signer` (responses/accountresponse.h), so the
+// global alias is safe.
+#ifndef STELLAR_QT_LEGACY_GLOBAL_NS
+using ::qstellar::checkNotNull;
+#endif
+
 #endif // SIGNER_H

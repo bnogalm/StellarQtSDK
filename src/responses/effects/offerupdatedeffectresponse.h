@@ -3,6 +3,9 @@
 
 
 #include "effectresponse.h"
+#include "qstellar_namespace.h"
+
+QSTELLAR_BEGIN_NS
 
 /**
  * Represents offer_updated effect response.
@@ -17,5 +20,12 @@ public:
     OfferUpdatedEffectResponse(QNetworkReply *reply = nullptr);
     virtual ~OfferUpdatedEffectResponse();
 };
-Q_DECLARE_METATYPE(OfferUpdatedEffectResponse*)
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(OfferUpdatedEffectResponse)
+
+
+
+Q_DECLARE_METATYPE(qstellar::OfferUpdatedEffectResponse*)
 #endif // OFFERUPDATEDEFFECTRESPONSE_H

@@ -3,6 +3,8 @@
 
 #include "asset.h"
 
+QSTELLAR_BEGIN_NS
+
 /**
  * Base class for AssetTypeCreditAlphaNum4 and AssetTypeCreditAlphaNum12 subclasses.
  * @see <a href="https://www.stellar.org/developers/learn/concepts/assets.html" target="_blank">Assets</a>
@@ -44,4 +46,9 @@ public:
     virtual QString toString() const;
 };
 AssetTypeCreditAlphaNum* checkNotNull(AssetTypeCreditAlphaNum* asset, const char *error);
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(AssetTypeCreditAlphaNum)
+
 #endif // ASSETTYPECREDITALPHANUM_H

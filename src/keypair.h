@@ -4,6 +4,10 @@
 #include <QtGlobal>
 #include "strkey.h"
 #include "xdr/stellartransaction.h"
+#include "qstellar_namespace.h"
+
+QSTELLAR_BEGIN_NS
+
 class Opertion;
 
 class KeyPair
@@ -167,6 +171,10 @@ public:
 };
 
 KeyPair* checkNotNull(KeyPair* keypair, const char *error);
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(KeyPair)
 
 
 #endif // KEYPAIR_H

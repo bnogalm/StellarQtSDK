@@ -1,5 +1,8 @@
 #include "revokesignersponsorshipoperation.h"
 
+QSTELLAR_BEGIN_NS
+
+
 
 RevokeSignerSponsorshipOperation::RevokeSignerSponsorshipOperation(QString accountId, stellar::SignerKey signer)
 {
@@ -49,3 +52,4 @@ RevokeSignerSponsorshipOperation *RevokeSignerSponsorshipOperation::setSourceAcc
     Operation::setSourceAccount(sourceAccount);
     return this;
 }
+QSTELLAR_END_NS

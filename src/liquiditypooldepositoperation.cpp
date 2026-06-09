@@ -3,6 +3,9 @@
 #include <cstring>
 #include <stdexcept>
 
+QSTELLAR_BEGIN_NS
+
+
 LiquidityPoolDepositOperation::LiquidityPoolDepositOperation(
     const QByteArray& liquidityPoolID,
     QString maxAmountA, QString maxAmountB,
@@ -75,3 +78,4 @@ LiquidityPoolDepositOperation* LiquidityPoolDepositOperation::setSourceAccount(Q
     Operation::setSourceAccount(sourceAccount);
     return this;
 }
+QSTELLAR_END_NS

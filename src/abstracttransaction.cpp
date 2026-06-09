@@ -2,6 +2,8 @@
 #include "transaction.h"
 #include "feebumptransaction.h"
 
+QSTELLAR_BEGIN_NS
+
 AbstractTransaction::AbstractTransaction(AccountConverter accountConverter, Network *network) : m_accountConverter(accountConverter), m_network(network)
 {    
     checkNotNull(network, "network cannot be null");
@@ -93,3 +95,5 @@ QString AbstractTransaction::toEnvelopeXdrBase64() {
     xdrOutputStream<< envelope;
     return outputStream.toBase64(XDR_BASE64ENCODING);
 }
+
+QSTELLAR_END_NS

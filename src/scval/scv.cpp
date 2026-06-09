@@ -5,6 +5,9 @@
 
 #include "../stellaraddress.h"
 
+QSTELLAR_BEGIN_NS
+
+
 namespace {
 
 void requireType(const stellar::SCVal& v, stellar::SCValType expected)
@@ -583,3 +586,4 @@ stellar::SCContractInstance Scv::fromContractInstance(const stellar::SCVal& v)
     requireType(v, stellar::SCValType::SCV_CONTRACT_INSTANCE);
     return v.instance ? *v.instance : stellar::SCContractInstance();
 }
+QSTELLAR_END_NS

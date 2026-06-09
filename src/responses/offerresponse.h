@@ -6,6 +6,11 @@
 #include "link.h"
 
 
+#include "../keypair.h"
+#include "qstellar_namespace.h"
+
+QSTELLAR_BEGIN_NS
+
 namespace OfferResponseAttach {
 /**
      * Links connected to ledger.
@@ -28,9 +33,7 @@ public:
     bool operator !=(const Links& links) const;
 };
 }
-class KeyPair;
-class Asset;
-/**
+class Asset;/**
  * Represents offer response.
  * @see <a href="https://www.stellar.org/developers/horizon/reference/resources/offer.html" target="_blank">Offer documentation</a>
  * @see org.stellar.sdk.requests.OffersRequestBuilder
@@ -90,5 +93,13 @@ public slots:
     void setBuying(QVariantMap buying);
     void setSelling(QVariantMap selling);
 };
-Q_DECLARE_METATYPE(OfferResponseAttach::Links)
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(OfferResponse)
+
+
+
+QSTELLAR_NS_ALIAS(OfferResponseAttach)
+Q_DECLARE_METATYPE(qstellar::OfferResponseAttach::Links)
 #endif // OFFERRESPONSE_H

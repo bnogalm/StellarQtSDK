@@ -3,6 +3,9 @@
 #include "../assettypecreditalphanum.h"
 #include "../keypair.h"
 #include "../server.h"
+
+QSTELLAR_BEGIN_NS
+
 TradesRequestBuilder::TradesRequestBuilder(Server *server):RequestBuilder(server, "trades")
 {
 
@@ -63,3 +66,4 @@ Page<TradeResponse>* TradesRequestBuilder::execute(QUrl uri)
 Page<TradeResponse>* TradesRequestBuilder::execute() {
     return server()->get<Page<TradeResponse> >(this);
 }
+QSTELLAR_END_NS

@@ -1,6 +1,9 @@
 #include "setoptionsoperationresponse.h"
 #include "../../keypair.h"
 
+QSTELLAR_BEGIN_NS
+
+
 SetOptionsOperationResponse::SetOptionsOperationResponse(QNetworkReply *reply)
     :OperationResponse(reply),m_inflationDestKeypair(0),m_signerKeypair(0)
 {
@@ -85,3 +88,4 @@ void SetOptionsOperationResponse::setSignerKey(QString signerKey)
         delete m_signerKeypair;
     m_signerKey = signerKey;
 }
+QSTELLAR_END_NS

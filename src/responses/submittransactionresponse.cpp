@@ -1,6 +1,9 @@
 #include "submittransactionresponse.h"
 #include "xdr/stellartransaction.h"
 #include "../abstracttransaction.h"
+
+QSTELLAR_BEGIN_NS
+
 SubmitTransactionResponse::SubmitTransactionResponse(QNetworkReply *reply,AbstractTransaction * transactionRequest):Response(reply)
   ,m_ledger(0)
   ,m_transactionRequest(transactionRequest)
@@ -88,3 +91,4 @@ qint64 SubmitTransactionResponse::getOfferIdFromResult(int position) {
     }
     return 0;
 }
+QSTELLAR_END_NS

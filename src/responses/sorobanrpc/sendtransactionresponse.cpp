@@ -2,6 +2,9 @@
 
 #include <QJsonArray>
 
+QSTELLAR_BEGIN_NS
+
+
 namespace {
 quint32 readU32(const QJsonObject& o, const QString& k) {
     QJsonValue v = o.value(k);
@@ -28,3 +31,4 @@ SendTransactionResponse SendTransactionResponse::fromJson(const QJsonObject& r)
     }
     return out;
 }
+QSTELLAR_END_NS

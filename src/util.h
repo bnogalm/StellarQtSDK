@@ -5,9 +5,16 @@
 #include <QList>
 #include <QRegularExpression>
 #include "xdr/stellartransaction.h"
+#include "qstellar_namespace.h"
 
+QSTELLAR_BEGIN_NS
+
+// Forward-declare Asset / AssetTypeCreditAlphaNum (now in qstellar::).
+// Util methods take/return these types; the actual headers are included
+// from util.cpp.
 class Asset;
 class AssetTypeCreditAlphaNum;
+
 QString checkNotNull(QString p, const char* error);
 QByteArray checkNotNull(QByteArray p, const char* error);
 
@@ -38,7 +45,9 @@ inline QVector<Type> checkNotNull(QVector<Type> &p, const char *error)
     if(!(EXP)) throw std::runtime_error(error)
 
 
-class KeyPair;
+// Forward-decl of qstellar::Transaction. We are already inside QSTELLAR_BEGIN_NS,
+// so a plain `class Transaction;` declares it in the right namespace. The
+// global alias is emitted by transaction.h's QSTELLAR_ALIAS(Transaction).
 class Transaction;
 
 
@@ -180,6 +189,16 @@ struct get_power_s<A, 0, T>
 
 qint64 get_power(quint32 a, quint32 b);
 
+QSTELLAR_END_NS
 
+QSTELLAR_ALIAS(Util)
+QSTELLAR_ALIAS(CheckHex)
+QSTELLAR_ALIAS(Integer)
+QSTELLAR_ALIAS(Boolean)
+#ifndef STELLAR_QT_LEGACY_GLOBAL_NS
+using ::qstellar::checkNotNull;
+using ::qstellar::get_power;
+using ::qstellar::get_power_s;     // template — usable as e.g. get_power_s<10,7,qint64>
+#endif
 
 #endif // UTIL_H

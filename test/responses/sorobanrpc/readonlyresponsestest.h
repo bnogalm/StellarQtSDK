@@ -81,6 +81,47 @@ private slots:
                  static_cast<int>(GetTransactionResponse::Status::NOT_FOUND));
     }
 
+    void testGetTransactionRichFields()
+    {
+        QByteArray json = "{"
+            "  \"status\": \"SUCCESS\","
+            "  \"txHash\": \"abc123\","
+            "  \"latestLedger\": 100,"
+            "  \"applicationOrder\": 1,"
+            "  \"feeBump\": true,"
+            "  \"envelopeXdr\": \"AAAA\","
+            "  \"resultXdr\": \"BBBB\","
+            "  \"resultMetaXdr\": \"CCCC\","
+            "  \"ledger\": 95,"
+            "  \"createdAt\": \"1700000000\","
+            "  \"diagnosticEventsXdr\": [ \"DGE1\", \"DGE2\" ],"
+            "  \"events\": {"
+            "    \"diagnosticEventsXdr\": [ \"EVDIAG1\" ],"
+            "    \"transactionEventsXdr\": [ \"TXEV1\", \"TXEV2\" ],"
+            "    \"contractEventsXdr\": [ [ \"OP0EV0\", \"OP0EV1\" ], [ \"OP1EV0\" ] ]"
+            "  }"
+            "}";
+        GetTransactionResponse r = GetTransactionResponse::fromJson(parseObj(json));
+
+        QCOMPARE(static_cast<int>(r.getStatus()),
+                 static_cast<int>(GetTransactionResponse::Status::SUCCESS));
+        QVERIFY(r.getFeeBump());
+        QCOMPARE(r.getDiagnosticEventsXdr().size(), 2);
+        QCOMPARE(r.getDiagnosticEventsXdr().at(0), QString("DGE1"));
+        QCOMPARE(r.getDiagnosticEventsXdr().at(1), QString("DGE2"));
+
+        GetTransactionResponse::Events ev = r.getEvents();
+        QCOMPARE(ev.diagnosticEventsXdr.size(), 1);
+        QCOMPARE(ev.diagnosticEventsXdr.at(0), QString("EVDIAG1"));
+        QCOMPARE(ev.transactionEventsXdr.size(), 2);
+        QCOMPARE(ev.transactionEventsXdr.at(1), QString("TXEV2"));
+        QCOMPARE(ev.contractEventsXdr.size(), 2);
+        QCOMPARE(ev.contractEventsXdr.at(0).size(), 2);
+        QCOMPARE(ev.contractEventsXdr.at(0).at(1), QString("OP0EV1"));
+        QCOMPARE(ev.contractEventsXdr.at(1).size(), 1);
+        QCOMPARE(ev.contractEventsXdr.at(1).at(0), QString("OP1EV0"));
+    }
+
     static QJsonObject parseObj(const QByteArray& json)
     {
         return QJsonDocument::fromJson(json).object();

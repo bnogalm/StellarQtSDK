@@ -1,5 +1,8 @@
 #include "accountinflationdestinationupdatedeffectresponse.h"
 
+QSTELLAR_BEGIN_NS
+
+
 AccountInflationDestinationUpdatedEffectResponse::AccountInflationDestinationUpdatedEffectResponse(QNetworkReply *reply)
     :EffectResponse(reply)
 {
@@ -10,3 +13,4 @@ AccountInflationDestinationUpdatedEffectResponse::~AccountInflationDestinationUp
 {
 
 }
+QSTELLAR_END_NS

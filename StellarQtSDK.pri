@@ -5,7 +5,7 @@ DEFINES += STELLAR_QT_REPLY_TIMEOUT=30000
 DEFINES *= ED25519_NO_SEED
 
 DEFINES += STELLAR_QT_SDK_CLIENT_NAME=\"\\\"qtcpp-stellar-sdk\\\"\"
-DEFINES += STELLAR_QT_SDK_CLIENT_VERSION=\"\\\"0.13.0\\\"\"
+DEFINES += STELLAR_QT_SDK_CLIENT_VERSION=\"\\\"1.0.0\\\"\"
 
 #DEFINES += STELLAR_QT_AUTOSET_BASE_FEE
 
@@ -13,7 +13,7 @@ DEFINES += STELLAR_QT_SDK_CLIENT_VERSION=\"\\\"0.13.0\\\"\"
 #DEFINES += STELLAR_QT_DEBUG_NETWORK_REQUESTS
 
 QT *= core network
-CONFIG *= c++11
+CONFIG *= c++17
 
 TEMPLATE = app
 
@@ -144,6 +144,7 @@ SOURCES += \
     $$PWD/src/responses/operations/settrustlineflagsoperationresponse.cpp \
     $$PWD/src/revokeaccountsponsorshipoperation.cpp \
     $$PWD/src/revokeclaimablebalancesponsorshipoperation.cpp \
+    $$PWD/src/revokeliquiditypoolsponsorshipoperation.cpp \
     $$PWD/src/revokedatasponsorshipoperation.cpp \
     $$PWD/src/revokeoffersponsorshipoperation.cpp \
     $$PWD/src/revokesignersponsorshipoperation.cpp \
@@ -203,6 +204,8 @@ SOURCES += \
     $$PWD/src/responses/operations/inflationoperationresponse.cpp \
     $$PWD/src/responses/operations/allowtrustoperationresponse.cpp \
     $$PWD/src/responses/operations/changetrustoperationresponse.cpp \
+    $$PWD/src/responses/operations/liquiditypooldepositoperationresponse.cpp \
+    $$PWD/src/responses/operations/liquiditypoolwithdrawoperationresponse.cpp \
     $$PWD/src/responses/operations/createpassiveofferoperationresponse.cpp \
     $$PWD/src/managedataoperation.cpp \
     $$PWD/src/responses/operations/managedataoperationresponse.cpp \
@@ -321,6 +324,7 @@ HEADERS += \
     $$PWD/src/responses/effects/liquiditypoolremovedeffectresponse.h \
     $$PWD/src/responses/effects/liquiditypoolrevokedeffectresponse.h \
     $$PWD/src/stellardeprecated.h \
+    $$PWD/src/qstellar_namespace.h \
     $$PWD/src/transactionbuilder.h \
     $$PWD/src/feebumptransactionbuilder.h \
     $$PWD/src/exception/sdkexception.h \
@@ -397,6 +401,7 @@ HEADERS += \
     $$PWD/src/responses/operations/settrustlineflagsoperationresponse.h \
     $$PWD/src/revokeaccountsponsorshipoperation.h \
     $$PWD/src/revokeclaimablebalancesponsorshipoperation.h \
+    $$PWD/src/revokeliquiditypoolsponsorshipoperation.h \
     $$PWD/src/revokedatasponsorshipoperation.h \
     $$PWD/src/revokeoffersponsorshipoperation.h \
     $$PWD/src/revokesignersponsorshipoperation.h \
@@ -470,6 +475,8 @@ HEADERS += \
     $$PWD/src/responses/operations/inflationoperationresponse.h \
     $$PWD/src/responses/operations/allowtrustoperationresponse.h \
     $$PWD/src/responses/operations/changetrustoperationresponse.h \
+    $$PWD/src/responses/operations/liquiditypooldepositoperationresponse.h \
+    $$PWD/src/responses/operations/liquiditypoolwithdrawoperationresponse.h \
     $$PWD/src/responses/operations/createpassiveofferoperationresponse.h \
     $$PWD/src/managedataoperation.h \
     $$PWD/src/responses/operations/managedataoperationresponse.h \

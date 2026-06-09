@@ -1,5 +1,8 @@
 #include "allowtrustoperation.h"
 
+QSTELLAR_BEGIN_NS
+
+
 
 
 AllowTrustOperation::AllowTrustOperation(KeyPair *trustor, QString assetCode, bool authorize, bool authorizeToMaintainLiabilities)
@@ -92,3 +95,4 @@ AllowTrustOperation *AllowTrustOperation::setSourceAccount(QString sourceAccount
     Operation::setSourceAccount(sourceAccount);
     return this;
 }
+QSTELLAR_END_NS

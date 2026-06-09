@@ -1,5 +1,8 @@
 #include "accountsponsorshipupdatedeffectresponse.h"
 
+QSTELLAR_BEGIN_NS
+
+
 
 
 AccountSponsorshipUpdatedEffectResponse::AccountSponsorshipUpdatedEffectResponse(QNetworkReply *reply):EffectResponse(reply)
@@ -36,3 +39,4 @@ void AccountSponsorshipUpdatedEffectResponse::setNewSponsor(QString new_sponsor)
     m_newSponsor = new_sponsor;
     emit newSponsorChanged();
 }
+QSTELLAR_END_NS

@@ -6,6 +6,8 @@
 #include "asset.h"
 #include "liquiditypool.h"
 
+QSTELLAR_BEGIN_NS
+
 ChangeTrustAsset* ChangeTrustAsset::wrap(Asset* asset)
 {
     if (!asset) {
@@ -134,3 +136,5 @@ bool LiquidityPoolShareChangeTrustAsset::equals(const ChangeTrustAsset* other) c
         && m_assetA->equals(o->m_assetA)
         && m_assetB->equals(o->m_assetB);
 }
+
+QSTELLAR_END_NS

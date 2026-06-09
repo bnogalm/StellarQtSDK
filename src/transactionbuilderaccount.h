@@ -3,8 +3,9 @@
 #include <QtGlobal>
 
 #include "keypair.h"
+#include "qstellar_namespace.h"
 
-
+QSTELLAR_BEGIN_NS
 
 /**
  * Specifies interface for Account object used in {@link org.stellar.sdk.Transaction.Builder}
@@ -40,4 +41,9 @@ inline TransactionBuilderAccount * checkNotNull(TransactionBuilderAccount *t, co
         throw std::runtime_error(error);
     return t;
 }
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(TransactionBuilderAccount)
+
 #endif // TRANSACTIONBUILDERACCOUNT_H

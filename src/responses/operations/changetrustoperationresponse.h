@@ -3,10 +3,12 @@
 
 #include <QObject>
 #include "operationresponse.h"
+#include "qstellar_namespace.h"
 
+
+QSTELLAR_BEGIN_NS
 
 class Asset;
-
 
 /**
  * Represents ChangeTrust operation response.
@@ -57,7 +59,14 @@ public slots:
     void setAssetCode(QString assetCode);
     void setAssetIssuer(QString assetIssuer);
 };
-Q_DECLARE_METATYPE(ChangeTrustOperationResponse*)
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(ChangeTrustOperationResponse)
+
+
+
+Q_DECLARE_METATYPE(qstellar::ChangeTrustOperationResponse*)
 #endif // CHANGETRUSTOPERATIONRESPONSE_H
 
 

@@ -2,11 +2,15 @@
 #define SETTRUSTLINEFLAGSOPERATION_H
 
 #include "operation.h"
+#include "qstellar_namespace.h"
+QSTELLAR_FWD(Asset)
 /**
  *
  * Represents a Set Trustline Flags operation.
  * @see <a href="https://www.stellar.org/developers/learn/concepts/list-of-operations.html" target="_blank">List of Operations</a>
  */
+QSTELLAR_BEGIN_NS
+
 class SetTrustlineFlagsOperation : public Operation
 {
     stellar::SetTrustLineFlagsOp m_op;
@@ -51,5 +55,9 @@ public:
          */
     SetTrustlineFlagsOperation* setSourceAccount(QString sourceAccount);
 };
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(SetTrustlineFlagsOperation)
 
 #endif // SETTRUSTLINEFLAGSOPERATION_H

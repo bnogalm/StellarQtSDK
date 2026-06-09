@@ -10,6 +10,7 @@
 
 #include "checkaccountrequiresmemo.h"
 
+QSTELLAR_BEGIN_NS
 
 QString Server::escapeUri(QString uri)
 {
@@ -237,3 +238,5 @@ void Server::processTransactionError()
         emit transactionError(response);//you have to delete the response
     }
 }
+
+QSTELLAR_END_NS

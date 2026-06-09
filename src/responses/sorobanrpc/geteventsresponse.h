@@ -6,6 +6,9 @@
 #include <QString>
 #include <QStringList>
 #include <QtGlobal>
+#include "qstellar_namespace.h"
+
+QSTELLAR_BEGIN_NS
 
 /** A single Soroban contract event. */
 struct EventInfo
@@ -34,5 +37,12 @@ public:
     quint32 getLatestLedger() const { return m_latestLedger; }
     QString getCursor() const { return m_cursor; }
 };
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(GetEventsResponse)
+
+
+
 
 #endif // GETEVENTSRESPONSE_H

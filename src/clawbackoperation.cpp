@@ -1,6 +1,9 @@
 #include "clawbackoperation.h"
 #include "assettypecreditalphanum.h"
 
+QSTELLAR_BEGIN_NS
+
+
 
 ClawbackOperation::ClawbackOperation(QString from, Asset *asset, QString amount):m_asset(nullptr)
 {
@@ -69,3 +72,4 @@ ClawbackOperation *ClawbackOperation::setSourceAccount(QString sourceAccount)
     Operation::setSourceAccount(sourceAccount);
     return this;
 }
+QSTELLAR_END_NS

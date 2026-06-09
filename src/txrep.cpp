@@ -19,6 +19,9 @@
 #include "assettypecreditalphanum12.h"
 #include "timebounds.h"
 
+QSTELLAR_BEGIN_NS
+
+
 namespace {
 
 void appendLine(QString& out, const QString& key, const QString& value)
@@ -234,3 +237,4 @@ Transaction* Txrep::fromTxrep(const QString& txrep, Network* network)
     delete account; // builder doesn't own it
     return tx;
 }
+QSTELLAR_END_NS

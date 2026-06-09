@@ -21,6 +21,9 @@
 #include "util.h"
 #include "contract/sorobancredentialssigner.h"
 
+QSTELLAR_BEGIN_NS
+
+
 AssembledTransaction::AssembledTransaction(Transaction* tx, SorobanServer* server, Network* network)
     : m_tx(tx), m_server(server), m_network(network)
 {
@@ -195,3 +198,4 @@ GetTransactionResponse AssembledTransaction::restoreFootprint(Account* sourceAcc
     }
     return m_server->pollTransaction(sendResp.getHash(), timeoutMs, intervalMs);
 }
+QSTELLAR_END_NS

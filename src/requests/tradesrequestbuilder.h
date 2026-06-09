@@ -3,7 +3,10 @@
 #include "requestbuilder.h"
 #include "../responses/traderesponse.h"
 #include "../responses/page.h"
-class Asset;
+#include "../qstellar_namespace.h"
+QSTELLAR_FWD(Asset)
+QSTELLAR_BEGIN_NS
+
 /**
  * Builds requests connected to trades.
  */
@@ -44,5 +47,9 @@ public:
 
     Page<TradeResponse>* execute();
 };
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(TradesRequestBuilder)
 
 #endif // TRADESREQUESTBUILDER_H

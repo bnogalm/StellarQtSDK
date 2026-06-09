@@ -57,6 +57,9 @@
 #include "effects/liquiditypoolremovedeffectresponse.h"
 #include "effects/liquiditypoolrevokedeffectresponse.h"
 
+QSTELLAR_BEGIN_NS
+
+
 
 EffectsPage::EffectsPage(QNetworkReply *reply)
     :Page<EffectResponse>(reply)
@@ -193,3 +196,4 @@ void EffectsPage::processRecords(const QJsonArray &records)
         }
     }
 }
+QSTELLAR_END_NS

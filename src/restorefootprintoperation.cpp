@@ -1,5 +1,8 @@
 #include "restorefootprintoperation.h"
 
+QSTELLAR_BEGIN_NS
+
+
 RestoreFootprintOperation::RestoreFootprintOperation(const stellar::RestoreFootprintOp&)
 {
 }
@@ -26,3 +29,4 @@ RestoreFootprintOperation* RestoreFootprintOperation::setSourceAccount(QString s
     Operation::setSourceAccount(sourceAccount);
     return this;
 }
+QSTELLAR_END_NS

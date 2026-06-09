@@ -1,6 +1,10 @@
 #ifndef SLIP10_H
 #define SLIP10_H
 #include <QVector>
+#include "qstellar_namespace.h"
+
+QSTELLAR_BEGIN_NS
+
 class SLIP10
 {
     SLIP10();
@@ -18,7 +22,8 @@ public:
     static QByteArray deriveEd25519PrivateKey(const QByteArray seed, const QVector<int> indexes = QVector<int>());
 };
 
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(SLIP10)
+
 #endif // SLIP10_H
-
-
-

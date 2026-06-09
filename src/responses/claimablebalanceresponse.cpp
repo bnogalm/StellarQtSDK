@@ -1,5 +1,8 @@
 #include "claimablebalanceresponse.h"
 
+QSTELLAR_BEGIN_NS
+
+
 
 ClaimableBalanceResponse::ClaimableBalanceResponse(QNetworkReply *reply):Response(reply),m_asset(nullptr)
 {
@@ -163,3 +166,4 @@ bool ClaimableBalanceResponseAttach::Links::operator ==(ClaimableBalanceResponse
 {
     return m_self==links.m_self;
 }
+QSTELLAR_END_NS

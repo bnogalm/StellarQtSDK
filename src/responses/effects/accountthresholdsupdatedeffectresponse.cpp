@@ -1,5 +1,8 @@
 #include "accountthresholdsupdatedeffectresponse.h"
 
+QSTELLAR_BEGIN_NS
+
+
 AccountThresholdsUpdatedEffectResponse::AccountThresholdsUpdatedEffectResponse(QNetworkReply * reply)
     :EffectResponse(reply)
     ,m_lowThreshold(0)
@@ -19,3 +22,4 @@ qint32 AccountThresholdsUpdatedEffectResponse::getMedThreshold() const{
 qint32 AccountThresholdsUpdatedEffectResponse::getHighThreshold() const{
     return m_highThreshold;
 }
+QSTELLAR_END_NS

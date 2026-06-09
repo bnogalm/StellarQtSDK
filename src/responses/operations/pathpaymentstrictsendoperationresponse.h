@@ -2,6 +2,9 @@
 #define PATHPAYMENTSTRICTSENDOPERATIONRESPONSE_H
 
 #include "pathpaymentbaseoperationresponse.h"
+#include "qstellar_namespace.h"
+
+QSTELLAR_BEGIN_NS
 
 /**
  * Represents PATH_PAYMENT_STRICT_SEND operation response.
@@ -21,5 +24,12 @@ public:
 
     QString getDestinationMin() const;
 };
-Q_DECLARE_METATYPE(PathPaymentStrictSendOperationResponse*)
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(PathPaymentStrictSendOperationResponse)
+
+
+
+Q_DECLARE_METATYPE(qstellar::PathPaymentStrictSendOperationResponse*)
 #endif // PATHPAYMENTSTRICTSENDOPERATIONRESPONSE_H

@@ -3,6 +3,9 @@
 #include "../asset.h"
 #include "../assettypecreditalphanum.h"
 #include "../util.h"
+
+QSTELLAR_BEGIN_NS
+
 AssetsRequestBuilder::AssetsRequestBuilder(Server *server):RequestBuilder(server, "assets")
 {
 
@@ -52,3 +55,4 @@ AssetsRequestBuilder &AssetsRequestBuilder::order(RequestBuilder::Order directio
     RequestBuilder::order(direction);
     return *this;
 }
+QSTELLAR_END_NS

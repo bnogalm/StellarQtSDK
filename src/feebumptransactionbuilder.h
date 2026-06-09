@@ -4,6 +4,9 @@
 #include <QtGlobal>
 #include <QString>
 #include "accountconverter.h"
+#include "qstellar_namespace.h"
+
+QSTELLAR_BEGIN_NS
 
 class Transaction;
 class FeeBumpTransaction;
@@ -40,5 +43,9 @@ public:
      */
     FeeBumpTransaction* build();
 };
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(FeeBumpTransactionBuilder)
 
 #endif // FEEBUMPTRANSACTIONBUILDER_H

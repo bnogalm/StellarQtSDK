@@ -4,6 +4,9 @@
 #include <QStringList>
 #include <stdexcept>
 
+QSTELLAR_BEGIN_NS
+
+
 Federation::Federation(){}
 
 FederationResponse *Federation::resolve(QString value) {
@@ -25,3 +28,4 @@ FederationResponse *Federation::resolve(QString value) {
         throw std::runtime_error("Malformed address");
     }
 }
+QSTELLAR_END_NS

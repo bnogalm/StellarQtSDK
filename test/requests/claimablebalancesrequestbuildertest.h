@@ -106,7 +106,7 @@ private slots:
           FakeServer* fakeServer= new FakeServer();
           fakeServer->addGet("/claimable_balances/00000000ae76f49e8513d0922b6bcbc8a3f5c4c0a5161871f27924e08724646acab56cd2",json);
 
-          Server* server = new Server("http://localhost:8080");
+          Server* server = new Server(fakeServer->baseUrl());
           QString id = "00000000ae76f49e8513d0922b6bcbc8a3f5c4c0a5161871f27924e08724646acab56cd2";
           ClaimableBalanceResponse* response = server->claimableBalances().claimableBalance(id);
           bool responseIsReady=false;

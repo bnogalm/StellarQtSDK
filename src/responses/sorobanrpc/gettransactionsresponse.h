@@ -7,6 +7,9 @@
 #include <QtGlobal>
 
 #include "gettransactionresponse.h"
+#include "qstellar_namespace.h"
+
+QSTELLAR_BEGIN_NS
 
 /** Soroban RPC `getTransactions` result. Each entry is the same shape as a
  *  single getTransaction result. */
@@ -27,5 +30,12 @@ public:
     QString getOldestLedgerCloseTime() const { return m_oldestLedgerCloseTime; }
     QString getCursor() const { return m_cursor; }
 };
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(GetTransactionsResponse)
+
+
+
 
 #endif // GETTRANSACTIONSRESPONSE_H

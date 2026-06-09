@@ -1,8 +1,11 @@
 #ifndef SIGNERUPDATEDEFFECTRESPONSE_H
 #define SIGNERUPDATEDEFFECTRESPONSE_H
 #include "signereffectresponse.h"
+#include "qstellar_namespace.h"
 
 
+
+QSTELLAR_BEGIN_NS
 
 /**
  * Represents signed_updated effect response.
@@ -17,5 +20,12 @@ public:
     SignerUpdatedEffectResponse(QNetworkReply *reply = nullptr);
     virtual ~SignerUpdatedEffectResponse();
 };
-Q_DECLARE_METATYPE(SignerUpdatedEffectResponse*)
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(SignerUpdatedEffectResponse)
+
+
+
+Q_DECLARE_METATYPE(qstellar::SignerUpdatedEffectResponse*)
 #endif // SIGNERUPDATEDEFFECTRESPONSE_H

@@ -5,6 +5,8 @@
 #include "timebounds.h"
 #include "ledgerbounds.h"
 
+QSTELLAR_BEGIN_NS
+
 TransactionPreconditions::TransactionPreconditions(const TransactionPreconditions& other)
 {
     *this = other;
@@ -184,3 +186,5 @@ TransactionPreconditions TransactionPreconditions::fromXdr(const stellar::Precon
     }
     return out;
 }
+
+QSTELLAR_END_NS

@@ -1,6 +1,9 @@
 #include "transactionresponse.h"
 #include "../keypair.h"
 #include "../memo.h"
+
+QSTELLAR_BEGIN_NS
+
 TransactionResponse::TransactionResponse(QNetworkReply *reply)
     :Response(reply)
     ,m_successful(QMetaType(QMetaType::Bool))// we have to indicate the type or it will not be filled, it will stay returning isNull as true if it is not initialized
@@ -157,3 +160,4 @@ void TransactionResponse::setFeeAccount(QString feeAccount)
 {
     m_feeAccount = feeAccount;
 }
+QSTELLAR_END_NS

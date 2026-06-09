@@ -2,6 +2,9 @@
 #include "external/cyoencode/src/CyoEncode.h"
 #include "external/cyoencode/src/CyoDecode.h"
 #include <QDebug>
+
+QSTELLAR_BEGIN_NS
+
 StrKey::StrKey()
 {
 
@@ -256,5 +259,7 @@ QByteArray StrKey::calculateChecksum(QByteArray bytes) {
     crc = qToLittleEndian(crc);
     return QByteArray((const char*)&crc, sizeof(quint16));
 }
+
+QSTELLAR_END_NS
 
 

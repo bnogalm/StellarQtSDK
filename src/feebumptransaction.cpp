@@ -1,5 +1,6 @@
 #include "feebumptransaction.h"
 
+QSTELLAR_BEGIN_NS
 
 FeeBumpTransaction::FeeBumpTransaction(AccountConverter accountConverter, QString feeAccount, qint64 fee, Transaction *innerTransaction):AbstractTransaction(accountConverter, innerTransaction ? innerTransaction->getNetwork(): nullptr)
 {
@@ -91,3 +92,5 @@ stellar::TransactionEnvelope FeeBumpTransaction::toEnvelopeXdr()
 
 // FeeBumpTransactionBuilder lives in feebumptransactionbuilder.cpp.
 // FeeBumpTransaction::Builder is now a deprecated alias (see header).
+
+QSTELLAR_END_NS

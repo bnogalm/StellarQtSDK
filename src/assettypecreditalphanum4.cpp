@@ -2,6 +2,8 @@
 #include "util.h"
 #include "keypair.h"
 
+QSTELLAR_BEGIN_NS
+
 AssetTypeCreditAlphaNum4::AssetTypeCreditAlphaNum4(QString code, KeyPair *issuer)
     :AssetTypeCreditAlphaNum(code,issuer){
     if (code.length() < 1 || code.length() > 4) {
@@ -28,3 +30,5 @@ stellar::Asset AssetTypeCreditAlphaNum4::toXdr() {
 
     return xdr;
 }
+
+QSTELLAR_END_NS

@@ -1,5 +1,8 @@
 #include "createclaimablebalanceoperationresponse.h"
 
+QSTELLAR_BEGIN_NS
+
+
 CreateClaimableBalanceOperationResponse::CreateClaimableBalanceOperationResponse(QNetworkReply* reply)
     :OperationResponse(reply),m_asset(nullptr)
 {
@@ -64,3 +67,4 @@ void CreateClaimableBalanceOperationResponse::setClaimants(QList<Claimant> claim
     m_claimants = claimants;
     emit claimantsChanged();
 }
+QSTELLAR_END_NS

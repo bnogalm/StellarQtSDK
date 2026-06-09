@@ -1,5 +1,8 @@
 #include "accountmergeoperation.h"
 
+QSTELLAR_BEGIN_NS
+
+
 
 
 AccountMergeOperation::AccountMergeOperation(QString destination)
@@ -39,3 +42,4 @@ AccountMergeOperation *AccountMergeOperation::setSourceAccount(QString sourceAcc
     Operation::setSourceAccount(sourceAccount);
     return this;
 }
+QSTELLAR_END_NS

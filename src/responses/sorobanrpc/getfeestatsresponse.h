@@ -4,6 +4,9 @@
 #include <QJsonObject>
 #include <QString>
 #include <QtGlobal>
+#include "qstellar_namespace.h"
+
+QSTELLAR_BEGIN_NS
 
 /**
  * Soroban RPC `getFeeStats` result.
@@ -37,5 +40,13 @@ public:
     const SorobanFeeDistribution& getInclusionFee() const { return m_inclusionFee; }
     quint32 getLatestLedger() const { return m_latestLedger; }
 };
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(SorobanFeeDistribution)
+QSTELLAR_ALIAS(GetFeeStatsResponse)
+
+
+
 
 #endif // GETFEESTATSRESPONSE_H

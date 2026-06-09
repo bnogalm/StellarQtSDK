@@ -1,14 +1,15 @@
 #ifndef CREATEPASSIVESELLOFFEROPERATION_H
 #define CREATEPASSIVESELLOFFEROPERATION_H
 #include "operation.h"
-
-
-class Asset;
+#include "qstellar_namespace.h"
+QSTELLAR_FWD(Asset)
 
 /**
  * Represents <a href="https://www.stellar.org/developers/learn/concepts/list-of-operations.html#create-passive-sell-offer" target="_blank">CreatePassiveSellOffer</a> operation.
  * @see <a href="https://www.stellar.org/developers/learn/concepts/list-of-operations.html" target="_blank">List of Operations</a>
  */
+QSTELLAR_BEGIN_NS
+
 class CreatePassiveSellOfferOperation : public Operation
 {
     Asset* m_selling;
@@ -60,5 +61,9 @@ public:
 };
 
 
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(CreatePassiveSellOfferOperation)
 
 #endif // CREATEPASSIVESELLOFFEROPERATION_H

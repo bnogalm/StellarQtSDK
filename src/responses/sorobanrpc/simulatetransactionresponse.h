@@ -6,6 +6,9 @@
 #include <QString>
 #include <QStringList>
 #include <QtGlobal>
+#include "qstellar_namespace.h"
+
+QSTELLAR_BEGIN_NS
 
 /** A single result from `simulateTransaction` (one per operation). */
 struct SimulateHostFunctionResult
@@ -64,5 +67,12 @@ public:
     /** True iff the simulation needs a RestoreFootprint applied first. */
     bool needsRestore() const { return m_restorePreamble.present; }
 };
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(SimulateTransactionResponse)
+
+
+
 
 #endif // SIMULATETRANSACTIONRESPONSE_H

@@ -3,6 +3,9 @@
 
 #include <QObject>
 #include "operationresponse.h"
+#include "qstellar_namespace.h"
+QSTELLAR_BEGIN_NS
+
 /**
  * Represents CreateAccount operation response.
  * @see <a href="https://www.stellar.org/developers/horizon/reference/resources/operation.html" target="_blank">Operation documentation</a>
@@ -35,7 +38,14 @@ public slots:
     void setAccount(QString account);
     void setFunder(QString funder);
 };
-Q_DECLARE_METATYPE(CreateAccountOperationResponse*)
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(CreateAccountOperationResponse)
+
+
+
+Q_DECLARE_METATYPE(qstellar::CreateAccountOperationResponse*)
 #endif // CREATEACCOUNTOPERATIONRESPONSE_H
 
 

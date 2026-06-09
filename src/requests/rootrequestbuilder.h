@@ -4,6 +4,9 @@
 #include "../responses/rootresponse.h"
 
 #include <QUrl>
+#include "../qstellar_namespace.h"
+QSTELLAR_BEGIN_NS
+
 
 
 /**
@@ -17,5 +20,9 @@ public:
     RootResponse* execute();
     QUrl buildUri();
 };
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(RootRequestBuilder)
 
 #endif // ROOTREQUESTBUILDER_H

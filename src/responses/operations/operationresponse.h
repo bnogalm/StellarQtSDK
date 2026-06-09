@@ -7,6 +7,11 @@
 #include "../../util.h"
 
 
+#include "../../keypair.h"
+#include "qstellar_namespace.h"
+
+QSTELLAR_BEGIN_NS
+
 namespace OperationResponseAttach
 {
   /**
@@ -60,7 +65,6 @@ namespace OperationResponseAttach
   };
 }
 
-class KeyPair;
 /**
  * Abstract class for operation responses.
  * @see <a href="https://www.stellar.org/developers/horizon/reference/resources/operation.html" target="_blank">Operation documentation</a>
@@ -135,7 +139,15 @@ public slots:
       void setSourceAccount(QString sourceAccount);
       void setTransactionSuccessful(QVariant transactionSuccessful);
 };
-Q_DECLARE_METATYPE(OperationResponseAttach::Links)
-Q_DECLARE_METATYPE(OperationResponse*)
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(OperationResponse)
+
+
+
+QSTELLAR_NS_ALIAS(OperationResponseAttach)
+Q_DECLARE_METATYPE(qstellar::OperationResponseAttach::Links)
+Q_DECLARE_METATYPE(qstellar::OperationResponse*)
 #endif // OPERATIONRESPONSE_H
 

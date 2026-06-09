@@ -2,12 +2,15 @@
 #define LIQUIDITYPOOLDEPOSITOPERATION_H
 
 #include "operation.h"
+#include "qstellar_namespace.h"
 #include "price.h"
 
 /**
  * CAP-38 — deposit into a liquidity pool.
  * Amounts are passed as decimal strings (same convention as PaymentOperation).
  */
+QSTELLAR_BEGIN_NS
+
 class LiquidityPoolDepositOperation : public Operation
 {
     stellar::LiquidityPoolDepositOp m_op;
@@ -34,5 +37,9 @@ public:
 
     LiquidityPoolDepositOperation* setSourceAccount(QString sourceAccount);
 };
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(LiquidityPoolDepositOperation)
 
 #endif // LIQUIDITYPOOLDEPOSITOPERATION_H

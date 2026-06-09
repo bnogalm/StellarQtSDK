@@ -1,5 +1,8 @@
 #include "ledgerresponse.h"
 
+QSTELLAR_BEGIN_NS
+
+
 LedgerResponse::LedgerResponse(QNetworkReply *reply)
     :Response(reply)
     ,m_sequence(0)
@@ -123,3 +126,4 @@ bool LedgerResponseAttach::Links::operator ==(LedgerResponseAttach::Links &links
             && (m_self==links.m_self)
             && (m_transactions==links.m_transactions);
 }
+QSTELLAR_END_NS

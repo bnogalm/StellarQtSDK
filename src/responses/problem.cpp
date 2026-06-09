@@ -6,6 +6,9 @@
 #include <QJsonArray>
 #include <QJsonParseError>
 
+QSTELLAR_BEGIN_NS
+
+
 namespace {
 
 QString readString(const QJsonObject& obj, const char* key)
@@ -83,3 +86,4 @@ Problem* Problem::tryParse(const QByteArray& json)
         return nullptr;
     }
 }
+QSTELLAR_END_NS

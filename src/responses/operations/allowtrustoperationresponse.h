@@ -3,9 +3,11 @@
 
 #include <QObject>
 #include "operationresponse.h"
+#include "qstellar_namespace.h"
 
-class Asset;
-/**
+QSTELLAR_BEGIN_NS
+
+class Asset;/**
  * @deprecated As of release 0.24.0, replaced by {@link SetTrustLineFlagsOperationResponse}
  *
  * Represents AllowTrust operation response.
@@ -53,5 +55,12 @@ public slots:
     void setAssetCode(QString assetCode);
     void setAssetIssuer(QString assetIssuer);
 };
-Q_DECLARE_METATYPE(AllowTrustOperationResponse*)
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(AllowTrustOperationResponse)
+
+
+
+Q_DECLARE_METATYPE(qstellar::AllowTrustOperationResponse*)
 #endif // ALLOWTRUSTOPERATIONRESPONSE_H

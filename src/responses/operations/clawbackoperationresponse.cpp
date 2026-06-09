@@ -2,6 +2,9 @@
 #include "keypair.h"
 #include "asset.h"
 
+QSTELLAR_BEGIN_NS
+
+
 ClawbackOperationResponse::ClawbackOperationResponse(QNetworkReply *reply):OperationResponse(reply), m_asset(nullptr)
 {
 
@@ -87,3 +90,4 @@ Asset *ClawbackOperationResponse::getAsset()
     }
     return m_asset;
 }
+QSTELLAR_END_NS

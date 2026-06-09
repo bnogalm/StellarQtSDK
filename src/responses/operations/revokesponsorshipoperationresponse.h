@@ -3,6 +3,9 @@
 
 #include "operationresponse.h"
 #include <QObject>
+#include "qstellar_namespace.h"
+QSTELLAR_BEGIN_NS
+
 /**
  * Represents RevokeSponsorship operation response.
  * @see org.stellar.sdk.requests.OperationsRequestBuilder
@@ -66,5 +69,12 @@ signals:
     void signerAccountIDChanged();
     void signerKeyChanged();
 };
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(RevokeSponsorshipOperationResponse)
+
+
+
 
 #endif // REVOKESPONSORSHIPOPERATIONRESPONSE_H

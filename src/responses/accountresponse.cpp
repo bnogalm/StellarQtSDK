@@ -2,6 +2,9 @@
 #include "../keypair.h"
 #include "../util.h"
 #include <QCoreApplication>
+
+QSTELLAR_BEGIN_NS
+
 static void registerTypes()
 {
     qRegisterMetaType<AccountResponseAttach::Balance>();
@@ -424,3 +427,4 @@ AccountResponseAttach::Data ResponseConverters::Account::convertData(const QVari
 {
     return AccountResponseAttach::Data(source);
 }
+QSTELLAR_END_NS

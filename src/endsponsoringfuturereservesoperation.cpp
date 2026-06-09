@@ -1,5 +1,8 @@
 #include "endsponsoringfuturereservesoperation.h"
 
+QSTELLAR_BEGIN_NS
+
+
 EndSponsoringFutureReservesOperation::EndSponsoringFutureReservesOperation()
 {
 
@@ -26,3 +29,4 @@ EndSponsoringFutureReservesOperation *EndSponsoringFutureReservesOperation::buil
 {
     return new EndSponsoringFutureReservesOperation();
 }
+QSTELLAR_END_NS

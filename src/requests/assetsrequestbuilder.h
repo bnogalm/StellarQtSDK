@@ -5,8 +5,10 @@
 #include "../responses/effectspage.h"
 #include "../responses/page.h"
 #include "../responses/assetresponse.h"
+#include "../qstellar_namespace.h"
+QSTELLAR_FWD(Asset)
+QSTELLAR_BEGIN_NS
 
-class Asset;
 
 /**
  * Builds requests connected to assets.
@@ -31,6 +33,8 @@ public:
     AssetsRequestBuilder& order(RequestBuilder::Order direction);
 };
 
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(AssetsRequestBuilder)
+
 #endif // ASSETSREQUESTBUILDER_H
-
-

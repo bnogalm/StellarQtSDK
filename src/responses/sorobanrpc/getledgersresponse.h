@@ -5,6 +5,9 @@
 #include <QList>
 #include <QString>
 #include <QtGlobal>
+#include "qstellar_namespace.h"
+
+QSTELLAR_BEGIN_NS
 
 /** Soroban RPC `getLedgers` result. */
 struct LedgerInfo
@@ -33,5 +36,12 @@ public:
     QString getOldestLedgerCloseTime() const { return m_oldestLedgerCloseTime; }
     QString getCursor() const { return m_cursor; }
 };
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(GetLedgersResponse)
+
+
+
 
 #endif // GETLEDGERSRESPONSE_H

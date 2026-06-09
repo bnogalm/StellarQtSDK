@@ -3,6 +3,9 @@
 
 #include "effectresponse.h"
 #include <QObject>
+#include "qstellar_namespace.h"
+
+QSTELLAR_BEGIN_NS
 
 class SequenceBumpedEffectResponse : public EffectResponse
 {
@@ -18,5 +21,12 @@ public slots:
 signals:
     void newSeqChanged();
 };
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(SequenceBumpedEffectResponse)
+
+
+
 
 #endif // SEQUENCEBUMPEDEFFECTRESPONSE_H

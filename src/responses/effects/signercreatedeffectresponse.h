@@ -2,6 +2,9 @@
 #define SIGNERCREATEDEFFECTRESPONSE_H
 
 #include "signereffectresponse.h"
+#include "qstellar_namespace.h"
+
+QSTELLAR_BEGIN_NS
 
 /**
  * Represents signer_created effect response.
@@ -16,5 +19,12 @@ public:
     SignerCreatedEffectResponse(QNetworkReply *reply  = nullptr);
     virtual ~SignerCreatedEffectResponse();
 };
-Q_DECLARE_METATYPE(SignerCreatedEffectResponse*)
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(SignerCreatedEffectResponse)
+
+
+
+Q_DECLARE_METATYPE(qstellar::SignerCreatedEffectResponse*)
 #endif // SIGNERCREATEDEFFECTRESPONSE_H

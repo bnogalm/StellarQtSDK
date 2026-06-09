@@ -2,6 +2,9 @@
 #define BUMPSEQUENCEOPERATIONRESPONSE_H
 #include <QObject>
 #include "operationresponse.h"
+#include "qstellar_namespace.h"
+QSTELLAR_BEGIN_NS
+
 /**
  * Represents BumpSequence operation response.
  * @see <a href="https://www.stellar.org/developers/horizon/reference/resources/operation.html" target="_blank">Operation documentation</a>
@@ -21,5 +24,12 @@ public:
 public slots:
     void setBumpTo(QString bump_to);
 };
-Q_DECLARE_METATYPE(BumpSequenceOperationResponse*)
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(BumpSequenceOperationResponse)
+
+
+
+Q_DECLARE_METATYPE(qstellar::BumpSequenceOperationResponse*)
 #endif // BUMPSEQUENCEOPERATIONRESPONSE_H

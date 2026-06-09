@@ -2,6 +2,9 @@
 
 #include <QJsonArray>
 
+QSTELLAR_BEGIN_NS
+
+
 namespace {
 quint32 readU32(const QJsonObject& o, const QString& k) {
     QJsonValue v = o.value(k);
@@ -30,3 +33,4 @@ GetLedgersResponse GetLedgersResponse::fromJson(const QJsonObject& r)
     out.m_cursor                = r.value("cursor").toString();
     return out;
 }
+QSTELLAR_END_NS

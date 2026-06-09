@@ -4,6 +4,9 @@
 #include <QObject>
 #include "response.h"
 #include "../price.h"
+#include "qstellar_namespace.h"
+
+QSTELLAR_BEGIN_NS
 
 namespace OrderBookResponseAttach
 {
@@ -27,8 +30,7 @@ public:
     bool operator ==(const Row& row) const;
 };
 }
-class Asset;
-/**
+class Asset;/**
  * Represents order book response.
  * @see <a href="https://www.stellar.org/developers/horizon/reference/resources/orderbook.html" target="_blank">Order book documentation</a>
  * @see org.stellar.sdk.requests.OrderBookRequestBuilder
@@ -63,7 +65,15 @@ public slots:
     void setBase(QVariantMap base);
     void setCounter(QVariantMap counter);
 };
-Q_DECLARE_METATYPE(OrderBookResponseAttach::Row)
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(OrderBookResponse)
+QSTELLAR_NS_ALIAS(OrderBookResponseAttach)
+
+
+
+Q_DECLARE_METATYPE(qstellar::OrderBookResponseAttach::Row)
 
 
 #endif // ORDERBOOKRESPONSE_H

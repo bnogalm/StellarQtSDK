@@ -4,8 +4,11 @@
 #include "../responses/pathresponse.h"
 #include "../responses/page.h"
 
-class KeyPair;
-class Asset;
+#include "../keypair.h"
+#include "../qstellar_namespace.h"
+QSTELLAR_FWD(Asset)
+QSTELLAR_BEGIN_NS
+
 /**
  * Builds requests connected to paths.
  */
@@ -21,5 +24,9 @@ public:
     Page<PathResponse> *execute(QUrl uri);
     Page<PathResponse> *execute();
 };
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(StrictSendPathsRequestBuilder)
 
 #endif // STRICTSENDPATHSREQUESTBUILDER_H

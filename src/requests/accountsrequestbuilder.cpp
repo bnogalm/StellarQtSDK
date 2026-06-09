@@ -2,6 +2,9 @@
 #include "../keypair.h"
 #include "../server.h"
 
+QSTELLAR_BEGIN_NS
+
+
 AccountsRequestBuilder::AccountsRequestBuilder(Server *server):RequestBuilder(server, "accounts") {
 
 }
@@ -103,3 +106,4 @@ Page<AccountResponse>* AccountsRequestBuilder::execute(QUrl uri) {
 Page<AccountResponse>* AccountsRequestBuilder::execute() {
     return server()->get<Page<AccountResponse> >(this);
 }
+QSTELLAR_END_NS

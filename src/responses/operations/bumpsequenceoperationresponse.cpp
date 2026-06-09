@@ -1,5 +1,8 @@
 #include "bumpsequenceoperationresponse.h"
 
+QSTELLAR_BEGIN_NS
+
+
 BumpSequenceOperationResponse::BumpSequenceOperationResponse(QNetworkReply *reply)
     :OperationResponse(reply),m_bumpTo(0)
 {
@@ -22,3 +25,4 @@ void BumpSequenceOperationResponse::setBumpTo(QString bump_to)
 {
     m_bumpTo=bump_to.toLongLong();
 }
+QSTELLAR_END_NS

@@ -16,6 +16,9 @@
 #include <QTimerEvent>
 #include <stdexcept>
 
+QSTELLAR_BEGIN_NS
+
+
 #define RECONNECT_DELAY 1000
 
 Response::Response(QNetworkReply *reply)    
@@ -479,3 +482,4 @@ void Response::processResponse()
 
     emit ready();
 }
+QSTELLAR_END_NS

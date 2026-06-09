@@ -3,7 +3,10 @@
 #include "requestbuilder.h"
 #include "../responses/effectspage.h"
 
-class KeyPair;
+#include "../keypair.h"
+#include "../qstellar_namespace.h"
+QSTELLAR_BEGIN_NS
+
 /**
  * Builds requests connected to effects.
  */
@@ -71,5 +74,9 @@ public:
 
     EffectsRequestBuilder& order(RequestBuilder::Order direction);
 };
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(EffectsRequestBuilder)
 
 #endif // EFFECTSREQUESTBUILDER_H

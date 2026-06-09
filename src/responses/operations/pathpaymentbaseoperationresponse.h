@@ -2,9 +2,11 @@
 #define PATHPAYMENTBASEOPERATIONRESPONSE_H
 
 #include "operationresponse.h"
+#include "qstellar_namespace.h"
 
-class Asset;
-/**
+QSTELLAR_BEGIN_NS
+
+class Asset;/**
  * Represents PathPayment operation response.
  * @see <a href="https://www.stellar.org/developers/horizon/reference/resources/operation.html" target="_blank">Operation documentation</a>
  * @see org.stellar.sdk.requests.OperationsRequestBuilder
@@ -82,6 +84,13 @@ public slots:
     void setSourceAssetIssuer(QString sourceAssetIssuer);
     void setPath(QVariantList path);
 };
-Q_DECLARE_METATYPE(PathPaymentBaseOperationResponse*)
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(PathPaymentBaseOperationResponse)
+
+
+
+Q_DECLARE_METATYPE(qstellar::PathPaymentBaseOperationResponse*)
 
 #endif // PATHPAYMENTBASEOPERATIONRESPONSE_H

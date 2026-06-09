@@ -201,7 +201,7 @@ private slots:
          FakeServer* fakeServer = new FakeServer();
 
          fakeServer->addPost("/transactions",successTransactionResponse);
-         m_server = new Server("http://localhost:8080");
+         m_server = new Server(fakeServer->baseUrl());
 
          KeyPair* source = KeyPair::fromSecretSeed(QString("SDQXFKA32UVQHUTLYJ42N56ZUEM5PNVVI4XE7EA5QFMLA2DHDCQX3GPY"));
          Account* account = new Account(source, 1L);
@@ -243,7 +243,7 @@ private slots:
          FakeServer* fakeServer = new FakeServer();
 
          fakeServer->addPost("/transactions",successTransactionResponse);
-         m_server = new Server("http://localhost:8080");
+         m_server = new Server(fakeServer->baseUrl());
 
          KeyPair* source = KeyPair::fromSecretSeed(QString("SDQXFKA32UVQHUTLYJ42N56ZUEM5PNVVI4XE7EA5QFMLA2DHDCQX3GPY"));
          Account* account = new Account(source, 1L);
@@ -294,7 +294,7 @@ private slots:
          FakeServer* fakeServer = new FakeServer();
 
          fakeServer->addPost("/transactions",successTransactionResponse);
-         m_server = new Server("http://localhost:8080");
+         m_server = new Server(fakeServer->baseUrl());
 
          KeyPair* source = KeyPair::fromSecretSeed(QString("SDQXFKA32UVQHUTLYJ42N56ZUEM5PNVVI4XE7EA5QFMLA2DHDCQX3GPY"));
          Account* account = new Account(source, 1L);
@@ -333,7 +333,7 @@ private slots:
          FakeServer* fakeServer = new FakeServer();
 
          fakeServer->addPost("/transactions",successTransactionResponse);
-         m_server = new Server("http://localhost:8080");
+         m_server = new Server(fakeServer->baseUrl());
 
          KeyPair* source = KeyPair::fromSecretSeed(QString("SDQXFKA32UVQHUTLYJ42N56ZUEM5PNVVI4XE7EA5QFMLA2DHDCQX3GPY"));
          Account* account = new Account(source, 1L);
@@ -373,7 +373,7 @@ private slots:
          FakeServer* fakeServer = new FakeServer();
 
          fakeServer->addPost("/transactions",successTransactionResponse);
-         m_server = new Server("http://localhost:8080");
+         m_server = new Server(fakeServer->baseUrl());
 
          KeyPair* source = KeyPair::fromSecretSeed(QString("SDQXFKA32UVQHUTLYJ42N56ZUEM5PNVVI4XE7EA5QFMLA2DHDCQX3GPY"));
          Account* account = new Account(source, 1L);
@@ -414,7 +414,7 @@ private slots:
          FakeServer* fakeServer = new FakeServer();
 
          fakeServer->addPost("/transactions",successTransactionResponse);
-         m_server = new Server("http://localhost:8080");
+         m_server = new Server(fakeServer->baseUrl());
 
          KeyPair* source = KeyPair::fromSecretSeed(QString("SDQXFKA32UVQHUTLYJ42N56ZUEM5PNVVI4XE7EA5QFMLA2DHDCQX3GPY"));
          Account* account = new Account(source, 1L);
@@ -454,7 +454,7 @@ private slots:
          FakeServer* fakeServer = new FakeServer();
 
          fakeServer->addPost("/transactions",successTransactionResponse);
-         m_server = new Server("http://localhost:8080");
+         m_server = new Server(fakeServer->baseUrl());
 
          KeyPair* source = KeyPair::fromSecretSeed(QString("SDQXFKA32UVQHUTLYJ42N56ZUEM5PNVVI4XE7EA5QFMLA2DHDCQX3GPY"));
          Account* account = new Account(source, 1L);
@@ -494,7 +494,7 @@ private slots:
          FakeServer* fakeServer = new FakeServer();
 
          fakeServer->addPost("/transactions",successTransactionResponse);
-         m_server = new Server("http://localhost:8080");
+         m_server = new Server(fakeServer->baseUrl());
 
          KeyPair* source = KeyPair::fromSecretSeed(QString("SDQXFKA32UVQHUTLYJ42N56ZUEM5PNVVI4XE7EA5QFMLA2DHDCQX3GPY"));
          Account* account = new Account(source, 1L);
@@ -535,7 +535,7 @@ private slots:
          FakeServer* fakeServer = new FakeServer();
 
          fakeServer->addPost("/transactions",successTransactionResponse);
-         m_server = new Server("http://localhost:8080");
+         m_server = new Server(fakeServer->baseUrl());
 
          KeyPair* source = KeyPair::fromSecretSeed(QString("SDQXFKA32UVQHUTLYJ42N56ZUEM5PNVVI4XE7EA5QFMLA2DHDCQX3GPY"));
          Account* account = new Account(source, 1L);
@@ -578,7 +578,7 @@ private slots:
 
          fakeServer->addPost("/transactions",successTransactionResponse);
          fakeServer->addGet("/accounts/"+DESTINATION_ACCOUNT_NO_FOUND,resourceMissingResponse,"404 Not Found");
-         m_server = new Server("http://localhost:8080");
+         m_server = new Server(fakeServer->baseUrl());
 
          KeyPair* source = KeyPair::fromSecretSeed(QString("SDQXFKA32UVQHUTLYJ42N56ZUEM5PNVVI4XE7EA5QFMLA2DHDCQX3GPY"));
          Account* account = new Account(source, 1L);
@@ -614,7 +614,7 @@ private slots:
 
          fakeServer->addPost("/transactions",successTransactionResponse);
          fakeServer->addGet("/accounts/"+DESTINATION_ACCOUNT_NO_FOUND,resourceMissingResponse,"404 Not Found");
-         m_server = new Server("http://localhost:8080");
+         m_server = new Server(fakeServer->baseUrl());
 
          KeyPair* source = KeyPair::fromSecretSeed(QString("SDQXFKA32UVQHUTLYJ42N56ZUEM5PNVVI4XE7EA5QFMLA2DHDCQX3GPY"));
          Account* account = new Account(source, 1L);
@@ -654,7 +654,7 @@ private slots:
          fakeServer->addGet("/accounts/"+DESTINATION_ACCOUNT_MEMO_REQUIRED_C,memoRequiredResponse);
          fakeServer->addGet("/accounts/"+DESTINATION_ACCOUNT_MEMO_REQUIRED_D,memoRequiredResponse);
 
-         m_server = new Server("http://localhost:8080");
+         m_server = new Server(fakeServer->baseUrl());
 
          KeyPair* source = KeyPair::fromSecretSeed(QString("SDQXFKA32UVQHUTLYJ42N56ZUEM5PNVVI4XE7EA5QFMLA2DHDCQX3GPY"));
          Account* account = new Account(source, 1L);

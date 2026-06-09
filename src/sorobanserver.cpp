@@ -22,6 +22,8 @@
 #include "xdr/sorobanops.h"
 #include "xdr/sorobantxdata.h"
 
+QSTELLAR_BEGIN_NS
+
 SorobanServer::SorobanServer(const QUrl& endpoint, QObject* parent)
     : QObject(parent), m_endpoint(endpoint), m_http(new QNetworkAccessManager(this))
 {
@@ -371,3 +373,5 @@ GetTransactionResponse SorobanServer::pollTransaction(const QString& hash, int t
         wait.exec();
     }
 }
+
+QSTELLAR_END_NS

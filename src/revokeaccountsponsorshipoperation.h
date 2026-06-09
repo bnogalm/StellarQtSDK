@@ -2,6 +2,9 @@
 #define REVOKEACCOUNTSPONSORSHIPOPERATION_H
 
 #include "operation.h"
+#include "qstellar_namespace.h"
+
+QSTELLAR_BEGIN_NS
 
 class RevokeAccountSponsorshipOperation : public Operation
 {
@@ -25,5 +28,9 @@ public:
          */
     RevokeAccountSponsorshipOperation* setSourceAccount(QString sourceAccount);
 };
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(RevokeAccountSponsorshipOperation)
 
 #endif // REVOKEACCOUNTSPONSORSHIPOPERATION_H

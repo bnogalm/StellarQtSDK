@@ -1,5 +1,8 @@
 #include "claimablebalancesrequestbuilder.h"
 #include "../server.h"
+
+QSTELLAR_BEGIN_NS
+
 ClaimableBalancesRequestBuilder::ClaimableBalancesRequestBuilder(Server *server)
 :RequestBuilder(server, "claimable_balances")
 {
@@ -54,3 +57,4 @@ ClaimableBalancesRequestBuilder &ClaimableBalancesRequestBuilder::order(RequestB
     RequestBuilder::order(direction);
     return *this;
 }
+QSTELLAR_END_NS

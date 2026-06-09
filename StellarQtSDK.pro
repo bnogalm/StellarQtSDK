@@ -3,7 +3,7 @@
 QT += core
 QT -= gui
 
-CONFIG += c++11
+CONFIG += c++17
 
 TARGET = StellarQtSDK
 CONFIG += console

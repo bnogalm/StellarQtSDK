@@ -1,5 +1,8 @@
 #include "tradeaggregationresponse.h"
 
+QSTELLAR_BEGIN_NS
+
+
 TradeAggregationResponse::TradeAggregationResponse(QNetworkReply* reply):Response(reply),m_timestamp(0),m_tradeCount(0)
 {
 
@@ -49,3 +52,4 @@ QString TradeAggregationResponse::getOpen() const{
 QString TradeAggregationResponse::getClose() const{
     return m_close;
 }
+QSTELLAR_END_NS

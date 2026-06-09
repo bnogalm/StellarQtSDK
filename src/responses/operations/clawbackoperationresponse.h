@@ -2,10 +2,12 @@
 #define CLAWBACKOPERATIONRESPONSE_H
 
 #include "operationresponse.h"
+#include "qstellar_namespace.h"
 
+
+QSTELLAR_BEGIN_NS
 
 class Asset;
-
 /**
  * Represents a Clawback operation response.
  *
@@ -60,5 +62,12 @@ signals:
     void amountChanged();
     void fromChanged();
 };
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(ClawbackOperationResponse)
+
+
+
 
 #endif // CLAWBACKOPERATIONRESPONSE_H

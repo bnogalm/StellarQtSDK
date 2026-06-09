@@ -1,6 +1,9 @@
 #include "managedataoperation.h"
 #include "util.h"
 
+QSTELLAR_BEGIN_NS
+
+
 ManageDataOperation::ManageDataOperation(QString name, QByteArray value) {
     checkNotNull(name, "name cannot be null");
     QByteArray utf8 = name.toUtf8();
@@ -66,3 +69,4 @@ ManageDataOperation *ManageDataOperation::setSourceAccount(QString sourceAccount
     return this;
 }
 
+QSTELLAR_END_NS

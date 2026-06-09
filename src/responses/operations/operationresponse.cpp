@@ -1,6 +1,9 @@
 #include "operationresponse.h"
 #include "../../keypair.h"
 
+QSTELLAR_BEGIN_NS
+
+
 OperationResponse::OperationResponse(QNetworkReply* reply)
     : Response(reply)
   ,m_id(0)
@@ -80,3 +83,4 @@ void OperationResponse::setTransactionSuccessful(QVariant transactionSuccessful)
     }
 }
 
+QSTELLAR_END_NS

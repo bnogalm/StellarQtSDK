@@ -7,6 +7,9 @@
 #include "strkey.h"
 #include "memo.h"
 
+QSTELLAR_BEGIN_NS
+
+
 
 #define NONCE_SIZE 48
 
@@ -435,7 +438,7 @@ QString Sep10Challenge::ChallengeTransaction::getMatchedHomeDomain() const
 
 int Sep10Challenge::ChallengeTransaction::hashCode() const
 {
-    return static_cast<int>(qHash(m_transaction->hash()) ^ qHash(m_clientAccountId) ^ qHash(m_matchedHomeDomain));
+    return static_cast<int>(::qHash(m_transaction->hash()) ^ ::qHash(m_clientAccountId) ^ ::qHash(m_matchedHomeDomain));
 }
 
 bool Sep10Challenge::ChallengeTransaction::equals(const Sep10Challenge::ChallengeTransaction *other) const
@@ -457,7 +460,7 @@ int Sep10Challenge::Signer::getWeight() const {
 }
 
 int Sep10Challenge::Signer::hashCode() const {
-    return qHash(m_key) ^ qHash(m_weight);
+    return ::qHash(m_key) ^ ::qHash(m_weight);
 }
 
 bool Sep10Challenge::Signer::equals(const Sep10Challenge::Signer *other) const {
@@ -468,3 +471,4 @@ bool Sep10Challenge::Signer::operator==(const Sep10Challenge::Signer &other) con
 {
     return m_key==other.m_key && m_weight == other.m_weight;
 }
+QSTELLAR_END_NS

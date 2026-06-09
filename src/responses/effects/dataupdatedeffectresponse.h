@@ -2,6 +2,9 @@
 #define DATAUPDATEDEFFECTRESPONSE_H
 
 #include "effectresponse.h"
+#include "qstellar_namespace.h"
+QSTELLAR_BEGIN_NS
+
 /**
 * Represents data_updatedeffect response.
 * @see <a href="https://www.stellar.org/developers/horizon/reference/resources/effect.html" target="_blank">Effect documentation</a>
@@ -18,5 +21,12 @@ signals:
 
 public slots:
 };
-Q_DECLARE_METATYPE(DataUpdatedEffectResponse*)
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(DataUpdatedEffectResponse)
+
+
+
+Q_DECLARE_METATYPE(qstellar::DataUpdatedEffectResponse*)
 #endif // DATAUPDATEDEFFECTRESPONSE_H

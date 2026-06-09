@@ -4,6 +4,10 @@
 #include <QObject>
 #include "../response.h"
 #include "../link.h"
+#include "../../keypair.h"
+#include "qstellar_namespace.h"
+
+QSTELLAR_BEGIN_NS
 
 namespace EffectResponseAttach
 {
@@ -37,7 +41,6 @@ public:
 }
 
 
-class KeyPair;
 /**
  * Abstract class for effect responses.
  * @see <a href="https://www.stellar.org/developers/horizon/reference/resources/effect.html" target="_blank">Effect documentation</a>
@@ -118,6 +121,14 @@ public:
 public slots:
     void setAccount(QString account);
 };
-Q_DECLARE_METATYPE(EffectResponseAttach::Links)
-Q_DECLARE_METATYPE(EffectResponse*)
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(EffectResponse)
+
+
+
+QSTELLAR_NS_ALIAS(EffectResponseAttach)
+Q_DECLARE_METATYPE(qstellar::EffectResponseAttach::Links)
+Q_DECLARE_METATYPE(qstellar::EffectResponse*)
 #endif // EFFECTRESPONSE_H

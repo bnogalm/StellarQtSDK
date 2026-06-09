@@ -1,5 +1,8 @@
 #include "accountsponsorshipremovedeffectresponse.h"
 
+QSTELLAR_BEGIN_NS
+
+
 AccountSponsorshipRemovedEffectResponse::AccountSponsorshipRemovedEffectResponse(QNetworkReply* reply):EffectResponse(reply)
 {
 
@@ -20,3 +23,4 @@ void AccountSponsorshipRemovedEffectResponse::setFormerSponsor(QString former_sp
     m_formerSponsor = former_sponsor;
     emit formerSponsorChanged();
 }
+QSTELLAR_END_NS

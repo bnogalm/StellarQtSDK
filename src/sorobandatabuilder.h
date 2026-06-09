@@ -5,6 +5,9 @@
 #include <QtGlobal>
 
 #include "xdr/sorobantxdata.h"
+#include "qstellar_namespace.h"
+QSTELLAR_BEGIN_NS
+
 
 /**
  * CAP-46 — fluent composer for `stellar::SorobanTransactionData`.
@@ -52,5 +55,9 @@ public:
     /** Convenience XDR serializer for tests / inspection. */
     QByteArray toXdr() const;
 };
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(SorobanDataBuilder)
 
 #endif // SOROBANDATABUILDER_H

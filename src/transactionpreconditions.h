@@ -6,9 +6,11 @@
 
 #include "xdr/stellartransaction.h"
 #include "signerkey.h"
+#include "timebounds.h"
+#include "ledgerbounds.h"
+#include "qstellar_namespace.h"
 
-class TimeBounds;
-class LedgerBounds;
+QSTELLAR_BEGIN_NS
 
 /**
  * CAP-21 — bundles all the optional preconditions a transaction can carry.
@@ -63,5 +65,9 @@ public:
     stellar::Preconditions toXdr() const;
     static TransactionPreconditions fromXdr(const stellar::Preconditions& xdr);
 };
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(TransactionPreconditions)
 
 #endif // TRANSACTIONPRECONDITIONS_H

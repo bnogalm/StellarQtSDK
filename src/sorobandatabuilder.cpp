@@ -2,6 +2,9 @@
 
 #include <QDataStream>
 
+QSTELLAR_BEGIN_NS
+
+
 SorobanDataBuilder& SorobanDataBuilder::setReadOnly(const QList<stellar::SorobanLedgerKey>& keys)
 {
     m_data.resources.footprint.readOnly = keys;
@@ -37,3 +40,4 @@ QByteArray SorobanDataBuilder::toXdr() const
     s << m_data;
     return bytes;
 }
+QSTELLAR_END_NS

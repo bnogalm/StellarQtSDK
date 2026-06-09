@@ -4,6 +4,9 @@
 #include <QObject>
 #include <QString>
 #include <QMetaType>
+#include "qstellar_namespace.h"
+
+QSTELLAR_BEGIN_NS
 
 /**
  * Asset / amount pair used in Horizon responses (trades, LP effects, ...).
@@ -28,6 +31,13 @@ public:
     }
     bool operator!=(const AssetAmount& other) const { return !(*this == other); }
 };
-Q_DECLARE_METATYPE(AssetAmount)
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(AssetAmount)
+
+
+
+Q_DECLARE_METATYPE(qstellar::AssetAmount)
 
 #endif // ASSETAMOUNT_H

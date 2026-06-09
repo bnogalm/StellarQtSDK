@@ -1,5 +1,6 @@
 #include "accountconverter.h"
 
+QSTELLAR_BEGIN_NS
 
 AccountConverter::AccountConverter(bool enabled) : m_enableMuxed(enabled) {
 }
@@ -59,3 +60,5 @@ QString AccountConverter::filter(QString account)
     }
     return StrKey::encodeStellarAccountId(StrKey::muxedAccountToAccountId(muxed));
 }
+
+QSTELLAR_END_NS

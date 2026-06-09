@@ -1,5 +1,8 @@
 #include "bumpsequenceoperation.h"
 
+QSTELLAR_BEGIN_NS
+
+
 BumpSequenceOperation::BumpSequenceOperation(qint64 bumpTo)
 {
     m_op.bumpTo=bumpTo;
@@ -43,3 +46,4 @@ BumpSequenceOperation *BumpSequenceOperation::setSourceAccount(QString sourceAcc
     Operation::setSourceAccount(sourceAccount);
     return this;
 }
+QSTELLAR_END_NS

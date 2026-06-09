@@ -2,6 +2,8 @@
 #include "util.h"
 #include "accountconverter.h"
 
+QSTELLAR_BEGIN_NS
+
 Account::Account(KeyPair *keypair, qint64 sequenceNumber) {
     m_keyPair = checkNotNull(keypair, "keypair cannot be null");
     m_accountId = AccountConverter().encode(keypair->getAccountId());
@@ -41,3 +43,5 @@ qint64 Account::getIncrementedSequenceNumber() {
 void Account::incrementSequenceNumber() {
     m_sequenceNumber++;
 }
+
+QSTELLAR_END_NS

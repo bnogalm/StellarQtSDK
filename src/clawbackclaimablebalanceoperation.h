@@ -2,11 +2,14 @@
 #define CLAWBACKCLAIMABLEBALANCEOPERATION_H
 
 #include "operation.h"
+#include "qstellar_namespace.h"
 /**
  *
  * Represents a Clawback Claimable Balance operation.
  * @see <a href="https://www.stellar.org/developers/learn/concepts/list-of-operations.html" target="_blank">List of Operations</a>
  */
+QSTELLAR_BEGIN_NS
+
 class ClawbackClaimableBalanceOperation : public Operation
 {
 
@@ -30,5 +33,9 @@ public:
          */
     ClawbackClaimableBalanceOperation* setSourceAccount(QString sourceAccount);
 };
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(ClawbackClaimableBalanceOperation)
 
 #endif // CLAWBACKCLAIMABLEBALANCEOPERATION_H

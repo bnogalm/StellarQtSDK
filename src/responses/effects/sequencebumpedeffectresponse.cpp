@@ -1,5 +1,8 @@
 #include "sequencebumpedeffectresponse.h"
 
+QSTELLAR_BEGIN_NS
+
+
 SequenceBumpedEffectResponse::SequenceBumpedEffectResponse(QNetworkReply *reply):EffectResponse(reply),m_new_seq(0)
 {
 
@@ -18,3 +21,4 @@ void SequenceBumpedEffectResponse::setNewSeq(qint64 new_seq)
     m_new_seq = new_seq;
     emit newSeqChanged();
 }
+QSTELLAR_END_NS

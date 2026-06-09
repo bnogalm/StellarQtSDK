@@ -2,6 +2,9 @@
 #define TRUSTLINECREATEDEFFECTRESPONSE_H
 
 #include "trustlinecudresponse.h"
+#include "qstellar_namespace.h"
+
+QSTELLAR_BEGIN_NS
 
 /**
  * Represents trustline_created effect response.
@@ -17,5 +20,12 @@ public:
     TrustlineCreatedEffectResponse(QNetworkReply *reply=nullptr);
     virtual ~TrustlineCreatedEffectResponse();
 };
-Q_DECLARE_METATYPE(TrustlineCreatedEffectResponse*)
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(TrustlineCreatedEffectResponse)
+
+
+
+Q_DECLARE_METATYPE(qstellar::TrustlineCreatedEffectResponse*)
 #endif // TRUSTLINECREATEDEFFECTRESPONSE_H

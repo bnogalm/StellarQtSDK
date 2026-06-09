@@ -1,5 +1,8 @@
 #include "trustlineauthorizedtomaintainliabilitieseffectresponse.h"
 
+QSTELLAR_BEGIN_NS
+
+
 TrustlineAuthorizedToMaintainLiabilitiesEffectResponse::TrustlineAuthorizedToMaintainLiabilitiesEffectResponse()
 {
 
@@ -9,3 +12,4 @@ TrustlineAuthorizedToMaintainLiabilitiesEffectResponse::~TrustlineAuthorizedToMa
 {
 
 }
+QSTELLAR_END_NS

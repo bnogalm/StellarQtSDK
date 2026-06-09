@@ -2,6 +2,9 @@
 #define BEGINSPONSORINGFUTURERESERVESOPERATION_H
 
 #include "operation.h"
+#include "qstellar_namespace.h"
+
+QSTELLAR_BEGIN_NS
 
 class BeginSponsoringFutureReservesOperation : public Operation
 {    
@@ -22,5 +25,9 @@ public:
          */
     BeginSponsoringFutureReservesOperation* setSourceAccount(QString sourceAccount);
 };
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(BeginSponsoringFutureReservesOperation)
 
 #endif // BEGINSPONSORINGFUTURERESERVESOPERATION_H

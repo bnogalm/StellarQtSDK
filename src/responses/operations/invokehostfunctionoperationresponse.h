@@ -5,6 +5,9 @@
 #include <QObject>
 #include <QString>
 #include "operationresponse.h"
+#include "qstellar_namespace.h"
+
+QSTELLAR_BEGIN_NS
 
 namespace InvokeHostFunctionOperationResponseAttach
 {
@@ -92,7 +95,15 @@ public:
     QList<InvokeHostFunctionOperationResponseAttach::Parameter> getParameters() const;
     QList<InvokeHostFunctionOperationResponseAttach::AssetBalanceChange> getAssetBalanceChanges() const;
 };
-Q_DECLARE_METATYPE(InvokeHostFunctionOperationResponseAttach::Parameter)
-Q_DECLARE_METATYPE(InvokeHostFunctionOperationResponseAttach::AssetBalanceChange)
-Q_DECLARE_METATYPE(InvokeHostFunctionOperationResponse*)
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(InvokeHostFunctionOperationResponse)
+QSTELLAR_NS_ALIAS(InvokeHostFunctionOperationResponseAttach)
+
+
+
+Q_DECLARE_METATYPE(qstellar::InvokeHostFunctionOperationResponseAttach::Parameter)
+Q_DECLARE_METATYPE(qstellar::InvokeHostFunctionOperationResponseAttach::AssetBalanceChange)
+Q_DECLARE_METATYPE(qstellar::InvokeHostFunctionOperationResponse*)
 #endif // INVOKEHOSTFUNCTIONOPERATIONRESPONSE_H

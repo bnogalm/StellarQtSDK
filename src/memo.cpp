@@ -1,5 +1,7 @@
 #include "memo.h"
 
+QSTELLAR_BEGIN_NS
+
 Memo::Memo()
 {
 
@@ -96,10 +98,6 @@ MemoNone* Memo::none() {
 
 MemoText* Memo::text(QString text) {
     return new MemoText(text);
-}
-
-MemoId* Memo::id(qint64 id) {
-    return new MemoId(id);
 }
 
 MemoId* Memo::id(quint64 id) {
@@ -267,13 +265,6 @@ stellar::Memo MemoHash::toXdr() {
     return memo;
 }
 
-MemoId::MemoId(qint64 id) {
-    if (id < 0) {
-        throw std::runtime_error("id must be a positive number");
-    }
-    this->m_id = static_cast<quint64>(id);
-}
-
 MemoId::MemoId(quint64 id) {
     this->m_id = id;
 }
@@ -295,3 +286,5 @@ stellar::Memo MemoId::toXdr()
     memo.id=m_id;
     return memo;
 }
+
+QSTELLAR_END_NS

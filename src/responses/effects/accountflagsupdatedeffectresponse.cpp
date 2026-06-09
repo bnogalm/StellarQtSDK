@@ -1,5 +1,8 @@
 #include "accountflagsupdatedeffectresponse.h"
 
+QSTELLAR_BEGIN_NS
+
+
 AccountFlagsUpdatedEffectResponse::AccountFlagsUpdatedEffectResponse(QNetworkReply *reply)
     :EffectResponse(reply), m_authRequiredFlag(false),m_authRevokableFlag(false)
 {
@@ -18,3 +21,4 @@ bool AccountFlagsUpdatedEffectResponse::getAuthRequiredFlag() const{
 bool AccountFlagsUpdatedEffectResponse::getAuthRevokableFlag() const{
     return m_authRevokableFlag;
 }
+QSTELLAR_END_NS

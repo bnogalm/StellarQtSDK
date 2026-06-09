@@ -4,6 +4,9 @@
 #include <exception>
 #include <QObject>
 #include "federationresponse.h"
+#include "../qstellar_namespace.h"
+QSTELLAR_BEGIN_NS
+
 
 /**
  * FederationServer handles a network connection to a
@@ -95,5 +98,8 @@ signals:
     void error(QString reason);
 };
 
-#endif // FEDERATIONSERVER_H
+QSTELLAR_END_NS
 
+QSTELLAR_ALIAS(FederationServer)
+
+#endif // FEDERATIONSERVER_H

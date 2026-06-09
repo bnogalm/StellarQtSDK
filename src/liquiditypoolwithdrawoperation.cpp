@@ -3,6 +3,9 @@
 #include <cstring>
 #include <stdexcept>
 
+QSTELLAR_BEGIN_NS
+
+
 LiquidityPoolWithdrawOperation::LiquidityPoolWithdrawOperation(
     const QByteArray& liquidityPoolID,
     QString amount,
@@ -67,3 +70,4 @@ LiquidityPoolWithdrawOperation* LiquidityPoolWithdrawOperation::setSourceAccount
     Operation::setSourceAccount(sourceAccount);
     return this;
 }
+QSTELLAR_END_NS

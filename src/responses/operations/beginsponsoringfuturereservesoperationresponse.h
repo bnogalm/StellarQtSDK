@@ -3,6 +3,9 @@
 
 #include "operationresponse.h"
 #include <QObject>
+#include "qstellar_namespace.h"
+QSTELLAR_BEGIN_NS
+
 /**
  * Represents BeginSponsoringFutureReserves operation response.
  * @see org.stellar.sdk.requests.OperationsRequestBuilder
@@ -23,5 +26,12 @@ public slots:
 signals:
     void sponsoredIDChanged();
 };
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(BeginSponsoringFutureReservesOperationResponse)
+
+
+
 
 #endif // BEGINSPONSORINGFUTURERESERVESOPERATIONRESPONSE_H

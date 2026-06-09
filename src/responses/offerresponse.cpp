@@ -1,6 +1,9 @@
 #include "offerresponse.h"
 #include "common.h"
 
+QSTELLAR_BEGIN_NS
+
+
 OfferResponse::OfferResponse(QNetworkReply *reply)
     :Response(reply)
     ,m_id(0)
@@ -133,3 +136,4 @@ bool OfferResponseAttach::Links::operator !=(const OfferResponseAttach::Links &l
 {
     return !(*this == links);
 }
+QSTELLAR_END_NS

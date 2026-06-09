@@ -1,5 +1,8 @@
 #include "endsponsoringfuturereservesoperationresponse.h"
 
+QSTELLAR_BEGIN_NS
+
+
 EndSponsoringFutureReservesOperationResponse::EndSponsoringFutureReservesOperationResponse(QNetworkReply* reply)
     :OperationResponse(reply)
 {
@@ -19,3 +22,4 @@ void EndSponsoringFutureReservesOperationResponse::setBeginSponsor(QString begin
     m_beginSponsor = beginSponsor;
     emit beginSponsorChanged();
 }
+QSTELLAR_END_NS

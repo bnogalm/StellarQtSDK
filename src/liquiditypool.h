@@ -3,8 +3,10 @@
 
 #include <QByteArray>
 #include "xdr/stellarledgerentries.h"
+#include "asset.h"
+#include "qstellar_namespace.h"
 
-class Asset;
+QSTELLAR_BEGIN_NS
 
 /**
  * Static helpers around CAP-38 Liquidity Pools.
@@ -26,5 +28,9 @@ public:
                                          Asset* assetB,
                                          qint32 fee);
 };
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(LiquidityPool)
 
 #endif // LIQUIDITYPOOL_H

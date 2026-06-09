@@ -1,11 +1,14 @@
 #ifndef ACCOUNTMERGEOPERATION_H
 #define ACCOUNTMERGEOPERATION_H
 #include "operation.h"
+#include "qstellar_namespace.h"
 #include "xdr/stellartransaction.h"
 /**
  * Represents <a href="https://www.stellar.org/developers/learn/concepts/list-of-operations.html#account-merge" target="_blank">AccountMerge</a> operation.
  * @see <a href="https://www.stellar.org/developers/learn/concepts/list-of-operations.html" target="_blank">List of Operations</a>
  */
+
+QSTELLAR_BEGIN_NS
 
 class AccountMergeOperation : public Operation
 {
@@ -40,10 +43,8 @@ public:
 
 };
 
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(AccountMergeOperation)
+
 #endif // ACCOUNTMERGEOPERATION_H
-
-
-
-
-
-

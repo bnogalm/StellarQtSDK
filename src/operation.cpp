@@ -22,6 +22,7 @@
 
 #include "revokeaccountsponsorshipoperation.h"
 #include "revokeclaimablebalancesponsorshipoperation.h"
+#include "revokeliquiditypoolsponsorshipoperation.h"
 #include "revokedatasponsorshipoperation.h"
 #include "revokeoffersponsorshipoperation.h"
 #include "revokesignersponsorshipoperation.h"
@@ -38,6 +39,7 @@
 #include "extendfootprintttloperation.h"
 #include "restorefootprintoperation.h"
 
+QSTELLAR_BEGIN_NS
 
 Operation::Operation()
 {
@@ -175,6 +177,9 @@ Operation *Operation::fromXdr(AccountConverter accountConverter, stellar::Operat
             case stellar::LedgerEntryType::CLAIMABLE_BALANCE:
               operation = RevokeClaimableBalanceSponsorshipOperation::build(xdr.operationRevokeSponsorship);
               break;
+            case stellar::LedgerEntryType::LIQUIDITY_POOL:
+              operation = RevokeLiquidityPoolSponsorshipOperation::build(xdr.operationRevokeSponsorship);
+              break;
             default:
               throw std::runtime_error("Unknown revoke sponsorship ledger entry type");
           }
@@ -229,3 +234,5 @@ Operation *Operation::setSourceAccount(QString sourceAccount)
 QString Operation::getSourceAccount() const{
     return m_sourceAccount;
 }
+
+QSTELLAR_END_NS

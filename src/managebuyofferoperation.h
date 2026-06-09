@@ -4,11 +4,14 @@
 
 #include "operation.h"
 #include "xdr/stellartransaction.h"
-class Asset;
+#include "qstellar_namespace.h"
+QSTELLAR_FWD(Asset)
 /**
  * Represents <a href="https://www.stellar.org/developers/learn/concepts/list-of-operations.html#manage-buy-offer" target="_blank">ManageBuyOffer</a> operation.
  * @see <a href="https://www.stellar.org/developers/learn/concepts/list-of-operations.html" target="_blank">List of Operations</a>
  */
+QSTELLAR_BEGIN_NS
+
 class ManageBuyOfferOperation : public Operation
 {
 
@@ -84,5 +87,9 @@ public:
 
 
 };
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(ManageBuyOfferOperation)
 
 #endif // MANAGEBUYOFFEROPERATION_H

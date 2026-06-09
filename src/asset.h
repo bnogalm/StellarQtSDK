@@ -2,10 +2,15 @@
 #define ASSET_H
 #include <exception>
 #include "xdr/stellarledgerentries.h"
+#include "stellaraddress.h"
+#include "keypair.h"
+#include "qstellar_namespace.h"
+
+QSTELLAR_BEGIN_NS
+
 class AssetCodeLengthInvalidException: public std::exception
 {
 };
-class KeyPair;
 
 /**
  * @brief The Asset class
@@ -75,11 +80,14 @@ public:
     QByteArray toSAC(const QString& networkPassphrase);
 
     /** Convenience: returns the SAC contract id wrapped in a C-strkey StellarAddress. */
-    class StellarAddress toSACAddress(const QString& networkPassphrase);
+    StellarAddress toSACAddress(const QString& networkPassphrase);
 };
 
 Asset* checkNotNull(Asset* asset, const char *error);
 
+QSTELLAR_END_NS
 
+QSTELLAR_ALIAS(Asset)
+QSTELLAR_ALIAS(AssetCodeLengthInvalidException)
 
 #endif // ASSET_H

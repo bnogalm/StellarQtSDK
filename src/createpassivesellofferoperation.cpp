@@ -2,6 +2,9 @@
 #include "asset.h"
 #include "price.h"
 
+QSTELLAR_BEGIN_NS
+
+
 CreatePassiveSellOfferOperation::CreatePassiveSellOfferOperation(Asset *selling, Asset *buying, QString amount, QString price)
     :m_selling(nullptr)
     ,m_buying(nullptr)
@@ -77,3 +80,4 @@ CreatePassiveSellOfferOperation *CreatePassiveSellOfferOperation::setSourceAccou
     Operation::setSourceAccount(sourceAccount);
     return this;
 }
+QSTELLAR_END_NS

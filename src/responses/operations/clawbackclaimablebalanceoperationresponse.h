@@ -2,7 +2,10 @@
 #define CLAWBACKCLAIMABLEBALANCEOPERATIONRESPONSE_H
 
 #include "operationresponse.h"
+#include "qstellar_namespace.h"
 
+
+QSTELLAR_BEGIN_NS
 
 /**
  * Represents a Clawback Claimable Balance operation response.
@@ -25,5 +28,12 @@ public:
 signals:
     void balanceIDChanged();
 };
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(ClawbackClaimableBalanceOperationResponse)
+
+
+
 
 #endif // CLAWBACKCLAIMABLEBALANCEOPERATIONRESPONSE_H

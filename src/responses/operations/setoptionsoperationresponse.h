@@ -3,6 +3,9 @@
 
 #include <QObject>
 #include "operationresponse.h"
+#include "qstellar_namespace.h"
+QSTELLAR_BEGIN_NS
+
 /**
  * Represents SetOptions operation response.
  * @see <a href="https://www.stellar.org/developers/horizon/reference/resources/operation.html" target="_blank">Operation documentation</a>
@@ -66,7 +69,14 @@ public slots:
     void setInflationDest(QString inflationDest);
     void setSignerKey(QString signerKey);
 };
-Q_DECLARE_METATYPE(SetOptionsOperationResponse*)
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(SetOptionsOperationResponse)
+
+
+
+Q_DECLARE_METATYPE(qstellar::SetOptionsOperationResponse*)
 #endif // SETOPTIONSOPERATIONRESPONSE_H
 
 

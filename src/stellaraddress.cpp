@@ -4,6 +4,8 @@
 
 #include "strkey.h"
 
+QSTELLAR_BEGIN_NS
+
 StellarAddress StellarAddress::fromString(const QString& strkey)
 {
     if (strkey.isEmpty()) {
@@ -43,3 +45,5 @@ QString StellarAddress::toString() const
     }
     throw std::runtime_error("invalid StellarAddress type");
 }
+
+QSTELLAR_END_NS

@@ -1,5 +1,8 @@
 #include "pathpaymentoperation.h"
 
+QSTELLAR_BEGIN_NS
+
+
 PathPaymentOperation::PathPaymentOperation()
 :m_sendAsset(nullptr)
 ,m_destAsset(nullptr)
@@ -123,3 +126,4 @@ PathPaymentOperation *PathPaymentOperation::setSourceAccount(QString sourceAccou
 }
 
 
+QSTELLAR_END_NS

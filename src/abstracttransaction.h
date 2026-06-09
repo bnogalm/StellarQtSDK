@@ -8,6 +8,9 @@
 #include "memo.h"
 #include "network.h"
 #include "accountconverter.h"
+#include "qstellar_namespace.h"
+
+QSTELLAR_BEGIN_NS
 
 class AbstractTransaction : public QObject
 {
@@ -82,5 +85,9 @@ public:
 signals:
 
 };
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(AbstractTransaction)
 
 #endif // ABSTRACTTRANSACTION_H

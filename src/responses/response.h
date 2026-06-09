@@ -5,8 +5,12 @@
 #include <QMetaProperty>
 #include <QVariantMap>
 #include <memory>
+#include "qstellar_namespace.h"
 
 namespace qstellar { namespace exception { class SdkException; } }
+
+QSTELLAR_BEGIN_NS
+
 namespace ResponseConverters{
 template<class T>
 inline QList<T> convert(QVariantList source)
@@ -141,5 +145,13 @@ public:
 protected:
     void timerEvent(QTimerEvent *event);
 };
-Q_DECLARE_METATYPE(Response*)
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(Response)
+QSTELLAR_NS_ALIAS(ResponseConverters)
+
+
+
+Q_DECLARE_METATYPE(qstellar::Response*)
 #endif // RESPONSE_H

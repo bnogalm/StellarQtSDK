@@ -10,6 +10,8 @@
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 #endif
 
+QSTELLAR_BEGIN_NS
+
 const QString Network::PUBLIC_S = "Public Global Stellar Network ; September 2015";
 const QString Network::TESTNET_S = "Test SDF Network ; September 2015";
 
@@ -84,6 +86,8 @@ Network* checkNotNull(Network* network, const char *error)
     }
     return network;
 }
+
+QSTELLAR_END_NS
 
 #if defined(__GNUC__) || defined(__clang__)
 #pragma GCC diagnostic pop

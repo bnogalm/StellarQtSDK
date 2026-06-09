@@ -8,6 +8,9 @@
 #include <QCoreApplication>
 #include <stdexcept>
 
+QSTELLAR_BEGIN_NS
+
+
 QNetworkAccessManager* FederationServer::s_httpClient = nullptr;
 QHash<QString,FederationServer*>* FederationServer::s_cachedFederationServers = nullptr;
 FederationServer::FederationServer()
@@ -222,3 +225,4 @@ void FederationServer::initialize()
     emit error("No federation server");
 #endif
 }
+QSTELLAR_END_NS

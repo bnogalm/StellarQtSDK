@@ -1,5 +1,8 @@
 #include "clawbackclaimablebalanceoperationresponse.h"
 
+QSTELLAR_BEGIN_NS
+
+
 ClawbackClaimableBalanceOperationResponse::ClawbackClaimableBalanceOperationResponse(QNetworkReply *reply):OperationResponse(reply)
 {
 
@@ -22,3 +25,4 @@ void ClawbackClaimableBalanceOperationResponse::setBalanceID(const QString newBa
     m_balanceId = newBalance_id;
     emit balanceIDChanged();
 }
+QSTELLAR_END_NS

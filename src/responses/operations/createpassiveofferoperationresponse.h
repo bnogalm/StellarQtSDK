@@ -3,8 +3,10 @@
 
 #include <QObject>
 #include "operationresponse.h"
-class Asset;
-/**
+#include "qstellar_namespace.h"
+QSTELLAR_BEGIN_NS
+
+class Asset;/**
  * Represents CreatePassiveSellOfferOperationResponse operation response.
  * @see <a href="https://www.stellar.org/developers/horizon/reference/resources/operation.html" target="_blank">Operation documentation</a>
  * @see org.stellar.sdk.requests.OperationsRequestBuilder
@@ -65,7 +67,14 @@ public slots:
 
 
 };
-Q_DECLARE_METATYPE(CreatePassiveSellOfferOperationResponse*)
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(CreatePassiveSellOfferOperationResponse)
+
+
+
+Q_DECLARE_METATYPE(qstellar::CreatePassiveSellOfferOperationResponse*)
 #endif // CREATEPASSIVESELLOFFEROPERATIONRESPONSE_H
 
 

@@ -10,6 +10,8 @@ namespace {
 const char* kSep53Prefix = "Stellar Signed Message:\n";
 }
 
+QSTELLAR_BEGIN_NS
+
 QByteArray MessageAuth::messageHash(const QByteArray& message)
 {
     QByteArray combined;
@@ -33,3 +35,5 @@ bool MessageAuth::verifyMessage(const QString& accountId,
     std::unique_ptr<KeyPair> kp(KeyPair::fromAccountId(accountId));
     return kp->verify(messageHash(message), signature);
 }
+
+QSTELLAR_END_NS

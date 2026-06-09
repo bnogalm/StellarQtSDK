@@ -2,10 +2,12 @@
 #define SETTRUSTLINEFLAGSOPERATIONRESPONSE_H
 
 #include "operationresponse.h"
+#include "qstellar_namespace.h"
 
 
-class Asset;
-/**
+QSTELLAR_BEGIN_NS
+
+class Asset;/**
  * Represents a Set Trustine Flags operation response.
  *
  * @see org.stellar.sdk.requests.OperationsRequestBuilder
@@ -84,5 +86,12 @@ signals:
     void setFlagStringsChanged();
     void trustorChanged();
 };
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(SetTrustLineFlagsOperationResponse)
+
+
+
 
 #endif // SETTRUSTLINEFLAGSOPERATIONRESPONSE_H

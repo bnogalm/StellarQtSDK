@@ -1,6 +1,7 @@
 #ifndef ALLOWTRUSTOPERATION_H
 #define ALLOWTRUSTOPERATION_H
 #include "operation.h"
+#include "qstellar_namespace.h"
 
 /**
  * @deprecated As of release 0.24.0, replaced by {@link SetTrustlineFlagsOperation}
@@ -8,6 +9,8 @@
  * Represents <a href="https://www.stellar.org/developers/learn/concepts/list-of-operations.html#allow-trust" target="_blank">AllowTrust</a> operation.
  * @see <a href="https://www.stellar.org/developers/learn/concepts/list-of-operations.html" target="_blank">List of Operations</a>
  */
+QSTELLAR_BEGIN_NS
+
 class Q_DECL_DEPRECATED AllowTrustOperation : public Operation
 {
     KeyPair* m_trustor;
@@ -61,5 +64,9 @@ public:
 
 };
 
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(AllowTrustOperation)
 
 #endif // ALLOWTRUSTOPERATION_H

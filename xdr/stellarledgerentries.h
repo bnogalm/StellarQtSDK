@@ -1211,6 +1211,10 @@ namespace stellar
         {
             ClaimableBalanceID balanceID;
         };
+        struct LiquidityPool//case LIQUIDITY_POOL:
+        {
+            PoolID liquidityPoolID;
+        };
         union
         {
             Account account;
@@ -1218,6 +1222,7 @@ namespace stellar
             Offer offer;
             Data data;
             ClaimableBalance claimableBalance;
+            LiquidityPool liquidityPool;
         };
         LedgerKey():type(LedgerEntryType::ACCOUNT)
         {
@@ -1237,6 +1242,8 @@ namespace stellar
                 (data).~Data(); break;
            case LedgerEntryType::CLAIMABLE_BALANCE:
                 (claimableBalance).~ClaimableBalance(); break;
+           case LedgerEntryType::LIQUIDITY_POOL:
+                (liquidityPool).~LiquidityPool(); break;
             default: break;
             }
         }
@@ -1254,6 +1261,13 @@ namespace stellar
             new (&claimableBalance) ClaimableBalance();
             type=LedgerEntryType::CLAIMABLE_BALANCE;
             return claimableBalance;
+        }
+        LiquidityPool& fillLiquidityPool()
+        {
+            clear();
+            new (&liquidityPool) LiquidityPool();
+            type=LedgerEntryType::LIQUIDITY_POOL;
+            return liquidityPool;
         }
         Data& fillData()
         {
@@ -1283,6 +1297,7 @@ namespace stellar
         }
         LedgerKey(const LedgerKey &obj)
         {
+            type = obj.type;
             switch(obj.type){
             case LedgerEntryType::ACCOUNT:
                 new (&account) Account();
@@ -1302,6 +1317,9 @@ namespace stellar
            case LedgerEntryType::CLAIMABLE_BALANCE:
                 new (&claimableBalance) ClaimableBalance();
                 claimableBalance.balanceID= obj.claimableBalance.balanceID; break;
+           case LedgerEntryType::LIQUIDITY_POOL:
+                new (&liquidityPool) LiquidityPool();
+                liquidityPool= obj.liquidityPool; break;
             //default: break;
             }
         }
@@ -1328,6 +1346,9 @@ namespace stellar
             case LedgerEntryType::CLAIMABLE_BALANCE:
                 new (&claimableBalance) ClaimableBalance();
                 claimableBalance.balanceID= obj.claimableBalance.balanceID; break;
+            case LedgerEntryType::LIQUIDITY_POOL:
+                new (&liquidityPool) LiquidityPool();
+                liquidityPool= obj.liquidityPool; break;
             }
             return *this;
         }
@@ -1346,6 +1367,8 @@ namespace stellar
             out << obj.data.accountID<<obj.data.dataName; break;
        case LedgerEntryType::CLAIMABLE_BALANCE:
             out << obj.claimableBalance.balanceID; break;
+       case LedgerEntryType::LIQUIDITY_POOL:
+            out << obj.liquidityPool.liquidityPoolID; break;
         //default: break;
         }
 
@@ -1370,6 +1393,9 @@ namespace stellar
        case LedgerEntryType::CLAIMABLE_BALANCE:
             new (&obj.claimableBalance) LedgerKey::ClaimableBalance();
             in >> obj.claimableBalance.balanceID; break;
+       case LedgerEntryType::LIQUIDITY_POOL:
+            new (&obj.liquidityPool) LedgerKey::LiquidityPool();
+            in >> obj.liquidityPool.liquidityPoolID; break;
         //default: break;
         }
        return in;

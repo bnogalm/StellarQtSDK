@@ -6,6 +6,9 @@
 #include <QList>
 #include <QMetaType>
 #include "assetamount.h"
+#include "qstellar_namespace.h"
+
+QSTELLAR_BEGIN_NS
 
 /**
  * Liquidity pool shape returned by Horizon (used by LP effects and the
@@ -49,6 +52,13 @@ public:
     }
     bool operator!=(const LiquidityPool& o) const { return !(*this == o); }
 };
-Q_DECLARE_METATYPE(LiquidityPool)
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(LiquidityPool)
+
+
+
+Q_DECLARE_METATYPE(qstellar::LiquidityPool)
 
 #endif // LIQUIDITYPOOL_H

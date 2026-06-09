@@ -5,6 +5,9 @@
 #include "asset.h"
 #include "changetrustasset.h"
 
+QSTELLAR_BEGIN_NS
+
+
 namespace {
 
 // Copies a plain stellar::Asset into a stellar::ChangeTrustAsset (3 shared variants).
@@ -127,3 +130,4 @@ ChangeTrustOperation *ChangeTrustOperation::setSourceAccount(QString sourceAccou
     Operation::setSourceAccount(sourceAccount);
     return this;
 }
+QSTELLAR_END_NS

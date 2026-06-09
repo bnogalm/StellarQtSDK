@@ -1,5 +1,8 @@
 #include "claimablebalancesponsorshipremovedeffectresponse.h"
 
+QSTELLAR_BEGIN_NS
+
+
 ClaimableBalanceSponsorshipRemovedEffectResponse::ClaimableBalanceSponsorshipRemovedEffectResponse(QNetworkReply *reply)
     :EffectResponse(reply)
 {
@@ -35,3 +38,4 @@ void ClaimableBalanceSponsorshipRemovedEffectResponse::setBalanceID(QString bala
     m_balanceID = balanceID;
     emit balanceIDChanged(m_balanceID);
 }
+QSTELLAR_END_NS

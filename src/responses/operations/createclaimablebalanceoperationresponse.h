@@ -5,6 +5,9 @@
 #include <QObject>
 #include "claimant.h"
 #include "asset.h"
+#include "qstellar_namespace.h"
+
+QSTELLAR_BEGIN_NS
 
 /**
  * Represents CreateClaimableBalance operation response.
@@ -45,5 +48,12 @@ signals:
     void amountChanged();
     void claimantsChanged();
 };
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(CreateClaimableBalanceOperationResponse)
+
+
+
 
 #endif // CREATECLAIMABLEBALANCEOPERATIONRESPONSE_H

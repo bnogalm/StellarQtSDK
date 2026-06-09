@@ -4,7 +4,10 @@
 #include "../responses/operations/operationresponse.h"
 #include "../responses/genericoperation.h"
 #include "../responses/operationpage.h"
-class KeyPair;
+#include "../keypair.h"
+#include "../qstellar_namespace.h"
+QSTELLAR_BEGIN_NS
+
 /**
  * Builds requests connected to operations.
  */
@@ -94,5 +97,9 @@ public:
 
     OperationsRequestBuilder& order(RequestBuilder::Order direction);
 };
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(OperationsRequestBuilder)
 
 #endif // OPERATIONSREQUESTBUILDER_H

@@ -3,6 +3,9 @@
 #include "../../assettypenative.h"
 #include "../../assettypecreditalphanum.h"
 
+QSTELLAR_BEGIN_NS
+
+
 TradeEffectResponse::TradeEffectResponse(QNetworkReply *reply)
     :EffectResponse(reply)
     ,m_sellerKeypair(nullptr)
@@ -160,3 +163,4 @@ void TradeEffectResponse::setBoughtAssetIssuer(QString boughtAssetIssuer)
     m_boughtAssetIssuer = boughtAssetIssuer;
 }
 
+QSTELLAR_END_NS

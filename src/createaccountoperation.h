@@ -1,11 +1,14 @@
 #ifndef CREATEACCOUNTOPERATION_H
 #define CREATEACCOUNTOPERATION_H
 #include "operation.h"
+#include "qstellar_namespace.h"
 
 /**
  * Represents <a href="https://www.stellar.org/developers/learn/concepts/list-of-operations.html#create-account" target="_blank">CreateAccount</a> operation.
  * @see <a href="https://www.stellar.org/developers/learn/concepts/list-of-operations.html" target="_blank">List of Operations</a>
  */
+QSTELLAR_BEGIN_NS
+
 class CreateAccountOperation : public Operation
 {
     KeyPair * m_destination;
@@ -40,5 +43,9 @@ public:
 
 
 };
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(CreateAccountOperation)
 
 #endif // CREATEACCOUNTOPERATION_H

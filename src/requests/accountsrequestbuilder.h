@@ -5,6 +5,9 @@
 #include "../responses/accountresponse.h"
 #include "../responses/page.h"
 #include <QUrl>
+#include "../qstellar_namespace.h"
+QSTELLAR_BEGIN_NS
+
 
 
 /**
@@ -107,5 +110,9 @@ public:
       Page<AccountResponse>* execute();
 
 };
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(AccountsRequestBuilder)
 
 #endif // ACCOUNTSREQUESTBUILDER_H

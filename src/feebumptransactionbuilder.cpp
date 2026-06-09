@@ -5,6 +5,8 @@
 #include "util.h"
 #include <limits>
 
+QSTELLAR_BEGIN_NS
+
 FeeBumpTransactionBuilder::FeeBumpTransactionBuilder(AccountConverter accountConverter, Transaction* inner)
 {
     m_inner = checkNotNull(inner, "inner cannot be null");
@@ -76,3 +78,5 @@ FeeBumpTransaction* FeeBumpTransactionBuilder::build()
     m_inner = nullptr;
     return result;
 }
+
+QSTELLAR_END_NS

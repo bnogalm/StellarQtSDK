@@ -6,6 +6,8 @@
 #include "keypair.h"
 #include "strkey.h"
 
+QSTELLAR_BEGIN_NS
+
 SignerKey::SignerKey()
 {
     m_xdr.type = stellar::SignerKeyType::SIGNER_KEY_TYPE_ED25519;
@@ -147,3 +149,5 @@ QByteArray SignerKey::getSignedPayload() const
     return QByteArray(reinterpret_cast<const char*>(m_xdr.ed25519SignedPayload.payload),
                       static_cast<int>(m_xdr.ed25519SignedPayload.payloadLen));
 }
+
+QSTELLAR_END_NS

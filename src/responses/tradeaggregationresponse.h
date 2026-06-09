@@ -3,6 +3,9 @@
 
 #include "response.h"
 #include <QDateTime>
+#include "qstellar_namespace.h"
+
+QSTELLAR_BEGIN_NS
 
 class TradeAggregationResponse : public Response
 {
@@ -41,5 +44,12 @@ public:
     QString getOpen() const;
     QString getClose() const;
 };
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(TradeAggregationResponse)
+
+
+
 
 #endif // TRADEAGGREGATIONRESPONSE_H

@@ -2,6 +2,9 @@
 #define ACCOUNTHOMEDOMAINUPDATEDEFFECTRESPONSE_H
 
 #include "effectresponse.h"
+#include "qstellar_namespace.h"
+QSTELLAR_BEGIN_NS
+
 /**
  * Represents account_home_domain_updated effect response.
  * @see <a href="https://www.stellar.org/developers/horizon/reference/resources/effect.html" target="_blank">Effect documentation</a>
@@ -18,7 +21,14 @@ public:
     virtual ~AccountHomeDomainUpdatedEffectResponse();
     QString getHomeDomain() const;
 };
-Q_DECLARE_METATYPE(AccountHomeDomainUpdatedEffectResponse*)
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(AccountHomeDomainUpdatedEffectResponse)
+
+
+
+Q_DECLARE_METATYPE(qstellar::AccountHomeDomainUpdatedEffectResponse*)
 #endif // ACCOUNTHOMEDOMAINUPDATEDEFFECTRESPONSE_H
 
 

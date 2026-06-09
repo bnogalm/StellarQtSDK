@@ -1,6 +1,9 @@
 #include "createaccountoperationresponse.h"
 #include "../../keypair.h"
 
+QSTELLAR_BEGIN_NS
+
+
 CreateAccountOperationResponse::CreateAccountOperationResponse(QNetworkReply *reply):OperationResponse(reply)
   ,m_accountKeypair(0),m_funderKeypair(0)
 {
@@ -62,3 +65,4 @@ void CreateAccountOperationResponse::setFunder(QString funder)
     }
     m_funder = funder;   
 }
+QSTELLAR_END_NS

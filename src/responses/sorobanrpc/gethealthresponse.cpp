@@ -1,5 +1,8 @@
 #include "gethealthresponse.h"
 
+QSTELLAR_BEGIN_NS
+
+
 GetHealthResponse GetHealthResponse::fromJson(const QJsonObject& result)
 {
     GetHealthResponse r;
@@ -16,3 +19,4 @@ GetHealthResponse GetHealthResponse::fromJson(const QJsonObject& result)
     r.m_ledgerRetentionWindow = readUint32(QStringLiteral("ledgerRetentionWindow"));
     return r;
 }
+QSTELLAR_END_NS

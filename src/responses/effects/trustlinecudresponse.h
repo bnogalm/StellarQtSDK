@@ -2,8 +2,10 @@
 #define TRUSTLINECUDRESPONSE_H
 
 #include "effectresponse.h"
-class Asset;
-class TrustlineCUDResponse : public EffectResponse
+#include "qstellar_namespace.h"
+QSTELLAR_BEGIN_NS
+
+class Asset;class TrustlineCUDResponse : public EffectResponse
 {
     Q_OBJECT
     Q_PROPERTY(QString limit MEMBER m_limit)
@@ -31,5 +33,12 @@ public slots:
     void setAssetCode(QString assetCode);
     void setAssetIssuer(QString assetIssuer);
 };
-Q_DECLARE_METATYPE(TrustlineCUDResponse*)
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(TrustlineCUDResponse)
+
+
+
+Q_DECLARE_METATYPE(qstellar::TrustlineCUDResponse*)
 #endif // TRUSTLINECUDRESPONSE_H

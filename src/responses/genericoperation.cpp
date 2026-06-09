@@ -17,6 +17,9 @@
 #include "operations/bumpsequenceoperationresponse.h"
 #include "operations/managebuyofferoperationresponse.h"
 
+QSTELLAR_BEGIN_NS
+
+
 GenericOperation::GenericOperation(QNetworkReply *reply)
     :Response(reply),m_operation(nullptr)
 {
@@ -77,3 +80,4 @@ void GenericOperation::loadFromJson(QByteArray data)
     Response::fillObject(m_operation->metaObject(),m_operation,obj,true);//reply will not emit finished again, so it will not get filled. Anyway this way we skip parsing if json is valid again
 }
 
+QSTELLAR_END_NS

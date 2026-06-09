@@ -1,6 +1,7 @@
 #ifndef SETOPTIONSOPERATION_H
 #define SETOPTIONSOPERATION_H
 #include "operation.h"
+#include "qstellar_namespace.h"
 
 
 
@@ -8,6 +9,8 @@
  * Represents <a href="https://www.stellar.org/developers/learn/concepts/list-of-operations.html#set-options">SetOptions</a> operation.
  * @see <a href="https://www.stellar.org/developers/learn/concepts/list-of-operations.html">List of Operations</a>
  */
+QSTELLAR_BEGIN_NS
+
 class SetOptionsOperation : public Operation
 {
     KeyPair* m_inflationDestination;
@@ -167,5 +170,9 @@ public:
 
 
 };
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(SetOptionsOperation)
 
 #endif // SETOPTIONSOPERATION_H

@@ -7,6 +7,9 @@
 #include "keypair.h"
 #include <QMetaProperty>
 #include <QVariantMap>
+#include "qstellar_namespace.h"
+QSTELLAR_BEGIN_NS
+
 namespace AccountResponseAttach
 {
 /**
@@ -303,11 +306,20 @@ signals:
     void sponsorChanged();
 };
 
-Q_DECLARE_METATYPE(AccountResponseAttach::Thresholds)
-Q_DECLARE_METATYPE(AccountResponseAttach::Flags)
-Q_DECLARE_METATYPE(AccountResponseAttach::Balance)
-Q_DECLARE_METATYPE(AccountResponseAttach::Signer)
-Q_DECLARE_METATYPE(AccountResponseAttach::Links)
-Q_DECLARE_METATYPE(AccountResponseAttach::Data)
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(AccountResponse)
+QSTELLAR_NS_ALIAS(AccountResponseAttach)
+QSTELLAR_NS_ALIAS(ResponseConverters)
+
+
+
+
+Q_DECLARE_METATYPE(qstellar::AccountResponseAttach::Thresholds)
+Q_DECLARE_METATYPE(qstellar::AccountResponseAttach::Flags)
+Q_DECLARE_METATYPE(qstellar::AccountResponseAttach::Balance)
+Q_DECLARE_METATYPE(qstellar::AccountResponseAttach::Signer)
+Q_DECLARE_METATYPE(qstellar::AccountResponseAttach::Links)
+Q_DECLARE_METATYPE(qstellar::AccountResponseAttach::Data)
 
 #endif // ACCOUNTRESPONSE_H

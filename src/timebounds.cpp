@@ -1,6 +1,8 @@
 #include "timebounds.h"
 #include <exception>
 
+QSTELLAR_BEGIN_NS
+
 TimeBounds::TimeBounds(qint64 minTime, qint64 maxTime)
 {
     if(maxTime > 0 && minTime >= maxTime) {
@@ -43,3 +45,5 @@ bool TimeBounds::operator==(const TimeBounds &other) const
     if (m_minTime != other.m_minTime) return false;
     return m_maxTime == other.m_maxTime;
 }
+
+QSTELLAR_END_NS

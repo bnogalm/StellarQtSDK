@@ -6,9 +6,13 @@
 #include <QStringList>
 #include <QtGlobal>
 
-class KeyPair;
-class Network;
-class SorobanServer;
+#include "keypair.h"
+#include "network.h"
+#include "qstellar_namespace.h"
+QSTELLAR_FWD(SorobanServer)
+
+QSTELLAR_BEGIN_NS
+
 
 /**
  * SEP-45 — Stellar Web Authentication for contract accounts.
@@ -93,5 +97,9 @@ public:
                                              const QStringList& homeDomains,
                                              const QString& webAuthDomain);
 };
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(Sep45Challenge)
 
 #endif // SEP45CHALLENGE_H

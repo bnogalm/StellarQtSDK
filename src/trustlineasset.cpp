@@ -5,6 +5,8 @@
 
 #include "asset.h"
 
+QSTELLAR_BEGIN_NS
+
 TrustLineAsset* TrustLineAsset::wrap(Asset* asset)
 {
     if (!asset) {
@@ -104,3 +106,5 @@ bool LiquidityPoolShareTrustLineAsset::equals(const TrustLineAsset* other) const
     if (!o) return false;
     return m_poolId == o->m_poolId;
 }
+
+QSTELLAR_END_NS

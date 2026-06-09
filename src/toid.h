@@ -3,6 +3,10 @@
 
 #include <QtGlobal>
 
+#include "qstellar_namespace.h"
+
+QSTELLAR_BEGIN_NS
+
 /**
  * SEP-35 — TOID (Total Order ID) packed into a uint64:
  *   high 32 bits  = ledger sequence
@@ -41,5 +45,9 @@ public:
     }
     bool operator!=(const TOID& other) const { return !(*this == other); }
 };
+
+QSTELLAR_END_NS
+
+QSTELLAR_ALIAS(TOID)
 
 #endif // TOID_H

@@ -1,6 +1,9 @@
 #include "trustlineauthorizationresponse.h"
 #include "../../keypair.h"
 
+QSTELLAR_BEGIN_NS
+
+
 TrustlineAuthorizationResponse::TrustlineAuthorizationResponse(QNetworkReply *reply )
     :EffectResponse(reply),m_trustorKeypair(nullptr)
 {
@@ -43,3 +46,4 @@ void TrustlineAuthorizationResponse::setTrustor(QString trustor)
     }
     m_trustor = trustor;
 }
+QSTELLAR_END_NS
