@@ -9,6 +9,8 @@
 #include "../../src/responses/effects/accountcreatedeffectresponse.h"
 #include "../../src/responses/effects/accountcreditedeffectresponse.h"
 #include "../../src/responses/effects/accountdebitedeffectresponse.h"
+#include "../../src/responses/effects/contractcreditedeffectresponse.h"
+#include "../../src/responses/effects/contractdebitedeffectresponse.h"
 #include "../../src/responses/effects/accountflagsupdatedeffectresponse.h"
 #include "../../src/responses/effects/accounthomedomainupdatedeffectresponse.h"
 #include "../../src/responses/effects/accountremovedeffectresponse.h"
@@ -159,6 +161,50 @@ private slots:
       QCOMPARE(effect.getLinks().getOperation().getHref(), QString("http://horizon-testnet.stellar.org/operations/13563506724865"));
       QCOMPARE(effect.getLinks().getSucceeds().getHref(), QString("http://horizon-testnet.stellar.org/effects?order=desc&cursor=13563506724865-1"));
       QCOMPARE(effect.getLinks().getPrecedes().getHref(), QString("http://horizon-testnet.stellar.org/effects?order=asc&cursor=13563506724865-1"));
+    }
+
+    void testDeserializeContractCreditedEffect() {
+      QByteArray json = "{\n"
+              "        \"id\": \"0000013563506724865-0000000001\",\n"
+              "        \"paging_token\": \"13563506724865-1\",\n"
+              "        \"account\": \"GDLGTRIBFH24364GPWPUS45GUFC2GU4ARPGWTXVCPLGTUHX3IOS3ON47\",\n"
+              "        \"type\": \"contract_credited\",\n"
+              "        \"type_i\": 96,\n"
+              "        \"contract\": \"CA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJVSGZ\",\n"
+              "        \"asset_type\": \"native\",\n"
+              "        \"amount\": \"250.0000000\"\n"
+              "      }";
+
+      ContractCreditedEffectResponse effect;
+      effect.loadFromJson(json);
+
+      QCOMPARE(effect.getType(), QString("contract_credited"));
+      QCOMPARE(effect.getContract(), QString("CA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJVSGZ"));
+      QCOMPARE(effect.getAmount(), QString("250.0000000"));
+      QVERIFY(effect.getAsset()->equals(new AssetTypeNative()));
+    }
+
+    void testDeserializeContractDebitedEffect() {
+      QByteArray json = "{\n"
+              "        \"id\": \"0000013563506724866-0000000001\",\n"
+              "        \"paging_token\": \"13563506724866-1\",\n"
+              "        \"account\": \"GDLGTRIBFH24364GPWPUS45GUFC2GU4ARPGWTXVCPLGTUHX3IOS3ON47\",\n"
+              "        \"type\": \"contract_debited\",\n"
+              "        \"type_i\": 97,\n"
+              "        \"contract\": \"CA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJVSGZ\",\n"
+              "        \"asset_type\": \"credit_alphanum4\",\n"
+              "        \"asset_code\": \"USDC\",\n"
+              "        \"asset_issuer\": \"GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN\",\n"
+              "        \"amount\": \"42.0000000\"\n"
+              "      }";
+
+      ContractDebitedEffectResponse effect;
+      effect.loadFromJson(json);
+
+      QCOMPARE(effect.getType(), QString("contract_debited"));
+      QCOMPARE(effect.getContract(), QString("CA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJVSGZ"));
+      QCOMPARE(effect.getAmount(), QString("42.0000000"));
+      QVERIFY(effect.getAsset()->equals(Asset::createNonNativeAsset("USDC", KeyPair::fromAccountId("GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN"))));
     }
 
 

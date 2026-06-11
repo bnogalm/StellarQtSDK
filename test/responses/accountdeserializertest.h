@@ -36,6 +36,8 @@ class AccountDeserializerTest: public QObject
             "  \"paging_token\": \"1\",\n"
             "  \"account_id\": \"GAAZI4TCR3TY5OJHCTJC2A4QSY6CJWJH5IAJTGKIN2ER7LBNVKOCCWN7\",\n"
             "  \"sequence\": 2319149195853854,\n"
+            "  \"sequence_ledger\": 47274621,\n"
+            "  \"sequence_time\": \"1640995200\",\n"
             "  \"subentry_count\": 0,\n"
             "  \"inflation_destination\": \"GAGRSA6QNQJN2OQYCBNQGMFLO4QLZFNEHIFXOMTQVSUTWVTWT66TOFSC\",\n"
             "  \"home_domain\": \"stellar.org\",\n"
@@ -47,11 +49,13 @@ class AccountDeserializerTest: public QObject
             "  \"flags\": {\n"
             "    \"auth_required\": false,\n"
             "    \"auth_revocable\": true,\n"
-            "    \"auth_immutable\": true\n"
+            "    \"auth_immutable\": true,\n"
+            "    \"auth_clawback_enabled\": true\n"
             "  },\n"
             "  \"balances\": [\n"
             "    {\n"
             "      \"balance\": \"1001.0000000\",\n"
+            "      \"is_clawback_enabled\": true,\n"
             "      \"limit\": \"12000.4775807\",\n"
             "      \"asset_type\": \"credit_alphanum4\",\n"
             "      \"asset_code\": \"ABC\",\n"
@@ -60,6 +64,11 @@ class AccountDeserializerTest: public QObject
             "    {\n"
             "      \"asset_type\": \"native\",\n"
             "      \"balance\": \"20.0000300\"\n"
+            "    },\n"
+            "    {\n"
+            "      \"asset_type\": \"liquidity_pool_shares\",\n"
+            "      \"balance\": \"500.0000000\",\n"
+            "      \"liquidity_pool_id\": \"dd7b1ab831c273310ddbec6f97870aa83c2fbcf57320c0bd000242331b46f1d2\"\n"
             "    }\n"
             "  ],\n"
             "  \"signers\": [\n"
@@ -252,6 +261,8 @@ private slots:
       QCOMPARE(account.getKeypair()->getAccountId(), QString("GAAZI4TCR3TY5OJHCTJC2A4QSY6CJWJH5IAJTGKIN2ER7LBNVKOCCWN7"));
       QCOMPARE(account.getPagingToken(), QString("1"));
       QCOMPARE(account.getSequenceNumber(), 2319149195853854L);
+      QCOMPARE(account.getSequenceLedger(), 47274621L);
+      QCOMPARE(account.getSequenceTime(), QString("1640995200"));
       QCOMPARE(account.getSubentryCount(), 0);
       QCOMPARE(account.getInflationDestination(), QString("GAGRSA6QNQJN2OQYCBNQGMFLO4QLZFNEHIFXOMTQVSUTWVTWT66TOFSC"));
       QCOMPARE(account.getHomeDomain(), QString("stellar.org"));
@@ -264,6 +275,7 @@ private slots:
       QCOMPARE(account.getFlags().getAuthRequired(), false);
       QCOMPARE(account.getFlags().getAuthRevocable(), true);
       QCOMPARE(account.getFlags().getAuthImmutable(), true);
+      QCOMPARE(account.getFlags().getAuthClawbackEnabled(), true);
 
       QCOMPARE(account.getBalances()[0].getAssetType(), QString("credit_alphanum4"));
       QCOMPARE(account.getBalances()[0].getAssetCode(), QString("ABC"));
@@ -271,11 +283,17 @@ private slots:
       QCOMPARE(account.getBalances()[0].getBalance(), QString("1001.0000000"));
       QCOMPARE(account.getBalances()[0].getLimit(), QString("12000.4775807"));
       QVERIFY(account.getBalances()[0].getSponsor().isNull());
+      QCOMPARE(account.getBalances()[0].getClawbackEnabled(), true);
 
       QCOMPARE(account.getBalances()[1].getAssetType(), QString("native"));
       QCOMPARE(account.getBalances()[1].getBalance(), QString("20.0000300"));
       QCOMPARE(account.getBalances()[1].getLimit(), QString());
       QVERIFY(account.getBalances()[1].getSponsor().isNull());
+
+      // P1.8 — liquidity_pool_shares balance must not throw on getAsset()
+      QCOMPARE(account.getBalances()[2].getAssetType(), QString("liquidity_pool_shares"));
+      QCOMPARE(account.getBalances()[2].getLiquidityPoolId(), QString("dd7b1ab831c273310ddbec6f97870aa83c2fbcf57320c0bd000242331b46f1d2"));
+      QVERIFY(account.getBalances()[2].getAsset() == nullptr);
 
       QCOMPARE(account.getSigners()[0].getType(), QString("ed25519_public_key"));
       QCOMPARE(account.getSigners()[0].getKey(), QString("GAAZI4TCR3TY5OJHCTJC2A4QSY6CJWJH5IAJTGKIN2ER7LBNVKOCCWN7"));

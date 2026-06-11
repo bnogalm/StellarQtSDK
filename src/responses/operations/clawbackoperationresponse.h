@@ -23,6 +23,8 @@ class ClawbackOperationResponse : public OperationResponse
     Q_PROPERTY(QString asset_issuer READ getAssetIssuer WRITE setAssetIssuer NOTIFY assetIssuerChanged)
     Q_PROPERTY(QString amount READ getAmount WRITE setAmount NOTIFY amountChanged)
     Q_PROPERTY(QString from READ getFrom WRITE setFrom NOTIFY fromChanged)
+    Q_PROPERTY(QString from_muxed MEMBER m_fromMuxed)
+    Q_PROPERTY(QString from_muxed_id MEMBER m_fromMuxedId)
 
 
     QString m_assetType;
@@ -34,6 +36,8 @@ class ClawbackOperationResponse : public OperationResponse
     QString m_amount;
 
     QString m_from;
+    QString m_fromMuxed;
+    QString m_fromMuxedId;
 
     Asset* m_asset;
 
@@ -53,6 +57,8 @@ public:
 
     const QString getFrom() const;
     void setFrom(const QString newFrom);
+    QString getFromMuxed() const { return m_fromMuxed; }
+    QString getFromMuxedId() const { return m_fromMuxedId; }
 
     Asset* getAsset();
 signals:

@@ -76,6 +76,8 @@ class OperationResponse : public Response
     Q_OBJECT
     Q_PROPERTY(qint64 id MEMBER m_id)
     Q_PROPERTY(QString source_account READ sourceAccount WRITE setSourceAccount)
+    Q_PROPERTY(QString source_account_muxed MEMBER m_sourceAccountMuxed)
+    Q_PROPERTY(QString source_account_muxed_id MEMBER m_sourceAccountMuxedId)
     Q_PROPERTY(QString paging_token MEMBER m_pagingToken)
     Q_PROPERTY(QString created_at MEMBER m_createdAt)
     Q_PROPERTY(QString transaction_hash MEMBER m_transactionHash)
@@ -86,6 +88,8 @@ class OperationResponse : public Response
     qint64 m_id;
     QString m_sourceAccount;
     KeyPair *m_sourceAccountKeypair;
+    QString m_sourceAccountMuxed;
+    QString m_sourceAccountMuxedId;
     QString m_pagingToken;
     QString m_createdAt;
     QString m_transactionHash;
@@ -129,6 +133,10 @@ public:
 
       /** Sponsor account id when the op is sponsored (Horizon 15+). Empty if not sponsored. */
       QString getSponsor() const { return m_sponsor; }
+      /** M-strkey if the source account was muxed (Horizon 14+). Empty otherwise. */
+      QString getSourceAccountMuxed() const { return m_sourceAccountMuxed; }
+      /** Decimal-string uint64 muxed id of the source account. Empty if not muxed. */
+      QString getSourceAccountMuxedId() const { return m_sourceAccountMuxedId; }
 
       Boolean isTransactionSuccessful() const;
 

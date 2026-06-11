@@ -17,7 +17,11 @@ class AccountMergeOperationResponse : public OperationResponse
 {
     Q_OBJECT
     Q_PROPERTY(QString account READ account WRITE setAccount)
+    Q_PROPERTY(QString account_muxed MEMBER m_accountMuxed)
+    Q_PROPERTY(QString account_muxed_id MEMBER m_accountMuxedId)
     Q_PROPERTY(QString into READ into WRITE setInto)
+    Q_PROPERTY(QString into_muxed MEMBER m_intoMuxed)
+    Q_PROPERTY(QString into_muxed_id MEMBER m_intoMuxedId)
 
 public:
     AccountMergeOperationResponse(QNetworkReply *reply= nullptr);
@@ -26,6 +30,10 @@ public:
     QString into() const;
     KeyPair &getAccount();
     KeyPair &getInto();
+    QString getAccountMuxed() const { return m_accountMuxed; }
+    QString getAccountMuxedId() const { return m_accountMuxedId; }
+    QString getIntoMuxed() const { return m_intoMuxed; }
+    QString getIntoMuxedId() const { return m_intoMuxedId; }
 
 
 public slots:
@@ -35,6 +43,10 @@ public slots:
 private:
     QString m_account;
     QString m_into;
+    QString m_accountMuxed;
+    QString m_accountMuxedId;
+    QString m_intoMuxed;
+    QString m_intoMuxedId;
     KeyPair *m_accountKeypair;
     KeyPair *m_intoKeypair;
 

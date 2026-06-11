@@ -230,7 +230,11 @@ class TransactionResponse : public Response
     Q_PROPERTY(qint64 ledger MEMBER m_ledger)
     Q_PROPERTY(QString created_at MEMBER m_createdAt)
     Q_PROPERTY(QString source_account READ sourceAccount WRITE setSourceAccount)
+    Q_PROPERTY(QString account_muxed MEMBER m_accountMuxed)
+    Q_PROPERTY(QString account_muxed_id MEMBER m_accountMuxedId)
     Q_PROPERTY(QString fee_account MEMBER m_feeAccount)
+    Q_PROPERTY(QString fee_account_muxed MEMBER m_feeAccountMuxed)
+    Q_PROPERTY(QString fee_account_muxed_id MEMBER m_feeAccountMuxedId)
 
     Q_PROPERTY(QVariant successful MEMBER m_successful WRITE setSuccessful) //we use a custom set method to filter non Bool types
 
@@ -250,6 +254,7 @@ class TransactionResponse : public Response
 
     Q_PROPERTY(QString memo_type READ memoType WRITE setMemoType)
     Q_PROPERTY(QByteArray memo READ memo WRITE setMemo)
+    Q_PROPERTY(QString memo_bytes MEMBER m_memoBytes)
 
     Q_PROPERTY(TransactionResponseAttach::Links _links MEMBER m_links)
 
@@ -278,9 +283,14 @@ class TransactionResponse : public Response
 
     QString m_memoType;
     QByteArray m_memoData;
+    QString m_memoBytes;
     Memo * m_memo;
 
     QString m_feeAccount;
+    QString m_accountMuxed;
+    QString m_accountMuxedId;
+    QString m_feeAccountMuxed;
+    QString m_feeAccountMuxedId;
 
 public:
     Q_INVOKABLE explicit TransactionResponse(QNetworkReply *reply=nullptr);
@@ -316,6 +326,14 @@ public:
       TransactionResponseAttach::Links& getLinks();
 
       QString getFeeAccount() const;
+      /** M-strkey if the source account was muxed. Empty otherwise. */
+      QString getAccountMuxed() const { return m_accountMuxed; }
+      /** Decimal-string uint64 muxed id of the source account. Empty if not muxed. */
+      QString getAccountMuxedId() const { return m_accountMuxedId; }
+      /** M-strkey if the fee account was muxed. Empty otherwise. */
+      QString getFeeAccountMuxed() const { return m_feeAccountMuxed; }
+      /** Decimal-string uint64 muxed id of the fee account. Empty if not muxed. */
+      QString getFeeAccountMuxedId() const { return m_feeAccountMuxedId; }
       QStringList getSignatures() const;
 
       TransactionResponseAttach::FeeBumpTransaction& getFeeBump();
@@ -326,6 +344,8 @@ public:
       QString memoType() const;
 
       QByteArray memo() const;
+      /** Base64 of the raw memo bytes (Horizon sets this when a MEMO_TEXT isn't valid UTF-8). Empty otherwise. */
+      QString getMemoBytes() const { return m_memoBytes; }
 
 
       void setSourceAccount(QString sourceAccount);

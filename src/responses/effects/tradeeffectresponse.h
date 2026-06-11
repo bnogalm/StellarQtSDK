@@ -19,6 +19,8 @@ class TradeEffectResponse : public EffectResponse
 {
     Q_OBJECT
     Q_PROPERTY(QString seller READ seller WRITE setSeller)
+    Q_PROPERTY(QString seller_muxed MEMBER m_sellerMuxed)
+    Q_PROPERTY(QString seller_muxed_id MEMBER m_sellerMuxedId)
     Q_PROPERTY(qint64 offer_id MEMBER m_offerId)
     Q_PROPERTY(QString sold_amount MEMBER m_soldAmount)
     Q_PROPERTY(QString sold_asset_type READ soldAssetType WRITE setSoldAssetType)
@@ -32,6 +34,8 @@ class TradeEffectResponse : public EffectResponse
 
     QString m_seller;
     KeyPair* m_sellerKeypair;
+    QString m_sellerMuxed;
+    QString m_sellerMuxedId;
     qint64 m_offerId;
 
     QString m_soldAmount;
@@ -60,6 +64,8 @@ public:
     Asset* getBoughtAsset();
 
     QString seller() const;
+    QString getSellerMuxed() const { return m_sellerMuxed; }
+    QString getSellerMuxedId() const { return m_sellerMuxedId; }
     QString soldAssetCode() const;
     QString soldAssetIssuer() const;
     QString boughtAssetType() const;

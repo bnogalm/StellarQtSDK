@@ -52,4 +52,20 @@ QString TradeAggregationResponse::getOpen() const{
 QString TradeAggregationResponse::getClose() const{
     return m_close;
 }
+
+Price TradeAggregationResponse::getHighR() const{
+    return Price(m_highR.value("n").toUInt(), m_highR.value("d").toUInt());
+}
+
+Price TradeAggregationResponse::getLowR() const{
+    return Price(m_lowR.value("n").toUInt(), m_lowR.value("d").toUInt());
+}
+
+Price TradeAggregationResponse::getOpenR() const{
+    return Price(m_openR.value("n").toUInt(), m_openR.value("d").toUInt());
+}
+
+Price TradeAggregationResponse::getCloseR() const{
+    return Price(m_closeR.value("n").toUInt(), m_closeR.value("d").toUInt());
+}
 QSTELLAR_END_NS

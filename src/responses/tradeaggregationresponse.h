@@ -3,6 +3,7 @@
 
 #include "response.h"
 #include <QDateTime>
+#include "price.h"
 #include "qstellar_namespace.h"
 
 QSTELLAR_BEGIN_NS
@@ -16,9 +17,13 @@ class TradeAggregationResponse : public Response
     Q_PROPERTY(QString counter_volume MEMBER m_counterVolume READ getCounterVolume)
     Q_PROPERTY(QString avg MEMBER m_avg READ getAvg)
     Q_PROPERTY(QString high MEMBER m_high READ getHigh)
+    Q_PROPERTY(QVariantMap high_r MEMBER m_highR)
     Q_PROPERTY(QString low MEMBER m_low READ getLow)
+    Q_PROPERTY(QVariantMap low_r MEMBER m_lowR)
     Q_PROPERTY(QString open MEMBER m_open READ getOpen)
+    Q_PROPERTY(QVariantMap open_r MEMBER m_openR)
     Q_PROPERTY(QString close MEMBER m_close READ getClose)
+    Q_PROPERTY(QVariantMap close_r MEMBER m_closeR)
 
     qint64 m_timestamp;
     qint32 m_tradeCount;
@@ -29,6 +34,10 @@ class TradeAggregationResponse : public Response
     QString m_low;
     QString m_open;
     QString m_close;
+    QVariantMap m_highR;
+    QVariantMap m_lowR;
+    QVariantMap m_openR;
+    QVariantMap m_closeR;
 
 public:
     Q_INVOKABLE explicit TradeAggregationResponse(QNetworkReply* reply=nullptr);
@@ -43,6 +52,11 @@ public:
     QString getLow() const;
     QString getOpen() const;
     QString getClose() const;
+    /** Exact high/low/open/close as rationals {n,d}; the decimal getters above are rounded. */
+    Price getHighR() const;
+    Price getLowR() const;
+    Price getOpenR() const;
+    Price getCloseR() const;
 };
 
 QSTELLAR_END_NS

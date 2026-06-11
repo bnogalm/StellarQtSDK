@@ -14,6 +14,16 @@ class OffersRequestBuilder : public RequestBuilder
 {
 public:
     OffersRequestBuilder(Server* server);
+
+     /**
+      * Requests <code>GET /offers/{offer_id}</code> — a single offer.
+      * @see <a href="https://developers.stellar.org/api/horizon/resources/get-offer-by-offer-id/">Offer Details</a>
+      * @param offerId the offer id
+      */
+     OfferResponse* offer(qint64 offerId);
+     /** Requests a specific offer <code>uri</code> and returns the {@link OfferResponse}. */
+     OfferResponse* offer(QUrl uri);
+
      /**
       * Builds request to <code>GET /accounts/{account}/offers</code>
       * @see <a href="https://www.stellar.org/developers/horizon/reference/offers-for-account.html">Offers for Account</a>

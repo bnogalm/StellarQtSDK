@@ -24,6 +24,8 @@ GetEventsResponse GetEventsResponse::fromJson(const QJsonObject& r)
         ev.ledgerClosedAt  = e.value("ledgerClosedAt").toString();
         ev.contractId      = e.value("contractId").toString();
         ev.id              = e.value("id").toString();
+        ev.operationIndex  = static_cast<qint32>(e.value("operationIndex").toInteger(0));
+        ev.transactionIndex= static_cast<qint32>(e.value("transactionIndex").toInteger(0));
         ev.pagingToken     = static_cast<qint32>(e.value("pagingToken").toInteger(0));
         ev.inSuccessfulContractCall =
             e.value("inSuccessfulContractCall").toBool(true);
@@ -35,6 +37,9 @@ GetEventsResponse GetEventsResponse::fromJson(const QJsonObject& r)
         out.m_events.append(ev);
     }
     out.m_latestLedger = readU32(r, "latestLedger");
+    out.m_oldestLedger = readU32(r, "oldestLedger");
+    out.m_latestLedgerCloseTime = r.value("latestLedgerCloseTime").toString();
+    out.m_oldestLedgerCloseTime = r.value("oldestLedgerCloseTime").toString();
     out.m_cursor       = r.value("cursor").toString();
     return out;
 }

@@ -28,10 +28,9 @@ QSTELLAR_BEGIN_NS
  * constructor. The `SorobanServer*` and `Network*` are borrowed (caller
  * keeps ownership).
  *
- * Iter 2 covers the no-auth path:
- *   - SOROBAN_CREDENTIALS_SOURCE_ACCOUNT credentials (the caller is the
- *     transaction's source account).
- *   - auth-entry signing + footprint restore land in Iter 3.
+ * Supports both the no-auth path (SOROBAN_CREDENTIALS_SOURCE_ACCOUNT — the
+ * caller is the transaction's source account) and non-invoker auth-entry
+ * signing (needsNonInvokerSigningBy / signAuthEntries) plus footprint restore.
  *
  * Methods are chainable: `at.simulate().sign(kp).signAndSend(kp).result()`.
  */

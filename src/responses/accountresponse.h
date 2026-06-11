@@ -42,15 +42,18 @@ class Flags {
     Q_PROPERTY(bool auth_required MEMBER m_authRequired)
     Q_PROPERTY(bool auth_revocable MEMBER m_authRevocable)
     Q_PROPERTY(bool auth_immutable MEMBER m_authImmutable)
+    Q_PROPERTY(bool auth_clawback_enabled MEMBER m_authClawbackEnabled)
     bool m_authRequired;
     bool m_authRevocable;
     bool m_authImmutable;
+    bool m_authClawbackEnabled;
 public:
     Flags();
 
     bool getAuthRequired() const;
     bool getAuthRevocable() const;
     bool getAuthImmutable() const;
+    bool getAuthClawbackEnabled() const;
     bool operator !=(const Flags& f) const;
     bool operator ==(const Flags &f) const;
 };
@@ -70,6 +73,7 @@ class Balance {
     Q_PROPERTY(QString selling_liabilities MEMBER m_sellingLiabilities)
     Q_PROPERTY(bool is_authorized MEMBER m_isAuthorized)
     Q_PROPERTY(bool is_authorized_to_maintain_liabilities MEMBER m_isAuthorizedToMaintainLiabilities)
+    Q_PROPERTY(bool is_clawback_enabled MEMBER m_isClawbackEnabled)
     Q_PROPERTY(int last_modified_ledger MEMBER m_lastModifiedLedger)
     Q_PROPERTY(QString sponsor READ getSponsor MEMBER m_sponsor)
     Q_PROPERTY(QString liquidity_pool_id MEMBER m_liquidityPoolId)
@@ -86,6 +90,7 @@ class Balance {
     QString m_sellingLiabilities;
     bool m_isAuthorized;
     bool m_isAuthorizedToMaintainLiabilities;
+    bool m_isClawbackEnabled;
     int m_lastModifiedLedger;
 
     KeyPair *m_assetIssuerKeypair;
@@ -116,6 +121,8 @@ public:
     QString getSponsor() const;
     /** Set only when `asset_type == "liquidity_pool_shares"`. */
     QString getLiquidityPoolId() const { return m_liquidityPoolId; }
+    /** Whether clawback is enabled for this trustline (Protocol 17 CAP-35). */
+    bool getClawbackEnabled() const { return m_isClawbackEnabled; }
 };
 
 /**
@@ -224,6 +231,8 @@ private:
     Q_PROPERTY(QString account_id READ accountID WRITE setAccountID)
     Q_PROPERTY(KeyPair* keypair READ getKeypair)//we dont allow to overwrite this
     Q_PROPERTY(qint64 sequence MEMBER m_sequence NOTIFY sequenceNumberChanged)
+    Q_PROPERTY(qint64 sequence_ledger MEMBER m_sequenceLedger)
+    Q_PROPERTY(QString sequence_time MEMBER m_sequenceTime)
     Q_PROPERTY(QString paging_token MEMBER m_pagingToken NOTIFY pagingTokenChanged)
     Q_PROPERTY(int subentry_count MEMBER m_subentryCount NOTIFY subentryCountChanged)
     Q_PROPERTY(QString inflation_destination MEMBER m_inflationDestination NOTIFY inflationDestinationChanged)
@@ -242,6 +251,8 @@ private:
     KeyPair * m_keypair;//generated with m_account_id
 
     qint64 m_sequence;
+    qint64 m_sequenceLedger;
+    QString m_sequenceTime;
     QString m_pagingToken;
     int m_subentryCount;
     QString m_inflationDestination;
@@ -271,6 +282,10 @@ public:
     qint64 getSequenceNumber() const;
     qint64 getIncrementedSequenceNumber() const;
     void incrementSequenceNumber();
+    /** Ledger sequence in which the account's sequence number was last bumped (CAP-21). 0 if absent. */
+    qint64 getSequenceLedger() const { return m_sequenceLedger; }
+    /** Unix timestamp (string) when the sequence number was last bumped. Empty if absent. */
+    QString getSequenceTime() const { return m_sequenceTime; }
     QString accountID() const;
     AccountResponseAttach::Links getLinks() const;
     QString getPagingToken() const;

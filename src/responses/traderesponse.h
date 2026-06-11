@@ -74,6 +74,10 @@ class TradeResponse : public Response
     Q_PROPERTY(QString counter_asset_issuer MEMBER m_counterAssetIssuer WRITE setCounterAssetIssuer)
 
     Q_PROPERTY(Price price MEMBER m_price)
+    Q_PROPERTY(QString trade_type MEMBER m_tradeType)
+    Q_PROPERTY(qint32 liquidity_pool_fee_bp MEMBER m_liquidityPoolFeeBp)
+    Q_PROPERTY(QString base_liquidity_pool_id MEMBER m_baseLiquidityPoolId)
+    Q_PROPERTY(QString counter_liquidity_pool_id MEMBER m_counterLiquidityPoolId)
 
     Q_PROPERTY(TradeResponseAttach::Links _links MEMBER m_links)
 
@@ -103,6 +107,10 @@ class TradeResponse : public Response
     QString m_counterAssetCode;
     QString m_counterAssetIssuer;
     Price m_price;
+    QString m_tradeType;
+    qint32 m_liquidityPoolFeeBp;
+    QString m_baseLiquidityPoolId;
+    QString m_counterLiquidityPoolId;
     TradeResponseAttach::Links m_links;
     Asset *m_baseAsset;
     Asset *m_counterAsset;
@@ -146,6 +154,11 @@ public:
     QString getCounterAssetIssuer() const;
 
     Price getPrice() const;
+    QString getTradeType() const;
+    /** Liquidity-pool fee in basis points for LP trades (0 for orderbook trades). */
+    qint32 getLiquidityPoolFeeBp() const;
+    QString getBaseLiquidityPoolId() const;
+    QString getCounterLiquidityPoolId() const;
     TradeResponseAttach::Links& getLinks();
     QString seller() const;
     QString buyer() const;

@@ -17,12 +17,16 @@ class CreateAccountOperationResponse : public OperationResponse
     Q_OBJECT
     Q_PROPERTY(QString account READ account WRITE setAccount)
     Q_PROPERTY(QString funder READ funder WRITE setFunder)
+    Q_PROPERTY(QString funder_muxed MEMBER m_funderMuxed)
+    Q_PROPERTY(QString funder_muxed_id MEMBER m_funderMuxedId)
     Q_PROPERTY(QString starting_balance MEMBER m_startingBalance)
     QString m_account;
     QString m_funder;
     QString m_startingBalance;
     KeyPair * m_accountKeypair;
     KeyPair * m_funderKeypair;
+    QString m_funderMuxed;
+    QString m_funderMuxedId;
 public:
     CreateAccountOperationResponse(QNetworkReply* reply=nullptr);
     virtual ~CreateAccountOperationResponse();
@@ -33,6 +37,8 @@ public:
     KeyPair& getFunder();
     QString account() const;
     QString funder() const;
+    QString getFunderMuxed() const { return m_funderMuxed; }
+    QString getFunderMuxedId() const { return m_funderMuxedId; }
 
 public slots:
     void setAccount(QString account);

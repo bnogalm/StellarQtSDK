@@ -11,6 +11,11 @@
 #include "../../src/responses/operations/revokesponsorshipoperationresponse.h"
 #include "../../src/responses/operations/liquiditypooldepositoperationresponse.h"
 #include "../../src/responses/operations/liquiditypoolwithdrawoperationresponse.h"
+#include "../../src/responses/operations/createclaimablebalanceoperationresponse.h"
+#include "../../src/responses/operations/beginsponsoringfuturereservesoperationresponse.h"
+#include "../../src/responses/operations/endsponsoringfuturereservesoperationresponse.h"
+#include "../../src/predicate.h"
+#include "../../src/claimant.h"
 
 #include "../../src/keypair.h"
 #include "../../src/assettypenative.h"
@@ -465,6 +470,10 @@ private slots:
         QCOMPARE(op->getLiquidityPoolId(), QString("a468d41d8e9b8f3c7209d816eb46be1bff71c907dbf4540e6493f7d3d6e3b8d6"));
         QCOMPARE(op->getMinPrice(), QString("0.4000000"));
         QCOMPARE(op->getMaxPrice(), QString("0.6000000"));
+        QCOMPARE(op->getMinPriceR().getNumerator(), 2);
+        QCOMPARE(op->getMinPriceR().getDenominator(), 5);
+        QCOMPARE(op->getMaxPriceR().getNumerator(), 3);
+        QCOMPARE(op->getMaxPriceR().getDenominator(), 5);
         QCOMPARE(op->getSharesReceived(), QString("1402.8005982"));
         QCOMPARE(op->getReservesMax().size(), 2);
         QCOMPARE(op->getReservesMax().at(0).getAsset(), QString("native"));
@@ -531,6 +540,292 @@ private slots:
         QCOMPARE(op->getReservesReceived().size(), 2);
         QCOMPARE(op->getReservesReceived().at(0).getAsset(), QString("native"));
         QCOMPARE(op->getReservesReceived().at(0).getAmount(), QString("105.5000000"));
+    }
+
+    void testDeserializeCreateClaimableBalanceOperation() {
+        QByteArray createClaimableBalanceJSON = "{"
+            "  \"_embedded\": {"
+            "    \"records\": ["
+            "      {"
+            "        \"id\": \"124042211741474817\","
+            "        \"paging_token\": \"124042211741474817\","
+            "        \"transaction_successful\": true,"
+            "        \"source_account\": \"GBS43BF24ENNS3KPACUZVKK2VYPOZVBQO2CISGZ777RYGOPYC2FT6S3K\","
+            "        \"type\": \"create_claimable_balance\","
+            "        \"type_i\": 14,"
+            "        \"created_at\": \"2020-10-02T20:35:22Z\","
+            "        \"transaction_hash\": \"f0d2b8e8b3a3f1c1b5d6e7a8c9d0e1f2031425364758697a8b9c0d1e2f304150\","
+            "        \"asset\": \"USDC:GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN\","
+            "        \"amount\": \"100.0000000\","
+            "        \"claimants\": ["
+            "          {"
+            "            \"destination\": \"GB56OJGSA6VHEUFZDX6AL2YDVG2TS5JDZYQJHDYHBDH7PCD5NIQKLSDO\","
+            "            \"predicate\": {"
+            "              \"or\": ["
+            "                { \"abs_before\": \"2020-09-28T17:57:04Z\" },"
+            "                { \"rel_before\": \"12\" }"
+            "              ]"
+            "            }"
+            "          }"
+            "        ]"
+            "      }"
+            "    ]"
+            "  }"
+            "}";
+
+        OperationPage operationsPage(0);
+        operationsPage.loadFromJson(createClaimableBalanceJSON);
+
+        CreateClaimableBalanceOperationResponse* op =
+            (CreateClaimableBalanceOperationResponse*) operationsPage.at(0);
+
+        QVERIFY(op != nullptr);
+        QCOMPARE(op->getType(), QString("create_claimable_balance"));
+        QCOMPARE(op->sourceAccount(), QString("GBS43BF24ENNS3KPACUZVKK2VYPOZVBQO2CISGZ777RYGOPYC2FT6S3K"));
+        QCOMPARE(op->asset(), QString("USDC:GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN"));
+        QCOMPARE(op->getAmount(), QString("100.0000000"));
+        QList<Claimant> claimants = op->getClaimants();
+        QCOMPARE(claimants.size(), 1);
+        QCOMPARE(claimants.at(0).getDestination(), QString("GB56OJGSA6VHEUFZDX6AL2YDVG2TS5JDZYQJHDYHBDH7PCD5NIQKLSDO"));
+        Predicate::Or& por = (Predicate::Or&) claimants.at(0).getPredicate();
+        QCOMPARE(por.getInner().size(), 2);
+        Predicate::AbsBefore& absBefore = (Predicate::AbsBefore&) por.get(0);
+        Predicate::RelBefore& relBefore = (Predicate::RelBefore&) por.get(1);
+        QCOMPARE(absBefore.getDate().toString(Qt::ISODate), QString("2020-09-28T17:57:04Z"));
+        QCOMPARE(relBefore.getSecondsSinceClose(), 12);
+    }
+
+    void testDeserializeBeginSponsoringFutureReservesOperation() {
+        QByteArray beginSponsoringJSON = "{"
+            "  \"_embedded\": { \"records\": [ {"
+            "    \"id\": \"4458463816060929\","
+            "    \"paging_token\": \"4458463816060929\","
+            "    \"transaction_successful\": true,"
+            "    \"source_account\": \"GB6QDNU47MYBR4NDTRP7M3FW27DAFOEADN5KDQI2DAVWW6YVKKG4QJS7\","
+            "    \"type\": \"begin_sponsoring_future_reserves\","
+            "    \"type_i\": 16,"
+            "    \"created_at\": \"2020-10-02T20:35:22Z\","
+            "    \"transaction_hash\": \"02a69bb0dc83d004ae918aab2d10c9dbc2cbf4451ab12927a691b87e5c6c5079\","
+            "    \"sponsored_id\": \"GB56OJGSA6VHEUFZDX6AL2YDVG2TS5JDZYQJHDYHBDH7PCD5NIQKLSDO\""
+            "  } ] }"
+            "}";
+
+        OperationPage operationsPage(0);
+        operationsPage.loadFromJson(beginSponsoringJSON);
+
+        BeginSponsoringFutureReservesOperationResponse* op =
+            (BeginSponsoringFutureReservesOperationResponse*) operationsPage.at(0);
+
+        QVERIFY(op != nullptr);
+        QCOMPARE(op->getType(), QString("begin_sponsoring_future_reserves"));
+        QCOMPARE(op->sourceAccount(), QString("GB6QDNU47MYBR4NDTRP7M3FW27DAFOEADN5KDQI2DAVWW6YVKKG4QJS7"));
+        QCOMPARE(op->getSponsoredID(), QString("GB56OJGSA6VHEUFZDX6AL2YDVG2TS5JDZYQJHDYHBDH7PCD5NIQKLSDO"));
+    }
+
+    void testDeserializeEndSponsoringFutureReservesOperation() {
+        QByteArray endSponsoringJSON = "{"
+            "  \"_embedded\": { \"records\": [ {"
+            "    \"id\": \"4458463816060930\","
+            "    \"paging_token\": \"4458463816060930\","
+            "    \"transaction_successful\": true,"
+            "    \"source_account\": \"GB56OJGSA6VHEUFZDX6AL2YDVG2TS5JDZYQJHDYHBDH7PCD5NIQKLSDO\","
+            "    \"type\": \"end_sponsoring_future_reserves\","
+            "    \"type_i\": 17,"
+            "    \"created_at\": \"2020-10-02T20:35:25Z\","
+            "    \"transaction_hash\": \"02a69bb0dc83d004ae918aab2d10c9dbc2cbf4451ab12927a691b87e5c6c5079\","
+            "    \"begin_sponsor\": \"GB6QDNU47MYBR4NDTRP7M3FW27DAFOEADN5KDQI2DAVWW6YVKKG4QJS7\""
+            "  } ] }"
+            "}";
+
+        OperationPage operationsPage(0);
+        operationsPage.loadFromJson(endSponsoringJSON);
+
+        EndSponsoringFutureReservesOperationResponse* op =
+            (EndSponsoringFutureReservesOperationResponse*) operationsPage.at(0);
+
+        QVERIFY(op != nullptr);
+        QCOMPARE(op->getType(), QString("end_sponsoring_future_reserves"));
+        QCOMPARE(op->sourceAccount(), QString("GB56OJGSA6VHEUFZDX6AL2YDVG2TS5JDZYQJHDYHBDH7PCD5NIQKLSDO"));
+        QCOMPARE(op->getBeginSponsor(), QString("GB6QDNU47MYBR4NDTRP7M3FW27DAFOEADN5KDQI2DAVWW6YVKKG4QJS7"));
+    }
+
+    void testDeserializeRevokeAccountSponsorshipOperation() {
+        QByteArray revokeAccountJSON = "{"
+            "  \"_embedded\": { \"records\": [ {"
+            "    \"id\": \"4458463816060931\","
+            "    \"paging_token\": \"4458463816060931\","
+            "    \"transaction_successful\": true,"
+            "    \"source_account\": \"GB6QDNU47MYBR4NDTRP7M3FW27DAFOEADN5KDQI2DAVWW6YVKKG4QJS7\","
+            "    \"type\": \"revoke_sponsorship\","
+            "    \"type_i\": 18,"
+            "    \"created_at\": \"2020-10-02T20:35:22Z\","
+            "    \"transaction_hash\": \"02a69bb0dc83d004ae918aab2d10c9dbc2cbf4451ab12927a691b87e5c6c5079\","
+            "    \"account_id\": \"GB56OJGSA6VHEUFZDX6AL2YDVG2TS5JDZYQJHDYHBDH7PCD5NIQKLSDO\""
+            "  } ] }"
+            "}";
+
+        OperationPage operationsPage(0);
+        operationsPage.loadFromJson(revokeAccountJSON);
+
+        RevokeSponsorshipOperationResponse* op =
+            (RevokeSponsorshipOperationResponse*) operationsPage.at(0);
+
+        QVERIFY(op != nullptr);
+        QCOMPARE(op->getType(), QString("revoke_sponsorship"));
+        QCOMPARE(op->getAccountID(), QString("GB56OJGSA6VHEUFZDX6AL2YDVG2TS5JDZYQJHDYHBDH7PCD5NIQKLSDO"));
+        QVERIFY(op->getClaimableBalanceID().isNull());
+        QVERIFY(op->getDataAccountID().isNull());
+        QVERIFY(op->getDataName().isNull());
+        QVERIFY(op->getOfferID().isNull());
+        QVERIFY(op->getSignerAccountID().isNull());
+        QVERIFY(op->getSignerKey().isNull());
+        QVERIFY(op->getTrustlineAccountID().isNull());
+        QVERIFY(op->getTrustlineAsset().isNull());
+    }
+
+    void testDeserializeRevokeDataSponsorshipOperation() {
+        QByteArray revokeDataJSON = "{"
+            "  \"_embedded\": { \"records\": [ {"
+            "    \"id\": \"4458463816060932\","
+            "    \"paging_token\": \"4458463816060932\","
+            "    \"transaction_successful\": true,"
+            "    \"source_account\": \"GB6QDNU47MYBR4NDTRP7M3FW27DAFOEADN5KDQI2DAVWW6YVKKG4QJS7\","
+            "    \"type\": \"revoke_sponsorship\","
+            "    \"type_i\": 18,"
+            "    \"created_at\": \"2020-10-02T20:35:22Z\","
+            "    \"transaction_hash\": \"02a69bb0dc83d004ae918aab2d10c9dbc2cbf4451ab12927a691b87e5c6c5079\","
+            "    \"data_account_id\": \"GB56OJGSA6VHEUFZDX6AL2YDVG2TS5JDZYQJHDYHBDH7PCD5NIQKLSDO\","
+            "    \"data_name\": \"config.setting\""
+            "  } ] }"
+            "}";
+
+        OperationPage operationsPage(0);
+        operationsPage.loadFromJson(revokeDataJSON);
+
+        RevokeSponsorshipOperationResponse* op =
+            (RevokeSponsorshipOperationResponse*) operationsPage.at(0);
+
+        QVERIFY(op != nullptr);
+        QCOMPARE(op->getType(), QString("revoke_sponsorship"));
+        QCOMPARE(op->getDataAccountID(), QString("GB56OJGSA6VHEUFZDX6AL2YDVG2TS5JDZYQJHDYHBDH7PCD5NIQKLSDO"));
+        QCOMPARE(op->getDataName(), QString("config.setting"));
+        QVERIFY(op->getAccountID().isNull());
+        QVERIFY(op->getClaimableBalanceID().isNull());
+        QVERIFY(op->getOfferID().isNull());
+        QVERIFY(op->getSignerAccountID().isNull());
+        QVERIFY(op->getSignerKey().isNull());
+        QVERIFY(op->getTrustlineAccountID().isNull());
+        QVERIFY(op->getTrustlineAsset().isNull());
+    }
+
+    void testDeserializeRevokeSignerSponsorshipOperation() {
+        QByteArray revokeSignerJSON = "{"
+            "  \"_embedded\": { \"records\": [ {"
+            "    \"id\": \"4458463816060933\","
+            "    \"paging_token\": \"4458463816060933\","
+            "    \"transaction_successful\": true,"
+            "    \"source_account\": \"GB6QDNU47MYBR4NDTRP7M3FW27DAFOEADN5KDQI2DAVWW6YVKKG4QJS7\","
+            "    \"type\": \"revoke_sponsorship\","
+            "    \"type_i\": 18,"
+            "    \"created_at\": \"2020-10-02T20:35:22Z\","
+            "    \"transaction_hash\": \"02a69bb0dc83d004ae918aab2d10c9dbc2cbf4451ab12927a691b87e5c6c5079\","
+            "    \"signer_account_id\": \"GB56OJGSA6VHEUFZDX6AL2YDVG2TS5JDZYQJHDYHBDH7PCD5NIQKLSDO\","
+            "    \"signer_key\": \"GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN\""
+            "  } ] }"
+            "}";
+
+        OperationPage operationsPage(0);
+        operationsPage.loadFromJson(revokeSignerJSON);
+
+        RevokeSponsorshipOperationResponse* op =
+            (RevokeSponsorshipOperationResponse*) operationsPage.at(0);
+
+        QVERIFY(op != nullptr);
+        QCOMPARE(op->getType(), QString("revoke_sponsorship"));
+        QCOMPARE(op->getSignerAccountID(), QString("GB56OJGSA6VHEUFZDX6AL2YDVG2TS5JDZYQJHDYHBDH7PCD5NIQKLSDO"));
+        QCOMPARE(op->getSignerKey(), QString("GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN"));
+        QVERIFY(op->getAccountID().isNull());
+        QVERIFY(op->getClaimableBalanceID().isNull());
+        QVERIFY(op->getDataAccountID().isNull());
+        QVERIFY(op->getDataName().isNull());
+        QVERIFY(op->getOfferID().isNull());
+        QVERIFY(op->getTrustlineAccountID().isNull());
+        QVERIFY(op->getTrustlineAsset().isNull());
+    }
+
+    void testDeserializeRevokeTrustlineSponsorshipOperation() {
+        QByteArray revokeTrustlineJSON = "{"
+            "  \"_embedded\": { \"records\": [ {"
+            "    \"id\": \"4458463816060934\","
+            "    \"paging_token\": \"4458463816060934\","
+            "    \"transaction_successful\": true,"
+            "    \"source_account\": \"GB6QDNU47MYBR4NDTRP7M3FW27DAFOEADN5KDQI2DAVWW6YVKKG4QJS7\","
+            "    \"type\": \"revoke_sponsorship\","
+            "    \"type_i\": 18,"
+            "    \"created_at\": \"2020-10-02T20:35:22Z\","
+            "    \"transaction_hash\": \"02a69bb0dc83d004ae918aab2d10c9dbc2cbf4451ab12927a691b87e5c6c5079\","
+            "    \"trustline_account_id\": \"GB56OJGSA6VHEUFZDX6AL2YDVG2TS5JDZYQJHDYHBDH7PCD5NIQKLSDO\","
+            "    \"trustline_asset\": \"USDC:GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN\""
+            "  } ] }"
+            "}";
+
+        OperationPage operationsPage(0);
+        operationsPage.loadFromJson(revokeTrustlineJSON);
+
+        RevokeSponsorshipOperationResponse* op =
+            (RevokeSponsorshipOperationResponse*) operationsPage.at(0);
+
+        QVERIFY(op != nullptr);
+        QCOMPARE(op->getType(), QString("revoke_sponsorship"));
+        QCOMPARE(op->getTrustlineAccountID(), QString("GB56OJGSA6VHEUFZDX6AL2YDVG2TS5JDZYQJHDYHBDH7PCD5NIQKLSDO"));
+        QCOMPARE(op->getTrustlineAsset(), QString("USDC:GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN"));
+        QVERIFY(op->getAccountID().isNull());
+        QVERIFY(op->getClaimableBalanceID().isNull());
+        QVERIFY(op->getDataAccountID().isNull());
+        QVERIFY(op->getDataName().isNull());
+        QVERIFY(op->getOfferID().isNull());
+        QVERIFY(op->getSignerAccountID().isNull());
+        QVERIFY(op->getSignerKey().isNull());
+    }
+
+    void testDeserializePaymentWithMuxedAccounts() {
+        // CAP-27 muxed source/from/to. muxed_id = 2^64-1 must survive as a string
+        // (a qint64 would overflow and corrupt the account id).
+        QByteArray json = "{"
+            "  \"_embedded\": { \"records\": [ {"
+            "    \"id\": \"3704821609664513\","
+            "    \"paging_token\": \"3704821609664513\","
+            "    \"transaction_successful\": true,"
+            "    \"source_account\": \"GCYK67DDGBOANS6UODJ62QWGLEB2A7JQ3XUV25HCMLT7CI23PMMK3W6R\","
+            "    \"source_account_muxed\": \"MA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJVAAAAAAAAAAAAAJLK\","
+            "    \"source_account_muxed_id\": \"18446744073709551615\","
+            "    \"type\": \"payment\","
+            "    \"type_i\": 1,"
+            "    \"asset_type\": \"native\","
+            "    \"from\": \"GCYK67DDGBOANS6UODJ62QWGLEB2A7JQ3XUV25HCMLT7CI23PMMK3W6R\","
+            "    \"from_muxed\": \"MA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJVAAAAAAAAAAAAAJLK\","
+            "    \"from_muxed_id\": \"18446744073709551615\","
+            "    \"to\": \"GBRPYHIL2CI3FNQ4BXLFMNDLFJUNPU2HY3ZMFSHONUCEOASW7QC7OX2H\","
+            "    \"to_muxed\": \"MBRPYHIL2CI3FNQ4BXLFMNDLFJUNPU2HY3ZMFSHONUCEOASW7QC7OX2HAAAAAAAAAAAAAPNT2\","
+            "    \"to_muxed_id\": \"420\","
+            "    \"amount\": \"10.123\""
+            "  } ] }"
+            "}";
+
+        OperationPage operationsPage(0);
+        operationsPage.loadFromJson(json);
+        PaymentOperationResponse* op = (PaymentOperationResponse*) operationsPage.at(0);
+
+        QVERIFY(op != nullptr);
+        QCOMPARE(op->getType(), QString("payment"));
+        // base OperationResponse muxed source (inherited by every operation type)
+        QCOMPARE(op->getSourceAccountMuxed(), QString("MA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJVAAAAAAAAAAAAAJLK"));
+        QCOMPARE(op->getSourceAccountMuxedId(), QString("18446744073709551615"));
+        // payment from/to muxed
+        QCOMPARE(op->getFromMuxed(), QString("MA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJVAAAAAAAAAAAAAJLK"));
+        QCOMPARE(op->getFromMuxedId(), QString("18446744073709551615"));
+        QCOMPARE(op->getToMuxed(), QString("MBRPYHIL2CI3FNQ4BXLFMNDLFJUNPU2HY3ZMFSHONUCEOASW7QC7OX2HAAAAAAAAAAAAAPNT2"));
+        QCOMPARE(op->getToMuxedId(), QString("420"));
     }
 };
 

@@ -16,8 +16,8 @@ QSTELLAR_BEGIN_NS
  * the type-specific helper that lives alongside the matching domain object
  * (e.g. SCAddress for Soroban contracts, ClaimableBalanceID, PoolID).
  *
- * SCAddress conversion (.toScAddress/.fromScAddress) lands in 0.9.0
- * alongside the Soroban XDR.
+ * SCAddress conversion is provided by the Scv helpers
+ * (Scv::toAddress(StellarAddress) / Scv::fromAddress), not as members here.
  *
  * Renamed from `Address` in 0.9.0 to avoid collision with Boost.Asio, Qt's
  * networking address types, and downstream `Address` classes in user code.

@@ -33,6 +33,10 @@ QString CreatePassiveSellOfferOperationResponse::getPrice() const{
     return m_price;
 }
 
+Price CreatePassiveSellOfferOperationResponse::getPriceR() const{
+    return Price(m_priceR.value("n").toUInt(), m_priceR.value("d").toUInt());
+}
+
 Asset* CreatePassiveSellOfferOperationResponse::getBuyingAsset() {
     if(m_buyingAsset)
         return m_buyingAsset;

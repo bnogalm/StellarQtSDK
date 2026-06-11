@@ -6,7 +6,7 @@
 #include <QtTest>
 #include "../testcollector.h"
 #include "../../src/responses/page.h"
-#include "../../src/responses/tradeaggregationresponse.h".h"
+#include "../../src/responses/tradeaggregationresponse.h"
 #include "../../src/keypair.h"
 class TradeAggregationsPageDeserializerTest: public QObject
 {
@@ -40,12 +40,21 @@ private slots:
         QCOMPARE(page.get(0).getLow(), QString("0.0000124"));
         QCOMPARE(page.get(0).getOpen(), QString("0.0000125"));
         QCOMPARE(page.get(0).getClose(), QString("0.0000126"));
+        QCOMPARE(page.get(0).getHighR().getNumerator(), 123);
+        QCOMPARE(page.get(0).getHighR().getDenominator(), 10000000);
+        QCOMPARE(page.get(0).getLowR().getNumerator(), 124);
+        QCOMPARE(page.get(0).getLowR().getDenominator(), 10000000);
+        QCOMPARE(page.get(0).getOpenR().getNumerator(), 125);
+        QCOMPARE(page.get(0).getOpenR().getDenominator(), 10000000);
+        QCOMPARE(page.get(0).getCloseR().getNumerator(), 126);
+        QCOMPARE(page.get(0).getCloseR().getDenominator(), 10000000);
 
         //support parse string timestamp and trade_count
         QCOMPARE(page.get(1).getTimestamp(), (qint64)1512732300000);
         QCOMPARE(page.get(1).getTradeCount(), (qint32)1);
     }
 
+private:
     QByteArray json = "{\n"
                       "  \"_links\": {\n"
                       "    \"self\": {\n"
@@ -64,9 +73,13 @@ private slots:
                       "        \"counter_volume\": \"0.0041700\",\n"
                       "        \"avg\": \"0.0000122\",\n"
                       "        \"high\": \"0.0000123\",\n"
+                      "        \"high_r\": { \"n\": \"123\", \"d\": \"10000000\" },\n"
                       "        \"low\": \"0.0000124\",\n"
+                      "        \"low_r\": { \"n\": \"124\", \"d\": \"10000000\" },\n"
                       "        \"open\": \"0.0000125\",\n"
-                      "        \"close\": \"0.0000126\"\n"
+                      "        \"open_r\": { \"n\": \"125\", \"d\": \"10000000\" },\n"
+                      "        \"close\": \"0.0000126\",\n"
+                      "        \"close_r\": { \"n\": \"126\", \"d\": \"10000000\" }\n"
                       "      },\n"
                       "      {\n"
                       "        \"timestamp\": \"1512732300000\",\n"

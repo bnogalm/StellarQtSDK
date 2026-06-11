@@ -8,6 +8,7 @@ TradeResponse::TradeResponse(QNetworkReply *reply)
     :Response(reply)
     ,m_baseIsSeller(false)
     ,m_baseAccountKeypair(nullptr),m_counterAccountKeypair(nullptr)
+    ,m_liquidityPoolFeeBp(0)
     ,m_baseAsset(nullptr),m_counterAsset(nullptr)
 {
 
@@ -108,6 +109,22 @@ QString TradeResponse::getCounterAssetIssuer() const{
 
 Price TradeResponse::getPrice() const{
     return m_price;
+}
+
+QString TradeResponse::getTradeType() const{
+    return m_tradeType;
+}
+
+qint32 TradeResponse::getLiquidityPoolFeeBp() const{
+    return m_liquidityPoolFeeBp;
+}
+
+QString TradeResponse::getBaseLiquidityPoolId() const{
+    return m_baseLiquidityPoolId;
+}
+
+QString TradeResponse::getCounterLiquidityPoolId() const{
+    return m_counterLiquidityPoolId;
 }
 
 TradeResponseAttach::Links &TradeResponse::getLinks(){

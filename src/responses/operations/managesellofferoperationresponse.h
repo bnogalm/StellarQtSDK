@@ -4,6 +4,7 @@
 #include <QObject>
 #include "operationresponse.h"
 #include "qstellar_namespace.h"
+#include "../../price.h"
 
 QSTELLAR_BEGIN_NS
 
@@ -18,8 +19,9 @@ class ManageSellOfferOperationResponse : public OperationResponse
     Q_OBJECT
     Q_PROPERTY(qint64 offer_id MEMBER m_offerID)
     Q_PROPERTY(QString amount MEMBER m_amount)
-    // Price is not implemented yet in horizon
     Q_PROPERTY(QString price MEMBER m_price)
+    // price_r: exact rational price {n,d}; `price` above is the rounded decimal.
+    Q_PROPERTY(QVariantMap price_r MEMBER m_priceR)
 
     Q_PROPERTY(QString buying_asset_type READ buyingAssetType WRITE setBuyingAssetType)
     Q_PROPERTY(QString buying_asset_code READ buyingAssetCode WRITE setBuyingAssetCode)
@@ -32,6 +34,7 @@ class ManageSellOfferOperationResponse : public OperationResponse
     qint64 m_offerID;
     QString m_amount;
     QString m_price;
+    QVariantMap m_priceR;
 
     QString m_buyingAssetType;
     QString m_buyingAssetCode;
@@ -50,6 +53,8 @@ public:
     qint64 getOfferId() const;
     QString getAmount() const;
     QString getPrice() const;
+    /** Exact price as a rational {n,d}. Prefer over getPrice() for fund-critical math. */
+    Price getPriceR() const;
     Asset* getBuyingAsset();
     Asset* getSellingAsset();
     QString buyingAssetType() const;

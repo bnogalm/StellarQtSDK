@@ -7,6 +7,7 @@
 
 
 #include "../keypair.h"
+#include "../price.h"
 #include "qstellar_namespace.h"
 
 QSTELLAR_BEGIN_NS
@@ -49,6 +50,7 @@ class OfferResponse : public Response
     Q_PROPERTY(QVariantMap buying READ buying WRITE setBuying)
     Q_PROPERTY(QString amount MEMBER m_amount)
     Q_PROPERTY(QString price MEMBER m_price)
+    Q_PROPERTY(QVariantMap price_r MEMBER m_priceR)
     Q_PROPERTY(qint32 last_modified_ledger MEMBER m_lastModifiedLedger)
     Q_PROPERTY(QString last_modified_time MEMBER m_lastModifiedTime)
     Q_PROPERTY(OfferResponseAttach::Links _links MEMBER m_links)
@@ -64,6 +66,7 @@ class OfferResponse : public Response
     Asset* m_buyingAsset;
     QString m_amount;
     QString m_price;
+    QVariantMap m_priceR;
     qint32 m_lastModifiedLedger;
     QString m_lastModifiedTime;
     OfferResponseAttach::Links m_links;
@@ -79,6 +82,8 @@ public:
     Asset* getBuying();
     QString getAmount();
     QString getPrice() const;
+    /** Exact price as a rational {n,d}. Prefer over getPrice() for fund-critical math. */
+    Price getPriceR() const;
     qint32 getLastModifiedLedger() const;
     // Can be null if ledger adding an offer has not been ingested yet.
     QString getLastModifiedTime() const;

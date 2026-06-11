@@ -3,6 +3,8 @@
 #include <QJsonArray>
 #include "effects/effectresponse.h"
 #include "effects/accountcreatedeffectresponse.h"
+#include "effects/contractcreditedeffectresponse.h"
+#include "effects/contractdebitedeffectresponse.h"
 #include "effects/accountcreditedeffectresponse.h"
 #include "effects/accountdebitedeffectresponse.h"
 #include "effects/accountflagsupdatedeffectresponse.h"
@@ -186,6 +188,10 @@ void EffectsPage::processRecords(const QJsonArray &records)
           effect= new LiquidityPoolRemovedEffectResponse();break;
         case 95:
           effect= new LiquidityPoolRevokedEffectResponse();break;
+        case 96:
+          effect= new ContractCreditedEffectResponse();break;
+        case 97:
+          effect= new ContractDebitedEffectResponse();break;
         default:
             throw std::runtime_error("Invalid effect type");
         }

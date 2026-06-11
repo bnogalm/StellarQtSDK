@@ -10,6 +10,16 @@ OffersRequestBuilder::OffersRequestBuilder(Server *server):RequestBuilder(server
 
 }
 
+OfferResponse* OffersRequestBuilder::offer(QUrl uri) {
+    this->setRequestUri(uri);
+    return server()->get<OfferResponse>(this);
+}
+
+OfferResponse* OffersRequestBuilder::offer(qint64 offerId) {
+    this->setSegments(QStringList()<< "offers"<< QString::number(offerId));
+    return this->offer(this->buildUri());
+}
+
 OffersRequestBuilder &OffersRequestBuilder::forAccount(KeyPair *account) {
     account = checkNotNull(account, "account cannot be null");
 

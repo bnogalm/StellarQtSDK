@@ -82,6 +82,37 @@ private slots:
     }
 
 
+    void testDeserializeWithDiagnosticEventsXdr() {
+        QString json = "{\n"
+                       "  \"type\": \"https://stellar.org/horizon-errors/transaction_failed\",\n"
+                       "  \"title\": \"Transaction Failed\",\n"
+                       "  \"status\": 400,\n"
+                       "  \"extras\": {\n"
+                       "    \"envelope_xdr\": \"AAAAAA==\",\n"
+                       "    \"result_codes\": {\n"
+                       "      \"transaction\": \"tx_failed\",\n"
+                       "      \"operations\": [ \"op_invoke_host_function_resource_limit_exceeded\" ]\n"
+                       "    },\n"
+                       "    \"result_xdr\": \"AAAAAAAAAGT/////AAAAAA==\",\n"
+                       "    \"diagnostic_events_xdr\": [\n"
+                       "      \"AAAAAQAAAAA=\",\n"
+                       "      \"AAAAAgAAAAA=\"\n"
+                       "    ]\n"
+                       "  }\n"
+                       "}";
+
+        SubmitTransactionResponse* submitTransactionResponse = new SubmitTransactionResponse(nullptr,nullptr);
+        submitTransactionResponse->loadFromJson(json.toLatin1());
+
+        QVERIFY(submitTransactionResponse->isSuccess()== false);
+        QCOMPARE(submitTransactionResponse->getExtras().getResultCodes().getTransactionResultCode(), QString("tx_failed"));
+        QStringList events = submitTransactionResponse->getExtras().getDiagnosticEventsXdr();
+        QCOMPARE(events.size(), 2);
+        QCOMPARE(events.at(0), QString("AAAAAQAAAAA="));
+        QCOMPARE(events.at(1), QString("AAAAAgAAAAA="));
+    }
+
+
     void testDeserializeSuccessResponse() {
         QString json = "{\n"
                        "  \"_links\": {\n"

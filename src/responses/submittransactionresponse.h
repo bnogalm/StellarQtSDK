@@ -50,9 +50,11 @@ class Extras
     Q_PROPERTY(QString envelope_xdr MEMBER m_envelopeXdr)
     Q_PROPERTY(QString result_xdr MEMBER m_resultXdr)
     Q_PROPERTY(SubmitTransactionResponseAttach::ResultCodes result_codes MEMBER m_resultCodes)
+    Q_PROPERTY(QStringList diagnostic_events_xdr MEMBER m_diagnosticEventsXdr)
     QString m_envelopeXdr;
     QString m_resultXdr;
     ResultCodes m_resultCodes;
+    QStringList m_diagnosticEventsXdr;
 public:
 
     /**
@@ -78,11 +80,20 @@ public:
         return m_resultCodes;
     }
 
+    /**
+    * Soroban diagnostic events (base64 XDR) attached to a failed submit, if the
+    * server returned them. Empty for classic (non-Soroban) transactions.
+    */
+    QStringList getDiagnosticEventsXdr() const {
+        return m_diagnosticEventsXdr;
+    }
+
     bool operator ==(const Extras& rc) const
     {
         return m_envelopeXdr == rc.m_envelopeXdr
                 && m_resultXdr == rc.m_resultXdr
-                && m_resultCodes == rc.m_resultCodes;
+                && m_resultCodes == rc.m_resultCodes
+                && m_diagnosticEventsXdr == rc.m_diagnosticEventsXdr;
     }
     bool operator !=(const Extras& rc) const
     {

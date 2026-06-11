@@ -18,7 +18,7 @@ static void registerTypes()
 Q_COREAPP_STARTUP_FUNCTION(registerTypes)
 
 AccountResponse::AccountResponse(QNetworkReply *reply)
-    :Response(reply), m_keypair(nullptr), m_sequence(0) ,m_subentryCount(0),m_numSponsoring(0),m_numSponsored(0)
+    :Response(reply), m_keypair(nullptr), m_sequence(0) ,m_sequenceLedger(0),m_subentryCount(0),m_numSponsoring(0),m_numSponsored(0)
 {
 
 }
@@ -124,7 +124,7 @@ void AccountResponse::setAccountID(QString account_id)
 
 namespace AccountResponseAttach
 {
-Balance::Balance():m_assetIssuerKeypair(nullptr),m_asset(nullptr){
+Balance::Balance():m_isClawbackEnabled(false),m_assetIssuerKeypair(nullptr),m_asset(nullptr){
 }
 
 Balance::~Balance()
@@ -137,6 +137,10 @@ Asset *Balance::getAsset() {
     if(!m_asset){
         if (m_assetType =="native") {
             m_asset= new AssetTypeNative();
+        } else if (m_assetType =="liquidity_pool_shares") {
+            // Pool shares aren't a classic Asset (no code/issuer). Returning the
+            // pool-share balance's asset would throw; use getLiquidityPoolId() instead.
+            return nullptr;
         } else {
             m_asset= Asset::createNonNativeAsset(m_assetCode, getAssetIssuer());
         }
@@ -206,6 +210,7 @@ bool Balance::operator !=(const Balance &b) const
             || (this->m_sellingLiabilities!=b.m_sellingLiabilities)
             || (this->m_isAuthorized!=b.m_isAuthorized)
             || (this->m_isAuthorizedToMaintainLiabilities!=b.m_isAuthorizedToMaintainLiabilities)
+            || (this->m_isClawbackEnabled!=b.m_isClawbackEnabled)
             || (this->m_lastModifiedLedger!=b.m_lastModifiedLedger)
             || (this->m_sponsor!=b.m_sponsor)
             || (this->m_liquidityPoolId!=b.m_liquidityPoolId);
@@ -222,6 +227,7 @@ bool Balance::operator ==(const Balance &b) const
             && (this->m_sellingLiabilities==b.m_sellingLiabilities)
             && (this->m_isAuthorized==b.m_isAuthorized)
             && (this->m_isAuthorizedToMaintainLiabilities==b.m_isAuthorizedToMaintainLiabilities)
+            && (this->m_isClawbackEnabled==b.m_isClawbackEnabled)
             && (this->m_lastModifiedLedger==b.m_lastModifiedLedger)
             && (this->m_sponsor==b.m_sponsor)
             && (this->m_liquidityPoolId==b.m_liquidityPoolId);
@@ -320,6 +326,7 @@ Flags::Flags()
     :m_authRequired(false)
     ,m_authRevocable(false)
     ,m_authImmutable(false)
+    ,m_authClawbackEnabled(false)
 {
 
 }
@@ -336,18 +343,24 @@ bool Flags::getAuthImmutable() const{
     return m_authImmutable;
 }
 
+bool Flags::getAuthClawbackEnabled() const{
+    return m_authClawbackEnabled;
+}
+
 bool Flags::operator !=(const Flags &f) const
 {
     return (m_authRequired!=f.m_authRequired)
             || (m_authRevocable != f.m_authRevocable)
-            || (m_authImmutable != f.m_authImmutable);
+            || (m_authImmutable != f.m_authImmutable)
+            || (m_authClawbackEnabled != f.m_authClawbackEnabled);
 }
 
 bool Flags::operator ==(const Flags &f) const
 {
     return (m_authRequired==f.m_authRequired)
             && (m_authRevocable== f.m_authRevocable)
-            && (m_authImmutable== f.m_authImmutable);
+            && (m_authImmutable== f.m_authImmutable)
+            && (m_authClawbackEnabled== f.m_authClawbackEnabled);
 }
 
 Thresholds::Thresholds()

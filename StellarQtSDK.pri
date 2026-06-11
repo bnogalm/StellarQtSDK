@@ -5,7 +5,7 @@ DEFINES += STELLAR_QT_REPLY_TIMEOUT=30000
 DEFINES *= ED25519_NO_SEED
 
 DEFINES += STELLAR_QT_SDK_CLIENT_NAME=\"\\\"qtcpp-stellar-sdk\\\"\"
-DEFINES += STELLAR_QT_SDK_CLIENT_VERSION=\"\\\"1.0.0\\\"\"
+DEFINES += STELLAR_QT_SDK_CLIENT_VERSION=\"\\\"1.0.1\\\"\"
 
 #DEFINES += STELLAR_QT_AUTOSET_BASE_FEE
 
@@ -221,6 +221,8 @@ SOURCES += \
     $$PWD/src/responses/effects/effectresponse.cpp \
     $$PWD/src/responses/effects/accountcreatedeffectresponse.cpp \
     $$PWD/src/responses/effects/accountcreditedeffectresponse.cpp \
+    $$PWD/src/responses/effects/contractcreditedeffectresponse.cpp \
+    $$PWD/src/responses/effects/contractdebitedeffectresponse.cpp \
     $$PWD/src/responses/effects/accountdebitedeffectresponse.cpp \
     $$PWD/src/responses/effects/accountflagsupdatedeffectresponse.cpp \
     $$PWD/src/responses/effects/accounthomedomainupdatedeffectresponse.cpp \
@@ -492,6 +494,8 @@ HEADERS += \
     $$PWD/src/responses/effects/effectresponse.h \
     $$PWD/src/responses/effects/accountcreatedeffectresponse.h \
     $$PWD/src/responses/effects/accountcreditedeffectresponse.h \
+    $$PWD/src/responses/effects/contractcreditedeffectresponse.h \
+    $$PWD/src/responses/effects/contractdebitedeffectresponse.h \
     $$PWD/src/responses/effects/accountdebitedeffectresponse.h \
     $$PWD/src/responses/effects/accountflagsupdatedeffectresponse.h \
     $$PWD/src/responses/effects/accounthomedomainupdatedeffectresponse.h \

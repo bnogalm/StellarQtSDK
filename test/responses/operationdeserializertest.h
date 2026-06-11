@@ -24,6 +24,7 @@
 #include "../../src/responses/operations/bumpsequenceoperationresponse.h"
 
 #include "../../src/responses/operations/clawbackclaimablebalanceoperationresponse.h"
+#include "../../src/responses/operations/claimclaimablebalanceoperationresponse.h"
 #include "../../src/responses/operations/clawbackoperationresponse.h"
 #include "../../src/responses/operations/settrustlineflagsoperationresponse.h"
 
@@ -514,6 +515,8 @@ private slots:
                 "        \"type_i\": 3,\n"
                 "        \"offer_id\": 0,\n"
                 "        \"amount\": \"100.0\",\n"
+                "        \"price\": \"32.6639943\",\n"
+                "        \"price_r\": { \"n\": 326639943, \"d\": 10000000 },\n"
                 "        \"buying_asset_type\": \"credit_alphanum4\",\n"
                 "        \"buying_asset_code\": \"CNY\",\n"
                 "        \"buying_asset_issuer\": \"GAZWSWPDQTBHFIPBY4FEDFW2J6E2LE7SZHJWGDZO6Q63W7DBSRICO2KN\",\n"
@@ -525,6 +528,9 @@ private slots:
 
         QCOMPARE(operation.getOfferId(), 0);
         QCOMPARE(operation.getAmount(), QString("100.0"));
+        QCOMPARE(operation.getPrice(), QString("32.6639943"));
+        QCOMPARE(operation.getPriceR().getNumerator(), 326639943);
+        QCOMPARE(operation.getPriceR().getDenominator(), 10000000);
         QVERIFY(operation.getBuyingAsset()->equals( Asset::createNonNativeAsset("CNY", KeyPair::fromAccountId(QString("GAZWSWPDQTBHFIPBY4FEDFW2J6E2LE7SZHJWGDZO6Q63W7DBSRICO2KN")))));
         QVERIFY(operation.getSellingAsset()->equals( new AssetTypeNative()));
     }
@@ -597,6 +603,8 @@ private slots:
                           "        \"type_i\": 12,\n"
                           "        \"offer_id\": 0,\n"
                           "        \"amount\": \"100.0\",\n"
+                          "        \"price\": \"2.3058668\",\n"
+                          "        \"price_r\": { \"n\": 5764667, \"d\": 2500000 },\n"
                           "        \"buying_asset_type\": \"credit_alphanum4\",\n"
                           "        \"buying_asset_code\": \"CNY\",\n"
                           "        \"buying_asset_issuer\": \"GAZWSWPDQTBHFIPBY4FEDFW2J6E2LE7SZHJWGDZO6Q63W7DBSRICO2KN\",\n"
@@ -607,6 +615,9 @@ private slots:
         operation.loadFromJson(json);
         QCOMPARE(operation.getOfferId(), 0);
         QCOMPARE(operation.getAmount(), QString("100.0"));
+        QCOMPARE(operation.getPrice(), QString("2.3058668"));
+        QCOMPARE(operation.getPriceR().getNumerator(), 5764667);
+        QCOMPARE(operation.getPriceR().getDenominator(), 2500000);
         QVERIFY(operation.getBuyingAsset()->equals( Asset::createNonNativeAsset("CNY", KeyPair::fromAccountId(QString("GAZWSWPDQTBHFIPBY4FEDFW2J6E2LE7SZHJWGDZO6Q63W7DBSRICO2KN")))));
         QVERIFY(operation.getSellingAsset()->equals( new AssetTypeNative()));
     }
@@ -854,6 +865,9 @@ private slots:
         operation.loadFromJson(json);
 
         QCOMPARE(operation.getAmount(), QString("11.27827"));
+        QCOMPARE(operation.getPrice(), QString("1.0"));
+        QCOMPARE(operation.getPriceR().getNumerator(), 1);
+        QCOMPARE(operation.getPriceR().getDenominator(), 1);
         QVERIFY(operation.getBuyingAsset()->equals(Asset::createNonNativeAsset("USD", KeyPair::fromAccountId(QString("GDS5JW5E6DRSSN5XK4LW7E6VUMFKKE2HU5WCOVFTO7P2RP7OXVCBLJ3Y")))));
         QVERIFY(operation.getSellingAsset()->equals( new AssetTypeNative()));
     }
@@ -1123,6 +1137,87 @@ private slots:
       QCOMPARE(operation.getClearFlags(), QList<qint32>() << 2);
       QCOMPARE(operation.getSetFlagStrings(), QStringList() << "clawback_enabled");
       QCOMPARE(operation.getClearFlagStrings(), QStringList()<< "authorized_to_maintain_liabilites");
+    }
+
+    // Mirrors java-stellar-sdk OperationResponseTest#testClaimClaimableBalanceOperation
+    // (same balance_id / claimant values → expects the same parsed response).
+    void testDeserializeClaimClaimableBalanceOperation() {
+      QByteArray json = "{\n"
+          "  \"_links\": {\n"
+          "    \"effects\": {\n"
+          "      \"href\": \"/operations/12884914177/effects/{?cursor,limit,order}\",\n"
+          "      \"templated\": true\n"
+          "    },\n"
+          "    \"precedes\": {\n"
+          "      \"href\": \"/operations?cursor=12884914177\\u0026order=asc\"\n"
+          "    },\n"
+          "    \"self\": {\n"
+          "      \"href\": \"/operations/12884914177\"\n"
+          "    },\n"
+          "    \"succeeds\": {\n"
+          "      \"href\": \"/operations?cursor=12884914177\\u0026order=desc\"\n"
+          "    },\n"
+          "    \"transaction\": {\n"
+          "      \"href\": \"/transactions/12884914176\"\n"
+          "    }\n"
+          "  },\n"
+          "  \"id\": 12884914177,\n"
+          "  \"paging_token\": \"12884914177\",\n"
+          "  \"type_i\": 15,\n"
+          "  \"type\": \"claim_claimable_balance\",\n"
+          "  \"balance_id\": \"00000000a5c8c85c12a32ec1b30fc1792a542ca38702afd78eb4fe524d028887cf6b6952\",\n"
+          "  \"claimant\": \"GAEY7JFLBBDD6PAUPVRVKMBNSL5W6GYMUOGJKNGHGFSFGJU6CT2IUARS\"\n"
+          "}";
+
+      ClaimClaimableBalanceOperationResponse operation;
+      operation.loadFromJson(json);
+
+      QCOMPARE(operation.getId(), 12884914177L);
+      QCOMPARE(operation.getType(), "claim_claimable_balance");
+      QCOMPARE(operation.getBalanceID(), "00000000a5c8c85c12a32ec1b30fc1792a542ca38702afd78eb4fe524d028887cf6b6952");
+      QCOMPARE(operation.getClaimant(), "GAEY7JFLBBDD6PAUPVRVKMBNSL5W6GYMUOGJKNGHGFSFGJU6CT2IUARS");
+    }
+
+    // Mirrors java-stellar-sdk OperationResponseTest#testChangeTrustOperationWithLiquidityPoolId.
+    // (Muxed trustor fields asserted by Java are CAP-27 / roadmap P1.5, not yet ported.)
+    void testDeserializeChangeTrustOperationLiquidityPool() {
+      QByteArray json = "{\n"
+          "  \"_links\": {\n"
+          "    \"self\": {\n"
+          "      \"href\": \"//horizon-testnet.stellar.org/operations/3602970755207169\"\n"
+          "    },\n"
+          "    \"transaction\": {\n"
+          "      \"href\": \"//horizon-testnet.stellar.org/transactions/8d409a788543895843d269c3f97a2d6a2ebca6e9f8f9a7ae593457b5c0ba6644\"\n"
+          "    },\n"
+          "    \"effects\": {\n"
+          "      \"href\": \"//horizon-testnet.stellar.org/operations/3602970755207169/effects\"\n"
+          "    },\n"
+          "    \"succeeds\": {\n"
+          "      \"href\": \"//horizon-testnet.stellar.org/effects?order=desc\\u0026cursor=3602970755207169\"\n"
+          "    },\n"
+          "    \"precedes\": {\n"
+          "      \"href\": \"//horizon-testnet.stellar.org/effects?order=asc\\u0026cursor=3602970755207169\"\n"
+          "    }\n"
+          "  },\n"
+          "  \"id\": \"3602970755207169\",\n"
+          "  \"paging_token\": \"3602970755207169\",\n"
+          "  \"source_account\": \"GAQXAWHCM4A7SQCT3BOSVEGRI2OOB7LO2CMFOYFF6YRXU4VQSB5V2V2K\",\n"
+          "  \"type\": \"change_trust\",\n"
+          "  \"type_i\": 6,\n"
+          "  \"asset_type\": \"liquidity_pool_shares\",\n"
+          "  \"liquidity_pool_id\": \"2c0bfa623845dd101cbf074a1ca1ae4b2458cc8d0104ad65939ebe2cd9054355\",\n"
+          "  \"limit\": \"922337203685.4775807\",\n"
+          "  \"trustor\": \"GAQXAWHCM4A7SQCT3BOSVEGRI2OOB7LO2CMFOYFF6YRXU4VQSB5V2V2K\"\n"
+          "}";
+
+      ChangeTrustOperationResponse operation;
+      operation.loadFromJson(json);
+
+      QCOMPARE(operation.getType(), "change_trust");
+      QCOMPARE(operation.assetType(), QString("liquidity_pool_shares"));
+      QCOMPARE(operation.getLiquidityPoolId(), QString("2c0bfa623845dd101cbf074a1ca1ae4b2458cc8d0104ad65939ebe2cd9054355"));
+      QCOMPARE(operation.getLimit(), QString("922337203685.4775807"));
+      QCOMPARE(operation.getTrustor().getAccountId(), QString("GAQXAWHCM4A7SQCT3BOSVEGRI2OOB7LO2CMFOYFF6YRXU4VQSB5V2V2K"));
     }
 };
 ADD_TEST(OperationDeserializerTest)

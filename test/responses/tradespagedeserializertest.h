@@ -46,7 +46,41 @@ private slots:
 
         QCOMPARE(tradesPage.get(0).getPrice().getNumerator(), 267);
         QCOMPARE(tradesPage.get(0).getPrice().getDenominator(), 1000);
+        QCOMPARE(tradesPage.get(0).getLiquidityPoolFeeBp(), 0);
+        QVERIFY(tradesPage.get(0).getTradeType().isEmpty());
         QCOMPARE(tradesPage.get(1).getBaseAccount().getAccountId(), QString("GAVH5JM5OKXGMQDS7YPRJ4MQCPXJUGH26LYQPQJ4SOMOJ4SXY472ZM7G"));
+    }
+
+    void testDeserializeLiquidityPoolTrade() {
+        QByteArray lpJson = "{"
+            "  \"_embedded\": { \"records\": [ {"
+            "    \"_links\": { \"self\": { \"href\": \"\" }, \"base\": { \"href\": \"\" }, \"counter\": { \"href\": \"\" }, \"operation\": { \"href\": \"\" } },"
+            "    \"id\": \"123456789-0\","
+            "    \"paging_token\": \"123456789-0\","
+            "    \"ledger_close_time\": \"2021-11-18T03:47:47Z\","
+            "    \"trade_type\": \"liquidity_pool\","
+            "    \"liquidity_pool_fee_bp\": 30,"
+            "    \"base_liquidity_pool_id\": \"abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789\","
+            "    \"base_amount\": \"10.0000000\","
+            "    \"base_asset_type\": \"native\","
+            "    \"counter_account\": \"GBB4JST32UWKOLGYYSCEYBHBCOFL2TGBHDVOMZP462ET4ZRD4ULA7S2L\","
+            "    \"counter_amount\": \"2.6700000\","
+            "    \"counter_asset_type\": \"credit_alphanum4\","
+            "    \"counter_asset_code\": \"JPY\","
+            "    \"counter_asset_issuer\": \"GBVAOIACNSB7OVUXJYC5UE2D4YK2F7A24T7EE5YOMN4CE6GCHUTOUQXM\","
+            "    \"base_is_seller\": true,"
+            "    \"price\": { \"n\": 267, \"d\": 1000 }"
+            "  } ] }"
+            "}";
+
+        Page<TradeResponse> tradesPage;
+        tradesPage.loadFromJson(lpJson);
+
+        QCOMPARE(tradesPage.get(0).getTradeType(), QString("liquidity_pool"));
+        QCOMPARE(tradesPage.get(0).getLiquidityPoolFeeBp(), 30);
+        QCOMPARE(tradesPage.get(0).getBaseLiquidityPoolId(), QString("abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789"));
+        QVERIFY(tradesPage.get(0).getCounterLiquidityPoolId().isEmpty());
+        QCOMPARE(tradesPage.get(0).getPrice().getNumerator(), 267);
     }
 private:
       const QByteArray json = "{\n"

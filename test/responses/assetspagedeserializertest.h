@@ -42,6 +42,13 @@ private slots:
         QCOMPARE(page.get(0).getClaimableBalancesAmount(), QString("0.0000000"));
         QCOMPARE(page.get(0).getAmount(), QString("0.0000000"));
         QCOMPARE(page.get(0).getNumAccounts(), 1);
+        QCOMPARE(page.get(0).getNumLiquidityPools(), 4);
+        QCOMPARE(page.get(0).getLiquidityPoolsAmount(), QString("123.4560000"));
+        QCOMPARE(page.get(0).getNumContracts(), 7);
+        QCOMPARE(page.get(0).getContractsAmount(), QString("789.0000000"));
+        QCOMPARE(page.get(0).getNumArchivedContracts(), 2);
+        QCOMPARE(page.get(0).getArchivedContractsAmount(), QString("10.0000000"));
+        QCOMPARE(page.get(0).getContractId(), QString("CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAH7B"));
         QCOMPARE(page.get(0).getLinks().getToml().getHref(), QString("https://www.stellar.org/.well-known/stellar.toml"));
         QCOMPARE(page.get(0).getFlags().isAuthRequired(), true);
         QCOMPARE(page.get(0).getFlags().isAuthRevocable(), false);
@@ -85,6 +92,13 @@ private:
               "        \"num_claimable_balances\": 0,\n"
               "        \"amount\": \"0.0000000\",\n"
               "        \"num_accounts\": 1,\n"
+              "        \"num_liquidity_pools\": 4,\n"
+              "        \"liquidity_pools_amount\": \"123.4560000\",\n"
+              "        \"num_contracts\": 7,\n"
+              "        \"contracts_amount\": \"789.0000000\",\n"
+              "        \"num_archived_contracts\": 2,\n"
+              "        \"archived_contracts_amount\": \"10.0000000\",\n"
+              "        \"contract_id\": \"CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAH7B\",\n"
               "        \"flags\": {\n"
               "          \"auth_required\": true,\n"
               "          \"auth_revocable\": false\n"

@@ -33,6 +33,10 @@ QString ManageBuyOfferOperationResponse::getPrice() const{
     return m_price;
 }
 
+Price ManageBuyOfferOperationResponse::getPriceR() const{
+    return Price(m_priceR.value("n").toUInt(), m_priceR.value("d").toUInt());
+}
+
 Asset* ManageBuyOfferOperationResponse::getBuyingAsset() {
     if(m_buyingAsset)
         return m_buyingAsset;

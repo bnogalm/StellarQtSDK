@@ -15,10 +15,10 @@ QSTELLAR_BEGIN_NS
  * CAP-46 — factories and accessors for `stellar::SCVal`. Mirrors the
  * Java SDK `org.stellar.sdk.scval.Scv` static helpers.
  *
- * This release covers the primitive variants (Bool, Void, U32/I32,
- * U64/I64, TimePoint, Duration, Bytes, String, Symbol). Wider integers
- * (128/256), Vec / Map, Address (SCV_ADDRESS), Error, ContractInstance, NonceKey and
- * the LedgerKey* variants land in subsequent 0.9.0 iterations.
+ * Covers the full SCVal surface: primitives (Bool, Void, U32/I32, U64/I64,
+ * TimePoint, Duration, Bytes, String, Symbol), wide integers (128/256),
+ * Vec / Map, Address (SCV_ADDRESS), Error, ContractInstance, NonceKey and the
+ * LedgerKey* variants.
  *
  * Symmetric API:
  *   stellar::SCVal v = Scv::toUint32(42);

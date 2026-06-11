@@ -62,6 +62,10 @@ QString OfferResponse::getPrice() const{
     return m_price;
 }
 
+Price OfferResponse::getPriceR() const{
+    return Price(m_priceR.value("n").toUInt(), m_priceR.value("d").toUInt());
+}
+
 qint32 OfferResponse::getLastModifiedLedger() const
 {
     return m_lastModifiedLedger;

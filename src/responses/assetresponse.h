@@ -104,6 +104,13 @@ class AssetResponse : public Response
     Q_PROPERTY(QString claimable_balances_amount MEMBER m_claimableBalancesAmount)
     Q_PROPERTY(int num_accounts MEMBER m_numAccounts)
     Q_PROPERTY(int num_claimable_balances MEMBER m_numClaimableBalances)
+    Q_PROPERTY(QString liquidity_pools_amount MEMBER m_liquidityPoolsAmount)
+    Q_PROPERTY(int num_liquidity_pools MEMBER m_numLiquidityPools)
+    Q_PROPERTY(QString contracts_amount MEMBER m_contractsAmount)
+    Q_PROPERTY(int num_contracts MEMBER m_numContracts)
+    Q_PROPERTY(QString archived_contracts_amount MEMBER m_archivedContractsAmount)
+    Q_PROPERTY(int num_archived_contracts MEMBER m_numArchivedContracts)
+    Q_PROPERTY(QString contract_id MEMBER m_contractId)
     Q_PROPERTY(AssetResponseAttach::Flags flags MEMBER m_flags)
     Q_PROPERTY(AssetResponseAttach::Links _links MEMBER m_links)
 
@@ -124,6 +131,13 @@ class AssetResponse : public Response
     QString m_claimableBalancesAmount;
 
     int m_numClaimableBalances;
+    QString m_liquidityPoolsAmount;
+    int m_numLiquidityPools;
+    QString m_contractsAmount;
+    int m_numContracts;
+    QString m_archivedContractsAmount;
+    int m_numArchivedContracts;
+    QString m_contractId;
 
 public:
     Q_INVOKABLE explicit AssetResponse(QNetworkReply *reply=nullptr);
@@ -151,6 +165,14 @@ public:
     QString getClaimableBalancesAmount() const;
 
     int getNumClaimableBalances();
+    QString getLiquidityPoolsAmount() const { return m_liquidityPoolsAmount; }
+    int getNumLiquidityPools() const { return m_numLiquidityPools; }
+    QString getContractsAmount() const { return m_contractsAmount; }
+    int getNumContracts() const { return m_numContracts; }
+    QString getArchivedContractsAmount() const { return m_archivedContractsAmount; }
+    int getNumArchivedContracts() const { return m_numArchivedContracts; }
+    /** Stellar Asset Contract id for this asset (Protocol 20+). Empty if absent. */
+    QString getContractId() const { return m_contractId; }
 
     AssetResponseAttach::Flags getFlags() const;
 

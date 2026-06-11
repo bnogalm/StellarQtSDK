@@ -3,7 +3,7 @@
 QSTELLAR_BEGIN_NS
 
 
-AssetResponse::AssetResponse(QNetworkReply *reply):Response(reply),m_asset(nullptr),m_numAccounts(0),m_numClaimableBalances(0)
+AssetResponse::AssetResponse(QNetworkReply *reply):Response(reply),m_asset(nullptr),m_numAccounts(0),m_numClaimableBalances(0),m_numLiquidityPools(0),m_numContracts(0),m_numArchivedContracts(0)
 {
 
 }
@@ -29,6 +29,9 @@ QString AssetResponse::getAssetIssuer() const{
 Asset *AssetResponse::getAsset() {
     if(!m_asset)
     {
+        if (m_assetType == "liquidity_pool_shares") {
+            return nullptr; // pool shares aren't a classic Asset; avoids a throw in Asset::create
+        }
         m_asset = Asset::create(m_assetType,m_assetCode,m_assetIssuer);
     }
     return m_asset;

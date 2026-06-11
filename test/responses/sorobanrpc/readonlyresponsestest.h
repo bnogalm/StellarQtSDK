@@ -201,15 +201,23 @@ private slots:
             "{\"events\":["
             "{\"type\":\"contract\",\"ledger\":100,\"ledgerClosedAt\":\"2026-01-01\","
             "\"contractId\":\"CABC\",\"id\":\"event-1\",\"pagingToken\":1,"
+            "\"operationIndex\":3,\"transactionIndex\":5,"
             "\"inSuccessfulContractCall\":true,\"txHash\":\"tx1\","
             "\"topic\":[\"t1-base64\",\"t2-base64\"],\"value\":\"value-base64\"}"
-            "],\"latestLedger\":200,\"cursor\":\"event-1\"}";
+            "],\"latestLedger\":200,\"oldestLedger\":150,"
+            "\"latestLedgerCloseTime\":\"1700000200\",\"oldestLedgerCloseTime\":\"1700000150\","
+            "\"cursor\":\"event-1\"}";
         GetEventsResponse r = GetEventsResponse::fromJson(parseObj(json));
         QCOMPARE(r.getEvents().size(), 1);
         const auto& ev = r.getEvents().first();
         QCOMPARE(ev.type, QString("contract"));
         QCOMPARE(ev.contractId, QString("CABC"));
         QCOMPARE(ev.topic.size(), 2);
+        QCOMPARE(ev.operationIndex, 3);
+        QCOMPARE(ev.transactionIndex, 5);
+        QCOMPARE(r.getOldestLedger(), quint32(150));
+        QCOMPARE(r.getLatestLedgerCloseTime(), QString("1700000200"));
+        QCOMPARE(r.getOldestLedgerCloseTime(), QString("1700000150"));
         QCOMPARE(r.getCursor(), QString("event-1"));
     }
 };

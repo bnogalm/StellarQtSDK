@@ -18,7 +18,11 @@ class PathPaymentBaseOperationResponse : public OperationResponse
     Q_PROPERTY(QString amount MEMBER m_amount)
     Q_PROPERTY(QString source_amount MEMBER m_sourceAmount)
     Q_PROPERTY(QString from READ from WRITE setFrom)
+    Q_PROPERTY(QString from_muxed MEMBER m_fromMuxed)
+    Q_PROPERTY(QString from_muxed_id MEMBER m_fromMuxedId)
     Q_PROPERTY(QString to READ to WRITE setTo)
+    Q_PROPERTY(QString to_muxed MEMBER m_toMuxed)
+    Q_PROPERTY(QString to_muxed_id MEMBER m_toMuxedId)
     Q_PROPERTY(QString asset_type READ assetType WRITE setAssetType)
     Q_PROPERTY(QString asset_code READ assetCode WRITE setAssetCode)
     Q_PROPERTY(QString asset_issuer READ assetIssuer WRITE setAssetIssuer)
@@ -36,6 +40,10 @@ class PathPaymentBaseOperationResponse : public OperationResponse
 
     QString m_to;
     KeyPair* m_toKeypair;
+    QString m_fromMuxed;
+    QString m_fromMuxedId;
+    QString m_toMuxed;
+    QString m_toMuxedId;
 
     QString m_assetType;
     QString m_assetCode;
@@ -63,6 +71,11 @@ public:
     Asset* getSourceAsset();
     QString from() const;
     QString to() const;
+    /** M-strkey of `from`/`to` if muxed; empty otherwise. */
+    QString getFromMuxed() const { return m_fromMuxed; }
+    QString getFromMuxedId() const { return m_fromMuxedId; }
+    QString getToMuxed() const { return m_toMuxed; }
+    QString getToMuxedId() const { return m_toMuxedId; }
 
     QString assetType() const;
     QString assetCode() const;
