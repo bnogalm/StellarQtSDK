@@ -20,6 +20,8 @@
 #include "../src/assettypecreditalphanum4.h"
 #include "../src/assettypecreditalphanum12.h"
 #include "../src/managedataoperation.h"
+#include "../src/responses/operationpage.h"
+#include "../src/responses/operations/paymentoperationresponse.h"
 
 #include "fakeserver.h"
 
@@ -93,6 +95,18 @@ class ServerTest: public QObject
         tx->sign(signer);
         return tx;
     }
+
+    // Builds one SSE payment event: "id: <id>\ndata: {payment ...}\n\n".
+    static QString paymentEvent(const QString& id, const QString& amount) {
+        return "id: " + id + "\n"
+               "data: {\"type\":\"payment\",\"type_i\":1,\"id\":\"" + id + "\",\"paging_token\":\"" + id + "\","
+               "\"source_account\":\"GBRPYHIL2CI3FNQ4BXLFMNDLFJUNPU2HY3ZMFSHONUCEOASW7QC7OX2H\","
+               "\"asset_type\":\"native\","
+               "\"from\":\"GBRPYHIL2CI3FNQ4BXLFMNDLFJUNPU2HY3ZMFSHONUCEOASW7QC7OX2H\","
+               "\"to\":\"GBRPYHIL2CI3FNQ4BXLFMNDLFJUNPU2HY3ZMFSHONUCEOASW7QC7OX2H\","
+               "\"amount\":\"" + amount + "\"}\n"
+               "\n";
+    }
 private slots:
 
     void initTestCase()
@@ -129,6 +143,94 @@ private slots:
         transaction->sign(source);
         m_transaction=transaction;
 
+    }
+
+    // P1.11 — first SSE streaming test (FakeServer streaming mode).
+    // Uses a LOCAL Server that is deleted at the end so the stream's reconnect
+    // timer is torn down (no lingering reconnect loop after the test).
+    void testStreamReceivesData() {
+        FakeServer* fakeServer = new FakeServer();
+        QString round1 =
+            "id: 1\n"
+            "data: {\"type\":\"payment\",\"type_i\":1,\"id\":\"1\",\"paging_token\":\"1\","
+            "\"source_account\":\"GBRPYHIL2CI3FNQ4BXLFMNDLFJUNPU2HY3ZMFSHONUCEOASW7QC7OX2H\","
+            "\"asset_type\":\"native\","
+            "\"from\":\"GBRPYHIL2CI3FNQ4BXLFMNDLFJUNPU2HY3ZMFSHONUCEOASW7QC7OX2H\","
+            "\"to\":\"GBRPYHIL2CI3FNQ4BXLFMNDLFJUNPU2HY3ZMFSHONUCEOASW7QC7OX2H\","
+            "\"amount\":\"10.0000000\"}\n"
+            "\n";
+        fakeServer->addStream("/payments", QStringList() << round1);
+
+        Server* server = new Server(fakeServer->baseUrl());
+        OperationPage* stream = server->payments().stream().execute();
+
+        bool gotEvent = false;
+        QObject::connect(stream, &Response::ready, [&gotEvent](){ gotEvent = true; });
+        WAIT_FOR(!gotEvent)
+
+        QVERIFY(gotEvent);
+        QVERIFY(stream->size() >= 1);
+        PaymentOperationResponse* p = dynamic_cast<PaymentOperationResponse*>(stream->streamedElement());
+        QVERIFY(p != nullptr);
+        QCOMPARE(p->getAmount(), QString("10.0000000"));
+
+        delete server;            // tears down the streaming response + reconnect timer
+        fakeServer->deleteLater();
+    }
+
+    // The stream closes after round 1; the SDK reconnects (after >= RECONNECT_DELAY)
+    // sending `Last-Event-ID`, and round 2 is served.
+    void testStreamReconnectsWithLastEventId() {
+        FakeServer* fakeServer = new FakeServer();
+        fakeServer->addStream("/payments", QStringList()
+            << paymentEvent("5", "10.0000000")
+            << paymentEvent("6", "20.0000000"));
+
+        Server* server = new Server(fakeServer->baseUrl());
+        OperationPage* stream = server->payments().stream().execute();
+
+        int events = 0;
+        QString lastAmount;
+        QObject::connect(stream, &Response::ready, [&](){
+            events++;
+            if (auto* p = dynamic_cast<PaymentOperationResponse*>(stream->streamedElement()))
+                lastAmount = p->getAmount();
+        });
+        WAIT_FOR(events < 2)   // the 2nd event only arrives after a reconnect (~1s)
+
+        QVERIFY(events >= 2);                            // reconnected
+        QCOMPARE(lastAmount, QString("20.0000000"));      // round 2 served
+        // Qt normalises the raw header name to "Last-Event-Id" on the wire (the SDK
+        // sets it as "Last-Event-ID"); the reconnect must carry the last seen id.
+        QVERIFY(fakeServer->lastRequestHeaders().contains("Last-Event-Id: 5"));
+
+        delete server;
+        fakeServer->deleteLater();
+    }
+
+    // Two SSE events delivered in a single connection chunk → two `ready()`s.
+    void testStreamParsesMultipleEvents() {
+        FakeServer* fakeServer = new FakeServer();
+        fakeServer->addStream("/payments", QStringList()
+            << (paymentEvent("1", "10.0000000") + paymentEvent("2", "20.0000000")));
+
+        Server* server = new Server(fakeServer->baseUrl());
+        OperationPage* stream = server->payments().stream().execute();
+
+        int events = 0;
+        QString lastAmount;
+        QObject::connect(stream, &Response::ready, [&](){
+            events++;
+            if (auto* p = dynamic_cast<PaymentOperationResponse*>(stream->streamedElement()))
+                lastAmount = p->getAmount();
+        });
+        WAIT_FOR(events < 2)
+
+        QVERIFY(events >= 2);
+        QCOMPARE(lastAmount, QString("20.0000000"));
+
+        delete server;
+        fakeServer->deleteLater();
     }
 #ifndef STELLAR_SKIP_LIVE_TESTS
     //it will fail because sequence number, it should be catched before creating the transaction
@@ -238,6 +340,67 @@ private slots:
      }
 
 
+     void testSubmitTimeout504IsDetected() {
+         // S3 (fund-safety): a Horizon 504 Gateway Timeout MUST be detectable so
+         // callers resend the SAME signed envelope (idempotent) instead of
+         // rebuilding with a new sequence — rebuilding after a 504 can apply the
+         // payment twice. Regression guard: Response::m_status was never
+         // populated from the HTTP status code (it defaulted to 0), so
+         // isTimeout() always returned false until preprocessResponse() was
+         // fixed to set it.
+
+         // --- 504 path: delivered via transactionError, flagged as a timeout ---
+         FakeServer* timeoutServer = new FakeServer();
+         // Body intentionally has NO "status" field, so getStatusCode()==504 can
+         // only come from the HTTP status line, not from JSON reflection.
+         timeoutServer->addPost("/transactions",
+                                QStringLiteral("{\"title\":\"Gateway Timeout\"}"),
+                                QStringLiteral("504 Gateway Timeout"));
+         Server* tServer = new Server(timeoutServer->baseUrl());
+
+         KeyPair* source1 = KeyPair::fromSecretSeed(QString("SDQXFKA32UVQHUTLYJ42N56ZUEM5PNVVI4XE7EA5QFMLA2DHDCQX3GPY"));
+         Account* a1 = new Account(source1, 1L);
+         Transaction* tx1 = Transaction::Builder(AccountConverter().enableMuxed(), a1)
+                 .addOperation(PaymentOperation::create(KeyPair::fromAccountId(DESTINATION_ACCOUNT_NO_MEMO_REQUIRED), new AssetTypeNative(), "10"))
+                 .setTimeout(Transaction::Builder::TIMEOUT_INFINITE)
+                 .setBaseFee(100)
+                 .build();
+         tx1->sign(source1);
+
+         SubmitTransactionResponse* rErr=nullptr;
+         QObject::connect(tServer,&Server::transactionError,[&rErr](SubmitTransactionResponse* response){ rErr = response; });
+         tServer->submitTransaction(tx1, true);
+         WAIT_FOR(!rErr)
+         QVERIFY(rErr);                        // arrived on the error path
+         QVERIFY(rErr->isTimeout());           // 504 detected
+         QCOMPARE(rErr->getStatusCode(), 504);
+         delete tServer;
+         timeoutServer->deleteLater();
+
+         // --- 2xx path: real code surfaced, NOT a timeout ---
+         FakeServer* okServer = new FakeServer();
+         okServer->addPost("/transactions", successTransactionResponse);
+         Server* oServer = new Server(okServer->baseUrl());
+
+         KeyPair* source2 = KeyPair::fromSecretSeed(QString("SDQXFKA32UVQHUTLYJ42N56ZUEM5PNVVI4XE7EA5QFMLA2DHDCQX3GPY"));
+         Account* a2 = new Account(source2, 1L);
+         Transaction* tx2 = Transaction::Builder(AccountConverter().enableMuxed(), a2)
+                 .addOperation(PaymentOperation::create(KeyPair::fromAccountId(DESTINATION_ACCOUNT_NO_MEMO_REQUIRED), new AssetTypeNative(), "10"))
+                 .setTimeout(Transaction::Builder::TIMEOUT_INFINITE)
+                 .setBaseFee(100)
+                 .build();
+         tx2->sign(source2);
+
+         SubmitTransactionResponse* rOk=nullptr;
+         QObject::connect(oServer,&Server::transactionResponse,[&rOk](SubmitTransactionResponse* response){ rOk = response; });
+         oServer->submitTransaction(tx2, true);
+         WAIT_FOR(!rOk)
+         QVERIFY(rOk);
+         QVERIFY(!rOk->isTimeout());           // 2xx is not a timeout
+         QCOMPARE(rOk->getStatusCode(), 200);  // and surfaces the real HTTP code
+         delete oServer;
+         okServer->deleteLater();
+     }
      void testCheckMemoRequiredWithMemoIdAddress()
      {
          FakeServer* fakeServer = new FakeServer();

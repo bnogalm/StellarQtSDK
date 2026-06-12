@@ -44,4 +44,8 @@ void Account::incrementSequenceNumber() {
     m_sequenceNumber++;
 }
 
+void Account::decrementSequenceNumber() {
+    m_sequenceNumber--;
+}
+
 QSTELLAR_END_NS

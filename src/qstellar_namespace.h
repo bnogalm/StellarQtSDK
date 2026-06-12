@@ -64,7 +64,7 @@
  * `qstellar::` so the call site resolves identically under both modes
  * — see e.g. `Q_DECLARE_METATYPE(qstellar::AssetAmount)`.
  *
- * The XDR layer (`namespace stellar { ... }`, in `xdr/*.h`) is an
+ * The XDR layer (`namespace stellar { ... }`, in the `xdr/` headers) is an
  * implementation detail and is NOT touched by this scheme.
  */
 

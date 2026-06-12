@@ -2,6 +2,8 @@
 #include "util.h"
 
 #include <numeric>
+#include <limits>
+#include <stdexcept>
 
 QSTELLAR_BEGIN_NS
 
@@ -15,24 +17,6 @@ Price::Price(stellar::Price &price):m_n(price.n),m_d(price.d)
 
 }
 
-//qint64 gcd(qint64 a, qint64 b)
-//{
-//    if (a == 0)
-//        return b;
-//    else if (b == 0)
-//        return a;
-
-//    if (a < b)
-//        return gcd(a, b % a);
-//    else
-//        return gcd(b, a % b);
-//}
-/*
-qint64 gcd(qint64 a, qint64 b)
-{    
-    while(b) b ^= a ^= b ^= a %= b;
-    return a;
-}*/
 qint64 gcd(qint64 a,qint64 b) {
   int R;
   while ((a % b) > 0)  {
@@ -56,8 +40,17 @@ Price::Price(QString price){
 
     qint64 denominator = precision / gcd_;
     qint64 numerator = round(frac * precision) / gcd_;
-    m_n = numerator+(integral*denominator);
-    m_d = denominator;
+    // A Stellar Price is two int32 values. Reject — instead of silently wrapping
+    // to a corrupt price — any value whose numerator/denominator exceeds int32.
+    const qint64 maxI = std::numeric_limits<qint32>::max();
+    if (integral < 0 || integral > static_cast<double>(maxI)
+        || denominator <= 0 || denominator > maxI)
+        throw std::runtime_error("price cannot be represented as an int32 fraction");
+    const qint64 n64 = numerator + static_cast<qint64>(integral) * denominator;
+    if (n64 < 0 || n64 > maxI)
+        throw std::runtime_error("price cannot be represented as an int32 fraction");
+    m_n = static_cast<qint32>(n64);
+    m_d = static_cast<qint32>(denominator);
 }
 
 Price::Price():m_n(0),m_d(0)

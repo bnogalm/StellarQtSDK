@@ -1,5 +1,8 @@
 #include "operation.h"
 
+#include <QRegularExpression>
+#include <limits>
+
 #include "accountmergeoperation.h"
 #include "createaccountoperation.h"
 #include "paymentoperation.h"
@@ -50,19 +53,44 @@ Operation::~Operation()
 }
 
 qint64 Operation::toXdrAmount(QString value) {
-    value = checkNotNull(value, "value cannot be null");
-    value = value.replace(',','.');
-    if(!value.contains('.'))
-        return value.toLongLong()*Operation::ONE;
-    QStringList parse = value.split('.');
-    if(parse[1].length()<Operation::FRACTIONAL)
-        return parse[0].toLongLong() * Operation::ONE + parse[1].toLongLong() *  get_power(quint32(10),quint32((Operation::FRACTIONAL-parse[1].length())));
-    for(int i=Operation::FRACTIONAL ; i<parse[1].length();i++){
-        if(parse[1][i]!=QChar('0')){
-            throw std::runtime_error("amount with too many decimals");
-        }
+    value = checkNotNull(value, "value cannot be null").trimmed();
+    // Accept only the canonical amount format used by the other SDKs: an optional
+    // sign, integer digits, and an optional '.' with decimals. No locale guessing
+    // (a comma is rejected, not silently turned into a decimal point — see S2).
+    static const QRegularExpression re(QStringLiteral("^(-?)([0-9]+)(?:\\.([0-9]+))?$"));
+    const QRegularExpressionMatch m = re.match(value);
+    if(!m.hasMatch())
+        throw std::runtime_error("invalid amount format: expected [-]digits[.digits]");
+
+    const bool negative = !m.captured(1).isEmpty();
+    bool ok = false;
+    const qint64 integral = m.captured(2).toLongLong(&ok);
+    if(!ok)
+        throw std::runtime_error("amount integral part out of range");
+
+    QString fracStr = m.captured(3);
+    if(fracStr.length() > Operation::FRACTIONAL){
+        for(int i=Operation::FRACTIONAL ; i<fracStr.length(); i++)
+            if(fracStr[i]!=QChar('0'))
+                throw std::runtime_error("amount with too many decimals");
+        fracStr = fracStr.left(Operation::FRACTIONAL);
     }
-    return parse[0].toLongLong() * Operation::ONE + parse[1].left(Operation::FRACTIONAL).toLongLong();
+    qint64 frac = 0;
+    if(!fracStr.isEmpty()){
+        frac = fracStr.toLongLong(&ok);
+        if(!ok)
+            throw std::runtime_error("amount fractional part invalid");
+        frac *= get_power(quint32(10), quint32(Operation::FRACTIONAL - fracStr.length()));
+    }
+    // result = integral*ONE + frac, with manual overflow detection (MSVC-safe).
+    const qint64 MAXV = std::numeric_limits<qint64>::max();
+    if(integral > MAXV / Operation::ONE)
+        throw std::runtime_error("amount overflows int64 stroops");
+    qint64 result = integral * Operation::ONE;
+    if(frac > MAXV - result)
+        throw std::runtime_error("amount overflows int64 stroops");
+    result += frac;
+    return negative ? -result : result;   // sign applied to the whole amount
 }
 
 

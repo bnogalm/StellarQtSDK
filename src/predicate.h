@@ -299,7 +299,12 @@ public:
     }
 
     QDateTime getDate() {
+#if QT_VERSION >= QT_VERSION_CHECK(6, 5, 0)
         return QDateTime::fromSecsSinceEpoch(m_epochSeconds, QTimeZone::UTC);
+#else
+        // Qt < 6.5 has no QTimeZone::UTC; Qt::UTC (TimeSpec) also serialises as "Z".
+        return QDateTime::fromSecsSinceEpoch(m_epochSeconds, Qt::UTC);
+#endif
     }
 
     bool equals(Predicate* o) const

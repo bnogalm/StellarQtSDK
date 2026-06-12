@@ -739,6 +739,16 @@ private slots:
         catch(const std::exception& e){
             Q_UNUSED(e)
         }
+        // S2 regression: invalid / locale-ambiguous / overflowing amounts must
+        // throw, not silently produce a wrong value.
+        try { Operation::toXdrAmount("abc"); QFAIL("expected exception (non-numeric)"); }
+        catch(const std::exception& e){ Q_UNUSED(e) }
+        try { Operation::toXdrAmount("1,000.5"); QFAIL("expected exception (thousands comma)"); }
+        catch(const std::exception& e){ Q_UNUSED(e) }
+        try { Operation::toXdrAmount("92233720368547758.08"); QFAIL("expected exception (int64 overflow)"); }
+        catch(const std::exception& e){ Q_UNUSED(e) }
+        // sign is applied to the whole amount (was -5000000 before the S2 fix).
+        QCOMPARE(Operation::toXdrAmount("-1.5"), (qint64)-15000000LL);
     }
 
 

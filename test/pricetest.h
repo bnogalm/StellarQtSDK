@@ -2,6 +2,7 @@
 #define PRICETEST_H
 #include <QObject>
 #include <QtTest>
+#include <stdexcept>
 #include "testcollector.h"
 #include "src/price.h"
 
@@ -43,6 +44,13 @@ private slots:
         QVERIFY(Price::fromString("1073742464.5")->equals( new Price(1073742464,1)));
         QVERIFY(Price::fromString("1635962526.2")->equals( new Price(1635962526,1)));
         QVERIFY(Price::fromString("2147483647")->equals( new Price(2147483647,1)));
+    }
+
+    void testRejectsOutOfInt32Range() {
+        // S1 regression: a price whose numerator/denominator doesn't fit in two
+        // int32 values must throw, not silently wrap to a corrupt price.
+        try { Price(QString("5000000.123456789")); QFAIL("expected exception"); }
+        catch(const std::exception& e){ Q_UNUSED(e) }
     }
 
 };

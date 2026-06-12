@@ -12,10 +12,28 @@
 
 // memset_s is a free function (NOT a member). Keep it in global scope so
 // it does not conflict with namespacing.
+//
+// Secure wipe: write through a volatile pointer byte-by-byte so the compiler
+// cannot elide the store as dead (the buffer is freed right after). The old
+// implementation called plain memset() and only touched byte 0 through a
+// volatile cast, which left the optimizer free to drop the whole memset.
 void memset_s(char * data,int value, int size)
 {
-    memset(data,value,size);
-    *(volatile char *)data = *(volatile char *)data;
+    if (!data || size <= 0) return;
+    volatile char * p = reinterpret_cast<volatile char *>(data);
+    while (size--)
+        *p++ = static_cast<char>(value);
+}
+
+// Best-effort secure wipe of a QByteArray holding secret material. Only wipes
+// in place when this is the sole owner: calling data() on a shared (COW) buffer
+// would detach and deep-copy, wiping just the copy while the real bytes survive.
+static void wipeSecret(QByteArray & secret)
+{
+    if (secret.isEmpty()) return;
+    if (secret.isDetached())
+        memset_s(secret.data(), 0, static_cast<int>(secret.size()));
+    secret.clear();
 }
 
 QSTELLAR_BEGIN_NS
@@ -61,6 +79,7 @@ KeyPair& KeyPair::operator=(const KeyPair &other) {
         m_privateKey = new quint8[keyLength*2];
         memcpy(m_privateKey, other.m_privateKey, keyLength*2);
     }
+    wipeSecret(m_secretSeed);
     m_secretSeed = other.m_secretSeed;
     return *this;
 }
@@ -73,6 +92,7 @@ KeyPair::~KeyPair()
         memset_s((char*)m_privateKey,0,keyLength*2);
         delete[] m_privateKey;
     }
+    wipeSecret(m_secretSeed);
 }
 
 

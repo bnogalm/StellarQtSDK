@@ -135,6 +135,16 @@ public:
 
     SubmitTransactionResponseAttach::Extras& getExtras();
     bool isSuccess() const;
+    /**
+     * True when Horizon replied with HTTP 504 (Gateway Timeout). On a timeout the
+     * transaction MAY still have been included. Re-submit the SAME signed envelope
+     * (idempotent — the sequence number guards against double-apply); NEVER rebuild
+     * with a new sequence until `GET /transactions/{hash}` confirms the original was
+     * not included (otherwise you risk paying twice). See `Account::decrementSequenceNumber`.
+     */
+    bool isTimeout() const { return getStatus() == 504; }
+    /** The HTTP status code Horizon returned for this submit (0 if none). */
+    int getStatusCode() const { return getStatus(); }
     QString getEnvelopeXdr();
     /**
         * Helper method that returns Offer ID for ManageSellOffer/ManageBuyOffer from TransactionResult Xdr.

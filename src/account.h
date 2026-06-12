@@ -38,6 +38,14 @@ public:
      */
     void incrementSequenceNumber();
 
+    /**
+     * Decrements the local sequence number by one — use it to roll back after a
+     * `TransactionBuilder::build()` whose transaction was NOT submitted, or whose
+     * submission is *confirmed* failed, so later builds don't get `tx_bad_seq`.
+     * Do NOT call it on a submit timeout — see `SubmitTransactionResponse::isTimeout()`.
+     */
+    void decrementSequenceNumber();
+
 
     enum class AccountFlag{
         AUTH_REQUIRED = 0x01

@@ -54,6 +54,14 @@ private slots:
         account->incrementSequenceNumber();
         QVERIFY(account->getSequenceNumber()== 101L);
     }
+    void testDecrementSequenceNumber() {
+        // S3: roll back the local sequence after a build whose tx was not submitted.
+        Account* account = new Account(KeyPair::random(), 100L);
+        account->incrementSequenceNumber();
+        QVERIFY(account->getSequenceNumber()== 101L);
+        account->decrementSequenceNumber();
+        QVERIFY(account->getSequenceNumber()== 100L);
+    }
     void testGetters() {
         KeyPair* keypair = KeyPair::random();
         Account* account = new Account(keypair, 100L);

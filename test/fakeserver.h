@@ -26,6 +26,11 @@ private:
     QHash<QString, Reply> m_getResponses;
     QHash<QString, Reply> m_postResponses;
     QList<QTcpSocket*> m_clients;
+
+    // --- SSE / streaming support ---
+    struct Stream { QStringList rounds; int served = 0; };
+    QHash<QString, Stream> m_streams;   // keyed by path (query string stripped)
+    QByteArray m_lastRequestHeaders;    // accumulated raw headers of all stream requests
 public:
     /**
      * Default port = 0 → ask the OS for any free ephemeral port. The actually
@@ -90,6 +95,22 @@ public:
         m_postResponses.insert(key, reply);
     }
 
+    /**
+     * Register an SSE (`text/event-stream`) endpoint. Each entry in `rounds` is the
+     * full SSE body served on ONE connection; the SDK reconnects after the stream
+     * closes (sending `Last-Event-ID`), so successive connections get successive
+     * rounds (rounds beyond the list send an empty keep-alive close). Matched by
+     * path (query string ignored). Compose bodies as `id: <n>\ndata: <json>\n\n`.
+     */
+    void addStream(const QString& path, const QStringList& rounds)
+    {
+        Stream s; s.rounds = rounds;
+        m_streams.insert(path, s);
+    }
+    /** Raw headers of all stream requests, accumulated (lets a test assert that a
+     *  reconnect sent `Last-Event-ID`, regardless of how many reconnects followed). */
+    QByteArray lastRequestHeaders() const { return m_lastRequestHeaders; }
+
 private slots:
     void incomingConnection()
     {
@@ -112,6 +133,12 @@ private slots:
             QStringList tokens = QString(socket->readLine()).split(QRegularExpression("[ \\r\\n][ \\r\\n]*"));
 #endif
             if(tokens.size()>=2){
+
+                QString reqPath = tokens[1].section('?', 0, 0);
+                if (tokens[0] == "GET" && m_streams.contains(reqPath)) {
+                    serveStream(socket, reqPath);
+                    return; // socket is being closed; stop processing it
+                }
 
                 Reply response;
                 response.responseCode = "";
@@ -167,6 +194,41 @@ private slots:
 
             }
         }
+    }
+
+private:
+    void serveStream(QTcpSocket* socket, const QString& path)
+    {
+        // Read the rest of the request headers (until the blank line), waiting for
+        // fragmented data, and ACCUMULATE across requests so a later reconnect
+        // doesn't hide an earlier one's `Last-Event-ID`.
+        QByteArray headers;
+        bool sawBlank = false;
+        for (int guard = 0; guard < 50 && !sawBlank; ++guard) {
+            while (socket->canReadLine()) {
+                QByteArray line = socket->readLine();
+                headers.append(line);
+                if (line == "\r\n" || line == "\n") { sawBlank = true; break; }
+            }
+            if (!sawBlank && !socket->waitForReadyRead(100))
+                break;
+        }
+        m_lastRequestHeaders.append(headers);
+
+        Stream& s = m_streams[path];
+        QString body = (s.served < s.rounds.size()) ? s.rounds.at(s.served) : QString();
+        s.served++;
+
+        socket->write(QByteArray(
+            "HTTP/1.1 200 OK\r\n"
+            "Content-Type: text/event-stream\r\n"
+            "Cache-Control: no-cache, no-store, max-age=0\r\n"
+            "Connection: close\r\n"
+            "\r\n"));
+        if (!body.isEmpty())
+            socket->write(body.toUtf8());
+        socket->waitForBytesWritten(1000);
+        socket->disconnectFromHost();
     }
 
 };

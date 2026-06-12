@@ -283,6 +283,15 @@ bool Response::preprocessResponse(QNetworkReply *response)
     const QVariant statusAttr = response->attribute(QNetworkRequest::HttpStatusCodeAttribute);
     const int httpStatus = statusAttr.isValid() ? statusAttr.toInt() : -1;
 
+    // Surface the real HTTP status so getStatus() / getStatusCode() /
+    // SubmitTransactionResponse::isTimeout() are meaningful. m_status was
+    // otherwise never assigned from the reply (defaulted to 0), so e.g. a
+    // Horizon 504 Gateway Timeout was invisible to callers — they could not
+    // tell a timeout (resend the SAME envelope) from a hard failure (rebuild).
+    // 0 means "no HTTP status" (connection-level failure, e.g. client timeout).
+    m_status = (httpStatus > 0) ? httpStatus : 0;
+    emit statusChanged();
+
     // 2xx → success; caller reads the body.
     if (httpStatus >= 200 && httpStatus < 300) {
         return true;
