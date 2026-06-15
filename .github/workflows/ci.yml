@@ -1,0 +1,45 @@
+# Name shown in GitHub's "Actions" tab.
+name: CI
+
+# --- WHEN it runs ---
+# On every push to any branch, and on every pull request, so you find out
+# immediately if a commit breaks the build or the tests.
+on:
+  push:
+  pull_request:
+
+jobs:
+  # A single job for now. "build-and-test" is the internal id; the "name:"
+  # below is what shows in the UI.
+  build-and-test:
+    name: Ubuntu · Qt 6.8
+    # The clean virtual machine GitHub lends us for this job.
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1) Bring OUR code onto the runner (the VM starts empty).
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2) Install Qt (qmake, make, the core+testlib modules) on the runner.
+      #    install-qt-action is the community-standard action for this.
+      #    'cache: true' caches the Qt download between runs (faster next time).
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: '6.8.1'
+          cache: true
+
+      # 3) Generate the Makefile from our .pro (same as locally).
+      - name: qmake
+        run: qmake StellarQtSDKTest.pro
+
+      # 4) Compile, using all available cores on the runner.
+      - name: Build
+        run: make -j$(nproc)
+
+      # 5) Run the tests. The binary returns the number of failed tests as its
+      #    exit code: 0 = all green, non-zero = this step (and the job) turn
+      #    RED. That is the heart of CI.
+      - name: Run tests
+        run: ./StellarQtSDKTest
