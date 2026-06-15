@@ -200,9 +200,13 @@ private slots:
 
         QVERIFY(events >= 2);                            // reconnected
         QCOMPARE(lastAmount, QString("20.0000000"));      // round 2 served
-        // Qt normalises the raw header name to "Last-Event-Id" on the wire (the SDK
-        // sets it as "Last-Event-ID"); the reconnect must carry the last seen id.
-        QVERIFY(fakeServer->lastRequestHeaders().contains("Last-Event-Id: 5"));
+        // The reconnect must carry the last seen id. The SDK sets the raw header
+        // as "Last-Event-ID", but Qt re-cases the name on the wire and the casing
+        // differs by version: Qt 6.8-6.10 send it lowercase ("last-event-id"),
+        // Qt 6.11 title-cases it ("Last-Event-Id"). HTTP header names are
+        // case-insensitive (RFC 7230 §3.2), so match case-insensitively rather
+        // than pinning one Qt version's casing.
+        QVERIFY(fakeServer->lastRequestHeaders().toLower().contains("last-event-id: 5"));
 
         delete server;
         fakeServer->deleteLater();
