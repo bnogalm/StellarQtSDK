@@ -2,44 +2,53 @@
 name: CI
 
 # --- WHEN it runs ---
-# On every push to any branch, and on every pull request, so you find out
-# immediately if a commit breaks the build or the tests.
+# On every push to any branch, and on every pull request.
 on:
   push:
   pull_request:
 
 jobs:
-  # A single job for now. "build-and-test" is the internal id; the "name:"
-  # below is what shows in the UI.
   build-and-test:
-    name: Ubuntu · Qt 6.8
-    # The clean virtual machine GitHub lends us for this job.
+    # ${{ matrix.qt }} expands to each Qt version below, so you get one job
+    # per version, each with its own green/red status in the UI.
+    name: Ubuntu · Qt ${{ matrix.qt }}
     runs-on: ubuntu-latest
+
+    # --- THE MATRIX ---
+    # Run this whole job once per value of 'qt'. This is what catches
+    # version-specific breakage like the S4 bug (QTimeZone::UTC is Qt 6.5+):
+    # it would compile here on 6.8 but fail on 6.4.
+    strategy:
+      # Don't cancel the other versions when one fails — we want to see the
+      # full picture (which versions pass, which break), not just the first red.
+      fail-fast: false
+      matrix:
+        qt:
+          - '5.15.2'   # last Qt 5 LTS (README claims it still works — let's verify)
+          - '6.4.3'    # Qt 6.4 (ships in Ubuntu 24.04); the version that exposed S4
+          - '6.8.1'    # current line
 
     steps:
       # 1) Bring OUR code onto the runner (the VM starts empty).
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2) Install Qt (qmake, make, the core+testlib modules) on the runner.
-      #    install-qt-action is the community-standard action for this.
-      #    'cache: true' caches the Qt download between runs (faster next time).
+      # 2) Install the matrix's Qt version. 'cache: true' keeps each version's
+      #    download warm across runs.
       - name: Install Qt
         uses: jurplel/install-qt-action@v4
         with:
-          version: '6.8.1'
+          version: ${{ matrix.qt }}
           cache: true
 
-      # 3) Generate the Makefile from our .pro (same as locally).
+      # 3) Generate the Makefile from our .pro.
       - name: qmake
         run: qmake StellarQtSDKTest.pro
 
-      # 4) Compile, using all available cores on the runner.
+      # 4) Compile, using all available cores.
       - name: Build
         run: make -j$(nproc)
 
-      # 5) Run the tests. The binary returns the number of failed tests as its
-      #    exit code: 0 = all green, non-zero = this step (and the job) turn
-      #    RED. That is the heart of CI.
+      # 5) Run the tests. Exit code = number of failed tests → red on failure.
       - name: Run tests
         run: ./StellarQtSDKTest
