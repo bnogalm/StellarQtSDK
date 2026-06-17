@@ -9,24 +9,26 @@ on:
 
 jobs:
   build-and-test:
-    # ${{ matrix.qt }} expands to each Qt version below, so you get one job
-    # per version, each with its own green/red status in the UI.
-    name: Ubuntu · Qt ${{ matrix.qt }}
-    runs-on: ubuntu-latest
+    # One job per (Qt, OS) entry below — each with its own green/red status.
+    name: ${{ matrix.os }} · Qt ${{ matrix.qt }}
+    runs-on: ${{ matrix.os }}
 
     # --- THE MATRIX ---
-    # Run this whole job once per value of 'qt'. This is what catches
-    # version-specific breakage like the S4 bug (QTimeZone::UTC is Qt 6.5+):
-    # it would compile here on 6.8 but fail on 6.4.
+    # Run this whole job once per entry. Pinning each Qt to an OS whose GCC fits
+    # its era is what catches version-specific breakage (e.g. the S4 QTimeZone
+    # bug surfaced on Qt 6.4) without tripping over toolchain mismatches.
     strategy:
-      # Don't cancel the other versions when one fails — we want to see the
-      # full picture (which versions pass, which break), not just the first red.
+      # Don't cancel the other entries when one fails — we want the full picture.
       fail-fast: false
       matrix:
-        qt:
-          - '5.15.2'   # last Qt 5 LTS (README claims it still works — let's verify)
-          - '6.4.3'    # Qt 6.4 (ships in Ubuntu 24.04); the version that exposed S4
-          - '6.8.1'    # current line
+        include:
+          # Qt 5.15.2 (2020) does NOT build under GCC 13's leaner libstdc++: its
+          # own headers (e.g. QtCore/qrandom.h) rely on transitive <limits> /
+          # <cstring> that GCC 13 dropped. Build it on ubuntu-22.04 (GCC 11), a
+          # toolchain from its era. (ubuntu-latest is GCC 13.)
+          - { qt: '5.15.2', os: 'ubuntu-22.04' }
+          - { qt: '6.4.3',  os: 'ubuntu-latest' }   # the version that exposed S4
+          - { qt: '6.8.1',  os: 'ubuntu-latest' }   # current line
 
     steps:
       # 1) Bring OUR code onto the runner (the VM starts empty).

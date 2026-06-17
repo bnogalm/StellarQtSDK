@@ -27,15 +27,6 @@ greaterThan(QT_MAJOR_VERSION, 5) {
 INCLUDEPATH *=  $$PWD
 INCLUDEPATH *=  $$PWD/src/
 
-# Qt 5.15 headers (e.g. QtCore/qrandom.h) reference std::numeric_limits without
-# including <limits>. GCC 13's leaner libstdc++ no longer pulls <limits> in
-# transitively, so building Qt 5.15 with GCC 13 fails to compile Qt's own
-# headers. Force-include <limits> on GCC/Clang to fix it. No-op on MSVC (which
-# still pulls it in transitively and uses /FI, not -include).
-gcc|clang {
-    QMAKE_CXXFLAGS += -include limits
-}
-
 
 SOURCES += \
     $$PWD/src/liquiditypool.cpp \
