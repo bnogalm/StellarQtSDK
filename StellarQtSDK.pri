@@ -27,6 +27,21 @@ greaterThan(QT_MAJOR_VERSION, 5) {
 INCLUDEPATH *=  $$PWD
 INCLUDEPATH *=  $$PWD/src/
 
+# Qt 5.15.2 ships QtCore headers (qfloat16.h, qendian.h) that specialize
+# std::numeric_limits WITHOUT first including <limits> (QTBUG-90395; fixed in
+# Qt 5.15.3+ and Qt 6). On GCC 11+, which no longer pulls <limits> in
+# transitively, the compiler binds std::numeric_limits to Qt's partial
+# (non-template) declaration first, then later <chrono>/<random>/qrandom.h fail
+# with "std::numeric_limits is not a template". Force-include <limits> as the
+# very first thing in every TU so the real template is always seen before any Qt
+# header (order-proof; per-header includes can't fix the TU-wide order). Scoped
+# to Qt 5 + GCC/Clang: Qt 6 is unaffected (header fixed) and MSVC already works.
+lessThan(QT_MAJOR_VERSION, 6) {
+    gcc|clang {
+        QMAKE_CXXFLAGS += -include limits
+    }
+}
+
 
 SOURCES += \
     $$PWD/src/liquiditypool.cpp \
