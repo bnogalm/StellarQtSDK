@@ -1,4 +1,6 @@
 #include "predicate.h"
+#include <QCoreApplication>
+#include "qtcompat.h"
 
 QSTELLAR_BEGIN_NS
 
@@ -119,12 +121,11 @@ QSTELLAR_END_NS
 static void registerTypes()
 {
     using namespace qstellar;
-    qRegisterMetaType<Predicate::AbsBefore>();
-    qRegisterMetaType<Predicate::And>();
-    qRegisterMetaType<Predicate::Not>();
-    qRegisterMetaType<Predicate::Or>();
-    qRegisterMetaType<Predicate::RelBefore>();
-    qRegisterMetaType<Predicate::Unconditional>();
+    regType<Predicate::AbsBefore>();
+    regType<Predicate::And>();
+    regType<Predicate::Not>();
+    regType<Predicate::Or>();
+    regType<Predicate::RelBefore>();
+    regType<Predicate::Unconditional>();
 }
-
 Q_COREAPP_STARTUP_FUNCTION(registerTypes)

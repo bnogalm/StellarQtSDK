@@ -4,16 +4,18 @@
 #include "../assettypenative.h"
 #include "../keypair.h"
 #include "common.h"
+#include <QCoreApplication>
+#include "qtcompat.h"
 
 QSTELLAR_BEGIN_NS
 
 
 static void registerTypes()
 {
-    qRegisterMetaType<OrderBookResponseAttach::Row>();
-    QMetaType::registerConverter<QVariantList ,QList<OrderBookResponseAttach::Row> >(&ResponseConverters::convert<OrderBookResponseAttach::Row>);
+    regType<OrderBookResponseAttach::Row>();
+    regType<QList<OrderBookResponseAttach::Row> >();
+    QMetaType::registerConverter<QVariantList, QList<OrderBookResponseAttach::Row> >(&ResponseConverters::convert<OrderBookResponseAttach::Row>);
 }
-
 Q_COREAPP_STARTUP_FUNCTION(registerTypes)
 
 QString OrderBookResponseAttach::Row::getAmount() {

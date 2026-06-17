@@ -1,5 +1,7 @@
 # StellarQtSDK
 
+[![CI](https://github.com/bnogalm/StellarQtSDK/actions/workflows/ci.yml/badge.svg)](https://github.com/bnogalm/StellarQtSDK/actions/workflows/ci.yml)
+
 Stellar SDK for Qt / C++. Builds against Qt 6 (Qt 5.15 still works).
 Interface to drive the Horizon REST API and the Soroban RPC API.
 

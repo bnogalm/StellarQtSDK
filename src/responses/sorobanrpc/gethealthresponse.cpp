@@ -1,4 +1,5 @@
 #include "gethealthresponse.h"
+#include "qtcompat.h"
 
 QSTELLAR_BEGIN_NS
 
@@ -12,7 +13,7 @@ GetHealthResponse GetHealthResponse::fromJson(const QJsonObject& result)
     auto readUint32 = [&](const QString& key) -> quint32 {
         QJsonValue v = result.value(key);
         if (v.isString()) return v.toString().toUInt();
-        return static_cast<quint32>(v.toInteger(0));
+        return static_cast<quint32>(jsonToInt64(v));
     };
     r.m_latestLedger = readUint32(QStringLiteral("latestLedger"));
     r.m_oldestLedger = readUint32(QStringLiteral("oldestLedger"));

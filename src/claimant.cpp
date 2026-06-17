@@ -1,12 +1,13 @@
 #include "claimant.h"
 #include <QCoreApplication>
 #include "responses/response.h"
+#include "qtcompat.h"
 static void registerTypes()
 {
     using namespace qstellar;
-    QMetaType::registerConverter<QVariantList ,QList<Claimant> >(&ClaimantConverter::convertData);
+    regType<QList<Claimant> >();
+    QMetaType::registerConverter<QVariantList, QList<Claimant> >(&ClaimantConverter::convertData);
 }
-
 Q_COREAPP_STARTUP_FUNCTION(registerTypes)
 
 QSTELLAR_BEGIN_NS

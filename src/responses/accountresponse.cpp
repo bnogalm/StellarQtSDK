@@ -2,19 +2,24 @@
 #include "../keypair.h"
 #include "../util.h"
 #include <QCoreApplication>
+#include "qtcompat.h"
 
 QSTELLAR_BEGIN_NS
 
 static void registerTypes()
 {
-    qRegisterMetaType<AccountResponseAttach::Balance>();
-    qRegisterMetaType<AccountResponseAttach::Signer>();
-    QMetaType::registerConverter<QVariantList ,QList<AccountResponseAttach::Balance> >(&ResponseConverters::convert<AccountResponseAttach::Balance>);
-    QMetaType::registerConverter<QVariantList ,QList<AccountResponseAttach::Signer> >(&ResponseConverters::convert<AccountResponseAttach::Signer>);
-    qRegisterMetaType<AccountResponseAttach::Data>();
-    QMetaType::registerConverter<QVariantMap ,AccountResponseAttach::Data>(&ResponseConverters::Account::convertData);
+    regType<AccountResponseAttach::Balance>();
+    regType<AccountResponseAttach::Signer>();
+    regType<AccountResponseAttach::Data>();
+    regType<AccountResponseAttach::Thresholds>();
+    regType<AccountResponseAttach::Flags>();
+    regType<AccountResponseAttach::Links>();
+    regType<QList<AccountResponseAttach::Balance> >();
+    regType<QList<AccountResponseAttach::Signer> >();
+    QMetaType::registerConverter<QVariantList, QList<AccountResponseAttach::Balance> >(&ResponseConverters::convert<AccountResponseAttach::Balance>);
+    QMetaType::registerConverter<QVariantList, QList<AccountResponseAttach::Signer> >(&ResponseConverters::convert<AccountResponseAttach::Signer>);
+    QMetaType::registerConverter<QVariantMap, AccountResponseAttach::Data>(&ResponseConverters::Account::convertData);
 }
-
 Q_COREAPP_STARTUP_FUNCTION(registerTypes)
 
 AccountResponse::AccountResponse(QNetworkReply *reply)

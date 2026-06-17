@@ -1,4 +1,5 @@
 #include "simulatetransactionresponse.h"
+#include "qtcompat.h"
 
 #include <QJsonArray>
 
@@ -9,7 +10,7 @@ namespace {
 quint32 readU32(const QJsonObject& o, const QString& k) {
     QJsonValue v = o.value(k);
     return v.isString() ? v.toString().toUInt()
-                        : static_cast<quint32>(v.toInteger(0));
+                        : static_cast<quint32>(jsonToInt64(v));
 }
 }
 
@@ -18,9 +19,11 @@ SimulateTransactionResponse SimulateTransactionResponse::fromJson(const QJsonObj
     SimulateTransactionResponse out;
     out.m_latestLedger    = readU32(r, "latestLedger");
     out.m_transactionData = r.value("transactionData").toString();
+    // minResourceFee is kept as a string to preserve precision; when the server
+    // sends it as a JSON number, read it via jsonToInt64 (exact on Qt 6).
     out.m_minResourceFee  = r.value("minResourceFee").isString()
         ? r.value("minResourceFee").toString()
-        : QString::number(r.value("minResourceFee").toInteger(0));
+        : QString::number(jsonToInt64(r.value("minResourceFee")));
     out.m_error           = r.value("error").toString();
 
     for (const QJsonValue& v : r.value("events").toArray()) {
@@ -51,7 +54,7 @@ SimulateTransactionResponse SimulateTransactionResponse::fromJson(const QJsonObj
         out.m_restorePreamble.transactionData = o.value("transactionData").toString();
         out.m_restorePreamble.minResourceFee = o.value("minResourceFee").isString()
             ? o.value("minResourceFee").toString()
-            : QString::number(o.value("minResourceFee").toInteger(0));
+            : QString::number(jsonToInt64(o.value("minResourceFee")));
         out.m_restorePreamble.present = true;
     }
     return out;

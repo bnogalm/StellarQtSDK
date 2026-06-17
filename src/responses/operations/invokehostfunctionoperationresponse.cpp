@@ -2,22 +2,20 @@
 
 #include <QCoreApplication>
 #include "../response.h"
+#include "qtcompat.h"
 
 QSTELLAR_BEGIN_NS
 
 
 static void registerInvokeHostFnTypes()
 {
-    qRegisterMetaType<InvokeHostFunctionOperationResponseAttach::Parameter>();
-    qRegisterMetaType<InvokeHostFunctionOperationResponseAttach::AssetBalanceChange>();
-    QMetaType::registerConverter<QVariantList,
-        QList<InvokeHostFunctionOperationResponseAttach::Parameter>>(
-        &ResponseConverters::convert<InvokeHostFunctionOperationResponseAttach::Parameter>);
-    QMetaType::registerConverter<QVariantList,
-        QList<InvokeHostFunctionOperationResponseAttach::AssetBalanceChange>>(
-        &ResponseConverters::convert<InvokeHostFunctionOperationResponseAttach::AssetBalanceChange>);
+    regType<InvokeHostFunctionOperationResponseAttach::Parameter>();
+    regType<InvokeHostFunctionOperationResponseAttach::AssetBalanceChange>();
+    regType<QList<InvokeHostFunctionOperationResponseAttach::Parameter> >();
+    regType<QList<InvokeHostFunctionOperationResponseAttach::AssetBalanceChange> >();
+    QMetaType::registerConverter<QVariantList, QList<InvokeHostFunctionOperationResponseAttach::Parameter> >(&ResponseConverters::convert<InvokeHostFunctionOperationResponseAttach::Parameter>);
+    QMetaType::registerConverter<QVariantList, QList<InvokeHostFunctionOperationResponseAttach::AssetBalanceChange> >(&ResponseConverters::convert<InvokeHostFunctionOperationResponseAttach::AssetBalanceChange>);
 }
-
 Q_COREAPP_STARTUP_FUNCTION(registerInvokeHostFnTypes)
 
 // ─── Parameter ──────────────────────────────────────────────────────

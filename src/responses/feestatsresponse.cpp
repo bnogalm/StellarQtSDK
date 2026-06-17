@@ -1,6 +1,14 @@
 #include "feestatsresponse.h"
+#include <QCoreApplication>
+#include "qtcompat.h"
 
 QSTELLAR_BEGIN_NS
+
+static void registerTypes()
+{
+    regType<FeeDistribution>();
+}
+Q_COREAPP_STARTUP_FUNCTION(registerTypes)
 
 
 FeeStatsResponse::FeeStatsResponse(QNetworkReply* reply)

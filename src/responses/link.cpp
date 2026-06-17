@@ -1,7 +1,17 @@
 #include "link.h"
 #include <stdexcept>
+#include <QCoreApplication>
+#include "qtcompat.h"
 
 QSTELLAR_BEGIN_NS
+
+// Qt 5: register this nested gadget under the moc property-type name so
+// QMetaProperty::read can resolve it (see qtcompat.h regType / response.cpp).
+static void registerTypes()
+{
+    regType<Link>();
+}
+Q_COREAPP_STARTUP_FUNCTION(registerTypes)
 
 
 Link::Link():m_templated(false)

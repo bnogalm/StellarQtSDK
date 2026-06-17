@@ -1,6 +1,17 @@
 #include "assetresponse.h"
+#include <QCoreApplication>
+#include "qtcompat.h"
 
 QSTELLAR_BEGIN_NS
+
+static void registerTypes()
+{
+    regType<AssetResponseAttach::Accounts>();
+    regType<AssetResponseAttach::Balances>();
+    regType<AssetResponseAttach::Flags>();
+    regType<AssetResponseAttach::Links>();
+}
+Q_COREAPP_STARTUP_FUNCTION(registerTypes)
 
 
 AssetResponse::AssetResponse(QNetworkReply *reply):Response(reply),m_asset(nullptr),m_numAccounts(0),m_numClaimableBalances(0),m_numLiquidityPools(0),m_numContracts(0),m_numArchivedContracts(0)

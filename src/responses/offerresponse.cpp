@@ -1,7 +1,15 @@
 #include "offerresponse.h"
 #include "common.h"
+#include <QCoreApplication>
+#include "qtcompat.h"
 
 QSTELLAR_BEGIN_NS
+
+static void registerTypes()
+{
+    regType<OfferResponseAttach::Links>();
+}
+Q_COREAPP_STARTUP_FUNCTION(registerTypes)
 
 
 OfferResponse::OfferResponse(QNetworkReply *reply)

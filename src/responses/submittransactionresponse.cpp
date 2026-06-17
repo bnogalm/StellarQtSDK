@@ -1,8 +1,22 @@
 #include "submittransactionresponse.h"
 #include "xdr/stellartransaction.h"
 #include "../abstracttransaction.h"
+#include <QCoreApplication>
+#include "qtcompat.h"
 
 QSTELLAR_BEGIN_NS
+
+static void registerTypes()
+{
+    regType<SubmitTransactionResponseAttach::ResultCodes>();
+    regType<SubmitTransactionResponseAttach::Extras>();
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+    // ResultCodes is referenced by its bare class name inside Extras (same
+    // namespace), so moc stores the unqualified name.
+    qRegisterMetaType<SubmitTransactionResponseAttach::ResultCodes>("ResultCodes");
+#endif
+}
+Q_COREAPP_STARTUP_FUNCTION(registerTypes)
 
 SubmitTransactionResponse::SubmitTransactionResponse(QNetworkReply *reply,AbstractTransaction * transactionRequest):Response(reply)
   ,m_ledger(0)

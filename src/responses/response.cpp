@@ -194,7 +194,6 @@ void Response::fillObject(const QMetaObject* mo, void* obj,const QJsonObject& js
 
 void Response::loadFromJson(QByteArray data)
 {
-
     QJsonParseError check;
     QJsonDocument doc = QJsonDocument::fromJson(data,&check);
 

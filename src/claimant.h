@@ -40,7 +40,9 @@ private:
 };
 namespace ClaimantConverter
 {
-    inline QList<Claimant> convertData(const QVariantList &source);
+    // Defined (non-inline) in claimant.cpp, where it is registered as a
+    // QVariantList->QList<Claimant> converter.
+    QList<Claimant> convertData(const QVariantList &source);
 }
 
 QList<Claimant> checkNotNull(QList<Claimant> claimants, const char *error);

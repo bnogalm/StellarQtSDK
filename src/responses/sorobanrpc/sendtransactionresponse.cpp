@@ -1,4 +1,5 @@
 #include "sendtransactionresponse.h"
+#include "qtcompat.h"
 
 #include <QJsonArray>
 
@@ -9,7 +10,7 @@ namespace {
 quint32 readU32(const QJsonObject& o, const QString& k) {
     QJsonValue v = o.value(k);
     return v.isString() ? v.toString().toUInt()
-                        : static_cast<quint32>(v.toInteger(0));
+                        : static_cast<quint32>(jsonToInt64(v));
 }
 }
 

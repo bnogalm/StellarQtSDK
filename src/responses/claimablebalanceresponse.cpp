@@ -1,6 +1,14 @@
 #include "claimablebalanceresponse.h"
+#include <QCoreApplication>
+#include "qtcompat.h"
 
 QSTELLAR_BEGIN_NS
+
+static void registerTypes()
+{
+    regType<ClaimableBalanceResponseAttach::Links>();
+}
+Q_COREAPP_STARTUP_FUNCTION(registerTypes)
 
 
 

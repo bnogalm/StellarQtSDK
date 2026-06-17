@@ -1,14 +1,22 @@
 #include "operationresponse.h"
 #include "../../keypair.h"
+#include "qtcompat.h"
+#include <QCoreApplication>
 
 QSTELLAR_BEGIN_NS
+
+static void registerTypes()
+{
+    regType<OperationResponseAttach::Links>();
+}
+Q_COREAPP_STARTUP_FUNCTION(registerTypes)
 
 
 OperationResponse::OperationResponse(QNetworkReply* reply)
     : Response(reply)
   ,m_id(0)
   ,m_sourceAccountKeypair(nullptr)
-  ,m_transactionSuccessful(QMetaType(QMetaType::Bool))// we have to indicate the type or it will not be filled, it will stay returning isNull as true if it is not initialized
+  ,m_transactionSuccessful(nullVariant(QMetaType::Bool))// we have to indicate the type or it will not be filled, it will stay returning isNull as true if it is not initialized
 {
 
 }

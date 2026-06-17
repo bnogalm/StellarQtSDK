@@ -1,4 +1,5 @@
 #include "geteventsresponse.h"
+#include "qtcompat.h"
 
 #include <QJsonArray>
 
@@ -9,7 +10,7 @@ namespace {
 quint32 readU32(const QJsonObject& o, const QString& k) {
     QJsonValue v = o.value(k);
     return v.isString() ? v.toString().toUInt()
-                        : static_cast<quint32>(v.toInteger(0));
+                        : static_cast<quint32>(jsonToInt64(v));
 }
 }
 
@@ -24,9 +25,9 @@ GetEventsResponse GetEventsResponse::fromJson(const QJsonObject& r)
         ev.ledgerClosedAt  = e.value("ledgerClosedAt").toString();
         ev.contractId      = e.value("contractId").toString();
         ev.id              = e.value("id").toString();
-        ev.operationIndex  = static_cast<qint32>(e.value("operationIndex").toInteger(0));
-        ev.transactionIndex= static_cast<qint32>(e.value("transactionIndex").toInteger(0));
-        ev.pagingToken     = static_cast<qint32>(e.value("pagingToken").toInteger(0));
+        ev.operationIndex  = static_cast<qint32>(jsonToInt64(e.value("operationIndex")));
+        ev.transactionIndex= static_cast<qint32>(jsonToInt64(e.value("transactionIndex")));
+        ev.pagingToken     = static_cast<qint32>(jsonToInt64(e.value("pagingToken")));
         ev.inSuccessfulContractCall =
             e.value("inSuccessfulContractCall").toBool(true);
         ev.txHash          = e.value("txHash").toString();

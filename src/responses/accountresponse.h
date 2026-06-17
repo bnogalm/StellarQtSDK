@@ -217,7 +217,9 @@ public:
 }
 namespace ResponseConverters{
 namespace Account{
-inline AccountResponseAttach::Data convertData(const QVariantMap& source);
+// Defined (non-inline) in accountresponse.cpp, where it is registered as a
+// QVariantMap->Data converter (its address is taken, so it needs a real symbol).
+AccountResponseAttach::Data convertData(const QVariantMap& source);
 }
 }
 

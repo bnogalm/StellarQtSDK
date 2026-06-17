@@ -1,4 +1,5 @@
 #include "getnetworkresponse.h"
+#include "qtcompat.h"
 
 QSTELLAR_BEGIN_NS
 
@@ -10,7 +11,7 @@ GetNetworkResponse GetNetworkResponse::fromJson(const QJsonObject& r)
     out.m_passphrase   = r.value("passphrase").toString();
     QJsonValue pv = r.value("protocolVersion");
     out.m_protocolVersion = pv.isString() ? pv.toString().toInt()
-                                          : static_cast<qint32>(pv.toInteger(0));
+                                          : static_cast<qint32>(jsonToInt64(pv));
     return out;
 }
 QSTELLAR_END_NS

@@ -2,16 +2,16 @@
 #include "keypair.h"
 #include "asset.h"
 #include <QCoreApplication>
+#include "qtcompat.h"
 
 QSTELLAR_BEGIN_NS
 
 
 static void registerTypes()
 {
-    qRegisterMetaType<QList<qint32> >();
-    QMetaType::registerConverter<QVariantList ,QList<qint32> >(&ResponseConverters::convertPlain<qint32>);
+    regType<QList<qint32> >();
+    QMetaType::registerConverter<QVariantList, QList<qint32> >(&ResponseConverters::convertPlain<qint32>);
 }
-
 Q_COREAPP_STARTUP_FUNCTION(registerTypes)
 
 SetTrustLineFlagsOperationResponse::SetTrustLineFlagsOperationResponse(QNetworkReply *reply):OperationResponse(reply), m_asset(nullptr)

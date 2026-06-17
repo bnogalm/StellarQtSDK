@@ -1,12 +1,31 @@
 #include "transactionresponse.h"
 #include "../keypair.h"
 #include "../memo.h"
+#include "qtcompat.h"
+#include <QCoreApplication>
 
 QSTELLAR_BEGIN_NS
 
+static void registerTypes()
+{
+    regType<TransactionResponseAttach::Links>();
+    regType<TransactionResponseAttach::FeeBumpTransaction>();
+    regType<TransactionResponseAttach::InnerTransaction>();
+    regType<TransactionResponseAttach::Preconditions>();
+    regType<TransactionResponseAttach::TimeBounds>();
+    regType<TransactionResponseAttach::LedgerBounds>();
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+    // TimeBounds/LedgerBounds are referenced by their bare class name inside
+    // Preconditions (same namespace), so moc stores the unqualified name.
+    qRegisterMetaType<TransactionResponseAttach::TimeBounds>("TimeBounds");
+    qRegisterMetaType<TransactionResponseAttach::LedgerBounds>("LedgerBounds");
+#endif
+}
+Q_COREAPP_STARTUP_FUNCTION(registerTypes)
+
 TransactionResponse::TransactionResponse(QNetworkReply *reply)
     :Response(reply)
-    ,m_successful(QMetaType(QMetaType::Bool))// we have to indicate the type or it will not be filled, it will stay returning isNull as true if it is not initialized
+    ,m_successful(nullVariant(QMetaType::Bool))// we have to indicate the type or it will not be filled, it will stay returning isNull as true if it is not initialized
     ,m_sourceAccountSequence(0)
     ,m_maxFee(0)
     ,m_feeCharged(0)

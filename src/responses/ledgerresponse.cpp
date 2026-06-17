@@ -1,6 +1,14 @@
 #include "ledgerresponse.h"
+#include <QCoreApplication>
+#include "qtcompat.h"
 
 QSTELLAR_BEGIN_NS
+
+static void registerTypes()
+{
+    regType<LedgerResponseAttach::Links>();
+}
+Q_COREAPP_STARTUP_FUNCTION(registerTypes)
 
 
 LedgerResponse::LedgerResponse(QNetworkReply *reply)

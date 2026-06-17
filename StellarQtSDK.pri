@@ -294,6 +294,7 @@ HEADERS += \
     $$PWD/src/responses/operations/restorefootprintoperationresponse.h \
     $$PWD/src/sorobanserver.h \
     $$PWD/src/exception/sorobanrpcexception.h \
+    $$PWD/src/qtcompat.h \
     $$PWD/src/responses/sorobanrpc/gethealthresponse.h \
     $$PWD/src/responses/sorobanrpc/getnetworkresponse.h \
     $$PWD/src/responses/sorobanrpc/getversioninforesponse.h \

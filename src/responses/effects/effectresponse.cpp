@@ -1,7 +1,15 @@
 #include "effectresponse.h"
 #include "../../keypair.h"
+#include <QCoreApplication>
+#include "qtcompat.h"
 
 QSTELLAR_BEGIN_NS
+
+static void registerTypes()
+{
+    regType<EffectResponseAttach::Links>();
+}
+Q_COREAPP_STARTUP_FUNCTION(registerTypes)
 
 
 EffectResponse::EffectResponse(QNetworkReply *reply)

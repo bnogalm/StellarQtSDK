@@ -1,8 +1,18 @@
 #include "traderesponse.h"
 #include "../keypair.h"
 #include "../asset.h"
+#include "price.h"
+#include <QCoreApplication>
+#include "qtcompat.h"
 
 QSTELLAR_BEGIN_NS
+
+static void registerTypes()
+{
+    regType<TradeResponseAttach::Links>();
+    regType<Price>();
+}
+Q_COREAPP_STARTUP_FUNCTION(registerTypes)
 
 TradeResponse::TradeResponse(QNetworkReply *reply)
     :Response(reply)

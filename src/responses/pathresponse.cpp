@@ -4,8 +4,16 @@
 #include "../assettypenative.h"
 #include "../assettypecreditalphanum.h"
 #include "common.h"
+#include <QCoreApplication>
+#include "qtcompat.h"
 
 QSTELLAR_BEGIN_NS
+
+static void registerTypes()
+{
+    regType<PathResponseAttach::Links>();
+}
+Q_COREAPP_STARTUP_FUNCTION(registerTypes)
 
 
 PathResponse::PathResponse(QNetworkReply *reply )
