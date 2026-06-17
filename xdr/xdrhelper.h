@@ -6,6 +6,10 @@
 #include <QDebug>
 #include <QIODevice>
 #include <stdexcept>
+#include <limits>   // std::numeric_limits used below as a default template arg;
+                    // include it here so this widely-included header is
+                    // self-sufficient regardless of include order (GCC's leaner
+                    // libstdc++ no longer guarantees it transitively).
 
 
 namespace xdr{
