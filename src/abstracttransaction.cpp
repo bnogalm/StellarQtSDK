@@ -1,6 +1,7 @@
 #include "abstracttransaction.h"
 #include "transaction.h"
 #include "feebumptransaction.h"
+#include <cstring>
 
 QSTELLAR_BEGIN_NS
 

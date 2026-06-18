@@ -4,6 +4,7 @@
 #include <QCryptographicHash>
 #include <stdexcept>
 #include <cstring>   // std::memcmp (GCC 13's libstdc++ no longer pulls it in transitively)
+#include <algorithm>
 
 #include "asset.h"
 

@@ -10,6 +10,8 @@
 #include "managedataoperation.h"
 
 #include <QtNetwork/qpassworddigestor.h>
+#include <cstring>
+#include <algorithm>
 
 QSTELLAR_BEGIN_NS
 

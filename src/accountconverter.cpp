@@ -1,4 +1,5 @@
 #include "accountconverter.h"
+#include <cstring>
 
 QSTELLAR_BEGIN_NS
 

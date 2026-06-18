@@ -1,6 +1,7 @@
 #include "assettypecreditalphanum4.h"
 #include "util.h"
 #include "keypair.h"
+#include <cstring>
 
 QSTELLAR_BEGIN_NS
 

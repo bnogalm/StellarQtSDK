@@ -4,6 +4,7 @@
 #include <numeric>
 #include <limits>
 #include <stdexcept>
+#include <cmath>
 
 QSTELLAR_BEGIN_NS
 

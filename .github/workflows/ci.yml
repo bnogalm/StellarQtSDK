@@ -47,9 +47,12 @@ jobs:
       - name: qmake
         run: qmake StellarQtSDKTest.pro
 
-      # 4) Compile, using all available cores.
+      # 4) Compile, using all available cores. '-k' (keep-going) makes a failing
+      #    build report EVERY compile error in one run instead of stopping at the
+      #    first file — so a missing-include sweep can be done in a single pass
+      #    rather than one CI round per file. The job still goes red on any error.
       - name: Build
-        run: make -j$(nproc)
+        run: make -k -j$(nproc)
 
       # 5) Run the tests. Exit code = number of failed tests → red on failure.
       - name: Run tests

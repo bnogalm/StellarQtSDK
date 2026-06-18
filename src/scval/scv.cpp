@@ -2,6 +2,7 @@
 
 #include <cstring>
 #include <stdexcept>
+#include <algorithm>
 
 #include "../stellaraddress.h"
 

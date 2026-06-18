@@ -1,4 +1,5 @@
 #include "memo.h"
+#include <cstring>
 
 QSTELLAR_BEGIN_NS
 

@@ -1,6 +1,7 @@
 #include "sep45challenge.h"
 
 #include <QDateTime>
+#include <cstring>
 #include <stdexcept>
 
 #include "abstracttransaction.h"

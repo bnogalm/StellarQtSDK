@@ -6,6 +6,7 @@
 #include <exception>
 #include <stdexcept>
 #include <QDataStream>
+#include <cstring>
 #include "xdr/stellartransaction.h"
 #include "exception/formatexception.h"
 #include "qstellar_namespace.h"

@@ -1,6 +1,7 @@
 #include "transaction.h"
 #include <QDateTime>
 #include <limits>
+#include <cstring>
 #include "createclaimablebalanceoperation.h"
 #include "accountconverter.h"
 

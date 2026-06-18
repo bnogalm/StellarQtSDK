@@ -3,6 +3,8 @@
 #include "keypair.h"
 #include "transaction.h"
 
+#include <cstring>
+
 QSTELLAR_BEGIN_NS
 
 stellar::SignerKey Signer::ed25519PublicKey(KeyPair *keyPair) {

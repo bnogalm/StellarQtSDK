@@ -15,6 +15,7 @@
 #include <QTimer>
 #include <QTimerEvent>
 #include <stdexcept>
+#include <cstring>
 
 QSTELLAR_BEGIN_NS
 
