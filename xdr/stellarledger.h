@@ -9,6 +9,15 @@ namespace stellar
 typedef Array<quint8,128> UpgradeType;
 
 /* StellarValue is the value used by SCP to reach consensus on a given ledger
+ *
+ * NOT WIRE-ACCURATE and NOT USED by the SDK (nothing outside this file
+ * references it; LedgerHeader below is commented out). The real `ext` is a
+ * union switched on StellarValueType — STELLAR_VALUE_BASIC (void),
+ * STELLAR_VALUE_SIGNED (LedgerCloseValueSignature) and, since CAP-83 /
+ * Protocol 28, STELLAR_VALUE_EMPTY_TX_SET (a proposedValue struct) — not the
+ * `Reserved` placeholder below. Client SDKs never parse SCP values; only
+ * consumers of raw ledger-close data do. Model the union properly before
+ * using this struct for anything.
 */
 struct StellarValue
 {

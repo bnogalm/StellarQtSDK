@@ -174,6 +174,73 @@ private slots:
         QVERIFY(!ci.storage.isNull());
         QCOMPARE(Scv::fromMap(*ci.storage).size(), 1);
     }
+
+    // ─── ContractExecutable EXTERNAL_REF (CAP-85, Protocol 28) ───────
+
+    void testContractInstanceExternalRefRoundTrip()
+    {
+        QByteArray ownerBytes(32, '\x5A');
+        stellar::ContractExecutable exec;
+        exec.type = stellar::ContractExecutableType::CONTRACT_EXECUTABLE_EXTERNAL_REF;
+        exec.externalRef.executableOwner =
+            Scv::toAddress(StrKey::encodeContract(ownerBytes)).address;
+        exec.externalRef.tag = QByteArray("shared-v1");   // 9 bytes -> 3 pad bytes
+
+        stellar::SCContractInstance ci =
+            Scv::fromContractInstance(roundtripXdr(Scv::toContractInstance(exec)));
+
+        QCOMPARE(static_cast<int>(ci.executable.type),
+                 static_cast<int>(stellar::ContractExecutableType::CONTRACT_EXECUTABLE_EXTERNAL_REF));
+        QCOMPARE(static_cast<int>(ci.executable.externalRef.executableOwner.type),
+                 static_cast<int>(stellar::SCAddressType::SC_ADDRESS_TYPE_CONTRACT));
+        for (int i = 0; i < 32; ++i) {
+            QCOMPARE(ci.executable.externalRef.executableOwner.contractId[i],
+                     static_cast<quint8>('\x5A'));
+        }
+        QCOMPARE(ci.executable.externalRef.tag, QByteArray("shared-v1"));
+    }
+
+    /** The regression that matters. Contract instances arrive as XDR produced
+     *  by Core, so the reader must handle a wire-correct external-ref payload.
+     *  Before CAP-85 support it consumed only the discriminant for any
+     *  non-WASM executable, leaving `executable_owner` + `tag` in the stream,
+     *  and every field decoded after them — here the instance storage — came
+     *  out garbage. */
+    void testExternalRefDoesNotDesyncTrailingStorage()
+    {
+        stellar::ContractExecutable exec;
+        exec.type = stellar::ContractExecutableType::CONTRACT_EXECUTABLE_EXTERNAL_REF;
+        exec.externalRef.executableOwner =
+            Scv::toAddress(StrKey::encodeContract(QByteArray(32, '\x11'))).address;
+        exec.externalRef.tag = QByteArray("tag");
+
+        QList<stellar::SCVal> keys   = { Scv::toSymbol("k") };
+        QList<stellar::SCVal> values = { Scv::toUint32(42) };
+        stellar::SCVal storage = Scv::toMap(keys, values);
+
+        stellar::SCContractInstance ci =
+            Scv::fromContractInstance(roundtripXdr(Scv::toContractInstance(exec, storage)));
+
+        QVERIFY(!ci.storage.isNull());
+        QList<stellar::SCMapEntry> entries = Scv::fromMap(*ci.storage);
+        QCOMPARE(entries.size(), 1);
+        QCOMPARE(Scv::fromSymbol(entries.at(0).key), QString("k"));
+        QCOMPARE(Scv::fromUint32(entries.at(0).val), 42u);
+    }
+
+    /** An executable arm we don't know must fail loudly rather than leave its
+     *  payload in the stream. */
+    void testUnknownContractExecutableTypeThrows()
+    {
+        QByteArray bytes;
+        { QDataStream s(&bytes, QIODevice::WriteOnly); s << static_cast<qint32>(7); }
+
+        stellar::ContractExecutable e;
+        QDataStream s(&bytes, QIODevice::ReadOnly);
+        bool threw = false;
+        try { s >> e; } catch (const std::runtime_error&) { threw = true; }
+        QVERIFY(threw);
+    }
 };
 
 ADD_TEST(ScvAddressErrorInstanceTest)

@@ -350,6 +350,44 @@ private slots:
       QCOMPARE(account.getNumSponsored(), 3);
       QCOMPARE(account.getNumSponsoring(), 2);
     }
+
+    // All four signer key types — only ed25519_public_key was exercised
+    // before. The non-G strkey types (X = sha256 hash, T = pre-auth tx,
+    // P = ed25519 signed payload, CAP-40) must deserialize their `key`,
+    // `type` and `weight` like any other signer.
+    void testDeserializeSignerTypes() {
+        QByteArray json = "{"
+            "\"id\":\"GAAZI4TCR3TY5OJHCTJC2A4QSY6CJWJH5IAJTGKIN2ER7LBNVKOCCWN7\","
+            "\"account_id\":\"GAAZI4TCR3TY5OJHCTJC2A4QSY6CJWJH5IAJTGKIN2ER7LBNVKOCCWN7\","
+            "\"sequence\":\"1\","
+            "\"signers\":["
+                "{\"key\":\"GAAZI4TCR3TY5OJHCTJC2A4QSY6CJWJH5IAJTGKIN2ER7LBNVKOCCWN7\",\"weight\":3,\"type\":\"ed25519_public_key\"},"
+                "{\"key\":\"XDRPF6NZRR7EEVO7ESIWUDXHAOMM2QSKIQQBJK6I2FB7YKDZES5UCLWD\",\"weight\":2,\"type\":\"sha256_hash\"},"
+                "{\"key\":\"TDRPF6NZRR7EEVO7ESIWUDXHAOMM2QSKIQQBJK6I2FB7YKDZES5UCLWD\",\"weight\":1,\"type\":\"preauth_tx\"},"
+                "{\"key\":\"PA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJVAI\",\"weight\":4,\"type\":\"ed25519_signed_payload\"}"
+            "]}";
+        AccountResponse account(0);
+        account.loadFromJson(json);
+
+        auto signers = account.getSigners();
+        QCOMPARE(signers.size(), 4);
+
+        QCOMPARE(signers[0].getType(), QString("ed25519_public_key"));
+        QCOMPARE(signers[0].getKey(), QString("GAAZI4TCR3TY5OJHCTJC2A4QSY6CJWJH5IAJTGKIN2ER7LBNVKOCCWN7"));
+        QCOMPARE(signers[0].getWeight(), 3);
+
+        QCOMPARE(signers[1].getType(), QString("sha256_hash"));
+        QCOMPARE(signers[1].getKey(), QString("XDRPF6NZRR7EEVO7ESIWUDXHAOMM2QSKIQQBJK6I2FB7YKDZES5UCLWD"));
+        QCOMPARE(signers[1].getWeight(), 2);
+
+        QCOMPARE(signers[2].getType(), QString("preauth_tx"));
+        QCOMPARE(signers[2].getKey(), QString("TDRPF6NZRR7EEVO7ESIWUDXHAOMM2QSKIQQBJK6I2FB7YKDZES5UCLWD"));
+        QCOMPARE(signers[2].getWeight(), 1);
+
+        QCOMPARE(signers[3].getType(), QString("ed25519_signed_payload"));
+        QCOMPARE(signers[3].getKey(), QString("PA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJVAI"));
+        QCOMPARE(signers[3].getWeight(), 4);
+    }
 };
 
 ADD_TEST(AccountDeserializerTest)

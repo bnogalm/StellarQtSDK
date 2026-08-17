@@ -67,6 +67,70 @@ qint64 authNonceFromBytes(const QByteArray& nonce48)
     return v;
 }
 
+/** True iff the challenge envelope carries a valid ed25519 signature from
+ *  the server's signing key over the transaction hash. This is the
+ *  server-side half of SEP-45 (mirrors Sep10Challenge::verifyTransactionSignature):
+ *  the client's proof of control is the Soroban auth entry validated by
+ *  `simulateTransaction`, but the envelope itself is signed ONLY by the
+ *  server (see Sep45Challenge::newChallenge → `tx->sign(serverSigner)`), so
+ *  this confirms the verifier is looking at a challenge it actually issued
+ *  — not one forged with a different (or no) server key. Filter by the
+ *  signature hint first, exactly as SEP-10 does. */
+/**
+ * Verify the server's own signature on a challenge envelope.
+ *
+ * The server signs BEFORE the client completes the challenge, and the client
+ * completes it by filling in the auth entry's `signatureExpirationLedger` and
+ * `signature` — fields that live inside the InvokeHostFunction operation body,
+ * i.e. inside the transaction signature payload. Hashing the envelope the
+ * client returns therefore produces a different hash than the one the server
+ * signed, so the signature must be checked against the *as-issued* form:
+ * re-parse the envelope and reset every ADDRESS-credentials auth entry to its
+ * unsigned state before hashing.
+ *
+ * Only those two client-owned fields are excluded. Everything the client must
+ * not touch — source account, sequence, timebounds, the host function with its
+ * client / homeDomain / webAuthDomain / nonce / expiration args, and each auth
+ * entry's address, nonce and rootInvocation — is still covered.
+ */
+bool serverSignedChallenge(const QString& challengeXdr, Network* network,
+                           const QString& serverAccountId)
+{
+    QScopedPointer<AbstractTransaction> reissued(
+        AbstractTransaction::fromEnvelopeXdr(challengeXdr, network));
+    auto* asIssued = dynamic_cast<Transaction*>(reissued.data());
+    if (!asIssued || asIssued->getOperations().isEmpty()) {
+        return false;
+    }
+    auto* op = dynamic_cast<InvokeHostFunctionOperation*>(asIssued->getOperations().at(0));
+    if (!op) {
+        return false;
+    }
+
+    QList<stellar::SorobanAuthorizationEntry> auth = op->getAuth();
+    for (stellar::SorobanAuthorizationEntry& e : auth) {
+        if (e.credentials.type == stellar::SorobanCredentialsType::SOROBAN_CREDENTIALS_ADDRESS) {
+            e.credentials.address.signatureExpirationLedger = 0;
+            e.credentials.address.signature = stellar::SCVal();   // default is SCV_VOID
+        }
+    }
+    op->setAuth(auth);
+
+    QScopedPointer<KeyPair> serverKey(KeyPair::fromAccountId(serverAccountId));
+    const QByteArray txHash = asIssued->hash();
+    const stellar::SignatureHint serverHint = serverKey->getSignatureHint();
+    const QVector<stellar::DecoratedSignature> sigs = asIssued->getSignatures();
+    for (const stellar::DecoratedSignature& ds : sigs) {
+        if (!(ds.hint == serverHint)) {
+            continue;
+        }
+        if (serverKey->verify(txHash, ds.signature.binary())) {
+            return true;
+        }
+    }
+    return false;
+}
+
 } // namespace
 
 QString Sep45Challenge::newChallenge(KeyPair* serverSigner,
@@ -226,13 +290,16 @@ Sep45Challenge::VerifiedChallenge Sep45Challenge::verifyChallenge(
         throw InvalidSep45ChallengeException("auth entry contract does not match args client");
     }
 
-    // The DecoratedSignature path lives in Sep10Challenge / AbstractTransaction
-    // — for SEP-45 we accept any envelope that round-trips via
-    // `AbstractTransaction::fromEnvelopeXdr` (which validates the wire format)
-    // and matches the source account, and we then defer the cryptographic
-    // truth to `simulateTransaction`. A challenge with no server signature
-    // would still fail on the network at submit time; here, simulate is
-    // the authoritative validator of the client-side auth chain.
+    // The challenge envelope MUST be signed by the server's signing key.
+    // simulateTransaction validates only the client-side auth chain (the
+    // contract's __check_auth), NOT who issued the envelope — so without
+    // this check a verifier would accept a challenge it never signed
+    // (or an unsigned one), defeating SEP-45's mutual-auth guarantee.
+    // Verified locally and cheaply, exactly as SEP-10 does.
+    if (!serverSignedChallenge(challengeXdr, network, serverAccountId)) {
+        throw InvalidSep45ChallengeException(
+            "challenge transaction not signed by the server's signing key");
+    }
 
     // Live verification: only meaningful with a real `sorobanServer`. The
     // simulation either succeeds (contract's __check_auth accepts the

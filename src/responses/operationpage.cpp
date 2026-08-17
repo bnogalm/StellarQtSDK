@@ -58,7 +58,20 @@ void OperationPage::processRecords(const QJsonArray &records)
           case stellar::OperationType::CHANGE_TRUST:
             op = new ChangeTrustOperationResponse();break;
           case stellar::OperationType::ALLOW_TRUST:
-            op = new AllowTrustOperationResponse();break;
+#if defined(_MSC_VER)
+#  pragma warning(push)
+#  pragma warning(disable: 4996)
+#elif defined(__GNUC__) || defined(__clang__)
+#  pragma GCC diagnostic push
+#  pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#endif
+            op = new AllowTrustOperationResponse();
+#if defined(_MSC_VER)
+#  pragma warning(pop)
+#elif defined(__GNUC__) || defined(__clang__)
+#  pragma GCC diagnostic pop
+#endif
+            break;
           case stellar::OperationType::ACCOUNT_MERGE:
             op = new AccountMergeOperationResponse();break;
           case stellar::OperationType::INFLATION:

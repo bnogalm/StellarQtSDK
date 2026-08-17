@@ -1,6 +1,16 @@
 #include "allowtrustoperation.h"
 #include <cstring>
 
+// This TU *is* the implementation of the deprecated AllowTrustOperation; the
+// deprecation is a signal to consumers, not to the class's own definition.
+#if defined(_MSC_VER)
+#  pragma warning(push)
+#  pragma warning(disable: 4996)
+#elif defined(__GNUC__) || defined(__clang__)
+#  pragma GCC diagnostic push
+#  pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#endif
+
 QSTELLAR_BEGIN_NS
 
 
@@ -25,11 +35,17 @@ AllowTrustOperation::AllowTrustOperation(KeyPair *trustor, QString assetCode, bo
         QByteArray padded = Util::paddedByteArray(assetCodeUtf8,12);
         memcpy(m_op.asset.alphaNum12.assetCode,padded.data(),12);
     }
-    // authorize
+    // authorize. The `else` is required: stellar::AllowTrustOp is a plain
+    // aggregate with no default member initializer, so leaving both flags
+    // false would ship an indeterminate `authorize` — and any non-zero
+    // garbage with bit 0 set reads back as AUTHORIZED, turning a de-authorize
+    // into an authorize.
     if(authorize)
         m_op.authorize=static_cast<quint32>(stellar::TrustLineFlags::AUTHORIZED_FLAG);
     else if(authorizeToMaintainLiabilities)
         m_op.authorize=static_cast<quint32>(stellar::TrustLineFlags::AUTHORIZED_TO_MAINTAIN_LIABILITIES_FLAG);
+    else
+        m_op.authorize=0;
 
 }
 
@@ -97,3 +113,8 @@ AllowTrustOperation *AllowTrustOperation::setSourceAccount(QString sourceAccount
     return this;
 }
 QSTELLAR_END_NS
+#if defined(_MSC_VER)
+#  pragma warning(pop)
+#elif defined(__GNUC__) || defined(__clang__)
+#  pragma GCC diagnostic pop
+#endif

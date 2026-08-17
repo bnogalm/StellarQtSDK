@@ -18,7 +18,7 @@ class TrustlineSponsorshipUpdatedEffectResponse : public EffectResponse
     Q_OBJECT
     Q_PROPERTY(QString asset READ asset WRITE setAsset NOTIFY assetChanged)
     Q_PROPERTY(QString former_sponsor READ getFormerSponsor WRITE setFormerSponsor NOTIFY formerSponsorChanged)
-    Q_PROPERTY(QString newSponsor READ getNewSponsor WRITE setNewSponsor NOTIFY newSponsorChanged)
+    Q_PROPERTY(QString new_sponsor READ getNewSponsor WRITE setNewSponsor NOTIFY newSponsorChanged)
 
     QString m_assetString;
     Asset* m_asset;

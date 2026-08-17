@@ -175,27 +175,78 @@ namespace stellar
         in >> k.nonce; return in;
     }
 
-    /** ContractExecutable (CAP-46). */
+    /**
+     * ContractExecutableExternalRef (CAP-85, Protocol 28) — the payload of the
+     * externally managed executable: the contract that owns the shared code
+     * reference, plus the tag naming which reference of that owner to use.
+     * Pointing several contracts at one reference is what makes a fleet
+     * upgrade atomic.
+     */
+    struct ContractExecutableExternalRef
+    {
+        SCAddress  executableOwner;
+        QByteArray tag;   // SCString — UTF-8 bytes, same wire form as SCV_STRING
+    };
+    inline QDataStream& operator<<(QDataStream& out, const ContractExecutableExternalRef& r) {
+        out << r.executableOwner;
+        out << static_cast<qint32>(r.tag.size());
+        if (!r.tag.isEmpty()) out.writeRawData(r.tag.constData(), r.tag.size());
+        const quint32 pad = (4 - (r.tag.size() % 4)) % 4;
+        if (pad) { char zero[4] = {0,0,0,0}; out.writeRawData(zero, static_cast<int>(pad)); }
+        return out;
+    }
+    inline QDataStream& operator>>(QDataStream& in, ContractExecutableExternalRef& r) {
+        in >> r.executableOwner;
+        qint32 n; in >> n;
+        if (n < 0) throw std::runtime_error("ContractExecutableExternalRef: negative tag length");
+        r.tag.resize(n);
+        if (n > 0) in.readRawData(r.tag.data(), n);
+        const quint32 pad = (4 - (static_cast<quint32>(n) % 4)) % 4;
+        if (pad) { char z[4]; in.readRawData(z, static_cast<int>(pad)); }
+        return in;
+    }
+
+    /** ContractExecutable (CAP-46; EXTERNAL_REF added by CAP-85 / Protocol 28). */
     enum class ContractExecutableType : qint32
     {
         CONTRACT_EXECUTABLE_WASM = 0,
-        CONTRACT_EXECUTABLE_STELLAR_ASSET = 1
+        CONTRACT_EXECUTABLE_STELLAR_ASSET = 1,
+        CONTRACT_EXECUTABLE_EXTERNAL_REF = 2   // CAP-85, Protocol 28
     };
     struct ContractExecutable
     {
         ContractExecutableType type = ContractExecutableType::CONTRACT_EXECUTABLE_WASM;
-        uint256 wasmHash{};  // only for WASM variant
+        uint256 wasmHash{};                          // only for WASM variant
+        ContractExecutableExternalRef externalRef;   // only for EXTERNAL_REF variant
     };
     inline QDataStream& operator<<(QDataStream& out, const ContractExecutable& e) {
         out << e.type;
-        if (e.type == ContractExecutableType::CONTRACT_EXECUTABLE_WASM)
-            out << e.wasmHash;
+        switch (e.type) {
+        case ContractExecutableType::CONTRACT_EXECUTABLE_WASM:
+            out << e.wasmHash; break;
+        case ContractExecutableType::CONTRACT_EXECUTABLE_STELLAR_ASSET:
+            break;  // void arm
+        case ContractExecutableType::CONTRACT_EXECUTABLE_EXTERNAL_REF:
+            out << e.externalRef; break;
+        default:
+            throw std::runtime_error("ContractExecutable: unknown executable type");
+        }
         return out;
     }
     inline QDataStream& operator>>(QDataStream& in, ContractExecutable& e) {
         in >> e.type;
-        if (e.type == ContractExecutableType::CONTRACT_EXECUTABLE_WASM)
-            in >> e.wasmHash;
+        switch (e.type) {
+        case ContractExecutableType::CONTRACT_EXECUTABLE_WASM:
+            in >> e.wasmHash; break;
+        case ContractExecutableType::CONTRACT_EXECUTABLE_STELLAR_ASSET:
+            break;  // void arm
+        case ContractExecutableType::CONTRACT_EXECUTABLE_EXTERNAL_REF:
+            in >> e.externalRef; break;
+        default:
+            // Never skip an unknown arm silently: its payload would stay in the
+            // stream and desync every field decoded after it.
+            throw std::runtime_error("ContractExecutable: unknown executable type");
+        }
         return in;
     }
 

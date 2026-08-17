@@ -6,6 +6,7 @@ QSTELLAR_BEGIN_NS
 
 
 RevokeTrustlineSponsorshipOperation::RevokeTrustlineSponsorshipOperation(QString accountId, Asset *asset)
+    : m_asset(nullptr)   // FIX: was uninitialized → getAsset()/dtor read/deleted garbage
 {
     auto& revokeSponsorshipLedgerEntry =m_op.fillRevokeSponsorshipLedgerEntry();
     auto& trustLine = revokeSponsorshipLedgerEntry.fillTrustLine();

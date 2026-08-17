@@ -58,9 +58,25 @@ public:
      * @param sourceAccount source account; its sequence number is incremented on build().
      * @param network network this transaction targets.
      */
+    // Legacy convenience ctor: defaults to the process-wide current network.
+    // Network::current() is deprecated (callers should pass a Network explicitly,
+    // removal slated for 2.0) but this overload's whole purpose is that implicit
+    // default, so the one intentional internal use is silenced right here.
+#if defined(_MSC_VER)
+#  pragma warning(push)
+#  pragma warning(disable: 4996)
+#elif defined(__GNUC__) || defined(__clang__)
+#  pragma GCC diagnostic push
+#  pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#endif
     TransactionBuilder(AccountConverter accountConverter,
                        TransactionBuilderAccount* sourceAccount,
                        Network* network = Network::current());
+#if defined(_MSC_VER)
+#  pragma warning(pop)
+#elif defined(__GNUC__) || defined(__clang__)
+#  pragma GCC diagnostic pop
+#endif
 
     /**
      * Java-aligned constructor (introduced in 0.4.0).

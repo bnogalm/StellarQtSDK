@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(StellarQtSDK VERSION 1.0.1 LANGUAGES C CXX)
+project(StellarQtSDK VERSION 1.0.2 LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -167,6 +167,14 @@ qt_add_library(StellarQtSDK STATIC
     src/sep45challenge.cpp
     src/sep45challenge.h
     src/exception/invalidsep45challengeexception.h
+    src/exception/assembledtransactionexception.h
+    src/exception/simulationfailedexception.h
+    src/exception/notyetsimulatedexception.h
+    src/exception/sendfailedexception.h
+    src/sep7.cpp
+    src/sep7.h
+    src/stellartoml.cpp
+    src/stellartoml.h
     xdr/scval.h
     xdr/sorobantxdata.h
     xdr/sorobanops.h
@@ -501,7 +509,7 @@ target_include_directories(StellarQtSDK PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} src)
 
 add_compile_definitions(
     STELLAR_QT_SDK_CLIENT_NAME=\"\\\"qtcpp-stellar-sdk\\\"\"
-    STELLAR_QT_SDK_CLIENT_VERSION=\"\\\"1.0.1\\\"\"
+    STELLAR_QT_SDK_CLIENT_VERSION=\"\\\"1.0.2\\\"\"
 )
 
 target_compile_definitions(StellarQtSDK PRIVATE

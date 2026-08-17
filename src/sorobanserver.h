@@ -80,8 +80,13 @@ public:
      * Sends a JSON-RPC 2.0 request and returns the `result` JSON value.
      * Throws `qstellar::exception::SorobanRpcException` if the envelope
      * carries an `error` instead.
+     *
+     * `virtual` so tests can subclass `SorobanServer` and capture the
+     * (method, params) a high-level call assembles — or feed a scripted
+     * result — without a live RPC (mirrors `sendTransactionXdr` /
+     * `simulateTransactionXdr`).
      */
-    QJsonValue sendRequest(const QString& method, const QJsonValue& params = QJsonValue());
+    virtual QJsonValue sendRequest(const QString& method, const QJsonValue& params = QJsonValue());
 
     /**
      * Parses a JSON-RPC 2.0 response envelope (`{jsonrpc, id, result}` or

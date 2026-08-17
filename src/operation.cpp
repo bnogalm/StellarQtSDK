@@ -154,7 +154,20 @@ Operation *Operation::fromXdr(AccountConverter accountConverter, stellar::Operat
         operation = ChangeTrustOperation::build(xdr.operationChangeTrust);
         break;
     case stellar::OperationType::ALLOW_TRUST:
+        // Decoding still must build the deprecated op for legacy ledgers.
+#if defined(_MSC_VER)
+#  pragma warning(push)
+#  pragma warning(disable: 4996)
+#elif defined(__GNUC__) || defined(__clang__)
+#  pragma GCC diagnostic push
+#  pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#endif
         operation = AllowTrustOperation::build(xdr.operationAllowTrust);
+#if defined(_MSC_VER)
+#  pragma warning(pop)
+#elif defined(__GNUC__) || defined(__clang__)
+#  pragma GCC diagnostic pop
+#endif
         break;
     case stellar::OperationType::ACCOUNT_MERGE:
         operation = AccountMergeOperation::build(xdr.operationAccountMerge);

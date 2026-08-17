@@ -3,6 +3,16 @@
 #include "../../asset.h"
 #include "../../assettypenative.h"
 
+// This TU *is* the implementation of the deprecated AllowTrustOperationResponse;
+// the deprecation targets consumers, not the class's own definition.
+#if defined(_MSC_VER)
+#  pragma warning(push)
+#  pragma warning(disable: 4996)
+#elif defined(__GNUC__) || defined(__clang__)
+#  pragma GCC diagnostic push
+#  pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#endif
+
 QSTELLAR_BEGIN_NS
 
 AllowTrustOperationResponse::AllowTrustOperationResponse(QNetworkReply *reply)
@@ -117,3 +127,8 @@ void AllowTrustOperationResponse::setAssetIssuer(QString assetIssuer)
     m_assetIssuer = assetIssuer;
 }
 QSTELLAR_END_NS
+#if defined(_MSC_VER)
+#  pragma warning(pop)
+#elif defined(__GNUC__) || defined(__clang__)
+#  pragma GCC diagnostic pop
+#endif

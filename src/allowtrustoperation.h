@@ -67,6 +67,21 @@ public:
 
 QSTELLAR_END_NS
 
+// AllowTrustOperation is intentionally deprecated (use SetTrustlineFlagsOperation).
+// The SDK still exports its legacy unqualified alias, so silence that one use here
+// while leaving the deprecation visible to consumers of the type itself.
+#if defined(_MSC_VER)
+#  pragma warning(push)
+#  pragma warning(disable: 4996)
+#elif defined(__GNUC__) || defined(__clang__)
+#  pragma GCC diagnostic push
+#  pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#endif
 QSTELLAR_ALIAS(AllowTrustOperation)
+#if defined(_MSC_VER)
+#  pragma warning(pop)
+#elif defined(__GNUC__) || defined(__clang__)
+#  pragma GCC diagnostic pop
+#endif
 
 #endif // ALLOWTRUSTOPERATION_H

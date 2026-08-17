@@ -16,7 +16,7 @@ CreateClaimableBalanceOperation::CreateClaimableBalanceOperation(QString amount,
 
 }
 
-CreateClaimableBalanceOperation::CreateClaimableBalanceOperation(stellar::CreateClaimableBalanceOp &op):m_op(op)
+CreateClaimableBalanceOperation::CreateClaimableBalanceOperation(stellar::CreateClaimableBalanceOp &op):m_op(op),m_asset(nullptr)
 {
 
 }
@@ -49,8 +49,11 @@ QList<Claimant> CreateClaimableBalanceOperation::getClaimants() {
 void CreateClaimableBalanceOperation::fillOperationBody(AccountConverter &accountConverter, stellar::Operation &operation)
 {
     Q_UNUSED(accountConverter)
-    operation.type = stellar::OperationType::CREATE_CLAIMABLE_BALANCE;
-    operation.operationCreateClaimableBalance = m_op;
+    // CreateClaimableBalanceOp holds an Array<Claimant> (a QVector), so it is
+    // one of the union's non-trivial members: it MUST be placement-constructed
+    // before being assigned, or the assignment operates on an unconstructed
+    // container and corrupts its refcount.
+    operation.fillCreateClaimableBalanceOp() = m_op;
 }
 
 CreateClaimableBalanceOperation *CreateClaimableBalanceOperation::build(stellar::CreateClaimableBalanceOp &op)

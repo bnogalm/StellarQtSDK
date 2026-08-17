@@ -44,6 +44,21 @@
 #include "../../src/responses/effects/liquiditypooltradeeffectresponse.h"
 #include "../../src/responses/effects/liquiditypoolremovedeffectresponse.h"
 #include "../../src/responses/effects/liquiditypoolrevokedeffectresponse.h"
+#include "../../src/responses/effects/accountsponsorshipcreatedeffectresponse.h"
+#include "../../src/responses/effects/accountsponsorshipupdatedeffectresponse.h"
+#include "../../src/responses/effects/accountsponsorshipremovedeffectresponse.h"
+#include "../../src/responses/effects/trustlinesponsorshipcreatedeffectresponse.h"
+#include "../../src/responses/effects/trustlinesponsorshipupdatedeffectresponse.h"
+#include "../../src/responses/effects/trustlinesponsorshipremovedeffectresponse.h"
+#include "../../src/responses/effects/datasponsorshipcreatedeffectresponse.h"
+#include "../../src/responses/effects/datasponsorshipupdatedeffectresponse.h"
+#include "../../src/responses/effects/datasponsorshipremovedeffectresponse.h"
+#include "../../src/responses/effects/claimablebalancesponsorshipcreatedeffectresponse.h"
+#include "../../src/responses/effects/claimablebalancesponsorshipupdatedeffectresponse.h"
+#include "../../src/responses/effects/claimablebalancesponsorshipremovedeffectresponse.h"
+#include "../../src/responses/effects/signersponsorshipcreatedeffectresponse.h"
+#include "../../src/responses/effects/signersponsorshipupdatedeffectresponse.h"
+#include "../../src/responses/effects/signersponsorshipremovedeffectresponse.h"
 #include "../../src/asset.h"
 #include "../../src/assettypenative.h"
 #include "../../src/keypair.h"
@@ -1102,6 +1117,212 @@ private slots:
          QCOMPARE(effect.getAssetCode(), QString("EUR"));
          QCOMPARE(effect.getAssetType(), QString("credit_alphanum4"));
        }
+
+    // ── Sponsorship effects (type_i 60-74) — were entirely untested ───────
+    // CAP-33 reserve sponsorship. Each family carries different fields:
+    // created → sponsor; updated → former_sponsor + new_sponsor; removed →
+    // former_sponsor; plus a resource discriminator (asset / data_name /
+    // balance_id / signer). Deserialized by reflection on the concrete class.
+
+    void testDeserializeAccountSponsorshipCreatedEffect() {
+        QByteArray json = "{\"id\":\"0000065571265847297-0000000001\",\"paging_token\":\"65571265847297-1\","
+            "\"account\":\"GBRPYHIL2CI3FNQ4BXLFMNDLFJUNPU2HY3ZMFSHONUCEOASW7QC7OX2H\","
+            "\"type\":\"account_sponsorship_created\",\"type_i\":60,"
+            "\"sponsor\":\"GCFKT6BN2FEASCEVDNHEC4LLFT2KLUUPEMKM4OJPEJ65H2AEZ7IH4RV6\"}";
+        AccountSponsorshipCreatedEffectResponse effect;
+        effect.loadFromJson(json);
+        QCOMPARE(effect.getType(), QString("account_sponsorship_created"));
+        QCOMPARE(effect.getSponsor(), QString("GCFKT6BN2FEASCEVDNHEC4LLFT2KLUUPEMKM4OJPEJ65H2AEZ7IH4RV6"));
+    }
+
+    void testDeserializeAccountSponsorshipUpdatedEffect() {
+        QByteArray json = "{\"id\":\"i\",\"paging_token\":\"p\","
+            "\"account\":\"GBRPYHIL2CI3FNQ4BXLFMNDLFJUNPU2HY3ZMFSHONUCEOASW7QC7OX2H\","
+            "\"type\":\"account_sponsorship_updated\",\"type_i\":61,"
+            "\"former_sponsor\":\"GA6U5X6WOPNKKDKQULBR7IDHDBAQKOWPHYEC7WSXHZBFEYFD3XVZAKOO\","
+            "\"new_sponsor\":\"GB24LPGAHYTWRYOXIDKXLI55SBRWW42T3TZKDAAW3BOJX4ADVIATFTLU\"}";
+        AccountSponsorshipUpdatedEffectResponse effect;
+        effect.loadFromJson(json);
+        QCOMPARE(effect.getType(), QString("account_sponsorship_updated"));
+        QCOMPARE(effect.getFormerSponsor(), QString("GA6U5X6WOPNKKDKQULBR7IDHDBAQKOWPHYEC7WSXHZBFEYFD3XVZAKOO"));
+        QCOMPARE(effect.getNewSponsor(), QString("GB24LPGAHYTWRYOXIDKXLI55SBRWW42T3TZKDAAW3BOJX4ADVIATFTLU"));
+    }
+
+    void testDeserializeAccountSponsorshipRemovedEffect() {
+        QByteArray json = "{\"id\":\"i\",\"paging_token\":\"p\","
+            "\"account\":\"GBRPYHIL2CI3FNQ4BXLFMNDLFJUNPU2HY3ZMFSHONUCEOASW7QC7OX2H\","
+            "\"type\":\"account_sponsorship_removed\",\"type_i\":62,"
+            "\"former_sponsor\":\"GA6U5X6WOPNKKDKQULBR7IDHDBAQKOWPHYEC7WSXHZBFEYFD3XVZAKOO\"}";
+        AccountSponsorshipRemovedEffectResponse effect;
+        effect.loadFromJson(json);
+        QCOMPARE(effect.getType(), QString("account_sponsorship_removed"));
+        QCOMPARE(effect.getFormerSponsor(), QString("GA6U5X6WOPNKKDKQULBR7IDHDBAQKOWPHYEC7WSXHZBFEYFD3XVZAKOO"));
+    }
+
+    void testDeserializeTrustlineSponsorshipCreatedEffect() {
+        QByteArray json = "{\"id\":\"i\",\"paging_token\":\"p\","
+            "\"account\":\"GBRPYHIL2CI3FNQ4BXLFMNDLFJUNPU2HY3ZMFSHONUCEOASW7QC7OX2H\","
+            "\"type\":\"trustline_sponsorship_created\",\"type_i\":63,"
+            "\"asset\":\"USD:GCWVFBJ24754I5GXG4JOEB72GJCL3MKWC7VAEYWKGQHPVH3ENPNBSKWS\","
+            "\"sponsor\":\"GCFKT6BN2FEASCEVDNHEC4LLFT2KLUUPEMKM4OJPEJ65H2AEZ7IH4RV6\"}";
+        TrustlineSponsorshipCreatedEffectResponse effect;
+        effect.loadFromJson(json);
+        QCOMPARE(effect.getType(), QString("trustline_sponsorship_created"));
+        QCOMPARE(effect.asset(), QString("USD:GCWVFBJ24754I5GXG4JOEB72GJCL3MKWC7VAEYWKGQHPVH3ENPNBSKWS"));
+        QCOMPARE(effect.getSponsor(), QString("GCFKT6BN2FEASCEVDNHEC4LLFT2KLUUPEMKM4OJPEJ65H2AEZ7IH4RV6"));
+    }
+
+    void testDeserializeTrustlineSponsorshipUpdatedEffect() {
+        // Also a regression guard: the `new_sponsor` field was previously
+        // declared as a `newSponsor` Q_PROPERTY (camelCase), so Horizon's
+        // snake_case key never bound and getNewSponsor() came back empty.
+        QByteArray json = "{\"id\":\"i\",\"paging_token\":\"p\","
+            "\"account\":\"GBRPYHIL2CI3FNQ4BXLFMNDLFJUNPU2HY3ZMFSHONUCEOASW7QC7OX2H\","
+            "\"type\":\"trustline_sponsorship_updated\",\"type_i\":64,"
+            "\"asset\":\"USD:GCWVFBJ24754I5GXG4JOEB72GJCL3MKWC7VAEYWKGQHPVH3ENPNBSKWS\","
+            "\"former_sponsor\":\"GA6U5X6WOPNKKDKQULBR7IDHDBAQKOWPHYEC7WSXHZBFEYFD3XVZAKOO\","
+            "\"new_sponsor\":\"GB24LPGAHYTWRYOXIDKXLI55SBRWW42T3TZKDAAW3BOJX4ADVIATFTLU\"}";
+        TrustlineSponsorshipUpdatedEffectResponse effect;
+        effect.loadFromJson(json);
+        QCOMPARE(effect.getType(), QString("trustline_sponsorship_updated"));
+        QCOMPARE(effect.getFormerSponsor(), QString("GA6U5X6WOPNKKDKQULBR7IDHDBAQKOWPHYEC7WSXHZBFEYFD3XVZAKOO"));
+        QCOMPARE(effect.getNewSponsor(), QString("GB24LPGAHYTWRYOXIDKXLI55SBRWW42T3TZKDAAW3BOJX4ADVIATFTLU"));
+    }
+
+    void testDeserializeTrustlineSponsorshipRemovedEffect() {
+        QByteArray json = "{\"id\":\"i\",\"paging_token\":\"p\","
+            "\"account\":\"GBRPYHIL2CI3FNQ4BXLFMNDLFJUNPU2HY3ZMFSHONUCEOASW7QC7OX2H\","
+            "\"type\":\"trustline_sponsorship_removed\",\"type_i\":65,"
+            "\"asset\":\"USD:GCWVFBJ24754I5GXG4JOEB72GJCL3MKWC7VAEYWKGQHPVH3ENPNBSKWS\","
+            "\"former_sponsor\":\"GA6U5X6WOPNKKDKQULBR7IDHDBAQKOWPHYEC7WSXHZBFEYFD3XVZAKOO\"}";
+        TrustlineSponsorshipRemovedEffectResponse effect;
+        effect.loadFromJson(json);
+        QCOMPARE(effect.getType(), QString("trustline_sponsorship_removed"));
+        QCOMPARE(effect.getFormerSponsor(), QString("GA6U5X6WOPNKKDKQULBR7IDHDBAQKOWPHYEC7WSXHZBFEYFD3XVZAKOO"));
+    }
+
+    void testDeserializeDataSponsorshipCreatedEffect() {
+        QByteArray json = "{\"id\":\"i\",\"paging_token\":\"p\","
+            "\"account\":\"GBRPYHIL2CI3FNQ4BXLFMNDLFJUNPU2HY3ZMFSHONUCEOASW7QC7OX2H\","
+            "\"type\":\"data_sponsorship_created\",\"type_i\":66,"
+            "\"data_name\":\"config.memo\","
+            "\"sponsor\":\"GCFKT6BN2FEASCEVDNHEC4LLFT2KLUUPEMKM4OJPEJ65H2AEZ7IH4RV6\"}";
+        DataSponsorshipCreatedEffectResponse effect;
+        effect.loadFromJson(json);
+        QCOMPARE(effect.getType(), QString("data_sponsorship_created"));
+        QCOMPARE(effect.getDataName(), QString("config.memo"));
+        QCOMPARE(effect.getSponsor(), QString("GCFKT6BN2FEASCEVDNHEC4LLFT2KLUUPEMKM4OJPEJ65H2AEZ7IH4RV6"));
+    }
+
+    void testDeserializeDataSponsorshipUpdatedEffect() {
+        QByteArray json = "{\"id\":\"i\",\"paging_token\":\"p\","
+            "\"account\":\"GBRPYHIL2CI3FNQ4BXLFMNDLFJUNPU2HY3ZMFSHONUCEOASW7QC7OX2H\","
+            "\"type\":\"data_sponsorship_updated\",\"type_i\":67,"
+            "\"data_name\":\"config.memo\","
+            "\"former_sponsor\":\"GA6U5X6WOPNKKDKQULBR7IDHDBAQKOWPHYEC7WSXHZBFEYFD3XVZAKOO\","
+            "\"new_sponsor\":\"GB24LPGAHYTWRYOXIDKXLI55SBRWW42T3TZKDAAW3BOJX4ADVIATFTLU\"}";
+        DataSponsorshipUpdatedEffectResponse effect;
+        effect.loadFromJson(json);
+        QCOMPARE(effect.getType(), QString("data_sponsorship_updated"));
+        QCOMPARE(effect.getDataName(), QString("config.memo"));
+        QCOMPARE(effect.getFormerSponsor(), QString("GA6U5X6WOPNKKDKQULBR7IDHDBAQKOWPHYEC7WSXHZBFEYFD3XVZAKOO"));
+        QCOMPARE(effect.getNewSponsor(), QString("GB24LPGAHYTWRYOXIDKXLI55SBRWW42T3TZKDAAW3BOJX4ADVIATFTLU"));
+    }
+
+    void testDeserializeDataSponsorshipRemovedEffect() {
+        QByteArray json = "{\"id\":\"i\",\"paging_token\":\"p\","
+            "\"account\":\"GBRPYHIL2CI3FNQ4BXLFMNDLFJUNPU2HY3ZMFSHONUCEOASW7QC7OX2H\","
+            "\"type\":\"data_sponsorship_removed\",\"type_i\":68,"
+            "\"data_name\":\"config.memo\","
+            "\"former_sponsor\":\"GA6U5X6WOPNKKDKQULBR7IDHDBAQKOWPHYEC7WSXHZBFEYFD3XVZAKOO\"}";
+        DataSponsorshipRemovedEffectResponse effect;
+        effect.loadFromJson(json);
+        QCOMPARE(effect.getType(), QString("data_sponsorship_removed"));
+        QCOMPARE(effect.getDataName(), QString("config.memo"));
+        QCOMPARE(effect.getFormerSponsor(), QString("GA6U5X6WOPNKKDKQULBR7IDHDBAQKOWPHYEC7WSXHZBFEYFD3XVZAKOO"));
+    }
+
+    void testDeserializeClaimableBalanceSponsorshipCreatedEffect() {
+        QByteArray json = "{\"id\":\"i\",\"paging_token\":\"p\","
+            "\"account\":\"GBRPYHIL2CI3FNQ4BXLFMNDLFJUNPU2HY3ZMFSHONUCEOASW7QC7OX2H\","
+            "\"type\":\"claimable_balance_sponsorship_created\",\"type_i\":69,"
+            "\"balance_id\":\"00000000aaaa\","
+            "\"sponsor\":\"GCFKT6BN2FEASCEVDNHEC4LLFT2KLUUPEMKM4OJPEJ65H2AEZ7IH4RV6\"}";
+        ClaimableBalanceSponsorshipCreatedEffectResponse effect;
+        effect.loadFromJson(json);
+        QCOMPARE(effect.getType(), QString("claimable_balance_sponsorship_created"));
+        QCOMPARE(effect.getBalanceID(), QString("00000000aaaa"));
+        QCOMPARE(effect.getSponsor(), QString("GCFKT6BN2FEASCEVDNHEC4LLFT2KLUUPEMKM4OJPEJ65H2AEZ7IH4RV6"));
+    }
+
+    void testDeserializeClaimableBalanceSponsorshipUpdatedEffect() {
+        QByteArray json = "{\"id\":\"i\",\"paging_token\":\"p\","
+            "\"account\":\"GBRPYHIL2CI3FNQ4BXLFMNDLFJUNPU2HY3ZMFSHONUCEOASW7QC7OX2H\","
+            "\"type\":\"claimable_balance_sponsorship_updated\",\"type_i\":70,"
+            "\"balance_id\":\"00000000aaaa\","
+            "\"former_sponsor\":\"GA6U5X6WOPNKKDKQULBR7IDHDBAQKOWPHYEC7WSXHZBFEYFD3XVZAKOO\","
+            "\"new_sponsor\":\"GB24LPGAHYTWRYOXIDKXLI55SBRWW42T3TZKDAAW3BOJX4ADVIATFTLU\"}";
+        ClaimableBalanceSponsorshipUpdatedEffectResponse effect;
+        effect.loadFromJson(json);
+        QCOMPARE(effect.getType(), QString("claimable_balance_sponsorship_updated"));
+        QCOMPARE(effect.getBalanceID(), QString("00000000aaaa"));
+        QCOMPARE(effect.getFormerSponsor(), QString("GA6U5X6WOPNKKDKQULBR7IDHDBAQKOWPHYEC7WSXHZBFEYFD3XVZAKOO"));
+        QCOMPARE(effect.getNewSponsor(), QString("GB24LPGAHYTWRYOXIDKXLI55SBRWW42T3TZKDAAW3BOJX4ADVIATFTLU"));
+    }
+
+    void testDeserializeClaimableBalanceSponsorshipRemovedEffect() {
+        QByteArray json = "{\"id\":\"i\",\"paging_token\":\"p\","
+            "\"account\":\"GBRPYHIL2CI3FNQ4BXLFMNDLFJUNPU2HY3ZMFSHONUCEOASW7QC7OX2H\","
+            "\"type\":\"claimable_balance_sponsorship_removed\",\"type_i\":71,"
+            "\"balance_id\":\"00000000aaaa\","
+            "\"former_sponsor\":\"GA6U5X6WOPNKKDKQULBR7IDHDBAQKOWPHYEC7WSXHZBFEYFD3XVZAKOO\"}";
+        ClaimableBalanceSponsorshipRemovedEffectResponse effect;
+        effect.loadFromJson(json);
+        QCOMPARE(effect.getType(), QString("claimable_balance_sponsorship_removed"));
+        QCOMPARE(effect.getBalanceID(), QString("00000000aaaa"));
+        QCOMPARE(effect.getFormerSponsor(), QString("GA6U5X6WOPNKKDKQULBR7IDHDBAQKOWPHYEC7WSXHZBFEYFD3XVZAKOO"));
+    }
+
+    void testDeserializeSignerSponsorshipCreatedEffect() {
+        QByteArray json = "{\"id\":\"i\",\"paging_token\":\"p\","
+            "\"account\":\"GBRPYHIL2CI3FNQ4BXLFMNDLFJUNPU2HY3ZMFSHONUCEOASW7QC7OX2H\","
+            "\"type\":\"signer_sponsorship_created\",\"type_i\":72,"
+            "\"signer\":\"GA6U5X6WOPNKKDKQULBR7IDHDBAQKOWPHYEC7WSXHZBFEYFD3XVZAKOO\","
+            "\"sponsor\":\"GCFKT6BN2FEASCEVDNHEC4LLFT2KLUUPEMKM4OJPEJ65H2AEZ7IH4RV6\"}";
+        SignerSponsorshipCreatedEffectResponse effect;
+        effect.loadFromJson(json);
+        QCOMPARE(effect.getType(), QString("signer_sponsorship_created"));
+        QCOMPARE(effect.getSigner(), QString("GA6U5X6WOPNKKDKQULBR7IDHDBAQKOWPHYEC7WSXHZBFEYFD3XVZAKOO"));
+        QCOMPARE(effect.getSponsor(), QString("GCFKT6BN2FEASCEVDNHEC4LLFT2KLUUPEMKM4OJPEJ65H2AEZ7IH4RV6"));
+    }
+
+    void testDeserializeSignerSponsorshipUpdatedEffect() {
+        QByteArray json = "{\"id\":\"i\",\"paging_token\":\"p\","
+            "\"account\":\"GBRPYHIL2CI3FNQ4BXLFMNDLFJUNPU2HY3ZMFSHONUCEOASW7QC7OX2H\","
+            "\"type\":\"signer_sponsorship_updated\",\"type_i\":73,"
+            "\"signer\":\"GA6U5X6WOPNKKDKQULBR7IDHDBAQKOWPHYEC7WSXHZBFEYFD3XVZAKOO\","
+            "\"former_sponsor\":\"GCFKT6BN2FEASCEVDNHEC4LLFT2KLUUPEMKM4OJPEJ65H2AEZ7IH4RV6\","
+            "\"new_sponsor\":\"GB24LPGAHYTWRYOXIDKXLI55SBRWW42T3TZKDAAW3BOJX4ADVIATFTLU\"}";
+        SignerSponsorshipUpdatedEffectResponse effect;
+        effect.loadFromJson(json);
+        QCOMPARE(effect.getType(), QString("signer_sponsorship_updated"));
+        QCOMPARE(effect.getSigner(), QString("GA6U5X6WOPNKKDKQULBR7IDHDBAQKOWPHYEC7WSXHZBFEYFD3XVZAKOO"));
+        QCOMPARE(effect.getFormerSponsor(), QString("GCFKT6BN2FEASCEVDNHEC4LLFT2KLUUPEMKM4OJPEJ65H2AEZ7IH4RV6"));
+        QCOMPARE(effect.getNewSponsor(), QString("GB24LPGAHYTWRYOXIDKXLI55SBRWW42T3TZKDAAW3BOJX4ADVIATFTLU"));
+    }
+
+    void testDeserializeSignerSponsorshipRemovedEffect() {
+        QByteArray json = "{\"id\":\"i\",\"paging_token\":\"p\","
+            "\"account\":\"GBRPYHIL2CI3FNQ4BXLFMNDLFJUNPU2HY3ZMFSHONUCEOASW7QC7OX2H\","
+            "\"type\":\"signer_sponsorship_removed\",\"type_i\":74,"
+            "\"signer\":\"GA6U5X6WOPNKKDKQULBR7IDHDBAQKOWPHYEC7WSXHZBFEYFD3XVZAKOO\","
+            "\"former_sponsor\":\"GCFKT6BN2FEASCEVDNHEC4LLFT2KLUUPEMKM4OJPEJ65H2AEZ7IH4RV6\"}";
+        SignerSponsorshipRemovedEffectResponse effect;
+        effect.loadFromJson(json);
+        QCOMPARE(effect.getType(), QString("signer_sponsorship_removed"));
+        QCOMPARE(effect.getSigner(), QString("GA6U5X6WOPNKKDKQULBR7IDHDBAQKOWPHYEC7WSXHZBFEYFD3XVZAKOO"));
+        QCOMPARE(effect.getFormerSponsor(), QString("GCFKT6BN2FEASCEVDNHEC4LLFT2KLUUPEMKM4OJPEJ65H2AEZ7IH4RV6"));
+    }
 };
 
 ADD_TEST(EffectDeserializerTest)

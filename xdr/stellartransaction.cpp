@@ -42,6 +42,7 @@ stellar::Operation::Operation(const stellar::Operation &op){
         new (&operationPathPaymentStrictSend) PathPaymentStrictSendOp();
         operationPathPaymentStrictSend = op.operationPathPaymentStrictSend; break;
     case OperationType::CREATE_CLAIMABLE_BALANCE:
+        new (&operationCreateClaimableBalance) CreateClaimableBalanceOp();
         operationCreateClaimableBalance = op.operationCreateClaimableBalance; break;
     case OperationType::CLAIM_CLAIMABLE_BALANCE:
         operationClaimClaimableBalance = op.operationClaimClaimableBalance; break;
@@ -102,6 +103,9 @@ void stellar::Operation::clear()
     case OperationType::INVOKE_HOST_FUNCTION:
         operationInvokeHostFunction.~InvokeHostFunctionOp();
         break;
+    case OperationType::CREATE_CLAIMABLE_BALANCE:
+        operationCreateClaimableBalance.~CreateClaimableBalanceOp();
+        break;
     default:
         break;
     }
@@ -150,6 +154,7 @@ const stellar::Operation &stellar::Operation::operator =(const stellar::Operatio
         new (&operationPathPaymentStrictSend) PathPaymentStrictSendOp();
         operationPathPaymentStrictSend = op.operationPathPaymentStrictSend; break;
     case OperationType::CREATE_CLAIMABLE_BALANCE:
+        new (&operationCreateClaimableBalance) CreateClaimableBalanceOp();
         operationCreateClaimableBalance = op.operationCreateClaimableBalance; break;
     case OperationType::CLAIM_CLAIMABLE_BALANCE:
         operationClaimClaimableBalance = op.operationClaimClaimableBalance; break;
@@ -258,6 +263,17 @@ stellar::InvokeHostFunctionOp &stellar::Operation::fillInvokeHostFunctionOp()
         new (&operationInvokeHostFunction) InvokeHostFunctionOp();
     }
     return operationInvokeHostFunction;
+}
+
+stellar::CreateClaimableBalanceOp &stellar::Operation::fillCreateClaimableBalanceOp()
+{
+    if(type!=OperationType::CREATE_CLAIMABLE_BALANCE)
+    {
+        clear();
+        type=OperationType::CREATE_CLAIMABLE_BALANCE;
+        new (&operationCreateClaimableBalance) CreateClaimableBalanceOp();
+    }
+    return operationCreateClaimableBalance;
 }
 
 stellar::OperationResult::OperationResult():type(OperationType::CREATE_ACCOUNT)

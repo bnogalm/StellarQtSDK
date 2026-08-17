@@ -14,12 +14,24 @@ QSTELLAR_BEGIN_NS
  * SEP-11 — Txrep, the human-readable text representation of Stellar
  * transactions.
  *
- * This release ships a minimal subset focused on the SEP-10 challenge
- * shape (Memo::NONE, preconditions NONE / TIME, ManageData and Payment
- * operations). Other operation types throw an `unsupported operation
- * type` runtime_error so callers can detect the gap explicitly. Surface
- * is intentionally extensible — future releases will add operations
- * without changing the public API.
+ * Supports all memo types (NONE / TEXT / ID / HASH / RETURN), all
+ * precondition variants (NONE / TIME / V2 — ledgerBounds, minSeqNum,
+ * minSeqAge, minSeqLedgerGap, extraSigners), and every classic operation
+ * (CreateAccount, Payment, PathPayment strict-receive/send, the offer ops,
+ * SetOptions, ChangeTrust, AllowTrust, AccountMerge, ManageData,
+ * BumpSequence, the sponsorship begin/end ops, Clawback, ClawbackClaimableBalance,
+ * SetTrustLineFlags, Claim/CreateClaimableBalance with nested predicate trees,
+ * the liquidity-pool deposit/withdraw ops, and RevokeSponsorship in all its
+ * ledger-key / signer variants).
+ *
+ * The native asset is rendered as `native` and field paths follow the
+ * SEP-11 / stc convention for cross-tool interoperability.
+ *
+ * The Soroban operations (InvokeHostFunction / ExtendFootprintTTL /
+ * RestoreFootprint) are intentionally NOT supported — txrep is a pre-Soroban
+ * format and no mainstream SDK encodes them (py-stellar-sdk raises, the JS
+ * SDK has no txrep), so there is no interoperable representation to target.
+ * They throw an `unsupported` runtime_error.
  *
  * The format follows the dotted-path notation of the SEP-11 spec:
  *   type: ENVELOPE_TYPE_TX

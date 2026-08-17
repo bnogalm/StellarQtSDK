@@ -8,6 +8,8 @@
 #include <QCoreApplication>
 #include <stdexcept>
 
+#include "../stellartoml.h"
+
 QSTELLAR_BEGIN_NS
 
 
@@ -195,34 +197,24 @@ void FederationServer::initialize()
         emit error("Error parsing toml");
     }
 #else
-    //workaround until i find a working alternative in android.. or android decide to fix their sdk problems once
-    QList<QByteArray> lines = data.split('\n');
-    for(const QByteArray& line : lines){
-
-        if(line.contains("FEDERATION_SERVER=")){
-            QString textLine = QString::fromLatin1(line);
-            textLine=textLine.trimmed();
-            textLine.replace("FEDERATION_SERVER=","");
-            int from = textLine.indexOf('"')+1;
-            int to = textLine.lastIndexOf('"');
-            if(to>from){
-                QString address= textLine.mid(from,to-from);
-                this->m_serverUri = QUrl(address);
-                if(this->m_serverUri.isValid()){
-                    emit ready();
-                }
-                else{
-                    emit error("Invalid federation server");
-                }
-                return;
-            }
-            else{
-                emit error("Error parsing toml");
-                return;
-            }
+    // Use the shared SEP-1 parser (Android-safe — cpptoml is disabled there).
+    // Replaces the old single-field `FEDERATION_SERVER=` line scan, which also
+    // missed the spaced form `FEDERATION_SERVER = "..."`.
+    try {
+        const QString server =
+            StellarToml::parse(QString::fromUtf8(data)).value("FEDERATION_SERVER").toString();
+        if (server.isEmpty()) {
+            emit error("No federation server");
+            return;
         }
+        this->m_serverUri = QUrl(server);
+        if (this->m_serverUri.isValid())
+            emit ready();
+        else
+            emit error("Invalid federation server");
+    } catch (const std::exception&) {
+        emit error("Error parsing toml");
     }
-    emit error("No federation server");
 #endif
 }
 QSTELLAR_END_NS

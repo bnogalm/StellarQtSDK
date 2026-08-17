@@ -214,7 +214,13 @@ public:
 
 
 };
+// Qt 6 hashes with a size_t seed; Qt 5 with uint. Match the active ABI so the
+// container never has to narrow size_t -> uint at the call site (MSVC C4267).
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+inline size_t qHash(const Sep10Challenge::Signer &t, size_t seed)
+#else
 inline uint qHash(const Sep10Challenge::Signer &t, uint seed)
+#endif
 {
     return t.hashCode() ^ seed;
 }

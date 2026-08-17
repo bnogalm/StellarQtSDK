@@ -228,6 +228,14 @@ private slots:
         QCOMPARE(operation.getAmount(), QString("1000000000.0"));
         QVERIFY(operation.getAsset()->equals(Asset::createNonNativeAsset("EUR", KeyPair::fromAccountId(QString("GAZN3PPIDQCSP5JD4ETQQQ2IU2RMFYQTAL4NNQZUGLLO2XJJJ3RDSDGA")))));
     }
+    // AllowTrustOperationResponse is deprecated; these two tests cover it on purpose.
+#if defined(_MSC_VER)
+#  pragma warning(push)
+#  pragma warning(disable: 4996)
+#elif defined(__GNUC__) || defined(__clang__)
+#  pragma GCC diagnostic push
+#  pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#endif
     void testDeserializeAllowTrustOperation() {
         QByteArray json = "{\n"
                 "        \"_links\": {\n"
@@ -313,6 +321,11 @@ private slots:
         QCOMPARE(operation.isAuthorizedToMaintainLiabilities(), true);
         QVERIFY(operation.getAsset()->equals(Asset::createNonNativeAsset("EUR", "GDIROJW2YHMSFZJJ4R5XWWNUVND5I45YEWS5DSFKXCHMADZ5V374U2LM")));
       }
+#if defined(_MSC_VER)
+#  pragma warning(pop)
+#elif defined(__GNUC__) || defined(__clang__)
+#  pragma GCC diagnostic pop
+#endif
 
     void testDeserializeChangeTrustOperation() {
         QByteArray json = "{\n"

@@ -58,9 +58,24 @@ public slots:
 
 QSTELLAR_END_NS
 
+// AllowTrustOperationResponse is intentionally deprecated; the legacy alias and
+// the metatype registration are the SDK's own required uses of the type, so they
+// are silenced here without hiding the deprecation from consumers.
+#if defined(_MSC_VER)
+#  pragma warning(push)
+#  pragma warning(disable: 4996)
+#elif defined(__GNUC__) || defined(__clang__)
+#  pragma GCC diagnostic push
+#  pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#endif
 QSTELLAR_ALIAS(AllowTrustOperationResponse)
 
 
 
 Q_DECLARE_METATYPE(qstellar::AllowTrustOperationResponse*)
+#if defined(_MSC_VER)
+#  pragma warning(pop)
+#elif defined(__GNUC__) || defined(__clang__)
+#  pragma GCC diagnostic pop
+#endif
 #endif // ALLOWTRUSTOPERATIONRESPONSE_H

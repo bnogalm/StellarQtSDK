@@ -22,6 +22,10 @@
 #include "../src/managedataoperation.h"
 #include "../src/responses/operationpage.h"
 #include "../src/responses/operations/paymentoperationresponse.h"
+#include "../src/responses/offerresponse.h"
+#include "../src/responses/ledgerresponse.h"
+#include "../src/responses/transactionresponse.h"
+#include "../src/responses/liquiditypoolresponse.h"
 
 #include "fakeserver.h"
 
@@ -233,6 +237,31 @@ private slots:
         QVERIFY(events >= 2);
         QCOMPARE(lastAmount, QString("20.0000000"));
 
+        delete server;
+        fakeServer->deleteLater();
+    }
+
+    // Horizon sends `data: "hello"` keep-alives to hold the stream open; the
+    // parser must skip them (no ready()) and surface only real events.
+    void testStreamSkipsKeepAlive() {
+        FakeServer* fakeServer = new FakeServer();
+        fakeServer->addStream("/payments", QStringList()
+            << (QString("data: \"hello\"\n\n") + paymentEvent("7", "42.0000000")));
+
+        Server* server = new Server(fakeServer->baseUrl());
+        OperationPage* stream = server->payments().stream().execute();
+
+        int events = 0;
+        QString lastAmount;
+        QObject::connect(stream, &Response::ready, [&](){
+            events++;
+            if (auto* p = dynamic_cast<PaymentOperationResponse*>(stream->streamedElement()))
+                lastAmount = p->getAmount();
+        });
+        WAIT_FOR(events < 1)
+
+        QCOMPARE(events, 1);                         // keep-alive did NOT emit
+        QCOMPARE(lastAmount, QString("42.0000000")); // the real payment did
         delete server;
         fakeServer->deleteLater();
     }
@@ -858,8 +887,132 @@ private slots:
          fakeServer->deleteLater();
      }
 
+    // ── single-resource GET endpoints (P2.5) ──────────────────────────────
+    // The request builders' single-resource forms — offer(id), ledger(seq),
+    // transaction(hash), liquidityPool(id) — execute a GET and populate a
+    // Response that emits ready()/error(). Previously only their buildUri()
+    // was exercised (in the request-builder tests); these drive the full
+    // HTTP round-trip against FakeServer so a regression in the URL the SDK
+    // hits, or in the parse of the single-resource (non-paged) body, is
+    // caught. A LOCAL Server is used and deleted so nothing lingers.
 
+    void testOfferSingleResourceEndpoint() {
+        FakeServer* fakeServer = new FakeServer();
+        QString body =
+            "{\"_links\":{\"self\":{\"href\":\"https://h/offers/241\"}},"
+            "\"id\":241,\"paging_token\":\"241\","
+            "\"seller\":\"GA2IYMIZSAMDD6QQTTSIEL73H2BKDJQTA7ENDEEAHJ3LMVF7OYIZPXQD\","
+            "\"selling\":{\"asset_type\":\"native\"},"
+            "\"buying\":{\"asset_type\":\"credit_alphanum4\",\"asset_code\":\"USD\","
+            "\"asset_issuer\":\"GA2IYMIZSAMDD6QQTTSIEL73H2BKDJQTA7ENDEEAHJ3LMVF7OYIZPXQD\"},"
+            "\"amount\":\"10.0000000\",\"price_r\":{\"n\":10,\"d\":1},"
+            "\"price\":\"11.0000000\",\"last_modified_ledger\":22200794,"
+            "\"last_modified_time\":\"2019-01-28T12:30:38Z\"}";
+        fakeServer->addGet("/offers/241", body);
 
+        Server* server = new Server(fakeServer->baseUrl());
+        OfferResponse* resp = server->offers().offer((qint64)241);
+
+        bool ready = false, errored = false;
+        QObject::connect(resp, &Response::ready,  [&](){ ready = true; });
+        QObject::connect(resp, &Response::error,  [&](){ errored = true; });
+        WAIT_FOR(!ready && !errored)
+
+        QVERIFY(ready);
+        QVERIFY(!errored);
+        QCOMPARE(resp->getId(), (qint64)241);
+        QCOMPARE(resp->getAmount(), QString("10.0000000"));
+
+        delete server;
+        fakeServer->deleteLater();
+    }
+
+    void testLedgerSingleResourceEndpoint() {
+        FakeServer* fakeServer = new FakeServer();
+        QString body =
+            "{\"_links\":{\"self\":{\"href\":\"/ledgers/898826\"}},"
+            "\"id\":\"686bb246db89b099cd3963a4633eb5e4315d89dfd3c00594c80b41a483847bfa\","
+            "\"paging_token\":\"3860428274794496\","
+            "\"hash\":\"686bb246db89b099cd3963a4633eb5e4315d89dfd3c00594c80b41a483847bfa\","
+            "\"sequence\":898826,\"successful_transaction_count\":3,"
+            "\"failed_transaction_count\":2,\"operation_count\":10,"
+            "\"closed_at\":\"2015-11-19T21:35:59Z\"}";
+        fakeServer->addGet("/ledgers/898826", body);
+
+        Server* server = new Server(fakeServer->baseUrl());
+        LedgerResponse* resp = server->ledgers().ledger(898826);
+
+        bool ready = false, errored = false;
+        QObject::connect(resp, &Response::ready,  [&](){ ready = true; });
+        QObject::connect(resp, &Response::error,  [&](){ errored = true; });
+        WAIT_FOR(!ready && !errored)
+
+        QVERIFY(ready);
+        QVERIFY(!errored);
+        QCOMPARE(resp->getSequence(), (qint64)898826);
+        QCOMPARE(resp->getHash(),
+                 QString("686bb246db89b099cd3963a4633eb5e4315d89dfd3c00594c80b41a483847bfa"));
+
+        delete server;
+        fakeServer->deleteLater();
+    }
+
+    void testTransactionSingleResourceEndpoint() {
+        const QString hash =
+            "5c2e4dad596941ef944d72741c8f8f1a4282f8f2f141e81d827f44bf365d626b";
+        FakeServer* fakeServer = new FakeServer();
+        QString body =
+            "{\"_links\":{\"self\":{\"href\":\"/transactions/" + hash + "\"}},"
+            "\"id\":\"" + hash + "\",\"paging_token\":\"3933090531512320\","
+            "\"successful\":true,\"hash\":\"" + hash + "\",\"ledger\":915744,"
+            "\"created_at\":\"2015-11-20T17:01:28Z\",\"memo_type\":\"none\"}";
+        fakeServer->addGet("/transactions/" + hash, body);
+
+        Server* server = new Server(fakeServer->baseUrl());
+        TransactionResponse* resp = server->transactions().transaction(hash);
+
+        bool ready = false, errored = false;
+        QObject::connect(resp, &Response::ready,  [&](){ ready = true; });
+        QObject::connect(resp, &Response::error,  [&](){ errored = true; });
+        WAIT_FOR(!ready && !errored)
+
+        QVERIFY(ready);
+        QVERIFY(!errored);
+        QCOMPARE(resp->getHash(), hash);
+        QCOMPARE(resp->getLedger(), 915744);
+
+        delete server;
+        fakeServer->deleteLater();
+    }
+
+    void testLiquidityPoolSingleResourceEndpoint() {
+        FakeServer* fakeServer = new FakeServer();
+        QString body =
+            "{\"id\":\"abc1234\",\"paging_token\":\"abc1234\",\"fee_bp\":30,"
+            "\"type\":\"constant_product\",\"total_trustlines\":\"42\","
+            "\"total_shares\":\"100.0000000\",\"reserves\":["
+            "{\"asset\":\"native\",\"amount\":\"50.0000000\"},"
+            "{\"asset\":\"USDC:GA5\",\"amount\":\"50.0000000\"}],"
+            "\"last_modified_ledger\":12345,"
+            "\"_links\":{\"self\":{\"href\":\"https://h/liquidity_pools/abc1234\"}}}";
+        fakeServer->addGet("/liquidity_pools/abc1234", body);
+
+        Server* server = new Server(fakeServer->baseUrl());
+        LiquidityPoolResponse* resp = server->liquidityPools().liquidityPool("abc1234");
+
+        bool ready = false, errored = false;
+        QObject::connect(resp, &Response::ready,  [&](){ ready = true; });
+        QObject::connect(resp, &Response::error,  [&](){ errored = true; });
+        WAIT_FOR(!ready && !errored)
+
+        QVERIFY(ready);
+        QVERIFY(!errored);
+        QCOMPARE(resp->getId(), QString("abc1234"));
+        QCOMPARE(resp->getReserves().size(), 2);
+
+        delete server;
+        fakeServer->deleteLater();
+    }
 
 };
 

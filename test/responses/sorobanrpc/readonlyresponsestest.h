@@ -1,11 +1,13 @@
 #ifndef READONLYRESPONSESTEST_H
 #define READONLYRESPONSESTEST_H
 
+#include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QObject>
 #include <QtTest>
 #include "../../testcollector.h"
+#include "../../../src/sorobanserver.h"
 
 #include "../../../src/responses/sorobanrpc/getnetworkresponse.h"
 #include "../../../src/responses/sorobanrpc/getversioninforesponse.h"
@@ -17,12 +19,76 @@
 #include "../../../src/responses/sorobanrpc/getledgersresponse.h"
 #include "../../../src/responses/sorobanrpc/geteventsresponse.h"
 
+/** Captures the (method, params) a high-level SorobanServer call assembles,
+ *  so request/filter construction can be asserted without a live RPC.
+ *  File scope (not nested) so moc parses it cleanly. */
+class CapturingSorobanServer : public SorobanServer
+{
+public:
+    CapturingSorobanServer() : SorobanServer(QUrl("http://127.0.0.1:1/")) {}
+    QString lastMethod;
+    QJsonObject lastParams;
+    QJsonValue sendRequest(const QString& method, const QJsonValue& params) override {
+        lastMethod = method;
+        lastParams = params.toObject();
+        // Minimal valid getEvents result so GetEventsResponse::fromJson is happy.
+        QJsonObject resp;
+        resp.insert("events", QJsonArray());
+        resp.insert("latestLedger", 200);
+        resp.insert("oldestLedger", 150);
+        resp.insert("latestLedgerCloseTime", QStringLiteral("1700000200"));
+        resp.insert("oldestLedgerCloseTime", QStringLiteral("1700000150"));
+        resp.insert("cursor", QStringLiteral("c"));
+        return resp;
+    }
+};
+
 class SorobanRpcReadOnlyResponsesTest: public QObject
 {
     Q_OBJECT
 private slots:
     void initTestCase() {}
     void cleanupTestCase() {}
+
+    // getEvents request CONSTRUCTION (the response side is testGetEvents).
+    // Every optional param present → every branch of the param builder fires.
+    void testGetEventsRequestConstruction()
+    {
+        CapturingSorobanServer srv;
+
+        QJsonObject filter;
+        filter.insert("type", QStringLiteral("contract"));
+        QJsonArray contractIds; contractIds.append(QStringLiteral("CABC"));
+        filter.insert("contractIds", contractIds);
+        QJsonArray filters; filters.append(filter);
+
+        srv.getEvents(/*startLedger*/100, /*endLedger*/200, filters,
+                      /*cursor*/QStringLiteral("cur"), /*limit*/5);
+
+        QCOMPARE(srv.lastMethod, QString("getEvents"));
+        QCOMPARE(srv.lastParams.value("startLedger").toInt(), 100);
+        QCOMPARE(srv.lastParams.value("endLedger").toInt(), 200);
+        QCOMPARE(srv.lastParams.value("filters").toArray().size(), 1);
+        QCOMPARE(srv.lastParams.value("filters").toArray().first().toObject()
+                     .value("type").toString(), QString("contract"));
+        const QJsonObject pg = srv.lastParams.value("pagination").toObject();
+        QCOMPARE(pg.value("cursor").toString(), QString("cur"));
+        QCOMPARE(pg.value("limit").toInt(), 5);
+    }
+
+    // Defaults → optional keys must be OMITTED (not sent as 0/empty), so the
+    // RPC node applies its own defaults rather than rejecting startLedger=0.
+    void testGetEventsRequestOmitsEmptyParams()
+    {
+        CapturingSorobanServer srv;
+        srv.getEvents(/*startLedger*/0);
+
+        QCOMPARE(srv.lastMethod, QString("getEvents"));
+        QVERIFY(!srv.lastParams.contains("startLedger"));
+        QVERIFY(!srv.lastParams.contains("endLedger"));
+        QVERIFY(!srv.lastParams.contains("filters"));
+        QVERIFY(!srv.lastParams.contains("pagination"));
+    }
 
     void testGetNetwork()
     {

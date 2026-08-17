@@ -20,16 +20,25 @@
 #include "transactionbuilder.h"
 #include "util.h"
 #include "contract/sorobancredentialssigner.h"
+#include "exception/assembledtransactionexception.h"
+#include "exception/notyetsimulatedexception.h"
+#include "exception/sendfailedexception.h"
+#include "exception/simulationfailedexception.h"
 
 QSTELLAR_BEGIN_NS
+
+using qstellar::exception::AssembledTransactionException;
+using qstellar::exception::NotYetSimulatedException;
+using qstellar::exception::SendFailedException;
+using qstellar::exception::SimulationFailedException;
 
 
 AssembledTransaction::AssembledTransaction(Transaction* tx, SorobanServer* server, Network* network)
     : m_tx(tx), m_server(server), m_network(network)
 {
-    if (!m_tx)      throw std::runtime_error("AssembledTransaction: null transaction");
-    if (!m_server)  throw std::runtime_error("AssembledTransaction: null SorobanServer");
-    if (!m_network) throw std::runtime_error("AssembledTransaction: null Network");
+    if (!m_tx)      throw AssembledTransactionException("AssembledTransaction: null transaction");
+    if (!m_server)  throw AssembledTransactionException("AssembledTransaction: null SorobanServer");
+    if (!m_network) throw AssembledTransactionException("AssembledTransaction: null Network");
 }
 
 AssembledTransaction::~AssembledTransaction()
@@ -41,8 +50,8 @@ AssembledTransaction& AssembledTransaction::simulate()
 {
     m_sim = m_server->simulateTransactionXdr(m_tx->toEnvelopeXdrBase64());
     if (m_sim.isError()) {
-        throw std::runtime_error(
-            QString("AssembledTransaction::simulate: %1").arg(m_sim.getError()).toStdString());
+        throw SimulationFailedException(
+            QString("AssembledTransaction::simulate: %1").arg(m_sim.getError()));
     }
     SorobanServer::applyTransactionSimulation(m_tx, m_sim);
     m_simulated = true;
@@ -52,14 +61,14 @@ AssembledTransaction& AssembledTransaction::simulate()
 stellar::SCVal AssembledTransaction::result() const
 {
     if (!m_simulated) {
-        throw std::runtime_error("AssembledTransaction::result: simulate() not called yet");
+        throw NotYetSimulatedException("AssembledTransaction::result: simulate() not called yet");
     }
     if (m_sim.getResults().isEmpty()) {
-        throw std::runtime_error("AssembledTransaction::result: simulation produced no result");
+        throw AssembledTransactionException("AssembledTransaction::result: simulation produced no result");
     }
     const QString xdrB64 = m_sim.getResults().first().xdr;
     if (xdrB64.isEmpty()) {
-        throw std::runtime_error("AssembledTransaction::result: empty result xdr");
+        throw AssembledTransactionException("AssembledTransaction::result: empty result xdr");
     }
     QByteArray raw = QByteArray::fromBase64(xdrB64.toLatin1(), XDR_BASE64ENCODING);
     QDataStream s(&raw, QIODevice::ReadOnly);
@@ -70,7 +79,7 @@ stellar::SCVal AssembledTransaction::result() const
 
 AssembledTransaction& AssembledTransaction::sign(KeyPair* signer)
 {
-    if (!signer) throw std::runtime_error("AssembledTransaction::sign: null signer");
+    if (!signer) throw AssembledTransactionException("AssembledTransaction::sign: null signer");
     m_tx->sign(signer);
     return *this;
 }
@@ -81,9 +90,9 @@ GetTransactionResponse AssembledTransaction::signAndSend(KeyPair* signer, int ti
 
     m_sendResponse = m_server->sendTransactionXdr(m_tx->toEnvelopeXdrBase64());
     if (m_sendResponse.getStatus() == SendTransactionResponse::Status::ERROR_) {
-        throw std::runtime_error(
+        throw SendFailedException(
             QString("AssembledTransaction::signAndSend: sendTransaction returned ERROR (%1)")
-                .arg(m_sendResponse.getErrorResultXdr()).toStdString());
+                .arg(m_sendResponse.getErrorResultXdr()));
     }
 
     m_finalResponse = m_server->pollTransaction(m_sendResponse.getHash(), timeoutMs, intervalMs);
@@ -93,7 +102,7 @@ GetTransactionResponse AssembledTransaction::signAndSend(KeyPair* signer, int ti
 QStringList AssembledTransaction::needsNonInvokerSigningBy() const
 {
     if (!m_simulated) {
-        throw std::runtime_error("needsNonInvokerSigningBy: simulate() not called yet");
+        throw NotYetSimulatedException("needsNonInvokerSigningBy: simulate() not called yet");
     }
     QSet<QString> seen;
     QStringList out;
@@ -124,9 +133,9 @@ QStringList AssembledTransaction::needsNonInvokerSigningBy() const
 AssembledTransaction& AssembledTransaction::signAuthEntries(KeyPair* signer, quint32 validUntilLedger)
 {
     if (!m_simulated) {
-        throw std::runtime_error("signAuthEntries: simulate() not called yet");
+        throw NotYetSimulatedException("signAuthEntries: simulate() not called yet");
     }
-    if (!signer) throw std::runtime_error("signAuthEntries: null signer");
+    if (!signer) throw AssembledTransactionException("signAuthEntries: null signer");
     if (validUntilLedger == 0) {
         validUntilLedger = m_sim.getLatestLedger() + 100;
     }
@@ -161,12 +170,12 @@ GetTransactionResponse AssembledTransaction::restoreFootprint(Account* sourceAcc
                                                               int timeoutMs,
                                                               int intervalMs)
 {
-    if (!m_simulated) throw std::runtime_error("restoreFootprint: simulate() not called yet");
+    if (!m_simulated) throw NotYetSimulatedException("restoreFootprint: simulate() not called yet");
     if (!m_sim.needsRestore()) {
-        throw std::runtime_error("restoreFootprint: simulation has no restorePreamble");
+        throw AssembledTransactionException("restoreFootprint: simulation has no restorePreamble");
     }
-    if (!sourceAccount) throw std::runtime_error("restoreFootprint: null sourceAccount");
-    if (!signer)        throw std::runtime_error("restoreFootprint: null signer");
+    if (!sourceAccount) throw AssembledTransactionException("restoreFootprint: null sourceAccount");
+    if (!signer)        throw AssembledTransactionException("restoreFootprint: null signer");
 
     // Decode the restorePreamble's SorobanTransactionData and build a tx
     // whose only op is RestoreFootprint, carrying that data.
@@ -192,9 +201,9 @@ GetTransactionResponse AssembledTransaction::restoreFootprint(Account* sourceAcc
     delete restoreTx;
 
     if (sendResp.getStatus() == SendTransactionResponse::Status::ERROR_) {
-        throw std::runtime_error(
+        throw SendFailedException(
             QString("restoreFootprint: sendTransaction returned ERROR (%1)")
-                .arg(sendResp.getErrorResultXdr()).toStdString());
+                .arg(sendResp.getErrorResultXdr()));
     }
     return m_server->pollTransaction(sendResp.getHash(), timeoutMs, intervalMs);
 }

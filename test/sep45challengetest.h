@@ -176,6 +176,56 @@ private slots:
         QVERIFY(v.expirationUnix > 0);
     }
 
+    /** Rewrite an issued challenge's single auth entry, the way a client does
+     *  when it completes the challenge, and return the new envelope. */
+    static QString withCompletedAuthEntry(const QString& challengeXdr,
+                                          quint32 expirationLedger,
+                                          qint64 nonceDelta = 0)
+    {
+        QScopedPointer<AbstractTransaction> atx(
+            AbstractTransaction::fromEnvelopeXdr(challengeXdr, Network::testnetNetwork()));
+        auto* tx = dynamic_cast<Transaction*>(atx.data());
+        auto* op = dynamic_cast<InvokeHostFunctionOperation*>(tx->getOperations().at(0));
+        QList<stellar::SorobanAuthorizationEntry> auth = op->getAuth();
+        auth[0].credentials.address.signatureExpirationLedger = expirationLedger;
+        auth[0].credentials.address.signature = Scv::toUint32(7);  // stand-in client signature
+        auth[0].credentials.address.nonce += nonceDelta;
+        op->setAuth(auth);
+        return tx->toEnvelopeXdrBase64();
+    }
+
+    /** The real SEP-45 flow: the server signs the envelope BEFORE the client
+     *  fills in the auth entry, and those fields sit inside the operation body,
+     *  so the completed envelope hashes differently. Verification must check
+     *  the server signature against the as-issued form or it rejects every
+     *  genuine client response. */
+    void testVerifyAcceptsClientCompletedChallenge()
+    {
+        QString completed = withCompletedAuthEntry(validChallenge(), 123456);
+        auto v = Sep45Challenge::verifyChallenge(
+            completed, serverSigner()->getAccountId(), Network::testnetNetwork(),
+            nullptr,
+            QStringList{QStringLiteral("example.com")},
+            QStringLiteral("auth.example.com"));
+        QCOMPARE(v.clientAccountId, QString(clientContract()));
+    }
+
+    /** ...but resetting the client-owned fields must not blind the check to
+     *  anything else in the entry: the nonce is still covered. */
+    void testVerifyRejectsTamperedAuthNonce()
+    {
+        QString tampered = withCompletedAuthEntry(validChallenge(), 123456, /*nonceDelta*/ 1);
+        bool threw = false;
+        try {
+            Sep45Challenge::verifyChallenge(
+                tampered, serverSigner()->getAccountId(), Network::testnetNetwork(),
+                nullptr,
+                QStringList{QStringLiteral("example.com")},
+                QStringLiteral("auth.example.com"));
+        } catch (const qstellar::exception::InvalidSep45ChallengeException&) { threw = true; }
+        QVERIFY(threw);
+    }
+
     void testVerifyRejectsWrongServerAccountId()
     {
         QString xdr = validChallenge();
@@ -244,6 +294,43 @@ private slots:
         try {
             Sep45Challenge::verifyChallenge(
                 xdr, serverSigner()->getAccountId(), Network::testnetNetwork(), &srv,
+                QStringList{QStringLiteral("example.com")},
+                QStringLiteral("auth.example.com"));
+        } catch (const qstellar::exception::InvalidSep45ChallengeException&) { threw = true; }
+        QVERIFY(threw);
+    }
+
+    void testVerifyRejectsForgedServerSignature()
+    {
+        // A challenge whose source account IS the server but whose envelope
+        // signature comes from a DIFFERENT key must be rejected. The earlier
+        // checks (source account, args, domains, auth entry) all pass — and
+        // simulate validates only the CLIENT's auth chain — so this is the
+        // case the local server-signature check exists to catch. Without it,
+        // an attacker who sets the server's G-address as the source and signs
+        // with their own key would slip a forged challenge through.
+        QString xdr = validChallenge();
+        QScopedPointer<Transaction> tx(dynamic_cast<Transaction*>(
+            AbstractTransaction::fromEnvelopeXdr(xdr, Network::testnetNetwork())));
+        QVERIFY(tx);
+
+        // Swap the genuine server signature for one from an unrelated key,
+        // signed over the same tx hash (structurally valid, wrong signer).
+        QScopedPointer<KeyPair> attacker(KeyPair::random());
+        stellar::TransactionEnvelope env = tx->toEnvelopeXdr();
+        env.v1.signatures.clear();
+        env.v1.signatures.append(attacker->signDecorated(tx->hash()));
+
+        QScopedPointer<Transaction> forged(dynamic_cast<Transaction*>(
+            AbstractTransaction::fromEnvelopeXdr(env, Network::testnetNetwork())));
+        QVERIFY(forged);
+        QString forgedXdr = forged->toEnvelopeXdrBase64();
+
+        bool threw = false;
+        try {
+            Sep45Challenge::verifyChallenge(
+                forgedXdr, serverSigner()->getAccountId(), Network::testnetNetwork(),
+                /*sorobanServer*/ nullptr,
                 QStringList{QStringLiteral("example.com")},
                 QStringLiteral("auth.example.com"));
         } catch (const qstellar::exception::InvalidSep45ChallengeException&) { threw = true; }

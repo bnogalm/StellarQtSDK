@@ -5,7 +5,7 @@ DEFINES += STELLAR_QT_REPLY_TIMEOUT=30000
 DEFINES *= ED25519_NO_SEED
 
 DEFINES += STELLAR_QT_SDK_CLIENT_NAME=\"\\\"qtcpp-stellar-sdk\\\"\"
-DEFINES += STELLAR_QT_SDK_CLIENT_VERSION=\"\\\"1.0.1\\\"\"
+DEFINES += STELLAR_QT_SDK_CLIENT_VERSION=\"\\\"1.0.2\\\"\"
 
 #DEFINES += STELLAR_QT_AUTOSET_BASE_FEE
 
@@ -81,6 +81,8 @@ SOURCES += \
     $$PWD/src/contract/assembledtransaction.cpp \
     $$PWD/src/contract/contractclient.cpp \
     $$PWD/src/sep45challenge.cpp \
+    $$PWD/src/sep7.cpp \
+    $$PWD/src/stellartoml.cpp \
     $$PWD/src/responses/problem.cpp \
     $$PWD/src/responses/effects/liquiditypooleffectsresponses.cpp \
     $$PWD/src/responses/liquiditypoolresponse.cpp \
@@ -326,7 +328,13 @@ HEADERS += \
     $$PWD/src/contract/assembledtransaction.h \
     $$PWD/src/contract/contractclient.h \
     $$PWD/src/sep45challenge.h \
+    $$PWD/src/sep7.h \
+    $$PWD/src/stellartoml.h \
     $$PWD/src/exception/invalidsep45challengeexception.h \
+    $$PWD/src/exception/assembledtransactionexception.h \
+    $$PWD/src/exception/simulationfailedexception.h \
+    $$PWD/src/exception/notyetsimulatedexception.h \
+    $$PWD/src/exception/sendfailedexception.h \
     $$PWD/xdr/scval.h \
     $$PWD/xdr/sorobantxdata.h \
     $$PWD/xdr/sorobanops.h \

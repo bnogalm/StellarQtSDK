@@ -860,6 +860,7 @@ namespace stellar
         RevokeSponsorshipOp& fillRevokeSponsorshipOp();
         ChangeTrustOp& fillChangeTrustOp();
         InvokeHostFunctionOp& fillInvokeHostFunctionOp();
+        CreateClaimableBalanceOp& fillCreateClaimableBalanceOp();
 
     };
     inline QDataStream &operator<<(QDataStream &out, const  Operation &obj) {
@@ -964,6 +965,7 @@ namespace stellar
             new (&obj.operationPathPaymentStrictSend) PathPaymentStrictSendOp();
             in >> obj.operationPathPaymentStrictSend; break;
         case OperationType::CREATE_CLAIMABLE_BALANCE:
+            new (&obj.operationCreateClaimableBalance) CreateClaimableBalanceOp();
             in >>obj.operationCreateClaimableBalance; break;
         case OperationType::CLAIM_CLAIMABLE_BALANCE:
             in >>obj.operationClaimClaimableBalance; break;

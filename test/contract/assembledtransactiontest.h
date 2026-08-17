@@ -20,6 +20,9 @@
 #include "../../src/invokehostfunctionoperation.h"
 #include "../../src/scval/scv.h"
 #include "../../src/util.h"
+#include "../../src/exception/notyetsimulatedexception.h"
+#include "../../src/exception/simulationfailedexception.h"
+#include "../../src/exception/sendfailedexception.h"
 
 /** Scripted server: feeds prebuilt sim/send/fetch responses without
  *  hitting the network. Declared at file scope (not nested) so moc parses cleanly. */
@@ -130,10 +133,12 @@ private slots:
     {
         StubSorobanServer srv;
         AssembledTransaction at(buildSorobanTx(), &srv, Network::testnetNetwork());
-        bool threw = false;
+        bool threw = false, typed = false;
         try { (void)at.result(); }
+        catch (const qstellar::exception::NotYetSimulatedException&) { typed = threw = true; }
         catch (const std::exception&) { threw = true; }
         QVERIFY(threw);
+        QVERIFY(typed);   // the precise type, not just "something threw"
     }
 
     void testSimulateThrowsOnSimulationError()
@@ -145,10 +150,12 @@ private slots:
         srv.simResponses = { SimulateTransactionResponse::fromJson(simJson) };
 
         AssembledTransaction at(buildSorobanTx(), &srv, Network::testnetNetwork());
-        bool threw = false;
+        bool threw = false, typed = false;
         try { at.simulate(); }
+        catch (const qstellar::exception::SimulationFailedException&) { typed = threw = true; }
         catch (const std::exception&) { threw = true; }
         QVERIFY(threw);
+        QVERIFY(typed);
         QVERIFY(!at.isSimulated());
     }
 
@@ -189,10 +196,25 @@ private slots:
 
         AssembledTransaction at(buildSorobanTx(), &srv, Network::testnetNetwork());
         at.simulate();
-        bool threw = false;
+        bool threw = false, typed = false;
         try { at.signAndSend(sourceKeyPair(), 5000, 1); }
+        catch (const qstellar::exception::SendFailedException&) { typed = threw = true; }
         catch (const std::exception&) { threw = true; }
         QVERIFY(threw);
+        QVERIFY(typed);
+    }
+
+    // Typed Soroban exceptions must remain catchable through the old base
+    // types — they derive SdkException → std::runtime_error → std::exception —
+    // so existing consumer `catch (std::runtime_error&)` clauses keep working.
+    void testTypedExceptionsRemainCatchableAsRuntimeError()
+    {
+        StubSorobanServer srv;
+        AssembledTransaction at(buildSorobanTx(), &srv, Network::testnetNetwork());
+        bool caughtAsRuntimeError = false;
+        try { (void)at.result(); }   // throws NotYetSimulatedException
+        catch (const std::runtime_error&) { caughtAsRuntimeError = true; }
+        QVERIFY(caughtAsRuntimeError);
     }
 
     void testSignAttachesSignature()

@@ -97,6 +97,14 @@ public:
     static QList<QString> mnemonicWords(SupportedMnemonicLanguages language = SupportedMnemonicLanguages::EN);
     static QByteArray mnemonicToBIP39Seed(QString words, QString passphrase=QString(""));
 
+    /** BIP-39: turn entropy (16/20/24/28/32 bytes) into a mnemonic phrase. */
+    static QString entropyToMnemonic(const QByteArray& entropy);
+    /** BIP-39: generate a fresh mnemonic from secure random entropy.
+     *  `strengthBits` ∈ {128,160,192,224,256} → 12/15/18/21/24 words. */
+    static QString generateMnemonic(int strengthBits = 128);
+    /** BIP-39: word-count, wordlist membership and checksum validation. */
+    static bool validateMnemonic(const QString& mnemonic);
+
 
     static void claimableBalanceIdToXDR(QString balanceID, stellar::ClaimableBalanceID& balanceIdToFill);
 

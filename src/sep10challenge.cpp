@@ -460,7 +460,8 @@ int Sep10Challenge::Signer::getWeight() const {
 }
 
 int Sep10Challenge::Signer::hashCode() const {
-    return ::qHash(m_key) ^ ::qHash(m_weight);
+    // qHash returns size_t on Qt 6; fold it into the int hashCode explicitly.
+    return static_cast<int>(::qHash(m_key) ^ ::qHash(m_weight));
 }
 
 bool Sep10Challenge::Signer::equals(const Sep10Challenge::Signer *other) const {

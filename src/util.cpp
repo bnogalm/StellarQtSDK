@@ -113,6 +113,80 @@ QByteArray Util::mnemonicToBIP39Seed(QString words, QString passphrase)
                                        ,2048,64);
 }
 
+QString Util::entropyToMnemonic(const QByteArray& entropy)
+{
+    const int entBits = entropy.size() * 8;
+    if (entBits < 128 || entBits > 256 || entBits % 32 != 0)
+        throw std::runtime_error("BIP-39 entropy must be 16, 20, 24, 28 or 32 bytes");
+    const int csBits = entBits / 32;                 // checksum bits
+    const QByteArray cs = Util::hash(entropy);       // SHA-256 of the entropy
+    const QList<QString> words = Util::mnemonicWords();  // sorted == BIP-39 index order
+    const int total = entBits + csBits;              // a multiple of 11
+    QStringList out;
+    int idx = 0, bitsInIdx = 0;
+    for (int i = 0; i < total; ++i) {
+        int bit;
+        if (i < entBits)
+            bit = (static_cast<quint8>(entropy[i / 8]) >> (7 - (i % 8))) & 1;
+        else {
+            const int j = i - entBits;
+            bit = (static_cast<quint8>(cs[j / 8]) >> (7 - (j % 8))) & 1;
+        }
+        idx = (idx << 1) | bit;
+        if (++bitsInIdx == 11) { out.append(words.at(idx)); idx = 0; bitsInIdx = 0; }
+    }
+    return out.join(' ');
+}
+
+QString Util::generateMnemonic(int strengthBits)
+{
+    if (strengthBits < 128 || strengthBits > 256 || strengthBits % 32 != 0)
+        throw std::runtime_error("strength must be 128, 160, 192, 224 or 256 bits");
+    return entropyToMnemonic(Util::generateRandomNonce(strengthBits / 8));
+}
+
+bool Util::validateMnemonic(const QString& mnemonic)
+{
+    const QStringList parts = mnemonic.split(' ', Qt::SkipEmptyParts);
+    const int n = parts.size();
+    if (n != 12 && n != 15 && n != 18 && n != 21 && n != 24) return false;
+
+    const QList<QString> words = Util::mnemonicWords();
+    const int totalBits = n * 11;
+    const int entBits = totalBits / 33 * 32;
+    const int csBits = totalBits / 33;
+
+    QByteArray entropy(entBits / 8, '\0');
+    QList<int> checksum;
+    int globalBit = 0;
+    for (const QString& w : parts) {
+        const QString normalized = w.normalized(QString::NormalizationForm_KD);
+        QList<QString>::const_iterator it =
+            std::lower_bound(words.begin(), words.end(), normalized);
+        if (it == words.end() || *it != normalized) return false;
+        const int wi = static_cast<int>(it - words.begin());
+        for (int b = 10; b >= 0; --b) {
+            const int bit = (wi >> b) & 1;
+            if (globalBit < entBits) {
+                if (bit) {
+                    const int p = globalBit / 8;
+                    entropy[p] = static_cast<char>(
+                        static_cast<quint8>(entropy[p]) | (1 << (7 - (globalBit % 8))));
+                }
+            } else {
+                checksum.append(bit);
+            }
+            ++globalBit;
+        }
+    }
+    const QByteArray cs = Util::hash(entropy);
+    for (int i = 0; i < csBits; ++i) {
+        const int expected = (static_cast<quint8>(cs[i / 8]) >> (7 - (i % 8))) & 1;
+        if (checksum.at(i) != expected) return false;
+    }
+    return true;
+}
+
 void Util::claimableBalanceIdToXDR(QString balanceID, stellar::ClaimableBalanceID &balanceIdToFill) {
     // FIX §3.1: old reinterpret_cast ignored that XDR is big-endian; only
     // worked by accident for V0=0. Use QDataStream (big-endian by default).
