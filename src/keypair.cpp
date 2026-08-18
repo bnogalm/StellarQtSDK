@@ -5,6 +5,7 @@
 
 #include <QDebug>
 #include <cstring>
+#include <stdexcept>
 #include <QDateTime>
 #include <QRandomGenerator>
 #include "slip10.h"
@@ -60,7 +61,7 @@ KeyPair::KeyPair(const KeyPair &keypair):KeyPair(keypair.m_publicKey,keypair.m_p
 // shallow copy caused double-free when releasing raw pointers.
 KeyPair& KeyPair::operator=(const KeyPair &other) {
     if (this == &other) return *this;
-    // Limpiar estado actual
+    // Release the current state
     if (m_publicKey) {
         delete[] m_publicKey;
         m_publicKey = nullptr;
@@ -70,7 +71,7 @@ KeyPair& KeyPair::operator=(const KeyPair &other) {
         delete[] m_privateKey;
         m_privateKey = nullptr;
     }
-    // Copia profunda
+    // Deep copy
     if (other.m_publicKey) {
         m_publicKey = new quint8[keyLength];
         memcpy(m_publicKey, other.m_publicKey, keyLength);
@@ -154,6 +155,11 @@ KeyPair *KeyPair::fromAccountId(QString accountId) {
 }
 
 KeyPair *KeyPair::fromPublicKey(QByteArray publicKey) {
+    // The ctor memcpys 32 bytes: with a shorter QByteArray it read past the
+    // end of the buffer and left a half-formed key, with no warning at all.
+    if (publicKey.size() != 32) {
+        throw std::runtime_error("public key must be exactly 32 bytes");
+    }
     return new KeyPair((quint8*)publicKey.data());
 }
 

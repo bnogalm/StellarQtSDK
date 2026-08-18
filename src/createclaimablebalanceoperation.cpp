@@ -11,6 +11,11 @@ CreateClaimableBalanceOperation::CreateClaimableBalanceOperation(QString amount,
     m_op.amount = Operation::toXdrAmount(amount);
     m_op.asset = asset->toXdr();
     m_op.claimants.clear();
+    // stellar::Array silently drops anything past its max: with 11 or more
+    // claimants we signed a balance with fewer beneficiaries than the user
+    // approved. The path payment operations already validate this way.
+    checkArgument(claimants.size() <= m_op.claimants.maxSize(),
+                  "too many claimants");
     for(const auto& c:claimants)
         m_op.claimants.append(c.toXdr());
 

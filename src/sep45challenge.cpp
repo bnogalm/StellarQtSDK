@@ -109,9 +109,19 @@ bool serverSignedChallenge(const QString& challengeXdr, Network* network,
 
     QList<stellar::SorobanAuthorizationEntry> auth = op->getAuth();
     for (stellar::SorobanAuthorizationEntry& e : auth) {
-        if (e.credentials.type == stellar::SorobanCredentialsType::SOROBAN_CREDENTIALS_ADDRESS) {
+        switch (e.credentials.type) {
+        case stellar::SorobanCredentialsType::SOROBAN_CREDENTIALS_ADDRESS:
+        case stellar::SorobanCredentialsType::SOROBAN_CREDENTIALS_ADDRESS_V2:
             e.credentials.address.signatureExpirationLedger = 0;
             e.credentials.address.signature = stellar::SCVal();   // default is SCV_VOID
+            break;
+        case stellar::SorobanCredentialsType::SOROBAN_CREDENTIALS_ADDRESS_WITH_DELEGATES:
+            e.credentials.addressWithDelegates.addressCredentials.signatureExpirationLedger = 0;
+            e.credentials.addressWithDelegates.addressCredentials.signature = stellar::SCVal();
+            e.credentials.addressWithDelegates.delegates.clear();
+            break;
+        default:
+            break;  // SOURCE_ACCOUNT carries nothing the client fills in
         }
     }
     op->setAuth(auth);

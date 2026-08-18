@@ -1,4 +1,6 @@
 #include "allowtrustoperation.h"
+
+#include <stdexcept>
 #include <cstring>
 
 // This TU *is* the implementation of the deprecated AllowTrustOperation; the
@@ -26,6 +28,11 @@ AllowTrustOperation::AllowTrustOperation(KeyPair *trustor, QString assetCode, bo
     m_op.trustor = trustor->getXdrPublicKey();
     // asset
     QByteArray assetCodeUtf8 = assetCode.toUtf8();
+    // The memcpy below copies a fixed 12 bytes: a longer code was silently
+    // truncated and we signed an authorization over a DIFFERENT asset.
+    if (assetCodeUtf8.length() < 1 || assetCodeUtf8.length() > 12) {
+        throw std::runtime_error("asset code must be between 1 and 12 bytes when UTF-8 encoded");
+    }
     if (assetCodeUtf8.length() <= 4) {
         m_op.asset.type = stellar::AssetType::ASSET_TYPE_CREDIT_ALPHANUM4;
         QByteArray padded = Util::paddedByteArray(assetCodeUtf8,4);

@@ -4,7 +4,9 @@
 #include <QByteArray>
 #include <QDataStream>
 #include <QList>
+#include <QSharedPointer>
 #include <QtGlobal>
+#include <stdexcept>
 
 #include "xdrhelper.h"
 #include "stellartypes.h"
@@ -183,7 +185,13 @@ namespace stellar
     enum class SorobanCredentialsType : qint32
     {
         SOROBAN_CREDENTIALS_SOURCE_ACCOUNT = 0,
-        SOROBAN_CREDENTIALS_ADDRESS = 1
+        SOROBAN_CREDENTIALS_ADDRESS = 1,
+        // CAP-71 (Protocol 27). ADDRESS_V2 carries the same payload as ADDRESS
+        // but its signature is made over ENVELOPE_TYPE_SOROBAN_AUTHORIZATION_
+        // WITH_ADDRESS, which binds the signer's address into the preimage and
+        // so prevents replay between accounts that share a private key.
+        SOROBAN_CREDENTIALS_ADDRESS_V2 = 2,
+        SOROBAN_CREDENTIALS_ADDRESS_WITH_DELEGATES = 3
     };
 
     struct SorobanAddressCredentials
@@ -202,21 +210,167 @@ namespace stellar
         return in;
     }
 
+    /**
+     * SorobanDelegateSignature (CAP-71, Protocol 27). Self-recursive: a
+     * delegate may itself be backed by further delegates. `nestedDelegates` is
+     * held by QSharedPointer to break the self-containment, exactly as SCVal
+     * does for its vec/map; a null pointer means the empty list.
+     */
+    struct SorobanDelegateSignature;
+    inline QDataStream& operator<<(QDataStream& out, const SorobanDelegateSignature& d);
+    inline QDataStream& operator>>(QDataStream& in, SorobanDelegateSignature& d);
+
+    /** Upper bound on a delegate array. CAP-71 sets no explicit cap, but an
+     *  unbounded 4-byte count read from a hostile stream is an OOM primitive:
+     *  0x7FFFFFFF entries of a ~400-byte struct asks for hundreds of GB. Same
+     *  reasoning as the `xdr array length out of bounds` guard in xdrhelper.h. */
+    static const qint32 MAX_SOROBAN_DELEGATES = 4096;
+
+    /** Delegates nest recursively, so decoding must be depth-limited: ~44 bytes
+     *  of wire buys a nesting level that costs ~400 bytes of stack, i.e. ~110 KB
+     *  of hostile XDR overflows a 1 MB stack — a crash no catch() can intercept. */
+    static const int MAX_SOROBAN_DELEGATE_DEPTH = 32;
+
+    inline int& sorobanDelegateDepth() { static thread_local int depth = 0; return depth; }
+    struct SorobanDelegateDepthGuard
+    {
+        SorobanDelegateDepthGuard() {
+            if (++sorobanDelegateDepth() > MAX_SOROBAN_DELEGATE_DEPTH) {
+                --sorobanDelegateDepth();   // no destructor runs when a ctor throws
+                throw std::runtime_error("SorobanDelegateSignature: delegate nesting too deep");
+            }
+        }
+        ~SorobanDelegateDepthGuard() { --sorobanDelegateDepth(); }
+    };
+
+    /** CAP-71-01 requires every delegate array — top level and every nested one
+     *  — to be sorted by ascending `address` with no duplicates; Core rejects
+     *  the whole invocation before entering the contract otherwise. XDR order
+     *  is the lexicographic order of the encoded bytes. */
+    inline QByteArray encodedSCAddress(const SCAddress& a) {
+        QByteArray bytes;
+        QDataStream s(&bytes, QIODevice::WriteOnly);
+        s << a;
+        return bytes;
+    }
+    inline void checkDelegatesSortedUnique(const QList<SorobanDelegateSignature>& xs);
+
+    struct SorobanDelegateSignature
+    {
+        SCAddress address;
+        SCVal signature;
+        QSharedPointer<QList<SorobanDelegateSignature>> nestedDelegates;
+    };
+    inline QDataStream& operator<<(QDataStream& out, const SorobanDelegateSignature& d) {
+        out << d.address << d.signature;
+        const qint32 n = d.nestedDelegates ? static_cast<qint32>(d.nestedDelegates->size()) : 0;
+        out << n;
+        if (d.nestedDelegates) {
+            checkDelegatesSortedUnique(*d.nestedDelegates);
+            for (const SorobanDelegateSignature& child : *d.nestedDelegates) out << child;
+        }
+        return out;
+    }
+    inline QDataStream& operator>>(QDataStream& in, SorobanDelegateSignature& d) {
+        SorobanDelegateDepthGuard depthGuard;
+        in >> d.address >> d.signature;
+        qint32 n = 0; in >> n;
+        if (n < 0 || n > MAX_SOROBAN_DELEGATES)
+            throw std::runtime_error("SorobanDelegateSignature: delegate count out of bounds");
+        d.nestedDelegates.reset();   // decoding must replace, never merge
+        if (n > 0) {
+            d.nestedDelegates = QSharedPointer<QList<SorobanDelegateSignature>>::create();
+            for (qint32 i = 0; i < n; ++i) {
+                // QDataStream never throws on exhaustion: it flags ReadPastEnd
+                // and hands back default values, so without this the loop would
+                // append n empty delegates for a truncated stream.
+                if (in.status() != QDataStream::Ok)
+                    throw std::runtime_error("SorobanDelegateSignature: truncated delegate array");
+                SorobanDelegateSignature child;
+                in >> child;
+                d.nestedDelegates->append(child);
+            }
+            checkDelegatesSortedUnique(*d.nestedDelegates);
+        }
+        return in;
+    }
+
+    inline void checkDelegatesSortedUnique(const QList<SorobanDelegateSignature>& xs) {
+        for (int i = 1; i < xs.size(); ++i) {
+            const QByteArray prev = encodedSCAddress(xs.at(i - 1).address);
+            const QByteArray cur  = encodedSCAddress(xs.at(i).address);
+            if (cur == prev)
+                throw std::runtime_error("SorobanDelegateSignature: duplicate delegate address");
+            if (cur < prev)
+                throw std::runtime_error("SorobanDelegateSignature: delegates must be sorted by ascending address");
+        }
+    }
+
+    struct SorobanAddressCredentialsWithDelegates
+    {
+        SorobanAddressCredentials addressCredentials;
+        QList<SorobanDelegateSignature> delegates;
+    };
+    inline QDataStream& operator<<(QDataStream& out, const SorobanAddressCredentialsWithDelegates& v) {
+        out << v.addressCredentials;
+        checkDelegatesSortedUnique(v.delegates);
+        out << static_cast<qint32>(v.delegates.size());
+        for (const SorobanDelegateSignature& d : v.delegates) out << d;
+        return out;
+    }
+    inline QDataStream& operator>>(QDataStream& in, SorobanAddressCredentialsWithDelegates& v) {
+        in >> v.addressCredentials;
+        qint32 n = 0; in >> n;
+        if (n < 0 || n > MAX_SOROBAN_DELEGATES)
+            throw std::runtime_error("SorobanAddressCredentialsWithDelegates: delegate count out of bounds");
+        v.delegates.clear();
+        for (qint32 i = 0; i < n; ++i) {
+            if (in.status() != QDataStream::Ok)
+                throw std::runtime_error("SorobanAddressCredentialsWithDelegates: truncated delegate array");
+            SorobanDelegateSignature d;
+            in >> d;
+            v.delegates.append(d);
+        }
+        checkDelegatesSortedUnique(v.delegates);
+        return in;
+    }
+
     struct SorobanCredentials
     {
         SorobanCredentialsType type = SorobanCredentialsType::SOROBAN_CREDENTIALS_SOURCE_ACCOUNT;
-        SorobanAddressCredentials address;
+        SorobanAddressCredentials address;                        // ADDRESS and ADDRESS_V2
+        SorobanAddressCredentialsWithDelegates addressWithDelegates;
     };
     inline QDataStream& operator<<(QDataStream& out, const SorobanCredentials& v) {
         out << v.type;
-        if (v.type == SorobanCredentialsType::SOROBAN_CREDENTIALS_ADDRESS)
-            out << v.address;
+        switch (v.type) {
+        case SorobanCredentialsType::SOROBAN_CREDENTIALS_SOURCE_ACCOUNT:
+            break;  // void arm
+        case SorobanCredentialsType::SOROBAN_CREDENTIALS_ADDRESS:
+        case SorobanCredentialsType::SOROBAN_CREDENTIALS_ADDRESS_V2:
+            out << v.address; break;
+        case SorobanCredentialsType::SOROBAN_CREDENTIALS_ADDRESS_WITH_DELEGATES:
+            out << v.addressWithDelegates; break;
+        default:
+            throw std::runtime_error("SorobanCredentials: unknown credentials type");
+        }
         return out;
     }
     inline QDataStream& operator>>(QDataStream& in, SorobanCredentials& v) {
         in >> v.type;
-        if (v.type == SorobanCredentialsType::SOROBAN_CREDENTIALS_ADDRESS)
-            in >> v.address;
+        switch (v.type) {
+        case SorobanCredentialsType::SOROBAN_CREDENTIALS_SOURCE_ACCOUNT:
+            break;  // void arm
+        case SorobanCredentialsType::SOROBAN_CREDENTIALS_ADDRESS:
+        case SorobanCredentialsType::SOROBAN_CREDENTIALS_ADDRESS_V2:
+            in >> v.address; break;
+        case SorobanCredentialsType::SOROBAN_CREDENTIALS_ADDRESS_WITH_DELEGATES:
+            in >> v.addressWithDelegates; break;
+        default:
+            // Reading only the discriminant would leave the payload in the
+            // stream and desync every field after it.
+            throw std::runtime_error("SorobanCredentials: unknown credentials type");
+        }
         return in;
     }
 

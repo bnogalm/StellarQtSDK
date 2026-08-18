@@ -1,6 +1,7 @@
 #include "setoptionsoperation.h"
 #include "signer.h"
 #include <QUrl>
+#include <stdexcept>
 
 QSTELLAR_BEGIN_NS
 
@@ -30,7 +31,12 @@ SetOptionsOperation::SetOptionsOperation(KeyPair *inflationDestination, Integer 
     m_op.highThreshold = highThreshold;
     stellar::Signer& s = m_op.signer.filler();
     s.key=signer;
-    s.weight=signerWeight& 0xFF;
+    // Same as in setSigner: masking turned 256 into 0, and weight 0 DELETES
+    // the signer instead of adding it.
+    if (signerWeight > 255) {
+        throw std::runtime_error("signer weight must be in the range 0-255");
+    }
+    s.weight=signerWeight;
 }
 
 SetOptionsOperation::SetOptionsOperation(stellar::SetOptionsOp &op):m_inflationDestination(nullptr),m_op(op)
@@ -167,7 +173,13 @@ SetOptionsOperation *SetOptionsOperation::setHomeDomain(QString homeDomain) {
 SetOptionsOperation *SetOptionsOperation::setSigner(stellar::SignerKey signer, quint32 weight) {
     stellar::Signer& s = m_op.signer.filler();
     s.key = signer;
-    s.weight = weight & 0xFF;
+    // Was: weight & 0xFF. A weight of 256 became 0, and weight 0 means DELETE
+    // the signer: an out-of-range mistake could lock the user out of their own
+    // account. The 0-255 range was already documented in the header.
+    if (weight > 255) {
+        throw std::runtime_error("signer weight must be in the range 0-255");
+    }
+    s.weight = weight;
     return this;
 }
 

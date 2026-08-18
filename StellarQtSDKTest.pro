@@ -45,6 +45,8 @@ HEADERS += \
     test/xdrhelpertest.h \
     test/liquiditypooltest.h \
     test/changetrustassettest.h \
+    test/operations/regressionfixestest.h \
+    test/operations/exactofferpricetest.h \
     test/operations/liquiditypooldepositoperationtest.h \
     test/operations/liquiditypoolwithdrawoperationtest.h \
     test/signerkeytest.h \

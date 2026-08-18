@@ -113,6 +113,10 @@ PathPaymentOperation *PathPaymentOperation::setPath(QList<Asset *> path) {
     {
         delete a;
     }
+    // Same bug as in PathPaymentStrict{Send,Receive}: without clearing the
+    // lazy cache the dangling pointers stay in the list, getPath() hands them
+    // back and the destructor frees them again.
+    m_path.clear();
     m_op.path.clear();
     for(int i=0;i<path.size();i++){
         m_op.path.append(path[i]->toXdr());

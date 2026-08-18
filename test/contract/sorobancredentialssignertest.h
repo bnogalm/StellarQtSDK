@@ -37,6 +37,16 @@ class SorobanCredentialsSignerTest: public QObject
         return entry;
     }
 
+    /** hashedSignaturePayload now requires the entry to already carry the
+     *  expiration it is being hashed for (Core rebuilds the preimage from that
+     *  field). authorizeEntry stamps it internally; direct callers must too. */
+    static stellar::SorobanAuthorizationEntry stamped(
+        stellar::SorobanAuthorizationEntry e, quint32 ledger)
+    {
+        e.credentials.address.signatureExpirationLedger = ledger;
+        return e;
+    }
+
 private slots:
     void initTestCase() {}
     void cleanupTestCase() {}
@@ -89,9 +99,9 @@ private slots:
         const QString testnet = Network::testnetNetwork()->getNetworkPassphrase();
         const QString mainnet = Network::publicNetwork()->getNetworkPassphrase();
 
-        QByteArray p1 = SorobanCredentialsSigner::hashedSignaturePayload(entry, 100, testnet);
-        QByteArray p2 = SorobanCredentialsSigner::hashedSignaturePayload(entry, 100, mainnet);
-        QByteArray p3 = SorobanCredentialsSigner::hashedSignaturePayload(entry, 200, testnet);
+        QByteArray p1 = SorobanCredentialsSigner::hashedSignaturePayload(stamped(entry, 100), 100, testnet);
+        QByteArray p2 = SorobanCredentialsSigner::hashedSignaturePayload(stamped(entry, 100), 100, mainnet);
+        QByteArray p3 = SorobanCredentialsSigner::hashedSignaturePayload(stamped(entry, 200), 200, testnet);
         QCOMPARE(p1.size(), 32);
         QVERIFY(p1 != p2);   // network sensitivity
         QVERIFY(p1 != p3);   // expiration sensitivity
@@ -127,6 +137,107 @@ private slots:
         bool threw = false;
         try {
             SorobanCredentialsSigner::buildSignatureSCVal(QByteArray(32, '\0'), QByteArray(63, '\0'));
+        } catch (const std::exception&) { threw = true; }
+        QVERIFY(threw);
+    }
+
+    // ─── CAP-71 / Protocol 27: ADDRESS_V2 ────────────────────────────
+
+    /** V2's whole point is that the signer's address is bound into the
+     *  preimage, so the same entry must hash differently under V2 — otherwise
+     *  we would be emitting a V1 signature under a V2 discriminant. Checked
+     *  against a preimage assembled by hand from the canonical layout
+     *  (type, networkID, nonce, expirationLedger, address, invocation) rather
+     *  than against our own helper. */
+    void testAddressV2SignaturePayloadBindsTheAddress()
+    {
+        stellar::SorobanAuthorizationEntry v1 = makeAddressEntry();
+        stellar::SorobanAuthorizationEntry v2 = makeAddressEntry();
+        v2.credentials.type = stellar::SorobanCredentialsType::SOROBAN_CREDENTIALS_ADDRESS_V2;
+
+        const QString net = Network::testnetNetwork()->getNetworkPassphrase();
+        v1 = stamped(v1, 4321);
+        v2 = stamped(v2, 4321);
+        const QByteArray h1 = SorobanCredentialsSigner::hashedSignaturePayload(v1, 4321, net);
+        const QByteArray h2 = SorobanCredentialsSigner::hashedSignaturePayload(v2, 4321, net);
+        QCOMPARE(h1.size(), 32);
+        QCOMPARE(h2.size(), 32);
+        QVERIFY(h1 != h2);
+
+        QByteArray expected;
+        {
+            const QByteArray networkId = Util::hash(net.toUtf8());
+            QDataStream s(&expected, QIODevice::WriteOnly);
+            s << stellar::EnvelopeType::ENVELOPE_TYPE_SOROBAN_AUTHORIZATION_WITH_ADDRESS;
+            s.writeRawData(networkId.constData(), 32);
+            s << v2.credentials.address.nonce;
+            s << quint32(4321);
+            s << v2.credentials.address.address;
+            s << v2.rootInvocation;
+        }
+        QCOMPARE(h2, Util::hash(expected));
+    }
+
+    void testAuthorizeEntrySignsAddressV2()
+    {
+        stellar::SorobanAuthorizationEntry entry = makeAddressEntry();
+        entry.credentials.type = stellar::SorobanCredentialsType::SOROBAN_CREDENTIALS_ADDRESS_V2;
+        QScopedPointer<KeyPair> kp(signer());
+
+        stellar::SorobanAuthorizationEntry signed_ = SorobanCredentialsSigner::authorizeEntry(
+            entry, kp.data(), 4321, Network::testnetNetwork()->getNetworkPassphrase());
+
+        QCOMPARE(static_cast<int>(signed_.credentials.type),
+                 static_cast<int>(stellar::SorobanCredentialsType::SOROBAN_CREDENTIALS_ADDRESS_V2));
+        QCOMPARE(signed_.credentials.address.signatureExpirationLedger, quint32(4321));
+        QCOMPARE(signed_.credentials.address.signature.type, stellar::SCValType::SCV_VEC);
+
+        // Verify the bytes really were signed over the V2 preimage. Without
+        // this the test would still pass if authorizeEntry regressed to hashing
+        // a V1-shaped payload for a V2 entry.
+        auto vec = Scv::fromVec(signed_.credentials.address.signature);
+        QCOMPARE(vec.size(), 1);
+        auto map = Scv::fromMap(vec.first());
+        QCOMPARE(map.size(), 2);
+        // Look the entry up by key: an SCMap is sorted by encoded key, and the
+        // length prefix sorts first, so "signature" (9 bytes) comes before
+        // "public_key" (10) — indexing positionally would pick the wrong one.
+        QByteArray sig;
+        for (const auto& e : map) {
+            if (QString::fromUtf8(e.key.symbol) == QLatin1String("signature"))
+                sig = Scv::fromBytes(e.val);
+        }
+        QCOMPARE(sig.size(), 64);
+        const QByteArray v2Payload = SorobanCredentialsSigner::hashedSignaturePayload(
+            signed_, 4321, Network::testnetNetwork()->getNetworkPassphrase());
+        QVERIFY(kp->verify(v2Payload, sig));
+    }
+
+    /** Signing an expiration the entry does not carry produces a signature Core
+     *  rejects, with nothing local to catch it. The builder must refuse. */
+    void testPayloadRejectsExpirationMismatch()
+    {
+        stellar::SorobanAuthorizationEntry e = makeAddressEntry();   // expiration 0
+        bool threw = false;
+        try {
+            SorobanCredentialsSigner::hashedSignaturePayload(
+                e, 4321, Network::testnetNetwork()->getNetworkPassphrase());
+        } catch (const std::exception&) { threw = true; }
+        QVERIFY(threw);
+    }
+
+    /** A delegate chain cannot be signed by one keypair; returning the entry
+     *  unsigned would look like success and only fail later at simulate. */
+    void testAuthorizeEntryRejectsDelegates()
+    {
+        stellar::SorobanAuthorizationEntry entry = makeAddressEntry();
+        entry.credentials.type =
+            stellar::SorobanCredentialsType::SOROBAN_CREDENTIALS_ADDRESS_WITH_DELEGATES;
+        QScopedPointer<KeyPair> kp(signer());
+        bool threw = false;
+        try {
+            SorobanCredentialsSigner::authorizeEntry(
+                entry, kp.data(), 4321, Network::testnetNetwork()->getNetworkPassphrase());
         } catch (const std::exception&) { threw = true; }
         QVERIFY(threw);
     }

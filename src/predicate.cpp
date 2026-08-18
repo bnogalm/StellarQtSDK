@@ -9,12 +9,15 @@ Predicate *Predicate::fromXdr(stellar::ClaimPredicate &xdr) {
     case stellar::ClaimPredicateType::CLAIM_PREDICATE_UNCONDITIONAL:
         return new Unconditional();
     case stellar::ClaimPredicateType::CLAIM_PREDICATE_AND:
-        if(xdr.notPredicate.value.size()>1)
+        // This used to read xdr.notPredicate: the three members share a
+        // union, so today they are the same bytes, but that is union aliasing
+        // (UB) and any future layout divergence breaks it silently.
+        if(xdr.andPredicates.value.size()>1)
             return new And(Predicate::convertXDRPredicates(xdr.andPredicates.value));
         else
             throw std::runtime_error("Corrupted predicate");
     case stellar::ClaimPredicateType::CLAIM_PREDICATE_OR:
-        if(xdr.notPredicate.value.size()>1)
+        if(xdr.orPredicates.value.size()>1)
             return new Or(Predicate::convertXDRPredicates(xdr.orPredicates.value));
         else
             throw std::runtime_error("Corrupted predicate");

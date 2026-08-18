@@ -1,5 +1,204 @@
 # Changelog
 
+## 1.0.3
+
+Protocol-correctness release: finishes the Protocol 28 work started in 1.0.2 by
+fixing the record that *contains* the new CAP-85 arm, and closes the Protocol 27
+(CAP-71) gap. No new public classes.
+
+### Fixed
+
+- **Every `SCV_VEC` and `SCV_MAP` was 4 bytes short of Core.** The canonical
+  union declares them as XDR *optionals* — `SCVec *vec;` / `SCMap *map;`, with
+  the comment "Vec and Map are recursive so need to live behind an option" — so
+  each carries a 4-byte present flag before the array (RFC 4506 §4.19). The SDK
+  wrote only the length. Consequences: every container the SDK produced was
+  short, every container Core produced was misparsed (the present flag was read
+  as the element count), the auth signature built by
+  `SorobanCredentialsSigner` (a vec wrapping a map) went into submitted
+  transactions 8 bytes short, and the SAC balance ledger key built by
+  `SorobanServer` could never match an entry. Writer and reader were wrong
+  together, so every round-trip test passed.
+- **`SCAddress`'s muxed arm had its two fields in the wrong order.** Canonical
+  is `struct MuxedEd25519Account { uint64 id; uint256 ed25519; }` — id first.
+  The SDK emitted the SEP-23 strkey order (ed25519 then id). Reversed in both
+  directions, so the round-trip test passed while every muxed `SCAddress` on
+  the wire was wrong. The classic `MuxedAccount` in `stellartransaction.h`
+  already had it right.
+- **Contract instances did not interoperate with Core.** Canonical XDR is
+  `SCContractInstance { ContractExecutable executable; SCMap* storage; }` — a
+  4-byte present flag followed by a *bare* length-prefixed `SCMapEntry` array.
+  The SDK serialised `storage` as a whole `SCVal`, which prepends its `SCV_MAP`
+  discriminant, so every instance the SDK wrote was 4 bytes longer than Core's
+  and every instance Core produced was misparsed (the map's element count was
+  read as an `SCValType` tag). Writer and reader agreed with each other, which
+  is why the round-trip tests passed. This undercut 1.0.2's CAP-85 support: the
+  new external-ref arm decoded correctly but the record carrying it did not.
+  The wire form is now canonical, pinned by a test that decodes a hand-assembled
+  byte stream and asserts the exact encoded size. Note this fix only becomes
+  complete together with the `SCV_VEC`/`SCV_MAP` fix above: a real instance's
+  storage entries are usually themselves maps or vectors.
+- **`SCValType` was missing `SCV_EXECUTABLE_TAG = 22`**, CAP-85's companion
+  value (it carries an `SCString`). Protocol 28 decoding was incomplete without
+  it.
+- **`SCAddress` silently desynced on an unrecognised address type** — the same
+  defect 1.0.2 fixed one level up in `ContractExecutable`. Both stream
+  operators now throw on an unknown arm instead of consuming the discriminant
+  alone and leaving the payload in the stream.
+
+### Added
+
+- **Protocol 27 (CAP-71) Soroban credentials.** `SorobanCredentialsType` gains
+  `SOROBAN_CREDENTIALS_ADDRESS_V2` and `SOROBAN_CREDENTIALS_ADDRESS_WITH_DELEGATES`,
+  with the new `SorobanAddressCredentialsWithDelegates` and the self-recursive
+  `SorobanDelegateSignature` (nested delegate chains round-trip). `EnvelopeType`
+  gains `ENVELOPE_TYPE_SOROBAN_AUTHORIZATION_WITH_ADDRESS = 10`. An unknown
+  credentials arm now throws rather than desyncing — previously an entry
+  produced by any SDK already emitting V2 would have corrupted everything
+  decoded after it.
+- **Signing for `ADDRESS_V2`.** `SorobanCredentialsSigner::hashedSignaturePayload`
+  builds the CAP-71 preimage (the CAP-46 layout with the signer's `SCAddress`
+  inserted between `signatureExpirationLedger` and `invocation`), and
+  `authorizeEntry` signs V2 entries. Binding the address is what stops a
+  signature being replayed under a different account sharing the same private
+  key. `AssembledTransaction` now treats V2 entries as signable rather than
+  ignoring them. `ADDRESS_WITH_DELEGATES` throws from `authorizeEntry`: a
+  delegate chain cannot be signed by a single keypair, and returning the entry
+  unsigned would look like success and fail only at simulate.
+
+### Fixed (pre-freeze defect sweep)
+
+Nine defects surfaced while scripting the guided tour for the lab, plus the
+siblings found by sweeping the whole repo for each defect class. **None was
+covered by a test**: the suite passed with every one of them present. Each fix
+now ships with a regression that was verified to fail — or crash — when the fix
+is reverted.
+
+Memory corruption:
+
+- **`PathPaymentStrictSend/Receive/PathPaymentOperation::setPath()`:
+  use-after-free and double-free.** All three deleted the `Asset*` entries of the
+  lazy cache `m_path` without clearing it, so the next `getPath()` handed back
+  freed pointers and the destructor deleted them again. The triggering sequence
+  — `getPath()` to render the path, `setPath()` to change it — is what any UI
+  does. With the fix reverted the test crashes with an access violation in the
+  destructor.
+- **`Claimant` and `Predicate::Not/Or/And` violated the rule of three.** Each had
+  a copy constructor and a destructor but no assignment operator, so the implicit
+  one copied the pointers and both objects deleted them. Copying a
+  default-constructed `Claimant` or `Not` also dereferenced a null predicate.
+  These are types that live in `QList` and are exposed to QML, where copying and
+  assigning is routine.
+- **`AccountResponseAttach::Balance` had the same defect and leaked on top.** It
+  is a `Q_GADGET` holding two owned pointers, returned by value inside a `QList`
+  from `AccountResponse::getBalances()`, and its destructor freed only one of the
+  two. Copies now start with empty caches (they rebuild themselves from the other
+  members) and both pointers are freed.
+- **`KeyPair::fromPublicKey` read past the end of the buffer.** The constructor
+  `memcpy`s 32 bytes and nothing checked the size, so a shorter `QByteArray` read
+  adjacent memory and produced a half-formed key, silently.
+
+Signing something other than what was approved:
+
+- **`ManageDataOperation` silently truncated** both the name (a trimming loop)
+  and the value (`Array::set` with a `qMin`). `setHomeDomain` already threw in
+  the same situation; now this does too.
+- **`SetOptionsOperation` masked the signer weight with `& 0xFF`**, in the
+  constructor and in `setSigner`. A weight of 256 became 0 — and weight 0
+  **deletes** the signer, so a range error could lock the user out of their own
+  account.
+- **`AllowTrustOperation` truncated the asset code** with a fixed 12-byte
+  `memcpy`, signing an authorization over a different asset.
+- **`AssetTypeCreditAlphaNum4/12` validated in characters and copied in bytes.** A
+  4-character non-ASCII code takes more than 4 bytes and was trimmed.
+- **`Predicate::And/Or` dropped the third operand** (`Array::append` silently
+  ignores anything past its maximum), so the signed claim condition was weaker
+  than the one the user built.
+- **Operations, signatures and claimants past their maximum were dropped at
+  serialization time.** A transaction with more than `MAX_OPS_PER_TX` operations,
+  more than 20 signatures or more than 10 claimants was signed truncated.
+- **A HASH_X preimage longer than 64 bytes was truncated**, producing a signature
+  that cannot satisfy the hash.
+
+Other:
+
+- **`Operation::fromXdr` had no `INFLATION` case** and threw "Unknown operation
+  body", so any historical envelope containing it was undecodable and the XDR
+  Inspector died there. `InflationOperation::create()` was also not `static`,
+  unlike every other operation, so it did not even compile.
+- **`OrderBookResponseAttach::Row::operator!=` always returned `true`**, breaking
+  the equality contract of a `Q_GADGET` used inside `QList` from QML.
+- **`Predicate::fromXdr` read the wrong union member** in the AND and OR cases
+  (union aliasing: the same bytes today, latent UB).
+
+### Added (exact offer prices)
+
+A Stellar price **is** an `n/d` fraction in the XDR, but the three offer classes
+only let you build and read it as a decimal string. That string goes through
+`Price(QString)`, which truncates to 11 characters and re-derives the fraction
+over 1e9, so any price without a short decimal representation was silently
+corrupted: `7/9` came back as `777777777/1000000000`. The **response** classes
+already exposed `getPriceR()`; the asymmetry was on the construction side only.
+
+- **`getPriceR()`** on `ManageSellOfferOperation`, `ManageBuyOfferOperation` and
+  `CreatePassiveSellOfferOperation`, returning the exact XDR fraction — the
+  authoritative value. `getPrice()` still returns the decimal string.
+- **Constructor and `create()` overloads taking `const Price&`**, alongside the
+  `QString` variants, which are kept for compatibility and still approximate (now
+  documented in the header rather than being a surprise). Same shape
+  `LiquidityPoolDepositOperation` already used.
+- **Txrep no longer loses the fraction in either direction.** Emitting used
+  `Price(op->getPrice())`, i.e. it re-parsed its own decimal string; parsing
+  converted the document's exact `n`/`d` to decimal only to approximate it again.
+  A txrep with `price.n: 7 / price.d: 9` produced a transaction with a different
+  price and **a different hash** than the document the user reviewed.
+- `Price::toXdr()` is now `const` (it never mutated), and `getNumerator()`,
+  `getDenominator()` and `toString()` are `Q_INVOKABLE` so prices can be
+  formatted from QML without dropping into C++.
+
+### Fixed (test harness)
+
+- **A test class that threw was counted as green.** In `TestCollector`, the
+  `catch` around `QTest::qExec` added the class to the failed list but never
+  incremented the counter, so the summary printed "Passed: everything,
+  Failed: 0" and `RunAllTests` returned 0: **CI would have gone green over a
+  suite that had blown up**. This surfaced while verifying the fixes above — a
+  throwing test also aborts its whole class and takes the other verdicts with it,
+  which is how four failures stayed hidden on the first pass. An exception now
+  counts as a failure of the whole class and the exit code reflects it.
+
+### Security / robustness
+
+- **The new CAP-71 delegate readers were two denial-of-service primitives.**
+  The 4-byte array count was attacker-controlled up to 0x7FFFFFFF and went
+  straight into `reserve()` (~800 GB for a ~400-byte struct), and `QDataStream`
+  never throws on exhaustion — it flags `ReadPastEnd` and returns defaults — so
+  a truncated stream appended empty delegates until the process died. Separately
+  `SorobanDelegateSignature` recursed with no depth limit: ~110 KB of hostile
+  XDR overflows a 1 MB stack, a crash no `catch` can intercept. Now bounded
+  (`MAX_SOROBAN_DELEGATES`), depth-limited (`MAX_SOROBAN_DELEGATE_DEPTH`), and
+  the readers check `QDataStream::status()` each iteration.
+- **Delegate arrays are validated against CAP-71-01's ordering rule.** Every
+  delegate array, at every nesting level, must be sorted by ascending address
+  with no duplicates or Core rejects the whole invocation before the contract
+  runs. The encoder wrote whatever order the caller appended. Both the encoder
+  and the decoder now reject unsorted or duplicated arrays, so an invalid
+  transaction fails locally with a clear message instead of on-chain.
+- **`hashedSignaturePayload` could sign an expiration the entry does not
+  carry.** Core rebuilds the preimage from the entry's own
+  `signatureExpirationLedger`, so the documented external-signer flow — hash for
+  ledger Y, stamp the returned signature in, ship an entry still saying 0 —
+  produced a signature that fails auth on-chain with nothing local to catch it.
+  The builder now requires the entry to already carry the expiration it is being
+  hashed for. `authorizeEntry` stamps it internally, so that path is unaffected.
+
+### Changed
+
+- The XDR the SDK produces for a contract instance with storage is 4 bytes
+  shorter (and now correct). Anything that stored or golden-tested
+  SDK-generated contract-instance XDR will differ — it was never valid against
+  Core.
+
 ## 1.0.2
 
 ### Fixed

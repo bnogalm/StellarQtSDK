@@ -75,6 +75,13 @@ inline int RunAllTests(int argc, char **argv) {
         {
             failedTestsWithExceptions.insert(i.first, e.what());
             failedTests.append(i.first);
+            // Without this, `result` stayed at 0: a class that threw was
+            // listed below as failed, but the totals said "Passed: all,
+            // Failed: 0" and RunAllTests returned 0, so CI went green over a
+            // suite that had blown up. qExec aborts the class as soon as the
+            // exception propagates, so we cannot claim any of its tests
+            // passed: they all count as failures.
+            result += classTestCount;
         }
     }
     if(!failedTests.isEmpty())

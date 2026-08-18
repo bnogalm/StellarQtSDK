@@ -110,7 +110,10 @@ QStringList AssembledTransaction::needsNonInvokerSigningBy() const
         auto* invoke = dynamic_cast<InvokeHostFunctionOperation*>(op);
         if (!invoke) continue;
         for (const stellar::SorobanAuthorizationEntry& e : invoke->getAuth()) {
-            if (e.credentials.type != stellar::SorobanCredentialsType::SOROBAN_CREDENTIALS_ADDRESS)
+            // ADDRESS_V2 carries the same SorobanAddressCredentials payload and
+            // is equally signable; only its signature preimage differs.
+            if (e.credentials.type != stellar::SorobanCredentialsType::SOROBAN_CREDENTIALS_ADDRESS
+                && e.credentials.type != stellar::SorobanCredentialsType::SOROBAN_CREDENTIALS_ADDRESS_V2)
                 continue;
             // Only ACCOUNT-type addresses can be signed with a KeyPair.
             if (e.credentials.address.address.type != stellar::SCAddressType::SC_ADDRESS_TYPE_ACCOUNT)
@@ -148,7 +151,10 @@ AssembledTransaction& AssembledTransaction::signAuthEntries(KeyPair* signer, qui
         QList<stellar::SorobanAuthorizationEntry> updated = invoke->getAuth();
         bool changed = false;
         for (stellar::SorobanAuthorizationEntry& e : updated) {
-            if (e.credentials.type != stellar::SorobanCredentialsType::SOROBAN_CREDENTIALS_ADDRESS)
+            // ADDRESS_V2 carries the same SorobanAddressCredentials payload and
+            // is equally signable; only its signature preimage differs.
+            if (e.credentials.type != stellar::SorobanCredentialsType::SOROBAN_CREDENTIALS_ADDRESS
+                && e.credentials.type != stellar::SorobanCredentialsType::SOROBAN_CREDENTIALS_ADDRESS_V2)
                 continue;
             if (e.credentials.address.address.type != stellar::SCAddressType::SC_ADDRESS_TYPE_ACCOUNT)
                 continue;

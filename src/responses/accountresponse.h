@@ -100,6 +100,15 @@ class Balance {
 
 public:
     Balance();
+    /** Rule of three. m_assetIssuerKeypair and m_asset are lazy caches this
+     *  object OWNS and the destructor frees; without our own copy ctor and
+     *  assignment, the implicit ones duplicated the pointers and both objects
+     *  deleted them (double-free). Balance is a Q_GADGET returned by value
+     *  inside a QList from AccountResponse::getBalances(), so copying and
+     *  assigning is the normal operation. Copies start with empty caches:
+     *  they rebuild themselves from m_assetType/m_assetCode. */
+    Balance(const Balance& other);
+    Balance& operator=(const Balance& other);
     ~Balance();
     Asset* getAsset();
     QString getAssetType() const;

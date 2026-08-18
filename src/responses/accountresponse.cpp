@@ -132,10 +132,47 @@ namespace AccountResponseAttach
 Balance::Balance():m_isClawbackEnabled(false),m_assetIssuerKeypair(nullptr),m_asset(nullptr){
 }
 
+Balance::Balance(const Balance& other)
+    : m_assetIssuerKeypair(nullptr), m_asset(nullptr)
+{
+    // The pointers MUST be nullptr before delegating: operator= starts by
+    // deleting whatever was there, which in a fresh object would be garbage.
+    *this = other;
+}
+
+Balance& Balance::operator=(const Balance& other)
+{
+    if (this == &other)
+        return *this;
+    if (m_assetIssuerKeypair) delete m_assetIssuerKeypair;
+    if (m_asset) delete m_asset;
+    m_assetType = other.m_assetType;
+    m_assetCode = other.m_assetCode;
+    m_assetIssuer = other.m_assetIssuer;
+    m_limit = other.m_limit;
+    m_balance = other.m_balance;
+    m_buyingLiabilities = other.m_buyingLiabilities;
+    m_sellingLiabilities = other.m_sellingLiabilities;
+    m_isAuthorized = other.m_isAuthorized;
+    m_isAuthorizedToMaintainLiabilities = other.m_isAuthorizedToMaintainLiabilities;
+    m_isClawbackEnabled = other.m_isClawbackEnabled;
+    m_lastModifiedLedger = other.m_lastModifiedLedger;
+    m_sponsor = other.m_sponsor;
+    m_liquidityPoolId = other.m_liquidityPoolId;
+    // The caches are NOT copied: they belong to each object and are rebuilt
+    // on demand from the fields above.
+    m_assetIssuerKeypair = nullptr;
+    m_asset = nullptr;
+    return *this;
+}
+
 Balance::~Balance()
 {
     if(m_assetIssuerKeypair)
         delete m_assetIssuerKeypair;
+    // This used to leak: getAsset() news it up in every non-native Balance.
+    if(m_asset)
+        delete m_asset;
 }
 
 Asset *Balance::getAsset() {

@@ -32,8 +32,10 @@ Price OrderBookResponseAttach::Row::getPriceR() {
 
 bool OrderBookResponseAttach::Row::operator !=(const Row &row) const
 {
-    Q_UNUSED(row)
-    return true;
+    // Was: Q_UNUSED(row) return true;  -> any diff of order book rows always
+    // saw "everything is different", breaking the equality contract of a
+    // Q_GADGET used inside a QList in QML properties.
+    return !(*this == row);
 }
 
 bool OrderBookResponseAttach::Row::operator ==(const Row &row) const

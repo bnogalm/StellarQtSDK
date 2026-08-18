@@ -35,14 +35,14 @@ public:
     /**
     * Returns numerator.
     */
-    qint32 getNumerator() const{
+    Q_INVOKABLE qint32 getNumerator() const{
         return m_n;
     }
 
     /**
     * Returns denominator
     */
-    qint32 getDenominator() const{
+    Q_INVOKABLE qint32 getDenominator() const{
         return m_d;
     }
 
@@ -54,11 +54,11 @@ public:
 
     static QString toString(qint32 n,qint32 d);
 
-    QString toString() const;
+    Q_INVOKABLE QString toString() const;
     /**
          * Generates Price XDR object.
          */
-    stellar::Price toXdr();
+    stellar::Price toXdr() const;
 
     bool equals(Price* price);
 

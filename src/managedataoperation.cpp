@@ -1,4 +1,6 @@
 #include "managedataoperation.h"
+
+#include <stdexcept>
 #include "util.h"
 
 QSTELLAR_BEGIN_NS
@@ -9,14 +11,22 @@ ManageDataOperation::ManageDataOperation(QString name, QByteArray value) {
     QByteArray utf8 = name.toUtf8();
     typedef decltype(stellar::ManageDataOp::dataName) nameFieldType;
     int maxSize = nameFieldType::maxSize();
-    int currentSize = name.size();
-    while(utf8.size()>maxSize){
-        currentSize--;
-        name = name.left(currentSize);
-        utf8 = name.toUtf8();
+    // This used to trim the name in a loop until it fit, and Array::set
+    // truncated the value with a qMin: we ended up signing something other
+    // than what the user typed, with no warning at all. setHomeDomain already
+    // threw in the same case; do it here too.
+    if(utf8.size() > maxSize){
+        throw std::runtime_error(
+            QString("data name exceeds %1 bytes when UTF-8 encoded").arg(maxSize).toStdString());
     }
     m_op.dataName.set(utf8.data(),utf8.size());
     if(!value.isNull()){
+        typedef decltype(stellar::ManageDataOp::dataValue.value) valueFieldType;
+        const int maxValue = valueFieldType::maxSize();
+        if(value.size() > maxValue){
+            throw std::runtime_error(
+                QString("data value exceeds %1 bytes").arg(maxValue).toStdString());
+        }
         m_op.dataValue.value.set((uchar*)value.data(),value.size());
         m_op.dataValue.filled=1;
     }

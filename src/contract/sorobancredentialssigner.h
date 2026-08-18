@@ -28,6 +28,17 @@ QSTELLAR_BEGIN_NS
  *
  * SOROBAN_CREDENTIALS_SOURCE_ACCOUNT entries are returned unchanged — the
  * source account's transaction signature implicitly covers them.
+ *
+ * CAP-71 (Protocol 27) additions:
+ *   - SOROBAN_CREDENTIALS_ADDRESS_V2 is signed too. Its preimage is
+ *     ENVELOPE_TYPE_SOROBAN_AUTHORIZATION_WITH_ADDRESS, i.e. the layout above
+ *     with the signer's SCAddress inserted between signatureExpirationLedger
+ *     and rootInvocation. Binding the address is what stops a signature being
+ *     replayed under another account sharing the same private key.
+ *   - SOROBAN_CREDENTIALS_ADDRESS_WITH_DELEGATES THROWS from `authorizeEntry`:
+ *     a delegate chain cannot be produced by one keypair, and returning the
+ *     entry unchanged would look like success and fail only at simulate.
+ *     Callers handling untrusted entries must catch std::runtime_error.
  */
 class SorobanCredentialsSigner
 {
@@ -40,7 +51,12 @@ public:
         const QString& networkPassphrase);
 
     /** Build the payload that needs signing (32-byte SHA-256). Exposed so
-     *  callers can route the actual signing through an HSM / external signer. */
+     *  callers can route the actual signing through an HSM / external signer.
+     *
+     *  `entry.credentials.address.signatureExpirationLedger` MUST already equal
+     *  `validUntilLedger` — Core rebuilds this preimage from the entry's own
+     *  field, so hashing a different value yields a signature that is rejected
+     *  on-chain. Throws if they disagree. */
     static QByteArray hashedSignaturePayload(
         const stellar::SorobanAuthorizationEntry& entry,
         quint32 validUntilLedger,

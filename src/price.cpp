@@ -95,7 +95,7 @@ QString Price::toString() const{
     return Price::toString(m_n,m_d);
 }
 
-stellar::Price Price::toXdr(){
+stellar::Price Price::toXdr() const{
     stellar::Price xdr;
     xdr.d=m_d;
     xdr.n=m_n;

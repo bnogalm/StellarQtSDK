@@ -2,6 +2,7 @@
 #define CREATEPASSIVESELLOFFEROPERATION_H
 #include "operation.h"
 #include "qstellar_namespace.h"
+#include "price.h"
 QSTELLAR_FWD(Asset)
 
 /**
@@ -19,6 +20,12 @@ class CreatePassiveSellOfferOperation : public Operation
 
 public:
     CreatePassiveSellOfferOperation(Asset* selling, Asset* buying, QString amount, QString price);
+
+    /**
+     * Same as the one above, but taking the price as an EXACT FRACTION.
+     * The `QString price` variant only approximates (see Price(QString)).
+     */
+    CreatePassiveSellOfferOperation(Asset* selling, Asset* buying, QString amount, const Price& price);
     virtual ~CreatePassiveSellOfferOperation();
     CreatePassiveSellOfferOperation(stellar::CreatePassiveSellOfferOp &op);
 
@@ -42,6 +49,15 @@ public:
      */
     QString getPrice();
 
+    /**
+     * The price as the EXACT FRACTION that goes into the XDR.
+     * `getPrice()` returns a decimal string derived from n/d, so rebuilding a
+     * Price from it goes through the `Price(QString)` approximation again and
+     * does not always give back the same fraction. This is the authoritative
+     * value.
+     */
+    Price getPriceR() const;
+
 
     void fillOperationBody(AccountConverter& accountConverter, stellar::Operation &operation);
     /**
@@ -50,6 +66,9 @@ public:
     */
     static CreatePassiveSellOfferOperation* build(stellar::CreatePassiveSellOfferOp& op);
     static CreatePassiveSellOfferOperation* create(Asset* selling, Asset* buying, QString amount, QString price);
+
+    /** Variant taking the price as an exact fraction (see the ctor). */
+    static CreatePassiveSellOfferOperation* create(Asset* selling, Asset* buying, QString amount, const Price& price);
 
     /**
          * Sets the source account for this operation.

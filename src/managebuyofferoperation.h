@@ -5,6 +5,7 @@
 #include "operation.h"
 #include "xdr/stellartransaction.h"
 #include "qstellar_namespace.h"
+#include "price.h"
 QSTELLAR_FWD(Asset)
 /**
  * Represents <a href="https://www.stellar.org/developers/learn/concepts/list-of-operations.html#manage-buy-offer" target="_blank">ManageBuyOffer</a> operation.
@@ -26,6 +27,16 @@ public:
     ManageBuyOfferOperation(Asset* selling, Asset* buying, QString amount, QString price, qint64 offerId);
 
     /**
+     * Same as the one above, but taking the price as an EXACT FRACTION.
+     * The `QString price` variant only approximates: it goes through
+     * `Price(QString)`, which truncates to 11 characters and re-derives the
+     * fraction over 1e9, so a price like 7/9 becomes 777777777/1000000000.
+     * Use this overload when the exact n/d matters (XDR round-trip, txrep,
+     * or a price read from the network).
+     */
+    ManageBuyOfferOperation(Asset* selling, Asset* buying, QString amount, const Price& price, qint64 offerId);
+
+    /**
       * The asset being sold in this operation
       */
     Asset* getSelling();
@@ -44,6 +55,15 @@ public:
       * Price of 1 unit of selling in terms of buying.
       */
     QString getPrice();
+
+    /**
+     * The price as the EXACT FRACTION that goes into the XDR.
+     * `getPrice()` returns a decimal string derived from n/d, so rebuilding a
+     * Price from it goes through the `Price(QString)` approximation again and
+     * does not always give back the same fraction. This is the authoritative
+     * value.
+     */
+    Price getPriceR() const;
 
     /**
       * The ID of the offer.
@@ -71,6 +91,9 @@ public:
          * @throws ArithmeticException when amount has more than 7 decimal places.
          */
     static ManageBuyOfferOperation* create(Asset* selling, Asset* buying, QString amount, QString price);
+
+    /** Variant taking the price as an exact fraction (see the ctor). */
+    static ManageBuyOfferOperation* create(Asset* selling, Asset* buying, QString amount, const Price& price);
 
     /**
          * Sets offer ID. <code>0</code> creates a new offer. Set to existing offer ID to change it.

@@ -14,7 +14,7 @@ class InflationOperation : public Operation
 public:
     InflationOperation();
     void fillOperationBody(AccountConverter& accountConverter, stellar::Operation &operation);
-    InflationOperation* create();
+    static InflationOperation* create();
 };
 
 QSTELLAR_END_NS

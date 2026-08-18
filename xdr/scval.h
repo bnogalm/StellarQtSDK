@@ -43,7 +43,8 @@ namespace stellar
         SCV_ADDRESS = 18,
         SCV_CONTRACT_INSTANCE = 19,
         SCV_LEDGER_KEY_CONTRACT_INSTANCE = 20,
-        SCV_LEDGER_KEY_NONCE = 21
+        SCV_LEDGER_KEY_NONCE = 21,
+        SCV_EXECUTABLE_TAG = 22   // CAP-85, Protocol 28 — carries an SCString
     };
 
     /**
@@ -91,11 +92,17 @@ namespace stellar
         case SCAddressType::SC_ADDRESS_TYPE_CONTRACT:
             out << a.contractId; break;
         case SCAddressType::SC_ADDRESS_TYPE_MUXED_ACCOUNT:
-            out << a.muxedEd25519 << a.muxedId; break;
+            // Canonical: struct MuxedEd25519Account { uint64 id; uint256 ed25519; }
+            // — id FIRST. The SEP-23 strkey payload is the other way round
+            // (ed25519 then id), which is what this used to emit; the classic
+            // MuxedAccount in stellartransaction.h already gets it right.
+            out << a.muxedId << a.muxedEd25519; break;
         case SCAddressType::SC_ADDRESS_TYPE_CLAIMABLE_BALANCE:
             out << qint32(0); out << a.claimableHash; break; // V0 discriminant + hash
         case SCAddressType::SC_ADDRESS_TYPE_LIQUIDITY_POOL:
             out << a.liquidityPoolId; break;
+        default:
+            throw std::runtime_error("SCAddress: unknown address type");
         }
         return out;
     }
@@ -108,11 +115,15 @@ namespace stellar
         case SCAddressType::SC_ADDRESS_TYPE_CONTRACT:
             in >> a.contractId; break;
         case SCAddressType::SC_ADDRESS_TYPE_MUXED_ACCOUNT:
-            in >> a.muxedEd25519 >> a.muxedId; break;
+            in >> a.muxedId >> a.muxedEd25519; break;   // id first — see the writer
         case SCAddressType::SC_ADDRESS_TYPE_CLAIMABLE_BALANCE:
             in >> disc; in >> a.claimableHash; break;
         case SCAddressType::SC_ADDRESS_TYPE_LIQUIDITY_POOL:
             in >> a.liquidityPoolId; break;
+        default:
+            // Same reason as ContractExecutable: an unknown arm's payload
+            // would stay in the stream and desync everything after it.
+            throw std::runtime_error("SCAddress: unknown address type");
         }
         return in;
     }
@@ -312,6 +323,7 @@ namespace stellar
         SCError    error;               // SCV_ERROR
         SCNonceKey nonceKey;            // SCV_LEDGER_KEY_NONCE
         QSharedPointer<SCContractInstance> instance; // SCV_CONTRACT_INSTANCE
+        QByteArray executableTag;   // SCV_EXECUTABLE_TAG (CAP-85) — SCString bytes
         // SCV_LEDGER_KEY_CONTRACT_INSTANCE has no payload.
 
         SCVal() = default;
@@ -372,18 +384,32 @@ namespace stellar
             out << v.u256.hiHi << v.u256.hiLo << v.u256.loHi << v.u256.loLo; break;
         case SCValType::SCV_I256:
             out << v.i256.hiHi << v.i256.hiLo << v.i256.loHi << v.i256.loLo; break;
+        // SCV_VEC / SCV_MAP are XDR OPTIONALS, not plain arrays: the canonical
+        // union declares `SCVec *vec;` / `SCMap *map;` ("Vec and Map are
+        // recursive so need to live behind an option, due to xdrpp
+        // limitations"). RFC 4506 §4.19 encodes `T *x` as a 4-byte boolean
+        // followed by the value when present. Omitting that flag made every
+        // container the SDK wrote 4 bytes shorter than Core's, and every
+        // container Core produced misparse — the reader took the present flag
+        // for the element count. A null pointer is the absent case; an
+        // allocated empty list is present-with-zero-elements, and the two are
+        // distinct on the wire.
         case SCValType::SCV_VEC: {
-            const QList<SCVal>* xs = v.vec.data();
-            const qint32 n = xs ? static_cast<qint32>(xs->size()) : 0;
-            out << n;
-            if (xs) for (const SCVal& e : *xs) out << e;
+            const bool present = !v.vec.isNull();
+            out << qint32(present ? 1 : 0);
+            if (present) {
+                out << static_cast<qint32>(v.vec->size());
+                for (const SCVal& e : *v.vec) out << e;
+            }
             break;
         }
         case SCValType::SCV_MAP: {
-            const QList<SCMapEntry>* xs = v.map.data();
-            const qint32 n = xs ? static_cast<qint32>(xs->size()) : 0;
-            out << n;
-            if (xs) for (const SCMapEntry& e : *xs) { out << e.key; out << e.val; }
+            const bool present = !v.map.isNull();
+            out << qint32(present ? 1 : 0);
+            if (present) {
+                out << static_cast<qint32>(v.map->size());
+                for (const SCMapEntry& e : *v.map) { out << e.key; out << e.val; }
+            }
             break;
         }
         case SCValType::SCV_ADDRESS:
@@ -394,13 +420,36 @@ namespace stellar
             out << v.nonceKey; break;
         case SCValType::SCV_LEDGER_KEY_CONTRACT_INSTANCE:
             break;  // no payload
+        case SCValType::SCV_EXECUTABLE_TAG: {
+            // SCString, same wire form as SCV_STRING.
+            out << static_cast<qint32>(v.executableTag.size());
+            if (!v.executableTag.isEmpty())
+                out.writeRawData(v.executableTag.constData(), v.executableTag.size());
+            const quint32 pad = (4 - (v.executableTag.size() % 4)) % 4;
+            if (pad) { char zero[4] = {0,0,0,0}; out.writeRawData(zero, static_cast<int>(pad)); }
+            break;
+        }
         case SCValType::SCV_CONTRACT_INSTANCE: {
             if (!v.instance) throw std::runtime_error("SCV_CONTRACT_INSTANCE storage is null");
             out << v.instance->executable;
-            // Optional<SCVal> storage: 4-byte present flag + (if present) the SCVal.
+            // Canonical XDR is `SCMap* storage`, i.e. a 4-byte present flag
+            // followed by a BARE length-prefixed SCMapEntry array — NOT a full
+            // SCVal. Writing the SCVal would prepend its SCV_MAP discriminant
+            // and put four extra bytes on the wire, which is what previously
+            // made every instance disagree with Core. `storage` is modelled as
+            // an SCVal purely so the recursive type works; only the map body
+            // is serialised.
             const bool present = !v.instance->storage.isNull();
             out << qint32(present ? 1 : 0);
-            if (present) out << *v.instance->storage;
+            if (present) {
+                const SCVal& st = *v.instance->storage;
+                if (st.type != SCValType::SCV_MAP)
+                    throw std::runtime_error("SCContractInstance storage must be an SCV_MAP");
+                // The SCMap inside a present storage is NOT itself optional, so
+                // a null list is simply zero entries.
+                out << static_cast<qint32>(st.map ? st.map->size() : 0);
+                if (st.map) for (const SCMapEntry& e : *st.map) { out << e.key; out << e.val; }
+            }
             break;
         }
         default:
@@ -465,18 +514,20 @@ namespace stellar
         case SCValType::SCV_I256:
             in >> v.i256.hiHi >> v.i256.hiLo >> v.i256.loHi >> v.i256.loLo; break;
         case SCValType::SCV_VEC: {
+            qint32 present = 0; in >> present;   // XDR optional (see the writer)
+            if (!present) { v.vec.reset(); break; }
             qint32 n; in >> n;
             if (n < 0) throw std::runtime_error("SCVec negative length");
             v.vec = QSharedPointer<QList<SCVal>>::create();
-            v.vec->reserve(n);
             for (qint32 i = 0; i < n; ++i) { SCVal e; in >> e; v.vec->append(e); }
             break;
         }
         case SCValType::SCV_MAP: {
+            qint32 present = 0; in >> present;   // XDR optional (see the writer)
+            if (!present) { v.map.reset(); break; }
             qint32 n; in >> n;
             if (n < 0) throw std::runtime_error("SCMap negative length");
             v.map = QSharedPointer<QList<SCMapEntry>>::create();
-            v.map->reserve(n);
             for (qint32 i = 0; i < n; ++i) {
                 SCMapEntry e;
                 in >> e.key;
@@ -493,13 +544,34 @@ namespace stellar
             in >> v.nonceKey; break;
         case SCValType::SCV_LEDGER_KEY_CONTRACT_INSTANCE:
             break;
+        case SCValType::SCV_EXECUTABLE_TAG: {
+            qint32 n; in >> n;
+            if (n < 0) throw std::runtime_error("SCV_EXECUTABLE_TAG negative length");
+            v.executableTag.resize(n);
+            if (n > 0) in.readRawData(v.executableTag.data(), n);
+            const quint32 pad = (4 - (static_cast<quint32>(n) % 4)) % 4;
+            if (pad) { char z[4]; in.readRawData(z, static_cast<int>(pad)); }
+            break;
+        }
         case SCValType::SCV_CONTRACT_INSTANCE: {
             v.instance = QSharedPointer<SCContractInstance>::create();
             in >> v.instance->executable;
             qint32 present = 0; in >> present;
             if (present) {
+                // Bare SCMap on the wire (see the writer); rebuild it as the
+                // SCV_MAP the rest of the SDK expects to find here.
+                qint32 n = 0; in >> n;
+                if (n < 0) throw std::runtime_error("SCContractInstance storage: negative map length");
                 v.instance->storage = QSharedPointer<SCVal>::create();
-                in >> *v.instance->storage;
+                v.instance->storage->type = SCValType::SCV_MAP;
+                v.instance->storage->map = QSharedPointer<QList<SCMapEntry>>::create();
+                v.instance->storage->map->reserve(n);
+                for (qint32 i = 0; i < n; ++i) {
+                    SCMapEntry e;
+                    in >> e.key;
+                    in >> e.val;
+                    v.instance->storage->map->append(e);
+                }
             }
             break;
         }

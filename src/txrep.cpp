@@ -264,7 +264,7 @@ void emitOperation(QString& out, Operation* op, int i)
     } else if (auto* mso = dynamic_cast<ManageSellOfferOperation*>(op)) {
         appendLine(out, prefix + ".body.type", "MANAGE_SELL_OFFER");
         const QString p = prefix + ".body.manageSellOfferOp";
-        const Price pr(mso->getPrice());  // SDK stores a reduced n/d; recover it
+        const Price pr = mso->getPriceR();   // exact fraction from the XDR
         appendLine(out, p + ".selling", assetToTxrep(mso->getSelling()));
         appendLine(out, p + ".buying",  assetToTxrep(mso->getBuying()));
         appendLine(out, p + ".amount",  QString::number(Operation::toXdrAmount(mso->getAmount())));
@@ -274,7 +274,7 @@ void emitOperation(QString& out, Operation* op, int i)
     } else if (auto* mbo = dynamic_cast<ManageBuyOfferOperation*>(op)) {
         appendLine(out, prefix + ".body.type", "MANAGE_BUY_OFFER");
         const QString p = prefix + ".body.manageBuyOfferOp";
-        const Price pr(mbo->getPrice());
+        const Price pr = mbo->getPriceR();   // exact fraction from the XDR
         appendLine(out, p + ".selling",   assetToTxrep(mbo->getSelling()));
         appendLine(out, p + ".buying",    assetToTxrep(mbo->getBuying()));
         appendLine(out, p + ".buyAmount", QString::number(Operation::toXdrAmount(mbo->getAmount())));
@@ -284,7 +284,7 @@ void emitOperation(QString& out, Operation* op, int i)
     } else if (auto* cpo = dynamic_cast<CreatePassiveSellOfferOperation*>(op)) {
         appendLine(out, prefix + ".body.type", "CREATE_PASSIVE_SELL_OFFER");
         const QString p = prefix + ".body.createPassiveSellOfferOp";
-        const Price pr(cpo->getPrice());
+        const Price pr = cpo->getPriceR();   // exact fraction from the XDR
         appendLine(out, p + ".selling", assetToTxrep(cpo->getSelling()));
         appendLine(out, p + ".buying",  assetToTxrep(cpo->getBuying()));
         appendLine(out, p + ".amount",  QString::number(Operation::toXdrAmount(cpo->getAmount())));
@@ -571,8 +571,11 @@ Operation* parseOperation(const QHash<QString, QString>& kv, int i)
         Asset* selling = assetFromTxrep(need(kv, p + ".selling"));
         Asset* buying  = assetFromTxrep(need(kv, p + ".buying"));
         const QString amount = Operation::fromXdrAmount(need(kv, p + ".amount").toLongLong());
-        const QString price = Price::toString(need(kv, p + ".price.n").toInt(),
-                                              need(kv, p + ".price.d").toInt());
+        // txrep carries the exact n and d: build the Price directly. Going
+        // through the decimal string fell back to the Price(QString)
+        // approximation, and 7/9 came back as 777777777/1000000000.
+        const Price price(need(kv, p + ".price.n").toInt(),
+                          need(kv, p + ".price.d").toInt());
         op = new ManageSellOfferOperation(selling, buying, amount, price,
                                           need(kv, p + ".offerID").toLongLong());
         delete selling; delete buying;  // ctor copies toXdr(), does not retain the pointers
@@ -581,8 +584,11 @@ Operation* parseOperation(const QHash<QString, QString>& kv, int i)
         Asset* selling = assetFromTxrep(need(kv, p + ".selling"));
         Asset* buying  = assetFromTxrep(need(kv, p + ".buying"));
         const QString amount = Operation::fromXdrAmount(need(kv, p + ".buyAmount").toLongLong());
-        const QString price = Price::toString(need(kv, p + ".price.n").toInt(),
-                                              need(kv, p + ".price.d").toInt());
+        // txrep carries the exact n and d: build the Price directly. Going
+        // through the decimal string fell back to the Price(QString)
+        // approximation, and 7/9 came back as 777777777/1000000000.
+        const Price price(need(kv, p + ".price.n").toInt(),
+                          need(kv, p + ".price.d").toInt());
         op = new ManageBuyOfferOperation(selling, buying, amount, price,
                                          need(kv, p + ".offerID").toLongLong());
         delete selling; delete buying;
@@ -591,8 +597,11 @@ Operation* parseOperation(const QHash<QString, QString>& kv, int i)
         Asset* selling = assetFromTxrep(need(kv, p + ".selling"));
         Asset* buying  = assetFromTxrep(need(kv, p + ".buying"));
         const QString amount = Operation::fromXdrAmount(need(kv, p + ".amount").toLongLong());
-        const QString price = Price::toString(need(kv, p + ".price.n").toInt(),
-                                              need(kv, p + ".price.d").toInt());
+        // txrep carries the exact n and d: build the Price directly. Going
+        // through the decimal string fell back to the Price(QString)
+        // approximation, and 7/9 came back as 777777777/1000000000.
+        const Price price(need(kv, p + ".price.n").toInt(),
+                          need(kv, p + ".price.d").toInt());
         op = new CreatePassiveSellOfferOperation(selling, buying, amount, price);
         delete selling; delete buying;
     } else if (type == "PATH_PAYMENT_STRICT_RECEIVE") {

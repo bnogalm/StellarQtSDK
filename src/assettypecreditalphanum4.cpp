@@ -7,13 +7,19 @@ QSTELLAR_BEGIN_NS
 
 AssetTypeCreditAlphaNum4::AssetTypeCreditAlphaNum4(QString code, KeyPair *issuer)
     :AssetTypeCreditAlphaNum(code,issuer){
-    if (code.length() < 1 || code.length() > 4) {
+    // The check counted QChars while the memcpy in toXdr copies UTF-8 BYTES:
+    // a non-ASCII code takes up more and was silently truncated, signing
+    // operations over an asset other than the one chosen.
+    if (code.length() < 1 || code.length() > 4 || code.toUtf8().length() > 4) {
         throw new AssetCodeLengthInvalidException();
     }
 }
 AssetTypeCreditAlphaNum4::AssetTypeCreditAlphaNum4(QString code,const KeyPair &issuer)
     :AssetTypeCreditAlphaNum(code,issuer){
-    if (code.length() < 1 || code.length() > 4) {
+    // The check counted QChars while the memcpy in toXdr copies UTF-8 BYTES:
+    // a non-ASCII code takes up more and was silently truncated, signing
+    // operations over an asset other than the one chosen.
+    if (code.length() < 1 || code.length() > 4 || code.toUtf8().length() > 4) {
         throw new AssetCodeLengthInvalidException();
     }
 }

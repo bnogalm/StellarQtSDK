@@ -114,6 +114,11 @@ PathPaymentStrictSendOperation *PathPaymentStrictSendOperation::setPath(QList<As
     {
         delete a;
     }
+    // m_path is the lazy cache getPath() fills only when empty. Without this
+    // clear() the just-deleted pointers stay in the list, the next getPath()
+    // hands them back (use-after-free) and the destructor frees them again
+    // (double-free).
+    m_path.clear();
     m_op.path.clear();
     for(int i=0;i<path.size();i++){
         m_op.path.append(path[i]->toXdr());

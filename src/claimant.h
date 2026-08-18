@@ -19,6 +19,11 @@ public:
     Claimant(QString destination, Predicate* predicate);
     Claimant();
     Claimant(const Claimant& other);
+    /** Rule of three. With a copy ctor and destructor of our own but no
+     *  assignment operator, the implicit one copied m_predicate and both
+     *  objects deleted it: double-free. And Claimant is a Q_GADGET that lives
+     *  in QList<Claimant>, where assigning is routine. */
+    Claimant& operator=(const Claimant& other);
     ~Claimant();
     QString getDestination() const;
     const Predicate &getPredicate() const;

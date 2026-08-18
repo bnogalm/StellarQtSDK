@@ -1415,7 +1415,10 @@ namespace stellar
         ENVELOPE_TYPE_OP_ID = 6,
         ENVELOPE_TYPE_POOL_REVOKE_OP_ID = 7,
         ENVELOPE_TYPE_CONTRACT_ID = 8,
-        ENVELOPE_TYPE_SOROBAN_AUTHORIZATION = 9
+        ENVELOPE_TYPE_SOROBAN_AUTHORIZATION = 9,
+        // CAP-71 (Protocol 27) — same preimage as the above plus the signer's
+        // SCAddress, used by SOROBAN_CREDENTIALS_ADDRESS_V2.
+        ENVELOPE_TYPE_SOROBAN_AUTHORIZATION_WITH_ADDRESS = 10
     };
 }
 

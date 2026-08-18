@@ -26,7 +26,21 @@ Claimant::Claimant():m_predicate(nullptr)
 Claimant::Claimant(const Claimant &other)
 {
     this->m_destination=other.m_destination;
-    this->m_predicate=Predicate::create(*(other.m_predicate));
+    // The default ctor leaves m_predicate null; copying such a Claimant
+    // (which happens on its own when it goes into a QList or through a
+    // QVariant) dereferenced a null pointer.
+    this->m_predicate=other.m_predicate ? Predicate::create(*(other.m_predicate)) : nullptr;
+}
+
+Claimant &Claimant::operator=(const Claimant &other)
+{
+    if (this == &other)
+        return *this;
+    if (m_predicate)
+        delete m_predicate;
+    m_destination = other.m_destination;
+    m_predicate = other.m_predicate ? Predicate::create(*(other.m_predicate)) : nullptr;
+    return *this;
 }
 
 Claimant::~Claimant(){

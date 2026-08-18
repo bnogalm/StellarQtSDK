@@ -1,4 +1,6 @@
 #include "abstracttransaction.h"
+
+#include <stdexcept>
 #include "transaction.h"
 #include "feebumptransaction.h"
 #include <cstring>
@@ -21,6 +23,11 @@ void AbstractTransaction::sign(QByteArray preimage) {
     stellar::DecoratedSignature decoratedSignature;
     stellar::Signature &signature = decoratedSignature.signature;
 
+    // Array::set clamps with qMin: a longer preimage was silently truncated
+    // and we shipped a signature that can never satisfy the hash.
+    if (preimage.length() > signature.maxSize()) {
+        throw std::runtime_error("hash-x preimage exceeds 64 bytes");
+    }
     signature.set(reinterpret_cast<uchar*>(preimage.data()),preimage.length());
 
 

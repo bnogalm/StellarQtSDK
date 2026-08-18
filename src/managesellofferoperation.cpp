@@ -37,6 +37,20 @@ ManageSellOfferOperation::ManageSellOfferOperation(Asset *selling, Asset *buying
     m_op.offerID = offerId;
 }
 
+ManageSellOfferOperation::ManageSellOfferOperation(Asset *selling, Asset *buying, QString amount, const Price& price, qint64 offerId)
+    :m_assetSelling(nullptr),m_assetBuying(nullptr)
+{
+    checkNotNull(selling, "selling cannot be null");
+    checkNotNull(buying, "buying cannot be null");
+    checkNotNull(amount, "amount cannot be null");
+    m_op.selling = selling->toXdr();
+    m_op.buying = buying->toXdr();
+    m_op.price = price.toXdr();   // exact fraction, no Price(QString) detour
+    m_op.amount = Operation::toXdrAmount(amount);
+    // offerId can be null
+    m_op.offerID = offerId;
+}
+
 Asset* ManageSellOfferOperation::getSelling() {
     if(!m_assetSelling)
         m_assetSelling = Asset::fromXdr(m_op.selling);
@@ -57,6 +71,10 @@ QString ManageSellOfferOperation::getPrice() {
     return Price::toString(m_op.price.n,m_op.price.d);
 }
 
+Price ManageSellOfferOperation::getPriceR() const {
+    return Price(m_op.price.n, m_op.price.d);
+}
+
 qint64 ManageSellOfferOperation::getOfferId() {
     return m_op.offerID;
 }
@@ -75,6 +93,10 @@ ManageSellOfferOperation *ManageSellOfferOperation::build(stellar::ManageSellOff
 }
 
 ManageSellOfferOperation *ManageSellOfferOperation::create(Asset *selling, Asset *buying, QString amount, QString price) {
+    return new ManageSellOfferOperation(selling,buying,amount,price,0);
+}
+
+ManageSellOfferOperation *ManageSellOfferOperation::create(Asset *selling, Asset *buying, QString amount, const Price& price) {
     return new ManageSellOfferOperation(selling,buying,amount,price,0);
 }
 

@@ -20,6 +20,20 @@ CreatePassiveSellOfferOperation::CreatePassiveSellOfferOperation(Asset *selling,
     m_op.price = Price(price).toXdr();
 }
 
+CreatePassiveSellOfferOperation::CreatePassiveSellOfferOperation(Asset *selling, Asset *buying, QString amount, const Price& price)
+    :m_selling(nullptr)
+    ,m_buying(nullptr)
+{
+    checkNotNull(selling, "selling cannot be null");
+    checkNotNull(buying, "buying cannot be null");
+    checkNotNull(amount, "amount cannot be null");
+
+    m_op.selling = selling->toXdr();
+    m_op.buying = buying->toXdr();
+    m_op.amount = Operation::toXdrAmount(amount);
+    m_op.price = price.toXdr();   // exact fraction, no Price(QString) detour
+}
+
 CreatePassiveSellOfferOperation::~CreatePassiveSellOfferOperation()
 {
     if(m_selling)
@@ -55,7 +69,11 @@ QString CreatePassiveSellOfferOperation::getAmount() {
 }
 
 QString CreatePassiveSellOfferOperation::getPrice() {
-    return Price::toString(m_op.price.n,m_op.price.d);;
+    return Price::toString(m_op.price.n,m_op.price.d);
+}
+
+Price CreatePassiveSellOfferOperation::getPriceR() const {
+    return Price(m_op.price.n, m_op.price.d);
 }
 
 void CreatePassiveSellOfferOperation::fillOperationBody(AccountConverter &accountConverter, stellar::Operation &operation)
@@ -71,6 +89,11 @@ CreatePassiveSellOfferOperation *CreatePassiveSellOfferOperation::build(stellar:
 }
 
 CreatePassiveSellOfferOperation *CreatePassiveSellOfferOperation::create(Asset* selling, Asset* buying, QString amount, QString price)
+{
+    return new CreatePassiveSellOfferOperation(selling, buying, amount, price);
+}
+
+CreatePassiveSellOfferOperation *CreatePassiveSellOfferOperation::create(Asset* selling, Asset* buying, QString amount, const Price& price)
 {
     return new CreatePassiveSellOfferOperation(selling, buying, amount, price);
 }

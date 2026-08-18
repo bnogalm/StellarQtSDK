@@ -3,6 +3,7 @@
 #include <QtCore>
 #include "xdr/stellarledgerentries.h"
 #include "qstellar_namespace.h"
+#include <stdexcept>
 
 QSTELLAR_BEGIN_NS
 
@@ -94,7 +95,19 @@ public:
     }
     Not(const Not& other)
     {
-        m_inner = Predicate::create(*(other.m_inner));
+        // The default ctor leaves m_inner null, so copying an empty Not
+        // (which happens on its own inside a QList or when going through
+        // QVariant) dereferenced a null pointer.
+        m_inner = other.m_inner ? Predicate::create(*(other.m_inner)) : nullptr;
+    }
+    /** Rule of three: with a copy ctor and destructor of our own, the implicit
+     *  assignment copied the pointer and both deleted it (double-free). */
+    Not& operator=(const Not& other)
+    {
+        if (this == &other) return *this;
+        if (m_inner) delete m_inner;
+        m_inner = other.m_inner ? Predicate::create(*(other.m_inner)) : nullptr;
+        return *this;
     }
     virtual ~Not()
     {
@@ -145,11 +158,22 @@ public:
     Or(const Or& other)
     {
         for(auto i :other.m_inner)
-            m_inner.append(Predicate::create(*i));
+            if(i) m_inner.append(Predicate::create(*i));
     }
     Or()
     {
 
+    }
+    /** Rule of three: without this, assignment copied the pointers and both
+     *  objects deleted them (double-free). */
+    Or& operator=(const Or& other)
+    {
+        if (this == &other) return *this;
+        for(auto i : m_inner) delete i;
+        m_inner.clear();
+        for(auto i : other.m_inner)
+            if(i) m_inner.append(Predicate::create(*i));
+        return *this;
     }
     virtual ~Or(){
         for(auto i :m_inner)
@@ -199,6 +223,13 @@ public:
     stellar::ClaimPredicate toXdr()  const {
         stellar::ClaimPredicate xdr;
         stellar::Array<stellar::ClaimPredicate,2>& predicates = xdr.fillOrPredicates();
+        // stellar::Array::append silently DROPS anything past max, so a node
+        // with 3 children went out carrying only 2 and no warning at all. The
+        // XDR admits exactly 2 operands per node.
+        if (m_inner.size() > 2) {
+            throw std::runtime_error(
+                "claim predicate AND/OR admits exactly 2 operands; nest further nodes instead");
+        }
         for (qsizetype i = 0; i < m_inner.size(); i++) {
             predicates.append(m_inner[i]->toXdr());
         }
@@ -221,7 +252,18 @@ public:
     And(const And& other)
     {
         for(auto i :other.m_inner)
-            m_inner.append(Predicate::create(*i));
+            if(i) m_inner.append(Predicate::create(*i));
+    }
+    /** Rule of three: without this, assignment copied the pointers and both
+     *  objects deleted them (double-free). */
+    And& operator=(const And& other)
+    {
+        if (this == &other) return *this;
+        for(auto i : m_inner) delete i;
+        m_inner.clear();
+        for(auto i : other.m_inner)
+            if(i) m_inner.append(Predicate::create(*i));
+        return *this;
     }
     virtual ~And(){
         for(auto i :m_inner)
@@ -273,6 +315,11 @@ public:
     stellar::ClaimPredicate toXdr()  const {
         stellar::ClaimPredicate xdr;
         stellar::Array<stellar::ClaimPredicate,2>& predicates= xdr.fillAndPredicates();
+        // See the note in Or::toXdr: append silently drops anything past 2.
+        if (m_inner.size() > 2) {
+            throw std::runtime_error(
+                "claim predicate AND/OR admits exactly 2 operands; nest further nodes instead");
+        }
         for (qsizetype i = 0; i < m_inner.size(); i++) {
             predicates.append(m_inner[i]->toXdr());
         }

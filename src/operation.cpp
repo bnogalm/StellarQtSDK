@@ -1,4 +1,5 @@
 #include "operation.h"
+#include "inflationoperation.h"
 
 #include <QRegularExpression>
 #include <limits>
@@ -251,6 +252,12 @@ Operation *Operation::fromXdr(AccountConverter accountConverter, stellar::Operat
       break;
     case stellar::OperationType::RESTORE_FOOTPRINT:
       operation = RestoreFootprintOperation::build(xdr.operationRestoreFootprint);
+      break;
+    case stellar::OperationType::INFLATION:
+      // A protocol fossil (inflation was disabled), but it still exists in
+      // the historical ledger: without this case any envelope carrying it was
+      // undecodable and the XDR Inspector threw. It has no body.
+      operation = InflationOperation::create();
       break;
     default:
         throw std::runtime_error("Unknown operation body");

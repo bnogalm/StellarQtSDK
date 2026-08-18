@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(StellarQtSDK VERSION 1.0.2 LANGUAGES C CXX)
+project(StellarQtSDK VERSION 1.0.3 LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -509,7 +509,7 @@ target_include_directories(StellarQtSDK PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} src)
 
 add_compile_definitions(
     STELLAR_QT_SDK_CLIENT_NAME=\"\\\"qtcpp-stellar-sdk\\\"\"
-    STELLAR_QT_SDK_CLIENT_VERSION=\"\\\"1.0.2\\\"\"
+    STELLAR_QT_SDK_CLIENT_VERSION=\"\\\"1.0.3\\\"\"
 )
 
 target_compile_definitions(StellarQtSDK PRIVATE

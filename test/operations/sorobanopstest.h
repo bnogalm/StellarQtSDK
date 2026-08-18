@@ -209,6 +209,94 @@ private slots:
             static_cast<InvokeHostFunctionOperation*>(Operation::fromXdr(xdr)));
         QCOMPARE(back->getHostFunction().createContractV2.constructorArgs.size(), 2);
     }
+
+    // ─── CAP-71 / Protocol 27 credential arms ────────────────────────
+
+    static stellar::SorobanAddressCredentials sampleAddressCredentials()
+    {
+        stellar::SorobanAddressCredentials c;
+        c.address.type = stellar::SCAddressType::SC_ADDRESS_TYPE_CONTRACT;
+        for (int i = 0; i < 32; ++i) c.address.contractId[i] = static_cast<quint8>(i);
+        c.nonce = Q_INT64_C(0x0102030405060708);
+        c.signatureExpirationLedger = 987654;
+        c.signature = Scv::toUint32(7);
+        return c;
+    }
+
+    static stellar::SorobanCredentials roundtrip(const stellar::SorobanCredentials& src)
+    {
+        QByteArray bytes;
+        { QDataStream s(&bytes, QIODevice::WriteOnly); s << src; }
+        stellar::SorobanCredentials back;
+        { QDataStream s(&bytes, QIODevice::ReadOnly); s >> back; }
+        return back;
+    }
+
+    /** ADDRESS_V2 carries the same payload as ADDRESS — only the discriminant
+     *  and the signature preimage differ — so it must encode to the ADDRESS
+     *  bytes with a different tag, and must not be silently read as ADDRESS. */
+    void testSorobanCredentialsAddressV2RoundTrip()
+    {
+        stellar::SorobanCredentials c;
+        c.type = stellar::SorobanCredentialsType::SOROBAN_CREDENTIALS_ADDRESS_V2;
+        c.address = sampleAddressCredentials();
+
+        stellar::SorobanCredentials back = roundtrip(c);
+        QCOMPARE(static_cast<int>(back.type),
+                 static_cast<int>(stellar::SorobanCredentialsType::SOROBAN_CREDENTIALS_ADDRESS_V2));
+        QCOMPARE(back.address.nonce, Q_INT64_C(0x0102030405060708));
+        QCOMPARE(back.address.signatureExpirationLedger, quint32(987654));
+        QCOMPARE(static_cast<int>(back.address.address.type),
+                 static_cast<int>(stellar::SCAddressType::SC_ADDRESS_TYPE_CONTRACT));
+    }
+
+    /** Delegates are self-recursive in the XDR, so exercise a nested chain. */
+    void testSorobanCredentialsWithDelegatesRoundTrip()
+    {
+        stellar::SorobanDelegateSignature nested;
+        nested.address.type = stellar::SCAddressType::SC_ADDRESS_TYPE_ACCOUNT;
+        for (int i = 0; i < 32; ++i) nested.address.accountId[i] = static_cast<quint8>(0xAA);
+        nested.signature = Scv::toUint32(2);
+
+        stellar::SorobanDelegateSignature top;
+        top.address.type = stellar::SCAddressType::SC_ADDRESS_TYPE_CONTRACT;
+        for (int i = 0; i < 32; ++i) top.address.contractId[i] = static_cast<quint8>(0xBB);
+        top.signature = Scv::toUint32(1);
+        top.nestedDelegates = QSharedPointer<QList<stellar::SorobanDelegateSignature>>::create();
+        top.nestedDelegates->append(nested);
+
+        stellar::SorobanCredentials c;
+        c.type = stellar::SorobanCredentialsType::SOROBAN_CREDENTIALS_ADDRESS_WITH_DELEGATES;
+        c.addressWithDelegates.addressCredentials = sampleAddressCredentials();
+        c.addressWithDelegates.delegates.append(top);
+
+        stellar::SorobanCredentials back = roundtrip(c);
+        QCOMPARE(static_cast<int>(back.type),
+                 static_cast<int>(stellar::SorobanCredentialsType::SOROBAN_CREDENTIALS_ADDRESS_WITH_DELEGATES));
+        QCOMPARE(back.addressWithDelegates.addressCredentials.nonce, Q_INT64_C(0x0102030405060708));
+        QCOMPARE(back.addressWithDelegates.delegates.size(), 1);
+
+        const stellar::SorobanDelegateSignature& d = back.addressWithDelegates.delegates.at(0);
+        QCOMPARE(Scv::fromUint32(d.signature), 1u);
+        QVERIFY(!d.nestedDelegates.isNull());
+        QCOMPARE(d.nestedDelegates->size(), 1);
+        QCOMPARE(Scv::fromUint32(d.nestedDelegates->at(0).signature), 2u);
+        QCOMPARE(static_cast<int>(d.nestedDelegates->at(0).address.type),
+                 static_cast<int>(stellar::SCAddressType::SC_ADDRESS_TYPE_ACCOUNT));
+    }
+
+    /** An unknown credentials arm must throw, not consume the discriminant
+     *  alone and desync the rest of the auth entry. */
+    void testUnknownSorobanCredentialsTypeThrows()
+    {
+        QByteArray bytes;
+        { QDataStream s(&bytes, QIODevice::WriteOnly); s << static_cast<qint32>(9); }
+        stellar::SorobanCredentials c;
+        QDataStream s(&bytes, QIODevice::ReadOnly);
+        bool threw = false;
+        try { s >> c; } catch (const std::runtime_error&) { threw = true; }
+        QVERIFY(threw);
+    }
 };
 
 ADD_TEST(SorobanOpsTest)

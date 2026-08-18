@@ -2,6 +2,7 @@
 #include <QDateTime>
 #include <limits>
 #include <cstring>
+#include <stdexcept>
 #include "createclaimablebalanceoperation.h"
 #include "accountconverter.h"
 
@@ -152,6 +153,11 @@ stellar::TransactionV0 Transaction::toV0Xdr(AccountConverter accountConverter) c
     stellar::AccountID accountID = StrKey::encodeToXDRAccountId(m_sourceAccount);
     memcpy(transaction.sourceAccountEd25519,accountID.ed25519,sizeof(transaction.sourceAccountEd25519));
     // operations
+    // stellar::Array silently drops anything past its maximum, so a tx with
+    // more than MAX_OPS_PER_TX operations got signed truncated.
+    if (m_operations.size() > transaction.operations.maxSize()) {
+        throw std::runtime_error("transaction exceeds the maximum number of operations");
+    }
     for (int i = 0; i < m_operations.length(); i++) {
         transaction.operations.append(m_operations.at(i)->toXdr(accountConverter));
     }
@@ -237,6 +243,11 @@ stellar::TransactionEnvelope Transaction::toEnvelopeXdr(){
     {
         stellar::TransactionV1Envelope envelope;        
         envelope.tx=toV1Xdr(m_accountConverter);
+        // Same as with the operations: past the maximum, Array drops them
+        // silently and the tx ships with fewer signatures than were added.
+        if (this->m_signatures.size() > envelope.signatures.maxSize()) {
+            throw std::runtime_error("transaction exceeds the maximum number of signatures");
+        }
         for(stellar::DecoratedSignature& signature : this->m_signatures){
             envelope.signatures.append(signature);
         }
@@ -246,6 +257,11 @@ stellar::TransactionEnvelope Transaction::toEnvelopeXdr(){
     {
         stellar::TransactionV0Envelope envelope;
         envelope.tx=toV0Xdr();
+        // Same as with the operations: past the maximum, Array drops them
+        // silently and the tx ships with fewer signatures than were added.
+        if (this->m_signatures.size() > envelope.signatures.maxSize()) {
+            throw std::runtime_error("transaction exceeds the maximum number of signatures");
+        }
         for(stellar::DecoratedSignature& signature : this->m_signatures){
             envelope.signatures.append(signature);
         }
