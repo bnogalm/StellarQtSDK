@@ -3,6 +3,7 @@
 
 #include "requestbuilder.h"
 #include "../responses/accountresponse.h"
+#include "../responses/accountdataresponse.h"
 #include "../responses/page.h"
 #include <QUrl>
 #include "../qstellar_namespace.h"
@@ -44,6 +45,43 @@ private:
      AccountResponse *account(QString accountID);
 public:
      AccountResponse *account(KeyPair* account);
+
+     /**
+      * Requests specific <code>uri</code> and returns {@link AccountDataResponse}:
+      * a data entry's own URL, as account(QUrl) for an account.
+      */
+     AccountDataResponse *accountData(QUrl uri);
+
+     /**
+      * Requests <code>GET /accounts/{account}/data/{key}</code>: one data
+      * entry of the account, its value decoded (see AccountDataResponse),
+      * as py's Server.data(account_id, data_name) and js's data({key}) link
+      * on an account record.
+      * An entry the account does not have is Horizon's 404, the
+      * BadRequestException every request gives. After stream(), the entry
+      * is streamed, as py's DataCallBuilder.stream().
+      *
+      * `key` is sent as one path segment, percent-encoded: a name may hold
+      * '/', '?', '#' or a '%XX' sequence, which py writes into the URL as
+      * they are, asking for another path (or cutting it at the '?' or '#'),
+      * or for another name ("a%20b" asks for "a b"); requests encodes py's
+      * spaces and a lone '%'. A name with '/' still cannot be read here:
+      * Horizon answers 404 for it however it is encoded (checked on
+      * testnet; js gets the same 404). It is in the account's data map
+      * (AccountResponse::getData()).
+      *
+      * Throws std::runtime_error, as the other filters here, for a key no
+      * entry can have, by stellar-core's rule for data names (ManageData's
+      * MANAGE_DATA_INVALID_NAME): empty, more than 64 bytes, or a byte that
+      * is not printable ASCII (0x20 to 0x7E). ManageDataOperation checks the
+      * length only; core refuses the others when it validates the
+      * transaction. Also for the names "." and "..": core takes them, but
+      * HTTP cannot address them, since they are dot-segments that Qt
+      * normalizes out of the path (".." would ask for the account itself,
+      * as py does), and percent-encoding does not help, %2E being read as
+      * '.'. Also for a null account.
+      */
+     AccountDataResponse *accountData(KeyPair* account, const QString& key);
 
      /**
       * @brief signer  filters accounts who have a given signer account id

@@ -1,5 +1,91 @@
 # Changelog
 
+## 1.0.5
+
+The Horizon utilities js-stellar-sdk 17.1.0 and py-stellar-sdk 14.1.0 have
+and this SDK lacked: the base fee, time bounds by the server's clock, an
+account's data entry and friendbot. Each reads its answer exactly and says
+where it differs from js and py, and why. New source and header files
+(`src/httpdate.h`, `src/responses/accountdataresponse.h`,
+`src/responses/friendbotresponse.h`): re-run qmake / re-configure CMake.
+
+### Added
+
+- **`Server::fetchBaseFee()`**, as js's `fetchBaseFee`: GET `/fee_stats` and
+  its `last_ledger_base_fee`, in a `BaseFeeResponse` (a `FeeStatsResponse`,
+  read exactly, with `baseFee()`) that the caller owns. js answers 100 when
+  the fee does not parse or is 0 (and returns a negative one as it is), py
+  (`fetch_base_fee`, from the latest ledger's `base_fee_in_stroops`) when
+  there is no ledger. Here no fee is made up: an
+  answer without a positive base fee (missing, null, 0, negative, not a
+  whole number) emits `error()` with an `UnknownResponseException`, and a
+  caller that wants js's default takes 100 itself. A failed request keeps its
+  own kind, as everywhere.
+- **`Server::fetchTimebounds(seconds)`**, as js's `fetchTimebounds`:
+  `{minTime 0, maxTime: the server's time + seconds}` in a caller-owned
+  `TimeboundsResponse` (`minTime()`, `maxTime()`, `toTimeBounds()` for
+  `TransactionBuilder::addTimeBounds`). The server's time is the HTTP `Date`
+  of the last answer from the Server's own host and port, if it came within
+  5 minutes (js's rule), moved on by the time since; otherwise the Horizon
+  root is asked, and an answer without a readable `Date` (or with one at or
+  before 1970) gives the local time, as js's retry does. The `Date` is taken
+  when the answer's headers arrive, not when its body ends, and streams do
+  not count (a stream's headers come when it opens, maybe hours before it
+  ends; js's EventSource streams are not recorded either). `ready()` never
+  gives a maxTime of 0 (no upper bound) or a negative one: with no usable
+  `Date` and a local clock at or before 1970 it is an `error()`. Where it
+  differs from js, and why: each Server
+  keeps its own time (js keeps one table for the whole process); the age is
+  measured on a monotonic clock (js's wall clock moves when the clock is
+  set); every HTTP answer's `Date` counts, an error's too (js records 2xx
+  only), and so the root's `Date` is used whatever its status (js fails on
+  an HTTP error there); an answer without a `Date` leaves the last time
+  (js forgets it); a redirected answer's `Date` counts only for the host that
+  answered (js records it under the host it asked, so a friendbot's clock
+  would be taken for Horizon's). A root that is not answered at all is an `error()`, as js
+  propagates it. Negative seconds throw `std::invalid_argument` (js does not
+  check, and gives a maxTime in the past). py has no `fetch_timebounds`.
+  `HttpDate::parse` reads the three HTTP-date forms (IMF-fixdate, RFC 850,
+  asctime) exactly, the same on Qt 5.15 and Qt 6, where
+  `QDateTime::fromString(..., Qt::RFC2822Date)` is not; an RFC 850 two-digit
+  year is read by RFC 7231's rule (the year with those digits at most 50
+  years ahead and at most 49 behind: in 2051, "00" is 2100).
+- **`AccountsRequestBuilder::accountData(account, key)`** (and
+  `accountData(QUrl)`): GET `/accounts/{id}/data/{key}`, as py's
+  `Server.data(account_id, data_name)` and js's `data({key})` link on an
+  account record. `AccountDataResponse`
+  decodes the value exactly (`value()` the bytes, `valueBase64()` the text,
+  `sponsor()`): text that is not canonical base64 of at most 64 bytes is an
+  `error()`; py hands the text back undecoded. The key is percent-encoded as
+  one path segment: py writes it into the URL raw, so a name with `/`, `?`
+  or `#` asks for another path and one with a `%XX` sequence for another
+  name (`a%20b` is read as `a b`; requests encodes a space or a lone `%`). A
+  name with `/` is answered 404 by Horizon however it is encoded (js too):
+  read it from the account's data map. A
+  key no entry can have is refused with `std::runtime_error` by
+  stellar-core's rule for data names (1 to 64 bytes, printable ASCII), and
+  so are `.` and `..`: core takes them, but they are dot-segments that Qt
+  normalizes out of the path, so HTTP cannot ask for them (py's `..` asks
+  for the account). After `stream()` the entry is streamed,
+  as py's `DataCallBuilder.stream()`.
+- **`Server::friendbot(account)`** (and `friendbot(account, url)`), as js's
+  `Horizon.Server.friendbot(addr)`: GET `<horizon>/friendbot?addr=G...`,
+  following redirects (SDF's Horizons answer 307 to friendbot.stellar.org;
+  Qt 5.15 follows none unless told), never from https to http: js (node's
+  follow-redirects) follows that one, dropping only confidential headers;
+  it is refused here so that a funding request is never downgraded. The explicit
+  URL keeps its query and gets `addr` set, as QML's `Horizon.fundAccount()`
+  does. `FriendbotResponse` (the Server's, as every `get()`) is ready only
+  for a 200 saying `"successful": true` with a 64-hex `hash`, read as
+  `fundAccount()` reads it (`getHash()`, `getLedger()`, `getEnvelopeXdr()`,
+  `getResultXdr()`); js returns any 2xx body. HTTP errors are the usual
+  ones, with friendbot's problem document. py's Horizon Server has no
+  friendbot.
+
+### Changed
+
+- The client version sent to Horizon (`X-Client-Version`) is 1.0.5.
+
 ## 1.0.4
 
 What is signed is what was asked for. 1.0.3 fixed the Soroban wire format;

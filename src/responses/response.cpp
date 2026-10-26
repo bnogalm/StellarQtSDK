@@ -323,6 +323,7 @@ const RequiredMembers kRequired[] = {
                         "max_tx_set_size protocol_version header_xdr _links" },
     { "LedgerResponseAttach::Links", "effects operations self transactions" },
     { "FeeStatsResponse", "last_ledger last_ledger_base_fee ledger_capacity_usage fee_charged max_fee" },
+    { "AccountDataResponse", "value" },
     { "FeeDistribution", "min max mode p10 p20 p30 p40 p50 p60 p70 p80 p90 p95 p99" },
     { "OfferResponse", "id paging_token seller selling buying amount price price_r last_modified_ledger _links" },
     { "OfferResponseAttach::Links", "self offer_maker" },

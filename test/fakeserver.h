@@ -6,6 +6,7 @@
 #include <QTest>
 #include <QThread>
 #include <QSet>
+#include <QPointer>
 
 /**
  * @brief The FakeServer class
@@ -32,6 +33,8 @@ private:
     struct Stream { QStringList rounds; int served = 0; };
     QHash<QString, Stream> m_streams;   // keyed by path (query string stripped)
     QSet<QString> m_hangs;              // paths that are never answered
+    QHash<QString, QByteArray> m_held;  // paths answered with a head only, until release()
+    QHash<QString, QPointer<QTcpSocket>> m_heldSockets;
     QByteArray m_lastRequestHeaders;    // accumulated raw headers of all stream requests
 public:
     /**
@@ -117,6 +120,32 @@ public:
     {
         m_hangs.insert(path);
     }
+    /**
+     * Answer a GET of `path` (query string ignored) with `head` (the status
+     * line, the headers and the blank line, and any body bytes sent with
+     * them), then keep the connection open until release(path, rest): an
+     * answer whose headers come long before its end, as a stream's.
+     */
+    void addHeld(const QString& path, const QByteArray& head)
+    {
+        m_held.insert(path, head);
+    }
+    /** Whether a request for a held `path` was answered with its head and waits for release(). */
+    bool isHeld(const QString& path) const
+    {
+        return m_heldSockets.value(path) != nullptr;
+    }
+    /** Sends `rest` on the held connection for `path` and closes it; the path is answered normally after. */
+    void release(const QString& path, const QByteArray& rest)
+    {
+        m_held.remove(path);
+        QPointer<QTcpSocket> socket = m_heldSockets.take(path);
+        if (!socket)
+            return;
+        socket->write(rest);
+        socket->waitForBytesWritten(1000);
+        socket->disconnectFromHost();
+    }
     /** Raw headers of all stream requests, accumulated (lets a test assert that a
      *  reconnect sent `Last-Event-ID`, regardless of how many reconnects followed). */
     QByteArray lastRequestHeaders() const { return m_lastRequestHeaders; }
@@ -148,6 +177,14 @@ private slots:
                 if (m_hangs.contains(reqPath)) {
                     while (socket->canReadLine())
                         socket->readLine();
+                    return;
+                }
+                if (tokens[0] == "GET" && m_held.contains(reqPath) && !m_heldSockets.contains(reqPath)) {
+                    while (socket->canReadLine())
+                        socket->readLine();
+                    socket->write(m_held.value(reqPath));
+                    socket->waitForBytesWritten(1000);
+                    m_heldSockets.insert(reqPath, socket);
                     return;
                 }
                 if (tokens[0] == "GET" && m_streams.contains(reqPath)) {

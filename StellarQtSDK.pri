@@ -5,7 +5,7 @@ DEFINES += STELLAR_QT_REPLY_TIMEOUT=30000
 DEFINES *= ED25519_NO_SEED
 
 DEFINES += STELLAR_QT_SDK_CLIENT_NAME=\"\\\"qtcpp-stellar-sdk\\\"\"
-DEFINES += STELLAR_QT_SDK_CLIENT_VERSION=\"\\\"1.0.4\\\"\"
+DEFINES += STELLAR_QT_SDK_CLIENT_VERSION=\"\\\"1.0.5\\\"\"
 
 #DEFINES += STELLAR_QT_AUTOSET_BASE_FEE
 
@@ -150,6 +150,8 @@ SOURCES += \
     $$PWD/src/responses/effects/trustlinesponsorshipremovedeffectresponse.cpp \
     $$PWD/src/responses/effects/trustlinesponsorshipupdatedeffectresponse.cpp \
     $$PWD/src/responses/feestatsresponse.cpp \
+    $$PWD/src/responses/accountdataresponse.cpp \
+    $$PWD/src/responses/friendbotresponse.cpp \
     $$PWD/src/responses/operations/beginsponsoringfuturereservesoperationresponse.cpp \
     $$PWD/src/responses/operations/bumpsequenceoperationresponse.cpp \
     $$PWD/src/responses/operations/claimclaimablebalanceoperationresponse.cpp \
@@ -181,6 +183,7 @@ SOURCES += \
     $$PWD/src/paymentoperation.cpp \
     $$PWD/src/price.cpp \
     $$PWD/src/server.cpp \
+    $$PWD/src/httpdate.cpp \
     $$PWD/src/setoptionsoperation.cpp \
     $$PWD/src/signer.cpp \
     $$PWD/src/transaction.cpp \
@@ -426,6 +429,8 @@ HEADERS += \
     $$PWD/src/responses/effects/trustlinesponsorshipremovedeffectresponse.h \
     $$PWD/src/responses/effects/trustlinesponsorshipupdatedeffectresponse.h \
     $$PWD/src/responses/feestatsresponse.h \
+    $$PWD/src/responses/accountdataresponse.h \
+    $$PWD/src/responses/friendbotresponse.h \
     $$PWD/src/responses/operations/beginsponsoringfuturereservesoperationresponse.h \
     $$PWD/src/responses/operations/bumpsequenceoperationresponse.h \
     $$PWD/src/responses/operations/claimclaimablebalanceoperationresponse.h \
@@ -471,6 +476,7 @@ HEADERS += \
     $$PWD/src/paymentoperation.h \
     $$PWD/src/price.h \
     $$PWD/src/server.h \
+    $$PWD/src/httpdate.h \
     $$PWD/src/setoptionsoperation.h \
     $$PWD/src/signer.h \
     $$PWD/src/transaction.h \

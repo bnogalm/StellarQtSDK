@@ -98,6 +98,7 @@ HEADERS += \
     test/requests/horizon15filterstest.h \
     test/responses/horizon15responsefieldstest.h \
     test/servertest.h \
+    test/serverutilitiestest.h \
     test/responses/submittransactionresponsetest.h \
     test/networktest.h \
     test/accounttest.h \

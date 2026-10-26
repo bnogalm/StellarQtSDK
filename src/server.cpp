@@ -7,6 +7,9 @@
 #include "responses/submittransactionresponse.h"
 #include "responses/submittransactionasyncresponse.h"
 #include "strkey.h"
+#include "keypair.h"
+#include "timebounds.h"
+#include "httpdate.h"
 #include "exception/accountrequiresmemoexception.h"
 #include "exception/badrequestexception.h"
 #include "exception/badresponseexception.h"
@@ -17,6 +20,11 @@
 
 #include <QPointer>
 #include <QScopedPointer>
+#include <QDateTime>
+#include <QElapsedTimer>
+#include <QUrlQuery>
+#include <functional>
+#include <limits>
 #include <memory>
 #include <stdexcept>
 #include <string>
@@ -138,7 +146,131 @@ qstellar::exception::SdkException* memoCheckFailure(const QString& destination, 
     return new MemoCheckFailure<ConnectionErrorException>(message);
 }
 
+/** How old a recorded server time may be and still be used: js's 5 minutes. */
+const qint64 SERVER_TIME_MAX_AGE_MS = 5 * 60 * 1000;
+
+/** 9999-12-31T23:59:59Z + 1: past every time a Date header (four-digit year) can name. */
+const qint64 YEAR_10000 = 253402300800LL;
+
+/** The port `url` is reached at, its scheme's default when it names none. */
+int effectivePort(const QUrl& url)
+{
+    const QString scheme = url.scheme().toLower();
+    return url.port(scheme == QLatin1String("https") ? 443 : scheme == QLatin1String("http") ? 80 : -1);
+}
+
+bool sameHostAndPort(const QUrl& a, const QUrl& b)
+{
+    return a.host().compare(b.host(), Qt::CaseInsensitive) == 0 && effectivePort(a) == effectivePort(b);
+}
+
+/**
+ * A Server's network manager: hands each reply's headers to `onHeaders` as
+ * they arrive (metaDataChanged), while `context`, the Server, lives. A
+ * reply's Date is the server's time when the headers were sent, not when
+ * the body ends: a stream's ends when the stream does, maybe hours later.
+ */
+class ServerNetworkManager : public QNetworkAccessManager
+{
+    QPointer<QObject> m_context;
+    std::function<void(QNetworkReply*)> m_onHeaders;
+public:
+    ServerNetworkManager(QObject* context, std::function<void(QNetworkReply*)> onHeaders)
+        : QNetworkAccessManager(context)
+        , m_context(context)
+        , m_onHeaders(std::move(onHeaders))
+    {
+    }
+protected:
+    QNetworkReply* createRequest(Operation op, const QNetworkRequest& request,
+                                 QIODevice* outgoingData = nullptr) override
+    {
+        QNetworkReply* reply = QNetworkAccessManager::createRequest(op, request, outgoingData);
+        if (reply && m_context) {
+            std::function<void(QNetworkReply*)> onHeaders = m_onHeaders;
+            connect(reply, &QNetworkReply::metaDataChanged, m_context.data(),
+                    [reply, onHeaders]() { onHeaders(reply); });
+        }
+        return reply;
+    }
+};
+
 } // namespace
+
+BaseFeeResponse::BaseFeeResponse(QNetworkReply* reply)
+    : FeeStatsResponse(reply)
+{
+}
+
+BaseFeeResponse::~BaseFeeResponse()
+{
+}
+
+void BaseFeeResponse::loadFromJson(QByteArray data)
+{
+    // Every member of /fee_stats exactly, last_ledger_base_fee among those
+    // Horizon always sends (missing or null is refused there).
+    FeeStatsResponse::loadFromJson(data);
+    if (getLastLedgerBaseFee() <= 0)
+        throw std::runtime_error(QStringLiteral("last_ledger_base_fee: %1 is not a base fee "
+                                                "(this SDK makes up no fee: a default is yours to take)")
+                                     .arg(getLastLedgerBaseFee()).toStdString());
+}
+
+qint64 BaseFeeResponse::baseFee() const
+{
+    return getLastLedgerBaseFee();
+}
+
+TimeboundsResponse::TimeboundsResponse(qint64 seconds)
+    : Response(nullptr)
+    , m_seconds(seconds)
+    , m_maxTime(0)
+    , m_known(false)
+{
+}
+
+TimeboundsResponse::~TimeboundsResponse()
+{
+    // Nothing more to wait for: the request for the server's time goes too
+    // (later: this may run inside one of its signals).
+    if (m_serverTimeRequest) {
+        disconnect(m_serverTimeRequest.data(), nullptr, this, nullptr);
+        m_serverTimeRequest->deleteLater();
+    }
+}
+
+void TimeboundsResponse::deliver(qint64 serverNow)
+{
+    // A maxTime of 0 is no upper bound, a negative one no TimeBounds: never
+    // ready() with either (only a local clock at or before 1970 gets here).
+    if (serverNow <= 0 || serverNow + m_seconds <= 0) {
+        emitError(new qstellar::exception::SdkException(
+            QStringLiteral("fetchTimebounds: no usable time: the server sent none and the local "
+                           "clock says %1, at or before 1970").arg(serverNow)));
+        return;
+    }
+    m_maxTime = serverNow + m_seconds;
+    m_known = true;
+    emit ready();
+}
+
+qint64 TimeboundsResponse::minTime() const
+{
+    return 0;
+}
+
+qint64 TimeboundsResponse::maxTime() const
+{
+    return m_maxTime;
+}
+
+TimeBounds* TimeboundsResponse::toTimeBounds() const
+{
+    if (!m_known)
+        throw std::runtime_error("fetchTimebounds: the time bounds are not known yet (wait for ready())");
+    return new TimeBounds(minTime(), m_maxTime);
+}
 
 QString Server::escapeUri(QString uri)
 {
@@ -295,11 +427,200 @@ QByteArray Server::clientVersion()
     return STELLAR_QT_SDK_CLIENT_VERSION;
 }
 
-Server::Server(QString uri) {
+Server::Server(QString uri)
+    : m_serverTime(-1)
+    , m_serverTimeRecordedAt(-1)
+{
     m_serverURI = QUrl(uri);
     if(!m_serverURI.isValid())
         throw std::runtime_error("invalid uri");
-    m_httpClient=new QNetworkAccessManager(this);
+    m_httpClient = new ServerNetworkManager(this, [this](QNetworkReply* reply) { recordServerTime(reply); });
+}
+
+QNetworkRequest Server::getRequest(const QUrl& url) const
+{
+    QNetworkRequest request(url);
+    request.setRawHeader("X-Client-Name", clientName());
+    request.setRawHeader("X-Client-Version", clientVersion());
+    return request;
+}
+
+qint64 Server::monotonicMSecs() const
+{
+    static QElapsedTimer clock;
+    static const bool started = (clock.start(), true);
+    Q_UNUSED(started)
+    return clock.elapsed();
+}
+
+qint64 Server::localSecsSinceEpoch() const
+{
+    return QDateTime::currentSecsSinceEpoch();
+}
+
+void Server::recordServerTime(QNetworkReply* reply)
+{
+    // An answer, from this Server's own host and port (a redirect followed
+    // elsewhere, friendbot's, is another server's clock), and not a
+    // stream's: js's EventSource streams do not go through the interceptor
+    // that records the time either.
+    if (!reply || !reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).isValid()
+            || !sameHostAndPort(reply->url(), m_serverURI)
+            || reply->request().rawHeader("Accept") == "text/event-stream"
+            || reply->header(QNetworkRequest::ContentTypeHeader).toString()
+                   .startsWith(QLatin1String("text/event-stream"), Qt::CaseInsensitive))
+        return;
+    qint64 date = 0;
+    // A Date at or before 1970 is no server's clock: read as no Date.
+    if (!HttpDate::parse(reply->rawHeader("Date"), &date) || date <= 0)
+        return;
+    m_serverTime = date;
+    m_serverTimeRecordedAt = monotonicMSecs();
+}
+
+bool Server::currentServerTime(qint64* now) const
+{
+    if (m_serverTime < 0)
+        return false;
+    const qint64 elapsed = monotonicMSecs() - m_serverTimeRecordedAt;
+    if (elapsed < 0 || elapsed > SERVER_TIME_MAX_AGE_MS)
+        return false;
+    *now = m_serverTime + elapsed / 1000;
+    return true;
+}
+
+void Server::askServerTime(QPointer<TimeboundsResponse> response)
+{
+    using namespace qstellar::exception;
+
+    RootRequestBuilder builder = root();
+    QNetworkReply* reply = m_httpClient->get(getRequest(builder.buildUri()));
+    response->m_serverTimeRequest = reply;
+
+    // Given up after Response::replyTimeout(), as every request is.
+    auto timedOut = std::make_shared<bool>(false);
+    auto done = std::make_shared<bool>(false);
+    QTimer* timer = new QTimer(reply);
+    timer->setSingleShot(true);
+    connect(timer, &QTimer::timeout, reply, [reply, timedOut]() {
+        if (reply->isRunning()) {
+            *timedOut = true;
+            reply->abort();
+        }
+    });
+    timer->start(Response::replyTimeout());
+
+    QPointer<Server> self(this);
+    connect(reply, &QNetworkReply::finished, response.data(), [self, response, reply, timedOut, done]() {
+        if (*done || !response)
+            return;
+        *done = true;
+        response->m_serverTimeRequest = nullptr;
+        reply->deleteLater();
+        if (!reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).isValid()) {
+            // Not answered at all: js propagates the failure of its request.
+            if (!self)
+                response->emitError(new ConnectionErrorException(
+                    QStringLiteral("fetchTimebounds: the request for the server's time was abandoned: "
+                                   "its Server was deleted")));
+            else if (*timedOut || reply->error() == QNetworkReply::TimeoutError)
+                response->emitError(new ClientTimeoutException(Response::replyTimeout(), reply->errorString()));
+            else
+                response->emitError(new ConnectionErrorException(reply->errorString()));
+            return;
+        }
+        qint64 now = 0;
+        // A Date at or before 1970 is no server's clock: read as no Date.
+        if (!HttpDate::parse(reply->rawHeader("Date"), &now) || now <= 0)
+            now = self ? self->localSecsSinceEpoch() : QDateTime::currentSecsSinceEpoch();
+        response->deliver(now);
+    });
+    // Deleted with its Server's network manager before it finished.
+    connect(reply, &QObject::destroyed, response.data(), [response, done]() {
+        if (*done || !response)
+            return;
+        *done = true;
+        response->m_serverTimeRequest = nullptr;
+        response->emitError(new ConnectionErrorException(
+            QStringLiteral("fetchTimebounds: the request for the server's time was abandoned: "
+                           "its Server was deleted")));
+    }, Qt::QueuedConnection);
+}
+
+BaseFeeResponse* Server::fetchBaseFee()
+{
+    FeeStatsRequestBuilder builder = operationFeeStats();
+    // The caller's: not parented to this Server. Deleted with it, its
+    // network manager takes the reply along, and the response reports that.
+    return new BaseFeeResponse(m_httpClient->get(getRequest(builder.buildUri())));
+}
+
+TimeboundsResponse* Server::fetchTimebounds(qint64 seconds)
+{
+    if (seconds < 0)
+        throw std::invalid_argument("fetchTimebounds: seconds cannot be negative");
+    if (seconds > std::numeric_limits<qint64>::max() - YEAR_10000)
+        throw std::invalid_argument("fetchTimebounds: seconds too large for a maxTime");
+
+    auto* response = new TimeboundsResponse(seconds);
+    QPointer<TimeboundsResponse> guard(response);
+    QPointer<Server> self(this);
+    // Queued even when the time is known, so that the caller has connected
+    // to the response before it answers; on the response, so that a Server
+    // deleted before the start does not leave it waiting.
+    QMetaObject::invokeMethod(response, [self, guard]() {
+        if (!guard)
+            return;
+        if (!self) {
+            guard->emitError(new qstellar::exception::ConnectionErrorException(
+                QStringLiteral("fetchTimebounds: abandoned: its Server was deleted")));
+            return;
+        }
+        qint64 now = 0;
+        if (self->currentServerTime(&now)) {
+            guard->deliver(now);
+            return;
+        }
+        self->askServerTime(guard);
+    }, Qt::QueuedConnection);
+    return response;
+}
+
+FriendbotResponse* Server::friendbot(KeyPair* account)
+{
+    QUrl url(m_serverURI);
+    QString path = url.path();
+    while (path.endsWith(QLatin1Char('/')))
+        path.chop(1);
+    url.setPath(path + QStringLiteral("/friendbot"));
+    url.setFragment(QString());
+    return friendbot(account, url);
+}
+
+FriendbotResponse* Server::friendbot(KeyPair* account, const QUrl& friendbotUrl)
+{
+    if (!account)
+        throw std::runtime_error("friendbot: account cannot be null");
+    const QString scheme = friendbotUrl.scheme().toLower();
+    if (!friendbotUrl.isValid() || friendbotUrl.host().isEmpty()
+            || (scheme != QLatin1String("http") && scheme != QLatin1String("https")))
+        throw std::runtime_error("friendbot: not an http or https URL");
+
+    QUrl url(friendbotUrl);
+    // Added to the query the URL carries (a token, say), as js sets addr.
+    QUrlQuery query(url);
+    query.removeAllQueryItems(QStringLiteral("addr"));
+    query.addQueryItem(QStringLiteral("addr"), account->getAccountId());
+    url.setQuery(query);
+
+    QNetworkRequest request = getRequest(url);
+    // Followed, as js's axios follows them: SDF's Horizons answer /friendbot
+    // with a 307. Qt 5.15 follows none unless told; never to http from https.
+    request.setAttribute(QNetworkRequest::RedirectPolicyAttribute,
+                         QNetworkRequest::NoLessSafeRedirectPolicy);
+    auto* response = new FriendbotResponse(m_httpClient->get(request));
+    response->setParent(this); // this Server's, as get() makes them
+    return response;
 }
 
 Server::~Server()
