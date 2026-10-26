@@ -21,6 +21,9 @@ class RevokeSponsorshipOperationResponse : public OperationResponse
     Q_PROPERTY(QString offer_id READ getOfferID WRITE setOfferID NOTIFY offerIDChanged)
     Q_PROPERTY(QString trustline_account_id READ getTrustlineAccountID WRITE setTrustlineAccountID NOTIFY trustlineAccountIDChanged)
     Q_PROPERTY(QString trustline_asset READ getTrustlineAsset WRITE setTrustlineAsset NOTIFY trustlineAssetChanged)
+    // A pool-share trustline's revoke names its pool here, with no
+    // trustline_asset. It was dropped: the record said nothing of the line.
+    Q_PROPERTY(QString trustline_liquidity_pool_id MEMBER m_trustlineLiquidityPoolID)
     Q_PROPERTY(QString signer_account_id READ getSignerAccountID WRITE setSignerAccountID NOTIFY signerAccountIDChanged)
     Q_PROPERTY(QString signer_key READ getSignerKey WRITE setSignerKey NOTIFY signerKeyChanged)
 
@@ -31,6 +34,7 @@ class RevokeSponsorshipOperationResponse : public OperationResponse
     QString m_offerID;
     QString m_trustlineAccountID;
     QString m_trustlineAsset;
+    QString m_trustlineLiquidityPoolID;
     QString m_signerAccountID;
     QString m_signerKey;
 
@@ -44,6 +48,8 @@ public:
     QString getOfferID() const;
     QString getTrustlineAccountID() const;
     QString getTrustlineAsset() const;
+    /** The pool (hex) of a revoked pool-share trustline sponsorship; empty otherwise. */
+    QString getTrustlineLiquidityPoolID() const { return m_trustlineLiquidityPoolID; }
     QString getSignerAccountID() const;
     QString getSignerKey() const;
 

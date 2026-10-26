@@ -1,19 +1,20 @@
 #include "getversioninforesponse.h"
-#include "qtcompat.h"
+#include "gethealthresponse.h"
 
 QSTELLAR_BEGIN_NS
 
 
 GetVersionInfoResponse GetVersionInfoResponse::fromJson(const QJsonObject& r)
 {
+    // Every field is always there; a missing one used to read as empty or 0,
+    // and protocolVersion was read from a string too, text as 0.
+    const sorobanrpcdetail::RpcFields fields(r, QStringLiteral("getVersionInfo"));
     GetVersionInfoResponse out;
-    out.m_version            = r.value("version").toString();
-    out.m_commitHash         = r.value("commitHash").toString();
-    out.m_buildTimestamp     = r.value("buildTimestamp").toString();
-    out.m_captiveCoreVersion = r.value("captiveCoreVersion").toString();
-    QJsonValue pv = r.value("protocolVersion");
-    out.m_protocolVersion = pv.isString() ? pv.toString().toInt()
-                                          : static_cast<qint32>(jsonToInt64(pv));
+    out.m_version            = fields.string(QStringLiteral("version"));
+    out.m_commitHash         = fields.string(QStringLiteral("commitHash"));
+    out.m_buildTimestamp     = fields.string(QStringLiteral("buildTimestamp"));
+    out.m_captiveCoreVersion = fields.string(QStringLiteral("captiveCoreVersion"));
+    out.m_protocolVersion    = fields.int32(QStringLiteral("protocolVersion"));
     return out;
 }
 QSTELLAR_END_NS

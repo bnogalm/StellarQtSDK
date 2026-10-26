@@ -8,14 +8,9 @@ RevokeClaimableBalanceSponsorshipOperation::RevokeClaimableBalanceSponsorshipOpe
 {    
     auto& ledgerKey = m_op.fillRevokeSponsorshipLedgerEntry();
     auto& claimableBalance = ledgerKey.fillClaimableBalance();
-
-
-    QByteArray ba = Util::hexToBytes(balanceID);
-    if(ba.size()!=(int)sizeof(claimableBalance.balanceID))
-        throw std::runtime_error("invalid hash size");
-    QDataStream stream(&ba,QIODevice::ReadOnly);
-    stream >> claimableBalance.balanceID;
-
+    // The same checked decode as claim and clawback: this one checked nothing
+    // after reading, so "000000ff" + 64 hex built a four-byte balance id.
+    Util::claimableBalanceIdToXDR(balanceID, claimableBalance.balanceID);
 }
 
 RevokeClaimableBalanceSponsorshipOperation::RevokeClaimableBalanceSponsorshipOperation(stellar::RevokeSponsorshipOp &op):m_op(op)
@@ -25,11 +20,10 @@ RevokeClaimableBalanceSponsorshipOperation::RevokeClaimableBalanceSponsorshipOpe
 
 QString RevokeClaimableBalanceSponsorshipOperation::getBalanceId() const
 {
-    QByteArray data;
-    QDataStream stream(&data,QIODevice::WriteOnly);
-    stream << m_op.ledgerKey.claimableBalance.balanceID;
-    return Util::bytesToHex(data);
-    //return Util::bytesToHex(QByteArray::fromRawData((const char*)(m_op.ledgerKey.claimableBalance.balanceID.v0),sizeof(m_op.ledgerKey.claimableBalance.balanceID.v0)));
+    // Checked, as claim and clawback are: an id type with no arm writes
+    // nothing, and came back as an empty balance id.
+    return Util::bytesToHex(xdr::encodeOrThrow(m_op.ledgerKey.claimableBalance.balanceID,
+                                               "the claimable balance id"));
 }
 
 void RevokeClaimableBalanceSponsorshipOperation::fillOperationBody(AccountConverter &accountConverter, stellar::Operation &op)

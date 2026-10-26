@@ -7,6 +7,8 @@
 #include "src/feebumptransaction.h"
 #include "src/paymentoperation.h"
 #include "src/assettypenative.h"
+#include <QScopedPointer>
+#include <cstring>
 #include <QtTest>
 #include "testcollector.h"
 
@@ -255,6 +257,44 @@ private slots:
 
       QCOMPARE(feeBump->getSignatures().size(), 1);
       signer->verify(feeBump->hash(), feeBump->getSignatures()[0].signature.binary());
+    }
+
+    /**
+     * A fee bump around a transaction holding a value XDR has no encoding for
+     * (a payment whose asset names POOL_SHARE) is neither hashed, signed nor
+     * emitted. Its signature payload was written with the inner transaction
+     * cut short where the writer failed, nobody looked at the stream, and the
+     * short bytes were hashed and signed.
+     */
+    void testAFeeBumpThatCannotBeEncodedIsNeitherSignedNorEmitted()
+    {
+        Network::useTestNetwork();
+        stellar::PaymentOp op;
+        op.destination.type = stellar::CryptoKeyType::KEY_TYPE_ED25519;
+        std::memset(op.destination.ed25519, 0x11, sizeof op.destination.ed25519);
+        op.asset.type = stellar::AssetType::ASSET_TYPE_POOL_SHARE;
+        op.amount = 1;
+        QScopedPointer<Account> account(new Account(
+            KeyPair::fromSecretSeed(QString("SCH27VUZZ6UAKB67BDNF6FA42YMBMQCBKXWGMFD5TZ6S5ZZCZFLRXKHS")), 2908908335136768L));
+        Transaction* inner = Transaction::Builder(AccountConverter().enableMuxed(), account.data(), Network::current())
+                .addOperation(PaymentOperation::build(AccountConverter(), op))
+                .setBaseFee(Transaction::MIN_BASE_FEE)
+                .addTimeBounds(new TimeBounds(10, 11))
+                .build();
+        QScopedPointer<FeeBumpTransaction> feeBump(new FeeBumpTransaction(   // owns the inner transaction
+            AccountConverter().enableMuxed(),
+            QStringLiteral("GDQNY3PBOJOKYZSRMK2S7LHHGWZIUISD4QORETLMXEWXBI7KFZZMKTL3"), 400, inner));
+        QScopedPointer<KeyPair> signer(KeyPair::random());
+        auto throws = [](auto&& call) {
+            try { call(); } catch (const std::runtime_error&) { return true; }
+            return false;
+        };
+        QVERIFY(throws([&] { feeBump->signatureBase(); }));
+        QVERIFY(throws([&] { feeBump->hash(); }));
+        QVERIFY(throws([&] { feeBump->sign(signer.data()); }));
+        QVERIFY(feeBump->getSignatures().isEmpty());
+        QVERIFY(throws([&] { feeBump->toEnvelopeXdr(); }));
+        QVERIFY(throws([&] { feeBump->toEnvelopeXdrBase64(); }));
     }
 };
 

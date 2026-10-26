@@ -35,6 +35,8 @@ public:
      * @param type
      * @param memo memo text/id/or HEXADECIMAL, usefull for user interface, for responses you must use QByteArray version
      * @return
+     * An id is a uint64 in decimal digits, as js Memo.id takes it; any other
+     * text throws (it was read as memo id 0).
      */
 
     static Memo* parse(QString type, QString memo);//memo
@@ -43,6 +45,8 @@ public:
      * @param type
      * @param memo memo text (utf8) /id/or BASE64, usefull for user interface, for responses you must use QByteArray version
      * @return
+     * An id is a uint64 in decimal digits; any other text throws, as a hash
+     * that is not base64 does.
      */
     static Memo* parse(QString type, QByteArray memo);
 
@@ -70,12 +74,14 @@ public:
 
     /**
       * Creates new {@link MemoHash} instance from byte array.
-      * @param bytes
+      * @param bytes exactly 32 bytes, as js and py require; anything else
+      *        throws std::runtime_error (1.0.3 padded shorter input with zeros)
       */
     static MemoHash* hash(QByteArray bytes);
 
     /**
-      * Creates new {@link MemoHash} instance from hex-encoded string
+      * Creates new {@link MemoHash} instance from hex-encoded string of exactly
+      * 64 hex characters (32 bytes); anything else throws
       * @param hexString
       * @throws DecoderException
       */
@@ -83,12 +89,14 @@ public:
 
     /**
       * Creates new {@link MemoReturnHash} instance from byte array.
-      * @param bytes
+      * @param bytes exactly 32 bytes, as js and py require; anything else
+      *        throws std::runtime_error (1.0.3 padded shorter input with zeros)
       */
     static MemoReturnHash* returnHash(QByteArray bytes);
 
     /**
-      * Creates new {@link MemoReturnHash} instance from hex-encoded string.
+      * Creates new {@link MemoReturnHash} instance from hex-encoded string of exactly
+      * 64 hex characters (32 bytes); anything else throws.
       * @param hexString
       * @throws DecoderException
       */
@@ -123,7 +131,7 @@ public:
    *
    * <p>Example:</p>
    * <code>
-   *   MemoHash memo = new MemoHash("4142434445");
+   *   MemoHash memo = new MemoHash("4142434445000000000000000000000000000000000000000000000000000000");
    *   memo.getHexValue(); // 4142434445000000000000000000000000000000000000000000000000000000
    *   memo.getTrimmedHexValue(); // 4142434445
    * </code>
@@ -136,7 +144,7 @@ public:
    *
    * <p>Example:</p>
    * <code>
-   *   MemoHash memo = new MemoHash("4142434445");
+   *   MemoHash memo = new MemoHash("4142434445000000000000000000000000000000000000000000000000000000");
    *   memo.getHexValue(); // 4142434445000000000000000000000000000000000000000000000000000000
    *   memo.getTrimmedHexValue(); // 4142434445
    * </code>
@@ -215,12 +223,33 @@ public:
 class MemoText : public Memo {
 private:
     QString m_text;
+    QByteArray m_bytes;     // what is signed
+
+    struct FromBytes {};
+    MemoText(const QByteArray& bytes, FromBytes);
 
 public:
+    /**
+     * UTF-8 of `text`, at most 28 bytes. Text that UTF-8 cannot hold as given
+     * (an unpaired surrogate, e.g. an emoji cut in half) is refused: it used
+     * to be signed with the surrogate dropped (Qt 6) or as '?' (Qt 5).
+     */
     MemoText(QString text);
+
+    /**
+     * The memo's bytes exactly as they are on the wire, at most 28. A memo
+     * text does not have to be UTF-8, and one decoded from XDR is written back
+     * as the same bytes — not re-encoded from text, which changed them.
+     */
+    static MemoText* fromBytes(const QByteArray& bytes);
+
     virtual ~MemoText();
 
+    /** For display: the bytes decoded as UTF-8 (invalid bytes become U+FFFD). */
     QString getText() const;
+
+    /** The bytes that are signed. */
+    QByteArray getBytes() const;
 
     stellar::Memo toXdr();
 };

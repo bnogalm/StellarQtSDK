@@ -19,7 +19,7 @@ private slots:
 
     void testInvokeHostFunctionDeserialize()
     {
-        QByteArray json = "{"
+        QByteArray json = "{\"_links\":{\"self\":{\"href\":\"https://horizon-testnet.stellar.org/operations/1\"},\"transaction\":{\"href\":\"https://horizon-testnet.stellar.org/transactions/deadbeef\"},\"effects\":{\"href\":\"https://horizon-testnet.stellar.org/operations/1/effects\"},\"succeeds\":{\"href\":\"https://horizon-testnet.stellar.org/effects?order=desc&cursor=1\"},\"precedes\":{\"href\":\"https://horizon-testnet.stellar.org/effects?order=asc&cursor=1\"}},"
             "\"id\":\"1\",\"paging_token\":\"1\","
             "\"transaction_successful\":true,"
             "\"source_account\":\"GCACCFMIWJAHUUASSE2WC7V6VVDLYRLSJYZ3DJEXCG523FSHTNII6KOG\","
@@ -50,7 +50,7 @@ private slots:
 
     void testInvokeHostFunctionWithBalanceChanges()
     {
-        QByteArray json = "{"
+        QByteArray json = "{\"_links\":{\"self\":{\"href\":\"https://horizon-testnet.stellar.org/operations/1\"},\"transaction\":{\"href\":\"https://horizon-testnet.stellar.org/transactions/deadbeef\"},\"effects\":{\"href\":\"https://horizon-testnet.stellar.org/operations/1/effects\"},\"succeeds\":{\"href\":\"https://horizon-testnet.stellar.org/effects?order=desc&cursor=1\"},\"precedes\":{\"href\":\"https://horizon-testnet.stellar.org/effects?order=asc&cursor=1\"}},\"address\":\"\",\"salt\":\"\","
             "\"id\":\"1\",\"paging_token\":\"1\","
             "\"transaction_successful\":true,"
             "\"source_account\":\"GCACCFMIWJAHUUASSE2WC7V6VVDLYRLSJYZ3DJEXCG523FSHTNII6KOG\","
@@ -83,7 +83,7 @@ private slots:
 
     void testExtendFootprintTtlDeserialize()
     {
-        QByteArray json = "{"
+        QByteArray json = "{\"_links\":{\"self\":{\"href\":\"https://horizon-testnet.stellar.org/operations/1\"},\"transaction\":{\"href\":\"https://horizon-testnet.stellar.org/transactions/deadbeef\"},\"effects\":{\"href\":\"https://horizon-testnet.stellar.org/operations/1/effects\"},\"succeeds\":{\"href\":\"https://horizon-testnet.stellar.org/effects?order=desc&cursor=1\"},\"precedes\":{\"href\":\"https://horizon-testnet.stellar.org/effects?order=asc&cursor=1\"}},"
             "\"id\":\"1\",\"paging_token\":\"1\","
             "\"transaction_successful\":true,"
             "\"source_account\":\"GCACCFMIWJAHUUASSE2WC7V6VVDLYRLSJYZ3DJEXCG523FSHTNII6KOG\","
@@ -100,7 +100,7 @@ private slots:
 
     void testRestoreFootprintDeserialize()
     {
-        QByteArray json = "{"
+        QByteArray json = "{\"_links\":{\"self\":{\"href\":\"https://horizon-testnet.stellar.org/operations/1\"},\"transaction\":{\"href\":\"https://horizon-testnet.stellar.org/transactions/deadbeef\"},\"effects\":{\"href\":\"https://horizon-testnet.stellar.org/operations/1/effects\"},\"succeeds\":{\"href\":\"https://horizon-testnet.stellar.org/effects?order=desc&cursor=1\"},\"precedes\":{\"href\":\"https://horizon-testnet.stellar.org/effects?order=asc&cursor=1\"}},"
             "\"id\":\"1\",\"paging_token\":\"1\","
             "\"transaction_successful\":true,"
             "\"source_account\":\"GCACCFMIWJAHUUASSE2WC7V6VVDLYRLSJYZ3DJEXCG523FSHTNII6KOG\","

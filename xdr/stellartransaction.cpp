@@ -2,6 +2,7 @@
 
 stellar::Operation::Operation(){
     type = stellar::OperationType::CREATE_ACCOUNT;//we set a trivial type, so correct destructor is called
+    new (&operationCreateAccount) CreateAccountOp();    // and zero it: the arm `type` names is written as is
 }
 
 stellar::Operation::Operation(const stellar::Operation &op){
@@ -30,7 +31,7 @@ stellar::Operation::Operation(const stellar::Operation &op){
     case OperationType::ACCOUNT_MERGE:
         operationAccountMerge = op.operationAccountMerge; break;
     case OperationType::INFLATION:
-        operationInflation = op.operationInflation; break;
+        break;                       // void: there is nothing to copy
     case OperationType::MANAGE_DATA:
         new (&operationManageData) ManageDataOp();
         operationManageData = op.operationManageData; break;
@@ -116,6 +117,8 @@ stellar::Operation::~Operation(){
 }
 
 const stellar::Operation &stellar::Operation::operator =(const stellar::Operation &op) {
+    if (this == &op)
+        return *this;       // clear() below would wipe the source too
     clear();
     sourceAccount = op.sourceAccount;
     type = op.type;
@@ -142,7 +145,7 @@ const stellar::Operation &stellar::Operation::operator =(const stellar::Operatio
     case OperationType::ACCOUNT_MERGE:
         operationAccountMerge = op.operationAccountMerge; break;
     case OperationType::INFLATION:
-        operationInflation = op.operationInflation; break;
+        break;                       // void: there is nothing to copy
     case OperationType::MANAGE_DATA:
         new (&operationManageData) ManageDataOp();
         operationManageData = op.operationManageData; break;
@@ -276,9 +279,12 @@ stellar::CreateClaimableBalanceOp &stellar::Operation::fillCreateClaimableBalanc
     return operationCreateClaimableBalance;
 }
 
-stellar::OperationResult::OperationResult():type(OperationType::CREATE_ACCOUNT)
+stellar::OperationResult::OperationResult()
+    : code(OperationResultCode::opINNER)
+    , type(OperationType::CREATE_ACCOUNT)
 {
-
+    // The arm `type` names, set too: the code was left as whatever memory held.
+    createAccountResult.code = CreateAccountResultCode::CREATE_ACCOUNT_SUCCESS;
 }
 //CreateAccountResult createAccountResult;
 //SetOptionsResult setOptionsResult;
@@ -355,11 +361,22 @@ stellar::OperationResult::OperationResult(const stellar::OperationResult &op)
         liquidityPoolDepositResult = op.liquidityPoolDepositResult; break;
     case OperationType::LIQUIDITY_POOL_WITHDRAW:
         liquidityPoolWithdrawResult = op.liquidityPoolWithdrawResult; break;
-    //default: break;
+    case OperationType::INVOKE_HOST_FUNCTION:
+        invokeHostFunctionResult = op.invokeHostFunctionResult; break;
+    case OperationType::EXTEND_FOOTPRINT_TTL:
+        extendFootprintTTLResult = op.extendFootprintTTLResult; break;
+    case OperationType::RESTORE_FOOTPRINT:
+        restoreFootprintResult = op.restoreFootprintResult; break;
+    default: break;
     }
 }
 
 stellar::OperationResult::~OperationResult()
+{
+    clear();
+}
+
+void stellar::OperationResult::clear()
 {
     switch(type)
     {
@@ -387,33 +404,16 @@ stellar::OperationResult::~OperationResult()
     default:
         break;
     }
+    type = OperationType::CREATE_ACCOUNT;   // trivial: no arm left to destroy
 }
 
 const stellar::OperationResult &stellar::OperationResult::operator =(const stellar::OperationResult &op)
 {
-    switch(type)
-    {
-    case OperationType::PAYMENT:
-        paymentResult.~PaymentResult();
-        break;
-    case OperationType::PATH_PAYMENT_STRICT_RECEIVE:
-        pathPaymentStrictReceiveResult.~PathPaymentStrictReceiveResult();
-        break;
-    case OperationType::MANAGE_SELL_OFFER:
-        manageSellOfferResult.~ManageSellOfferResult();
-        break;
-    case OperationType::CREATE_PASSIVE_SELL_OFFER:
-        createPassiveOfferResult.~ManageSellOfferResult();
-        break;
-    case OperationType::INFLATION:
-        inflationResult.~InflationResult();
-        break;
-    case OperationType::MANAGE_BUY_OFFER:
-        manageBuyOfferResult.~ManageBuyOfferResult();
-        break;
-    default:
-        break;
-    }
+    // Without this, r = r destroyed the live arm, rebuilt it empty and then
+    // copied that empty arm onto itself: a created offer came back with id 0.
+    if (this == &op)
+        return *this;
+    clear();
     code = op.code;
     type = op.type;
     switch(op.type){
@@ -472,15 +472,22 @@ const stellar::OperationResult &stellar::OperationResult::operator =(const stell
         liquidityPoolDepositResult = op.liquidityPoolDepositResult; break;
     case OperationType::LIQUIDITY_POOL_WITHDRAW:
         liquidityPoolWithdrawResult = op.liquidityPoolWithdrawResult; break;
-
-    //default: break;
+    case OperationType::INVOKE_HOST_FUNCTION:
+        invokeHostFunctionResult = op.invokeHostFunctionResult; break;
+    case OperationType::EXTEND_FOOTPRINT_TTL:
+        extendFootprintTTLResult = op.extendFootprintTTLResult; break;
+    case OperationType::RESTORE_FOOTPRINT:
+        restoreFootprintResult = op.restoreFootprintResult; break;
+    default: break;
     }
     return *this;
 }
 
 stellar::TransactionEnvelope::TransactionEnvelope():type(EnvelopeType::ENVELOPE_TYPE_TX_FEE_BUMP)
 {
-
+    // The arm `type` names must exist: destroying (or assigning into) a
+    // default envelope used to run the fee bump's destructor on raw memory.
+    new (&feeBump) FeeBumpTransactionEnvelope();
 }
 
 stellar::TransactionEnvelope::TransactionEnvelope(const stellar::TransactionV0Envelope& t)
@@ -520,6 +527,11 @@ stellar::TransactionEnvelope::TransactionEnvelope(const stellar::TransactionEnve
 
 stellar::TransactionEnvelope::~TransactionEnvelope()
 {
+    clear();
+}
+
+void stellar::TransactionEnvelope::clear()
+{
     switch(type){
     case EnvelopeType::ENVELOPE_TYPE_TX_V0:
         v0.~TransactionV0Envelope();break;
@@ -533,23 +545,20 @@ stellar::TransactionEnvelope::~TransactionEnvelope()
 
 const stellar::TransactionEnvelope &stellar::TransactionEnvelope::operator =(const stellar::TransactionEnvelope &te)
 {
-    switch(type){
-    case EnvelopeType::ENVELOPE_TYPE_TX_V0:
-        v0.~TransactionV0Envelope();break;
-    case EnvelopeType::ENVELOPE_TYPE_TX:
-        v1.~TransactionV1Envelope();break;
-    default: break;
-    }
+    // The fee-bump arm used to be neither destroyed (a leak) nor constructed:
+    // a fee bump was assigned into memory that held another arm, or nothing,
+    // and crashed. And e = e emptied the envelope.
+    if (this == &te)
+        return *this;
+    clear();
     type = te.type;
     switch(te.type){
     case EnvelopeType::ENVELOPE_TYPE_TX_V0:
-        new (&v0) TransactionV0Envelope();
-        v0 = te.v0; break;
+        new (&v0) TransactionV0Envelope(te.v0); break;
     case EnvelopeType::ENVELOPE_TYPE_TX:
-        new (&v1) TransactionV1Envelope();
-        v1 = te.v1; break;
+        new (&v1) TransactionV1Envelope(te.v1); break;
     case EnvelopeType::ENVELOPE_TYPE_TX_FEE_BUMP:
-        feeBump = te.feeBump; break;
+        new (&feeBump) FeeBumpTransactionEnvelope(te.feeBump); break;
     default: break;
     }
     return *this;
@@ -565,36 +574,32 @@ const stellar::FeeBumpTransactionEnvelope &stellar::FeeBumpTransactionEnvelope::
 
 const stellar::FeeBumpTransaction &stellar::FeeBumpTransaction::operator =(const stellar::FeeBumpTransaction &fbt)
 {
+    if (this == &fbt)
+        return *this;
     feeSource = fbt.feeSource;
     fee = fbt.fee;
     type = fbt.type;
-    switch(fbt.type)
-    {
-    case EnvelopeType::ENVELOPE_TYPE_TX:
-    {
-        new (&v1) TransactionV1Envelope();
-        v1 = fbt.v1;        
-        break;
-    }
-    default:break;
-    }
+    // v1 is always live (every constructor builds it, the destructor destroys
+    // it): assign it. Building a new one over it leaked the old one.
+    v1 = fbt.v1;
     ext = fbt.ext;
     return *this;
 }
 
 stellar::FeeBumpTransaction::FeeBumpTransaction()
+    : fee(0)
+    , type(EnvelopeType::ENVELOPE_TYPE_TX)      // the only inner type, and the arm built below
 {
     new (&v1) TransactionV1Envelope();
-
 }
 
 stellar::FeeBumpTransaction::FeeBumpTransaction(const stellar::FeeBumpTransaction &fbt)
     :feeSource(fbt.feeSource)
     ,fee(fbt.fee)
     ,type(fbt.type)
+    ,ext(fbt.ext)
 {
-    new (&v1) TransactionV1Envelope;
-    v1=fbt.v1;
+    new (&v1) TransactionV1Envelope(fbt.v1);
 }
 
 stellar::FeeBumpTransaction::~FeeBumpTransaction()

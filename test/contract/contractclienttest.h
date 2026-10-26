@@ -127,6 +127,93 @@ private slots:
         QCOMPARE(Scv::fromUint64(r), quint64(42));
         delete acc;
     }
+
+    /** read() only simulates, but it built on the caller's Account and
+     *  advanced it: after two reads the next invoke was signed two ahead of
+     *  the chain and refused with tx_bad_seq. */
+    void testReadDoesNotUseUpTheSequence()
+    {
+        StubCcSorobanServer srv;
+        srv.simResponses = { makeSimResponse(0, Scv::toUint64(42)) };
+
+        ContractClient cc(QString(sacContractId()), &srv, Network::testnetNetwork());
+        Account acc(sourceKeyPair(), 41);
+        cc.read(QStringLiteral("balance"), QList<stellar::SCVal>{}, &acc);
+        cc.read(QStringLiteral("balance"), QList<stellar::SCVal>{}, &acc);
+        QCOMPARE(acc.getSequenceNumber(), qint64(41));
+
+        QScopedPointer<AssembledTransaction> at(
+            cc.invoke(QStringLiteral("decimals"), QList<stellar::SCVal>{}, &acc));
+        QCOMPARE(at->getTransaction()->getSequenceNumber(), qint64(42));
+        QCOMPARE(acc.getSequenceNumber(), qint64(42));
+    }
+
+    /** An invoke whose simulation failed had already advanced the caller's
+     *  Account, so the retry was signed one ahead of the chain. */
+    void testAFailedInvokeLeavesTheSequence()
+    {
+        QJsonObject failed;
+        failed.insert("latestLedger", 1);
+        failed.insert("error", QStringLiteral("HostError: Error(Contract, #1)"));
+        StubCcSorobanServer srv;
+        srv.simResponses = { SimulateTransactionResponse::fromJson(failed),
+                             makeSimResponse(999, Scv::toUint32(7)) };
+
+        ContractClient cc(QString(sacContractId()), &srv, Network::testnetNetwork());
+        Account acc(sourceKeyPair(), 41);
+        bool threw = false;
+        try { delete cc.invoke(QStringLiteral("decimals"), QList<stellar::SCVal>{}, &acc); }
+        catch (const std::exception&) { threw = true; }
+        QVERIFY(threw);
+        QCOMPARE(acc.getSequenceNumber(), qint64(41));
+
+        QScopedPointer<AssembledTransaction> at(
+            cc.invoke(QStringLiteral("decimals"), QList<stellar::SCVal>{}, &acc));
+        QCOMPARE(at->getTransaction()->getSequenceNumber(), qint64(42));
+        QCOMPARE(acc.getSequenceNumber(), qint64(42));
+    }
+
+    /** The simulation waits in a nested event loop, where a transaction can
+     *  be built on the same Account. invoke() holds the number it built with,
+     *  so that one gets the next; and a failed invoke hands its number back
+     *  only when no later one was taken meanwhile. */
+    void testABuildWhileSimulatingGetsTheNextNumber()
+    {
+        class BuildsMeanwhile : public StubCcSorobanServer
+        {
+        public:
+            Account* account = nullptr;
+            SimulateTransactionResponse simulateTransactionXdr(const QString& xdr) override
+            {
+                if (account) {
+                    account->incrementSequenceNumber();   // what the other build does
+                    account = nullptr;
+                }
+                return StubCcSorobanServer::simulateTransactionXdr(xdr);
+            }
+        } srv;
+        srv.simResponses = { makeSimResponse(999, Scv::toUint32(7)) };
+
+        ContractClient cc(QString(sacContractId()), &srv, Network::testnetNetwork());
+        Account acc(sourceKeyPair(), 41);
+        srv.account = &acc;
+        QScopedPointer<AssembledTransaction> at(
+            cc.invoke(QStringLiteral("decimals"), QList<stellar::SCVal>{}, &acc));
+        QCOMPARE(at->getTransaction()->getSequenceNumber(), qint64(42));
+        QCOMPARE(acc.getSequenceNumber(), qint64(43));   // 42 for invoke, 43 for the other build
+
+        // Failed, with 45 taken meanwhile: 44 cannot be handed back.
+        QJsonObject failed;
+        failed.insert("latestLedger", 1);
+        failed.insert("error", QStringLiteral("HostError: Error(Contract, #1)"));
+        srv.simResponses = { SimulateTransactionResponse::fromJson(failed) };
+        srv.account = &acc;
+        bool threw = false;
+        try { delete cc.invoke(QStringLiteral("decimals"), QList<stellar::SCVal>{}, &acc); }
+        catch (const std::exception&) { threw = true; }
+        QVERIFY(threw);
+        QCOMPARE(acc.getSequenceNumber(), qint64(45));
+    }
 };
 
 ADD_TEST(ContractClientTest)

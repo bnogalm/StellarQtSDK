@@ -24,14 +24,21 @@ AccountResponse* AccountsRequestBuilder::account(KeyPair *account) {
     return this->account(account->getAccountId());
 }
 
+void AccountsRequestBuilder::checkOneFilter(const QString& filter) const
+{
+    const QStringList filters = { QStringLiteral("signer"), QStringLiteral("sponsor"),
+                                  QStringLiteral("asset"), QStringLiteral("liquidity_pool") };
+    for (const QString& other : filters) {
+        if (other != filter && !parameter(other).isNull())
+            throw std::runtime_error(QStringLiteral("cannot set both %1 and %2: /accounts takes one of "
+                                                    "signer, sponsor, asset and liquidity_pool")
+                                         .arg(other, filter).toStdString());
+    }
+}
+
 AccountsRequestBuilder &AccountsRequestBuilder::forSigner(QString accountID)
 {
-    if (!parameter("asset").isNull()) {
-        throw std::runtime_error("cannot set both signer and asset");
-    }
-    if (!parameter("sponsor").isNull()) {
-        throw std::runtime_error("cannot set both signer and sponsor");
-    }
+    checkOneFilter(QStringLiteral("signer"));
     addParameter("signer",accountID);
     return *this;
 }
@@ -42,12 +49,7 @@ AccountsRequestBuilder &AccountsRequestBuilder::forSigner(KeyPair *accountID)
 }
 
 AccountsRequestBuilder &AccountsRequestBuilder::forSponsor(QString sponsor) {
-    if (!parameter("signer").isNull()) {
-        throw std::runtime_error("cannot set both signer and sponsor");
-    }
-    if (!parameter("asset").isNull()) {
-        throw std::runtime_error("cannot set both asset and sponsor");
-    }
+    checkOneFilter(QStringLiteral("sponsor"));
     addParameter("sponsor", sponsor);
     return *this;
 }
@@ -58,21 +60,14 @@ AccountsRequestBuilder &AccountsRequestBuilder::forSponsor(KeyPair* sponsor) {
 
 AccountsRequestBuilder &AccountsRequestBuilder::forAsset(Asset *asset)
 {
-    if (!parameter("signer").isNull()) {
-        throw std::runtime_error("cannot set both signer and asset");
-    }
-    if (!parameter("sponsor").isNull()) {
-        throw std::runtime_error("cannot set both sponsor and asset");
-    }
+    checkOneFilter(QStringLiteral("asset"));
     RequestBuilder::setAssetParameter("asset",asset);
     return *this;
 }
 
 AccountsRequestBuilder &AccountsRequestBuilder::forLiquidityPool(const QString& liquidityPoolId)
 {
-    if (!parameter("signer").isNull() || !parameter("sponsor").isNull() || !parameter("asset").isNull()) {
-        throw std::runtime_error("forLiquidityPool cannot be combined with signer/sponsor/asset");
-    }
+    checkOneFilter(QStringLiteral("liquidity_pool"));
     addParameter("liquidity_pool", liquidityPoolId);
     return *this;
 }

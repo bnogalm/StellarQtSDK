@@ -23,7 +23,11 @@ QString RevokeDataSponsorshipOperation::getAccountId() const
 
 QString RevokeDataSponsorshipOperation::getDataName() const
 {
-    return m_op.ledgerKey.data.dataName.toString();
+    // A leading BOM kept, as ManageDataOperation::getName keeps it: dropped,
+    // "\xEF\xBB\xBFk" read as "k", the name of another entry, and TxRep
+    // got past the check that refuses a hidden U+FEFF (only its read-back
+    // check then caught it).
+    return Util::fromUtf8KeepingBom(m_op.ledgerKey.data.dataName.binary());
 }
 
 void RevokeDataSponsorshipOperation::fillOperationBody(AccountConverter& accountConverter, stellar::Operation &op)

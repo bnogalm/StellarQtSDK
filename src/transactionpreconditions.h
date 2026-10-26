@@ -31,6 +31,7 @@ class TransactionPreconditions
     quint64 m_minSeqAge = 0;       // CAP-21 Duration (seconds). 0 = no constraint.
     quint32 m_minSeqLedgerGap = 0; // 0 = no constraint.
     QList<SignerKey> m_extraSigners;
+    bool m_v2 = false;             // written as PRECOND_V2 even when every V2 field is 0
 
 public:
     static const int MAX_EXTRA_SIGNERS = 2;
@@ -48,8 +49,13 @@ public:
     void setLedgerBounds(LedgerBounds* lb);
     void setMinSeqNumber(qint64* seq);
 
-    void setMinSeqAge(quint64 age) { m_minSeqAge = age; }
-    void setMinSeqLedgerGap(quint32 gap) { m_minSeqLedgerGap = gap; }
+    /**
+     * Setting either makes the preconditions a PRECOND_V2, 0 included, as js
+     * (value !== null) and py (is not None) do. An explicit 0 used to leave a
+     * PRECOND_TIME: the same meaning, another envelope and hash than theirs.
+     */
+    void setMinSeqAge(quint64 age) { m_minSeqAge = age; m_v2 = true; }
+    void setMinSeqLedgerGap(quint32 gap) { m_minSeqLedgerGap = gap; m_v2 = true; }
     void addExtraSigner(const SignerKey& key);
 
     TimeBounds* getTimeBounds() const { return m_timeBounds; }
@@ -59,8 +65,19 @@ public:
     quint32 getMinSeqLedgerGap() const { return m_minSeqLedgerGap; }
     const QList<SignerKey>& getExtraSigners() const { return m_extraSigners; }
 
-    /** True when any V2-only field is set (forces PRECOND_V2 emission). */
+    /**
+     * True when any V2-only field is set, or when this came from (or was
+     * asked to be) a PRECOND_V2: forces PRECOND_V2 emission.
+     *
+     * A V2 whose extra fields are all zero is a different envelope — and a
+     * different hash — from the PRECOND_TIME with the same bounds. It used to
+     * be written back as the latter: refused by the exact-reading gate, and
+     * signed as a different transaction when it came from a TxRep document.
+     */
     bool hasV2() const;
+
+    /** Emit PRECOND_V2 even when no V2-only field is set. */
+    void setV2(bool v2) { m_v2 = v2; }
 
     stellar::Preconditions toXdr() const;
     static TransactionPreconditions fromXdr(const stellar::Preconditions& xdr);

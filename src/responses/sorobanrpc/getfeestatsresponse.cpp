@@ -1,48 +1,55 @@
 #include "getfeestatsresponse.h"
-#include "qtcompat.h"
+#include "gethealthresponse.h"
+
+#include <limits>
 
 QSTELLAR_BEGIN_NS
 
 
 namespace {
-QString readStr(const QJsonObject& o, const QString& k) {
-    return o.value(k).toString();
-}
-quint32 readU32(const QJsonObject& o, const QString& k) {
-    QJsonValue v = o.value(k);
-    return v.isString() ? v.toString().toUInt()
-                        : static_cast<quint32>(jsonToInt64(v));
+/**
+ * The RPC sends each fee (a uint64) and transactionCount (a uint32) as a
+ * decimal string, and ledgerCount as a JSON integer. They used to be taken
+ * as they came: a fee that was not a number was kept as its text, a
+ * transactionCount that was not one read as 0, and so did a missing one.
+ */
+SorobanFeeDistribution readDistribution(const sorobanrpcdetail::RpcFields& o)
+{
+    const quint64 fee = std::numeric_limits<quint64>::max();
+    SorobanFeeDistribution fd;
+    fd.max  = o.decimal(QStringLiteral("max"), fee);
+    fd.min  = o.decimal(QStringLiteral("min"), fee);
+    fd.mode = o.decimal(QStringLiteral("mode"), fee);
+    fd.p10  = o.decimal(QStringLiteral("p10"), fee);
+    fd.p20  = o.decimal(QStringLiteral("p20"), fee);
+    fd.p30  = o.decimal(QStringLiteral("p30"), fee);
+    fd.p40  = o.decimal(QStringLiteral("p40"), fee);
+    fd.p50  = o.decimal(QStringLiteral("p50"), fee);
+    fd.p60  = o.decimal(QStringLiteral("p60"), fee);
+    fd.p70  = o.decimal(QStringLiteral("p70"), fee);
+    fd.p80  = o.decimal(QStringLiteral("p80"), fee);
+    fd.p90  = o.decimal(QStringLiteral("p90"), fee);
+    fd.p95  = o.decimal(QStringLiteral("p95"), fee);
+    fd.p99  = o.decimal(QStringLiteral("p99"), fee);
+    fd.transactionCount = o.decimal(QStringLiteral("transactionCount"),
+                                    std::numeric_limits<quint32>::max()).toUInt();
+    fd.ledgerCount      = o.uint32(QStringLiteral("ledgerCount"));
+    return fd;
 }
 }
 
 SorobanFeeDistribution SorobanFeeDistribution::fromJson(const QJsonObject& o)
 {
-    SorobanFeeDistribution fd;
-    fd.max  = readStr(o, "max");
-    fd.min  = readStr(o, "min");
-    fd.mode = readStr(o, "mode");
-    fd.p10  = readStr(o, "p10");
-    fd.p20  = readStr(o, "p20");
-    fd.p30  = readStr(o, "p30");
-    fd.p40  = readStr(o, "p40");
-    fd.p50  = readStr(o, "p50");
-    fd.p60  = readStr(o, "p60");
-    fd.p70  = readStr(o, "p70");
-    fd.p80  = readStr(o, "p80");
-    fd.p90  = readStr(o, "p90");
-    fd.p95  = readStr(o, "p95");
-    fd.p99  = readStr(o, "p99");
-    fd.transactionCount = readU32(o, "transactionCount");
-    fd.ledgerCount      = readU32(o, "ledgerCount");
-    return fd;
+    return readDistribution(sorobanrpcdetail::RpcFields(o, QStringLiteral("getFeeStats")));
 }
 
 GetFeeStatsResponse GetFeeStatsResponse::fromJson(const QJsonObject& r)
 {
+    const sorobanrpcdetail::RpcFields fields(r, QStringLiteral("getFeeStats"));
     GetFeeStatsResponse out;
-    out.m_sorobanInclusionFee = SorobanFeeDistribution::fromJson(r.value("sorobanInclusionFee").toObject());
-    out.m_inclusionFee        = SorobanFeeDistribution::fromJson(r.value("inclusionFee").toObject());
-    out.m_latestLedger        = readU32(r, "latestLedger");
+    out.m_sorobanInclusionFee = readDistribution(fields.object(QStringLiteral("sorobanInclusionFee")));
+    out.m_inclusionFee        = readDistribution(fields.object(QStringLiteral("inclusionFee")));
+    out.m_latestLedger        = fields.uint32(QStringLiteral("latestLedger"));
     return out;
 }
 QSTELLAR_END_NS

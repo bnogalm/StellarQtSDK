@@ -16,6 +16,9 @@
 
 
 #include "../src/createclaimablebalanceoperation.h"
+#include "../src/claimclaimablebalanceoperation.h"
+#include "../src/clawbackclaimablebalanceoperation.h"
+#include "../src/revokeclaimablebalancesponsorshipoperation.h"
 
 
 class ClaimableBalanceIdTest: public QObject
@@ -116,6 +119,71 @@ private slots:
         } catch (const std::runtime_error& e) {
             QCOMPARE(e.what(), "operation at index is not of type CreateClaimableBalanceOperation");
         }
+    }
+
+    /**
+     * A balance id is a V0 id: "00000000" and the 32-byte hash. Any other type
+     * was read as the four-byte type alone and the hash dropped, so claim,
+     * clawback and revoke built and signed a balance id of just "00000001"
+     * (or "000000ff"), which js and py cannot decode and Core rejects.
+     */
+    void testOnlyAV0BalanceIdIsAccepted()
+    {
+        const QString hash = QString("ab").repeated(32);
+        const QString v0 = "00000000" + hash;
+        QScopedPointer<ClaimClaimableBalanceOperation> claim(ClaimClaimableBalanceOperation::create(v0));
+        QCOMPARE(claim->getBalanceId(), v0);
+        QScopedPointer<ClawbackClaimableBalanceOperation> clawback(ClawbackClaimableBalanceOperation::create(v0));
+        QCOMPARE(clawback->getBalanceId(), v0);
+        QScopedPointer<RevokeClaimableBalanceSponsorshipOperation> revoke(
+            RevokeClaimableBalanceSponsorshipOperation::create(v0));
+        QCOMPARE(revoke->getBalanceId().toLower(), v0);
+
+        for (const char* type : { "00000001", "000000ff", "ffffffff" }) {
+            const QString id = type + hash;
+            try {
+                delete ClaimClaimableBalanceOperation::create(id);
+                QFAIL(qPrintable("claim accepted " + id));
+            } catch (const std::runtime_error&) {}
+            try {
+                delete ClawbackClaimableBalanceOperation::create(id);
+                QFAIL(qPrintable("clawback accepted " + id));
+            } catch (const std::runtime_error&) {}
+            try {
+                delete RevokeClaimableBalanceSponsorshipOperation::create(id);
+                QFAIL(qPrintable("revoke accepted " + id));
+            } catch (const std::runtime_error&) {}
+        }
+    }
+
+    /**
+     * A balance id of a type with no arm writes nothing, and the three
+     * getBalanceId()s and Util::xdrToClaimableBalanceId handed that nothing
+     * back as an empty id. It is an exception now.
+     */
+    void testAnUnencodableBalanceIdIsNotAnEmptyOne()
+    {
+        stellar::ClaimableBalanceID id;
+        id.type = stellar::ClaimableBalanceIDType(1);
+        QVERIFY_EXCEPTION_THROWN(Util::xdrToClaimableBalanceId(id), std::runtime_error);
+
+        stellar::ClaimClaimableBalanceOp claimOp;
+        claimOp.balanceID.type = stellar::ClaimableBalanceIDType(1);
+        QScopedPointer<ClaimClaimableBalanceOperation> claim(ClaimClaimableBalanceOperation::build(claimOp));
+        QVERIFY_EXCEPTION_THROWN(claim->getBalanceId(), std::runtime_error);
+
+        stellar::RevokeSponsorshipOp revokeOp;
+        revokeOp.ledgerKey.fillClaimableBalance().balanceID.type = stellar::ClaimableBalanceIDType(1);
+        QScopedPointer<RevokeClaimableBalanceSponsorshipOperation> revoke(
+            RevokeClaimableBalanceSponsorshipOperation::build(revokeOp));
+        QVERIFY_EXCEPTION_THROWN(revoke->getBalanceId(), std::runtime_error);
+
+        // A V0 id still reads back as its 72 hex digits.
+        revokeOp.ledgerKey.claimableBalance.balanceID.type = stellar::ClaimableBalanceIDType::CLAIMABLE_BALANCE_ID_TYPE_V0;
+        std::memset(revokeOp.ledgerKey.claimableBalance.balanceID.v0, 0xab,
+                    sizeof revokeOp.ledgerKey.claimableBalance.balanceID.v0);
+        revoke.reset(RevokeClaimableBalanceSponsorshipOperation::build(revokeOp));
+        QCOMPARE(revoke->getBalanceId(), QString("00000000") + QString("ab").repeated(32));
     }
 
 };

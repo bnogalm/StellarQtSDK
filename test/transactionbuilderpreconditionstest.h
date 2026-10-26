@@ -19,15 +19,14 @@
 class TransactionBuilderPreconditionsTest: public QObject
 {
     Q_OBJECT
-private slots:
-    void initTestCase() {}
-    void cleanupTestCase() {}
 
     static KeyPair* sourceKeyPair()
     {
         return KeyPair::fromSecretSeed(QString("SC4CGETADVYTCR5HEAVZRB3DZQY5Y4J7RFNJTRA6ESMHIPEZUSTE2QDK"));
     }
 
+    // Not a slot: moc's call wrapper assigns a slot's return value, and a
+    // TransactionBuilder cannot be assigned (it owns its operations).
     static TransactionBuilder makeBuilder(Account*& acc)
     {
         acc = new Account(sourceKeyPair(), 2908908335136768L);
@@ -37,6 +36,26 @@ private slots:
             "1000"));
         b.setBaseFee(100);
         return b;
+    }
+
+private slots:
+    void initTestCase() {}
+    void cleanupTestCase() {}
+
+    /**
+     * Ledger bounds whose minimum passes a set maximum were signed; core
+     * rejects the transaction as malformed and js refuses them. A maximum of
+     * 0 (no maximum) takes any minimum.
+     */
+    void testLedgerBoundsMinAboveMaxIsRefused()
+    {
+        Account* acc = nullptr;
+        TransactionBuilder b = makeBuilder(acc);
+        QVERIFY_EXCEPTION_THROWN(b.setLedgerBounds(new LedgerBounds(51, 50)), std::runtime_error);
+        b.setLedgerBounds(new LedgerBounds(50, 50));
+        b.setLedgerBounds(new LedgerBounds(500, 0));
+        b.setLedgerBounds(nullptr);
+        delete acc;
     }
 
     /** Round-trip a transaction with PRECOND_V2 through V1 envelope serialization. */

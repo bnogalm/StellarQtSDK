@@ -20,6 +20,10 @@ class Q_DECL_DEPRECATED AllowTrustOperationResponse : public OperationResponse
     Q_OBJECT
     Q_PROPERTY(QString trustor READ trustor WRITE setTrustor)
     Q_PROPERTY(QString trustee READ trustee WRITE setTrustee)
+    // The muxed (M...) form and id Horizon adds when the account was
+    // given muxed. They were dropped.
+    Q_PROPERTY(QString trustee_muxed MEMBER m_trusteeMuxed)
+    Q_PROPERTY(QString trustee_muxed_id MEMBER m_trusteeMuxedId)
     Q_PROPERTY(QString asset_type READ assetType WRITE setAssetType)
     Q_PROPERTY(QString asset_code READ assetCode WRITE setAssetCode)
     Q_PROPERTY(QString asset_issuer READ assetIssuer WRITE setAssetIssuer)
@@ -35,7 +39,13 @@ class Q_DECL_DEPRECATED AllowTrustOperationResponse : public OperationResponse
     Asset *m_asset;
     bool m_authorize;
     bool m_authorizeToMaintainLiabilities;
+    QString m_trusteeMuxed;
+    QString m_trusteeMuxedId;
 public:
+    /** The muxed (M...) address when the account was given muxed; empty otherwise. */
+    QString getTrusteeMuxed() const { return m_trusteeMuxed; }
+    /** Its muxed id (a uint64, as text); empty otherwise. */
+    QString getTrusteeMuxedId() const { return m_trusteeMuxedId; }
     AllowTrustOperationResponse(QNetworkReply* reply=nullptr);
     virtual ~AllowTrustOperationResponse();
     KeyPair& getTrustor();

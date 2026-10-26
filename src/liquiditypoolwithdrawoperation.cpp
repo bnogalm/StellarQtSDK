@@ -15,9 +15,9 @@ LiquidityPoolWithdrawOperation::LiquidityPoolWithdrawOperation(
         throw std::runtime_error("LiquidityPoolID must be exactly 32 bytes");
     }
     std::memcpy(m_op.liquidityPoolID, liquidityPoolID.constData(), 32);
-    m_op.amount = Operation::toXdrAmount(amount);
-    m_op.minAmountA = Operation::toXdrAmount(minAmountA);
-    m_op.minAmountB = Operation::toXdrAmount(minAmountB);
+    m_op.amount = Operation::toXdrAmountPositive(amount);
+    m_op.minAmountA = Operation::toXdrAmountNonNegative(minAmountA);
+    m_op.minAmountB = Operation::toXdrAmountNonNegative(minAmountB);
 }
 
 LiquidityPoolWithdrawOperation::LiquidityPoolWithdrawOperation(const stellar::LiquidityPoolWithdrawOp& op)

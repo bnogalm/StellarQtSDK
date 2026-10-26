@@ -52,11 +52,29 @@ public:
     QString getLow() const;
     QString getOpen() const;
     QString getClose() const;
-    /** Exact high/low/open/close as rationals {n,d}; the decimal getters above are rounded. */
+    /**
+     * Exact high/low/open/close as rationals {n,d}; the decimal getters above
+     * are rounded. Horizon sends these terms as int64 and on busy pairs they
+     * often do not fit int32: a Price is n/d as sent when both fit,
+     * otherwise reduced by their gcd, and these throw
+     * std::runtime_error when even that does not fit. They used to wrap mod
+     * 2^32 into a different, sometimes plausible-looking, price. The int64
+     * getters below always hold the exact terms.
+     */
     Price getHighR() const;
     Price getLowR() const;
     Price getOpenR() const;
     Price getCloseR() const;
+
+    /** The int64 terms of high_r, low_r, open_r and close_r, exactly as sent. */
+    qint64 getHighRN() const;
+    qint64 getHighRD() const;
+    qint64 getLowRN() const;
+    qint64 getLowRD() const;
+    qint64 getOpenRN() const;
+    qint64 getOpenRD() const;
+    qint64 getCloseRN() const;
+    qint64 getCloseRD() const;
 };
 
 QSTELLAR_END_NS

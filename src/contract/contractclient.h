@@ -28,11 +28,14 @@ QSTELLAR_BEGIN_NS
  *
  *   ContractClient::read — convenience wrapper around `invoke` that only
  *     simulates and returns the decoded result `SCVal`. The intermediate
- *     transaction is discarded.
+ *     transaction is discarded, and the account's sequence is left alone.
  *
- * Both flavours require an `Account` (with current sequence) because
- * soroban-rpc doesn't expose `getAccount`; the caller fetches it elsewhere
- * (Horizon, a saved account, or a freshly-issued one).
+ * Both flavours take an `Account` with its current sequence number, which
+ * the caller fetches (Horizon, a saved account, or a freshly-issued one).
+ * The RPC can supply it: an account is a ledger entry, which js's
+ * rpc.Server.getAccount and py's load_account read with getLedgerEntries.
+ * This SDK has no such helper yet; SorobanServer::getLedgerEntries reads the
+ * entry, to be decoded by hand.
  */
 class ContractClient
 {
@@ -49,10 +52,30 @@ public:
     const StellarAddress& getContractAddress() const { return m_contract; }
     SorobanServer* getServer() const { return m_server; }
 
+    /** How long a built transaction stays valid, as in js-stellar-sdk's contract client. */
+    static const qint64 DEFAULT_TIMEOUT_SECONDS = 300;
+
     /**
      * Build a Soroban tx that invokes `functionName(args)` on this
      * contract, wrap it in an `AssembledTransaction`, simulate it, and
      * (optionally) sign any auth entries that match `authSigner`.
+     *
+     * The transaction expires `timeoutSeconds` after it is built; 0 means it
+     * never expires, and only when asked for. (It used to be built with no
+     * time bounds at all: signed, it stayed valid for as long as its sequence
+     * number was unused.)
+     *
+     * The transaction takes `sourceAccount`'s next sequence number, as a
+     * build does. If the simulation or the auth signing throws, the number
+     * is handed back, unless something built on that account meanwhile (the
+     * simulation waits in a nested event loop). In 1.0.3 a failed invoke()
+     * and every read() kept the number: code that called
+     * Account::decrementSequenceNumber() afterwards to make up for it must
+     * drop that call. That holds for a simulation that timed out or was
+     * cancelled as well: a simulation submits nothing, so it cannot have used
+     * the number. Sending is the returned AssembledTransaction's signAndSend(),
+     * which never hands the number back: a send that timed out or was
+     * cancelled may still land (see its caveat).
      *
      * Caller owns the returned pointer.
      */
@@ -60,16 +83,19 @@ public:
                                  const QList<stellar::SCVal>& args,
                                  Account* sourceAccount,
                                  qint64 baseFee = 100,
-                                 KeyPair* authSigner = nullptr);
+                                 KeyPair* authSigner = nullptr,
+                                 qint64 timeoutSeconds = DEFAULT_TIMEOUT_SECONDS);
 
     /**
      * Read-only invocation: build + simulate + return the result SCVal,
-     * discarding the intermediate AssembledTransaction.
+     * discarding the intermediate AssembledTransaction. Nothing is sent, so
+     * `sourceAccount`'s sequence number is never advanced.
      */
     stellar::SCVal read(const QString& functionName,
                         const QList<stellar::SCVal>& args,
                         Account* sourceAccount,
-                        qint64 baseFee = 100);
+                        qint64 baseFee = 100,
+                        qint64 timeoutSeconds = DEFAULT_TIMEOUT_SECONDS);
 };
 
 QSTELLAR_END_NS

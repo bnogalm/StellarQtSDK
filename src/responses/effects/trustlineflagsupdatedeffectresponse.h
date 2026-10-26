@@ -28,6 +28,10 @@ class TrustlineFlagsUpdatedEffectResponse : public EffectResponse
     Q_PROPERTY(bool authorized_flag READ getAuthorized WRITE setAuthorized NOTIFY authorizedChanged)
     Q_PROPERTY(bool authorized_to_maintain_liabilities_flag READ getAuthorizedToMaintainLiabilities WRITE setAuthorizedToMaintainLiabilities NOTIFY authorizedToMaintainLiabilitiesChanged)
     Q_PROPERTY(bool clawback_enabled_flag READ getClawbackEnabled WRITE setClawbackEnabled NOTIFY clawbackEnabledChanged)
+    // Horizon's own spelling of the maintain-liabilities flag in this effect
+    // (effects/main.go: "authorized_to_maintain_liabilites_flag"); the
+    // property above, spelled right, could never be read from it.
+    Q_PROPERTY(bool authorized_to_maintain_liabilites_flag READ getAuthorizedToMaintainLiabilities WRITE setAuthorizedToMaintainLiabilities)
 
 
     QString m_trustor;
@@ -44,11 +48,30 @@ class TrustlineFlagsUpdatedEffectResponse : public EffectResponse
 
     bool m_clawbackEnabledFlag;
 
+    // Horizon sends only the flags the operation changed: an absent one read
+    // as false, "cleared". Whether each was in the record:
+    bool m_hasAuthorized = false;
+    bool m_hasAuthorizedToMaintainLiabilities = false;
+    bool m_hasClawbackEnabled = false;
+
 
     Asset* m_asset;
 public:
     TrustlineFlagsUpdatedEffectResponse(QNetworkReply *reply=nullptr);
     virtual ~TrustlineFlagsUpdatedEffectResponse();
+
+    /** Whether the record says the operation changed the flag (js: not undefined). */
+    bool hasAuthorized() const { return m_hasAuthorized; }
+    /** Current Horizon never reports this change in the effect (its ingester drops it). */
+    bool hasAuthorizedToMaintainLiabilities() const { return m_hasAuthorizedToMaintainLiabilities; }
+    bool hasClawbackEnabled() const { return m_hasClawbackEnabled; }
+protected:
+    void reset() override
+    {
+        EffectResponse::reset();
+        m_hasAuthorized = m_hasAuthorizedToMaintainLiabilities = m_hasClawbackEnabled = false;
+    }
+public:
 
 
     Asset* getAsset();

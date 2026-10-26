@@ -16,7 +16,13 @@ QSTELLAR_BEGIN_NS
 class DataRemovedEffectResponse : public EffectResponse
 {
     Q_OBJECT
+    // The entry's name and (base64) value, as Horizon sends them and js
+    // types them. They were dropped: nothing said which entry changed.
+    Q_PROPERTY(QString name MEMBER m_name)
+    QString m_name;
 public:
+    /** The data entry's name. */
+    QString getName() const { return m_name; }
     DataRemovedEffectResponse(QNetworkReply *reply = nullptr);
     virtual ~DataRemovedEffectResponse();
 signals:

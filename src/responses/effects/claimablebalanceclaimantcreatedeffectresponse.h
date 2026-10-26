@@ -37,6 +37,10 @@ public:
 
     QString getBalanceID() const;
 
+    /**
+     * The claimant's predicate, owned by this effect; read exactly from
+     * Horizon's JSON (it never was before 1.0.4, and this was always null).
+     */
     Predicate* predicate() const;
 
 public slots:
@@ -44,6 +48,10 @@ public slots:
     void setAmount(QString amount);
     void setBalanceID(QString balance_id);
     void setPredicate(Predicate* predicate);
+
+protected:
+    /** The predicate, which the generic reader cannot build. */
+    bool readMember(const QString& key, const QJsonValue& value, const QString& field) override;
 
 signals:
     void assetChanged();

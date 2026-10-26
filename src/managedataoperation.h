@@ -25,9 +25,15 @@ public:
 
      ManageDataOperation(stellar::ManageDataOp &op);
      /**
-      * The name of the data value
+      * The name of the data value. A leading byte order mark is kept as U+FEFF:
+      * it is part of the name that is signed.
       */
      QString getName();
+
+     /**
+      * The name exactly as it is signed: its UTF-8 bytes, undecoded.
+      */
+     QByteArray getNameBytes();
 
      /**
       * Data value

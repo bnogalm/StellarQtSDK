@@ -1,6 +1,9 @@
 #include "effectspage.h"
 #include <QJsonObject>
 #include <QJsonArray>
+#include <limits>
+#include <memory>
+#include <stdexcept>
 #include "effects/effectresponse.h"
 #include "effects/accountcreatedeffectresponse.h"
 #include "effects/contractcreditedeffectresponse.h"
@@ -69,137 +72,150 @@ EffectsPage::EffectsPage(QNetworkReply *reply)
 
 }
 
+EffectResponse *EffectsPage::createRecord(const QJsonObject &record, const QString &field)
+{
+    // type_i, exactly: it used to be read with toInt(), so a record without
+    // it, or with it as text, became an AccountCreatedEffectResponse.
+    const QString typeField = field.isEmpty() ? QStringLiteral("type_i") : field + QStringLiteral(".type_i");
+    const int type = static_cast<int>(ResponseConverters::exactInteger(
+        record.value(QStringLiteral("type_i")), typeField, 0, std::numeric_limits<qint32>::max()));
+    EffectResponse * effect=nullptr;
+    switch(type)
+    {
+    // Account effects
+    case 0:
+      effect= new AccountCreatedEffectResponse();break;
+    case 1:
+      effect= new AccountRemovedEffectResponse();break;
+    case 2:
+      effect= new AccountCreditedEffectResponse();break;
+    case 3:
+      effect= new AccountDebitedEffectResponse();break;
+    case 4:
+      effect= new AccountThresholdsUpdatedEffectResponse();break;
+    case 5:
+      effect= new AccountHomeDomainUpdatedEffectResponse();break;
+    case 6:
+      effect= new AccountFlagsUpdatedEffectResponse();break;
+    case 7:
+      effect= new AccountInflationDestinationUpdatedEffectResponse();break;
+    // Signer effects
+    case 10:
+      effect= new SignerCreatedEffectResponse();break;
+    case 11:
+      effect= new SignerRemovedEffectResponse();break;
+    case 12:
+      effect= new SignerUpdatedEffectResponse();break;
+    // Trustline effects
+    case 20:
+      effect= new TrustlineCreatedEffectResponse();break;
+    case 21:
+      effect= new TrustlineRemovedEffectResponse();break;
+    case 22:
+      effect= new TrustlineUpdatedEffectResponse();break;
+    case 23:
+      effect= new TrustlineAuthorizedEffectResponse();break;
+    case 24:
+      effect= new TrustlineDeauthorizedEffectResponse();break;
+    case 25:
+      effect= new TrustlineAuthorizedToMaintainLiabilitiesEffectResponse();break;
+    case 26:
+      effect= new TrustlineFlagsUpdatedEffectResponse();break;
+
+    // Trading effects
+    case 30:
+      effect= new OfferCreatedEffectResponse();break;
+    case 31:
+      effect= new OfferRemovedEffectResponse();break;
+    case 32:
+      effect= new OfferUpdatedEffectResponse();break;
+    case 33:
+      effect= new TradeEffectResponse();break;
+    // Data effects
+    case 40:
+      effect= new DataCreatedEffectResponse();break;
+    case 41:
+      effect= new DataRemovedEffectResponse();break;
+    case 42:
+      effect= new DataUpdatedEffectResponse();break;
+    case 43:
+      effect= new SequenceBumpedEffectResponse();break;
+      // claimable balance effects
+    case 50:
+      effect= new ClaimableBalanceCreatedEffectResponse();break;
+    case 51:
+      effect= new ClaimableBalanceClaimantCreatedEffectResponse();break;
+    case 52:
+      effect= new ClaimableBalanceClaimedEffectResponse();break;
+    // sponsorship effects
+    case 60:
+      effect= new AccountSponsorshipCreatedEffectResponse();break;
+    case 61:
+      effect= new AccountSponsorshipUpdatedEffectResponse();break;
+    case 62:
+      effect= new AccountSponsorshipRemovedEffectResponse();break;
+    case 63:
+      effect= new TrustlineSponsorshipCreatedEffectResponse();break;
+    case 64:
+      effect= new TrustlineSponsorshipUpdatedEffectResponse();break;
+    case 65:
+      effect= new TrustlineSponsorshipRemovedEffectResponse();break;
+    case 66:
+      effect= new DataSponsorshipCreatedEffectResponse();break;
+    case 67:
+      effect= new DataSponsorshipUpdatedEffectResponse();break;
+    case 68:
+      effect= new DataSponsorshipRemovedEffectResponse();break;
+    case 69:
+      effect= new ClaimableBalanceSponsorshipCreatedEffectResponse();break;
+    case 70:
+      effect= new ClaimableBalanceSponsorshipUpdatedEffectResponse();break;
+    case 71:
+      effect= new ClaimableBalanceSponsorshipRemovedEffectResponse();break;
+    case 72:
+      effect= new SignerSponsorshipCreatedEffectResponse();break;
+    case 73:
+      effect= new SignerSponsorshipUpdatedEffectResponse();break;
+    case 74:
+      effect= new SignerSponsorshipRemovedEffectResponse();break;
+    case 80:
+      effect= new ClaimableBalanceClawedBackEffectResponse();break;
+    // liquidity pool effects
+    case 90:
+      effect= new LiquidityPoolDepositedEffectResponse();break;
+    case 91:
+      effect= new LiquidityPoolWithdrewEffectResponse();break;
+    case 92:
+      effect= new LiquidityPoolTradeEffectResponse();break;
+    case 93:
+      effect= new LiquidityPoolCreatedEffectResponse();break;
+    case 94:
+      effect= new LiquidityPoolRemovedEffectResponse();break;
+    case 95:
+      effect= new LiquidityPoolRevokedEffectResponse();break;
+    case 96:
+      effect= new ContractCreditedEffectResponse();break;
+    case 97:
+      effect= new ContractDebitedEffectResponse();break;
+    default:
+        // A type this SDK does not know yet: Horizon adds effects without a
+        // major release (96 and 97 came with Soroban). It is kept as a plain
+        // EffectResponse, its common members read and json() holding the
+        // rest, as js and py hand such a record back. It refused the whole
+        // page, and every stream event of that type.
+        effect= new EffectResponse();break;
+    }
+    return effect;
+}
+
 void EffectsPage::processRecords(const QJsonArray &records)
 {
     for(int i=0;i<records.size();i++){
-        QJsonObject obj = records.at(i).toObject();
-        int type = obj.value("type_i").toInt();
-        Response * effect=0;
-        switch(type)
-        {
-        // Account effects
-        case 0:
-          effect= new AccountCreatedEffectResponse();break;
-        case 1:
-          effect= new AccountRemovedEffectResponse();break;
-        case 2:
-          effect= new AccountCreditedEffectResponse();break;
-        case 3:
-          effect= new AccountDebitedEffectResponse();break;
-        case 4:
-          effect= new AccountThresholdsUpdatedEffectResponse();break;
-        case 5:
-          effect= new AccountHomeDomainUpdatedEffectResponse();break;
-        case 6:
-          effect= new AccountFlagsUpdatedEffectResponse();break;
-        case 7:
-          effect= new AccountInflationDestinationUpdatedEffectResponse();break;
-        // Signer effects
-        case 10:
-          effect= new SignerCreatedEffectResponse();break;
-        case 11:
-          effect= new SignerRemovedEffectResponse();break;
-        case 12:
-          effect= new SignerUpdatedEffectResponse();break;
-        // Trustline effects
-        case 20:
-          effect= new TrustlineCreatedEffectResponse();break;
-        case 21:
-          effect= new TrustlineRemovedEffectResponse();break;
-        case 22:
-          effect= new TrustlineUpdatedEffectResponse();break;
-        case 23:
-          effect= new TrustlineAuthorizedEffectResponse();break;
-        case 24:
-          effect= new TrustlineDeauthorizedEffectResponse();break;
-        case 25:
-          effect= new TrustlineAuthorizedToMaintainLiabilitiesEffectResponse();break;
-        case 26:
-          effect= new TrustlineFlagsUpdatedEffectResponse();break;
-
-        // Trading effects
-        case 30:
-          effect= new OfferCreatedEffectResponse();break;
-        case 31:
-          effect= new OfferRemovedEffectResponse();break;
-        case 32:
-          effect= new OfferUpdatedEffectResponse();break;
-        case 33:
-          effect= new TradeEffectResponse();break;
-        // Data effects
-        case 40:
-          effect= new DataCreatedEffectResponse();break;
-        case 41:
-          effect= new DataRemovedEffectResponse();break;
-        case 42:
-          effect= new DataUpdatedEffectResponse();break;
-        case 43:
-          effect= new SequenceBumpedEffectResponse();break;
-          // claimable balance effects
-        case 50:
-          effect= new ClaimableBalanceCreatedEffectResponse();break;
-        case 51:
-          effect= new ClaimableBalanceClaimantCreatedEffectResponse();break;
-        case 52:
-          effect= new ClaimableBalanceClaimedEffectResponse();break;
-        // sponsorship effects
-        case 60:
-          effect= new AccountSponsorshipCreatedEffectResponse();break;
-        case 61:
-          effect= new AccountSponsorshipUpdatedEffectResponse();break;
-        case 62:
-          effect= new AccountSponsorshipRemovedEffectResponse();break;
-        case 63:
-          effect= new TrustlineSponsorshipCreatedEffectResponse();break;
-        case 64:
-          effect= new TrustlineSponsorshipUpdatedEffectResponse();break;
-        case 65:
-          effect= new TrustlineSponsorshipRemovedEffectResponse();break;
-        case 66:
-          effect= new DataSponsorshipCreatedEffectResponse();break;
-        case 67:
-          effect= new DataSponsorshipUpdatedEffectResponse();break;
-        case 68:
-          effect= new DataSponsorshipRemovedEffectResponse();break;
-        case 69:
-          effect= new ClaimableBalanceSponsorshipCreatedEffectResponse();break;
-        case 70:
-          effect= new ClaimableBalanceSponsorshipUpdatedEffectResponse();break;
-        case 71:
-          effect= new ClaimableBalanceSponsorshipRemovedEffectResponse();break;
-        case 72:
-          effect= new SignerSponsorshipCreatedEffectResponse();break;
-        case 73:
-          effect= new SignerSponsorshipUpdatedEffectResponse();break;
-        case 74:
-          effect= new SignerSponsorshipRemovedEffectResponse();break;
-        case 80:
-          effect= new ClaimableBalanceClawedBackEffectResponse();break;
-        // liquidity pool effects
-        case 90:
-          effect= new LiquidityPoolDepositedEffectResponse();break;
-        case 91:
-          effect= new LiquidityPoolWithdrewEffectResponse();break;
-        case 92:
-          effect= new LiquidityPoolTradeEffectResponse();break;
-        case 93:
-          effect= new LiquidityPoolCreatedEffectResponse();break;
-        case 94:
-          effect= new LiquidityPoolRemovedEffectResponse();break;
-        case 95:
-          effect= new LiquidityPoolRevokedEffectResponse();break;
-        case 96:
-          effect= new ContractCreditedEffectResponse();break;
-        case 97:
-          effect= new ContractDebitedEffectResponse();break;
-        default:
-            throw std::runtime_error("Invalid effect type");
-        }
-        if(effect){
-            effect->setParent(this);
-            Response::fillObject(effect->metaObject(),effect,obj,true);
-            this->m_records.append(effect);
-        }
+        const QJsonObject obj = recordObject(records, i);
+        std::unique_ptr<EffectResponse> effect(createRecord(obj, recordField(i)));
+        effect->setParent(this);
+        Response::fillObject(effect->metaObject(), effect.get(), obj, true, recordField(i));
+        this->m_records.append(effect.release());
     }
 }
 QSTELLAR_END_NS

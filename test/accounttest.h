@@ -11,7 +11,11 @@
 #include "../src/transaction.h"
 #include "../src/account.h"
 #include "../src/createaccountoperation.h"
+#include "../src/bumpsequenceoperation.h"
+#include "../src/transactionbuilder.h"
 #include "../src/responses/submittransactionresponse.h"
+#include <functional>
+#include <limits>
 class AccountTest: public QObject
 {
     Q_OBJECT
@@ -67,6 +71,39 @@ private slots:
         Account* account = new Account(keypair, 100L);
         QVERIFY(account->getKeypair()->getAccountId()== keypair->getAccountId());
         QVERIFY(account->getSequenceNumber()== 100L);
+    }
+
+    /** At INT64_MAX the +1 overflowed: build() signed a transaction with
+     *  sequence INT64_MIN and left the account there. */
+    void testTheSequenceNumberDoesNotWrap() {
+        const qint64 max = std::numeric_limits<qint64>::max();
+        Account account(KeyPair::random(), max);
+        auto throws = [](const std::function<void()>& f) {
+            try { f(); return false; } catch (const std::exception&) { return true; }
+        };
+        QVERIFY(throws([&] { account.getIncrementedSequenceNumber(); }));
+        QVERIFY(throws([&] { account.incrementSequenceNumber(); }));
+        QCOMPARE(account.getSequenceNumber(), max);
+
+        QVERIFY(throws([&] {
+            TransactionBuilder builder(&account, Network::testnetNetwork());
+            builder.addOperation(BumpSequenceOperation::create(qint64(2)))
+                   .setTimeout(180).setBaseFee(100);
+            delete builder.build();
+        }));
+        QCOMPARE(account.getSequenceNumber(), max);
+
+        // One below still signs INT64_MAX itself.
+        Account last(KeyPair::random(), max - 1);
+        QScopedPointer<Transaction> tx(TransactionBuilder(&last, Network::testnetNetwork())
+            .addOperation(BumpSequenceOperation::create(qint64(2)))
+            .setTimeout(180).setBaseFee(100).build());
+        QCOMPARE(tx->getSequenceNumber(), max);
+        QCOMPARE(last.getSequenceNumber(), max);
+
+        Account lowest(KeyPair::random(), std::numeric_limits<qint64>::min());
+        QVERIFY(throws([&] { lowest.decrementSequenceNumber(); }));
+        QCOMPARE(lowest.getSequenceNumber(), std::numeric_limits<qint64>::min());
     }
 };
 

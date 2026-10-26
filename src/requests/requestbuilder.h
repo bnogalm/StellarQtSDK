@@ -14,6 +14,12 @@ QSTELLAR_FWD(Server)
 QSTELLAR_BEGIN_NS
 
 
+/**
+ * Setting a query parameter again (cursor, limit, order, or a builder's
+ * filter) replaces its value, where it was first set, as js's
+ * searchParams.set and py's params dict do. Before 1.0.4 the request
+ * carried both values.
+ */
 class RequestBuilder
 {
     QUrl m_uri;//origin of the uri
@@ -42,6 +48,7 @@ protected:
 
     RequestBuilder& setSegments(QStringList segments);
 
+    /** Sets query parameter `key` to `value`, replacing the value it had. */
     void addParameter(QString key, QString value);
 
     QString parameter(QString key) const;
@@ -79,6 +86,7 @@ public:
 
 
      QString toString(Order order);
+     /** "asc" or "desc", exactly; throws std::runtime_error for anything else (read as DESC before 1.0.4). */
      Order orderFromString(QString s);
 
 protected:

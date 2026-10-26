@@ -4,6 +4,10 @@
 #include <QtTest>
 #include "../testcollector.h"
 #include "../../src/responses/feestatsresponse.h"
+#include <QJsonArray>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <limits>
 
 class FeeStatsDeserializerTest: public QObject
 {
@@ -96,6 +100,112 @@ private slots:
         QCOMPARE(feeCharged.getP99(),113);
     }
 
+
+    // ---- Exact reading (1.0.4) -------------------------------------------
+private:
+    /** `json` with the member at `path` ("a.b[1].c") set to `value`, or removed when undefined. */
+    static QJsonValue edited(const QJsonValue& json, QStringList path, const QJsonValue& value)
+    {
+        const QString step = path.takeFirst();
+        const int bracket = step.indexOf(QLatin1Char('['));
+        const QString key = bracket < 0 ? step : step.left(bracket);
+        QJsonObject object = json.toObject();
+        if (bracket >= 0) {
+            const int index = step.mid(bracket + 1, step.size() - bracket - 2).toInt();
+            QJsonArray array = object.value(key).toArray();
+            array[index] = path.isEmpty() ? value : edited(array.at(index), path, value);
+            object[key] = array;
+        } else if (path.isEmpty()) {
+            if (value.isUndefined())
+                object.remove(key);
+            else
+                object[key] = value;
+        } else {
+            object[key] = edited(object.value(key), path, value);
+        }
+        return object;
+    }
+
+    /** What a T loading `json` with `member` set to `value` throws; empty if it loads. */
+    template<class T>
+    static QString refusalOf(const QByteArray& json, const QString& member, const QJsonValue& value)
+    {
+        const QJsonValue changed = edited(QJsonDocument::fromJson(json).object(),
+                                          member.split(QLatin1Char('.')), value);
+        T response;
+        try {
+            response.loadFromJson(QJsonDocument(changed.toObject()).toJson());
+        } catch (const std::exception& e) {
+            return QString::fromUtf8(e.what());
+        }
+        return QString();
+    }
+
+private slots:
+
+    /**
+     * The fees a transaction is priced with, exactly: a percentile that is
+     * not a number, a fraction, or a number past int64 used to read as 0 (a
+     * fee of 0 is refused by the network), and a missing one as 0 too.
+     */
+    void testFeeStatsAreReadExactly()
+    {
+        QVERIFY(refusalOf<FeeStatsResponse>(json, "fee_charged.p50", QString("abc")).startsWith("fee_charged.p50: "));
+        QVERIFY(refusalOf<FeeStatsResponse>(json, "fee_charged.p99", 113.5).startsWith("fee_charged.p99: "));
+        QVERIFY(refusalOf<FeeStatsResponse>(json, "max_fee.max", QString("9223372036854775808")).startsWith("max_fee.max: "));
+        QVERIFY(refusalOf<FeeStatsResponse>(json, "max_fee.p95", QJsonValue(QJsonValue::Undefined)).startsWith("max_fee.p95: "));
+        QVERIFY(refusalOf<FeeStatsResponse>(json, "max_fee.mode", QJsonValue()).startsWith("max_fee.mode: "));
+        QVERIFY(refusalOf<FeeStatsResponse>(json, "last_ledger_base_fee", QString("100 stroops")).startsWith("last_ledger_base_fee: "));
+        QVERIFY(refusalOf<FeeStatsResponse>(json, "last_ledger_base_fee", QJsonValue(QJsonValue::Undefined)).startsWith("last_ledger_base_fee: "));
+        QVERIFY(refusalOf<FeeStatsResponse>(json, "ledger_capacity_usage", QString("high")).startsWith("ledger_capacity_usage: "));
+        QVERIFY(refusalOf<FeeStatsResponse>(json, "fee_charged", QString("100")).startsWith("fee_charged: "));
+    }
+
+    /** Real fee stats, pubnet and testnet, load with their exact values. */
+    void testRealHorizonFeeStats()
+    {
+        FeeStatsResponse pubnet;
+        pubnet.loadFromJson(realPubnetFeeStats());
+        QCOMPARE(pubnet.getLastLedger(), Q_INT64_C(64664562));
+        QCOMPARE(pubnet.getLastLedgerBaseFee(), Q_INT64_C(100));
+        QCOMPARE(pubnet.getLedgerCapacityUsage(), 0.82f);
+        QCOMPARE(pubnet.getMaxFee().getMax(), Q_INT64_C(301106380));
+        QCOMPARE(pubnet.getFeeCharged().getP99(), Q_INT64_C(317989));
+        FeeStatsResponse testnet;
+        testnet.loadFromJson(realTestnetFeeStats());
+        QCOMPARE(testnet.getFeeCharged().getMax(), Q_INT64_C(8140878));
+        QCOMPARE(testnet.getMaxFee().getP90(), Q_INT64_C(10000000));
+    }
+
+    /**
+     * How full the last ledgers were is always sent too: missing or null it
+     * read 0, as if there were room for any fee.
+     */
+    void testLedgerCapacityUsageIsRequired()
+    {
+        const QByteArray real = realPubnetFeeStats();
+        QVERIFY(refusalOf<FeeStatsResponse>(real, "ledger_capacity_usage", QString("0.82")).isEmpty());
+        QVERIFY(refusalOf<FeeStatsResponse>(real, "ledger_capacity_usage", QJsonValue(QJsonValue::Undefined))
+                    .startsWith("ledger_capacity_usage: "));
+        QVERIFY(refusalOf<FeeStatsResponse>(real, "ledger_capacity_usage", QJsonValue())
+                    .startsWith("ledger_capacity_usage: "));
+    }
+private:
+    /** Real pubnet fee stats. */
+    static QByteArray realPubnetFeeStats()
+    {
+        return QByteArray(
+            "{\"last_ledger\":\"64664562\",\"last_ledger_base_fee\":\"100\",\"ledger_capacity_usage\":\"0.82\",\"fee_charged\":{\"max\":\"398442\",\"min\":\"100\",\"mode\":\"100\",\"p10\":\"100\",\"p20\":\"100\",\"p30\":\"100\",\"p40\":\"100\",\"p50\":\"100\",\"p60\":\"9236\",\"p70\":\"9236\",\"p80\":\"9236\",\"p90\":\"9236\",\"p95\":\"17443\",\"p99\":\"317989\"},\"max_fee\":{\"max\":\"301106380\",\"min\":\"100\",\"mode\":\"141895\",\"p10\":\"125\",\"p20\":\"1000\",\"p30\":\"20001\",\"p40\":\"22688\",\"p50\":\"141895\",\"p60\":\"141895\",\"p70\":\"141895\",\"p80\":\"141895\",\"p90\":\"1000000\",\"p95\":\"3000000\",\"p99\":\"16824685\"}}");
+    }
+
+    /** Real testnet fee stats. */
+    static QByteArray realTestnetFeeStats()
+    {
+        return QByteArray(
+            "{\"last_ledger\":\"4917001\",\"last_ledger_base_fee\":\"100\",\"ledger_capacity_usage\":\"0.12\",\"fee_charged\":{\"max\":\"8140878\",\"min\":\"100\",\"mode\":\"100\",\"p10\":\"100\",\"p20\":\"100\",\"p30\":\"100\",\"p40\":\"100\",\"p50\":\"100\",\"p60\":\"9694\",\"p70\":\"17190\",\"p80\":\"85564\",\"p90\":\"152588\",\"p95\":\"1690276\",\"p99\":\"8140878\"},\"max_fee\":{\"max\":\"20000000\",\"min\":\"100\",\"mode\":\"1000000\",\"p10\":\"21442\",\"p20\":\"36576\",\"p30\":\"203994\",\"p40\":\"1000000\",\"p50\":\"1000000\",\"p60\":\"1000000\",\"p70\":\"1000000\",\"p80\":\"1103554\",\"p90\":\"10000000\",\"p95\":\"10026826\",\"p99\":\"20000000\"}}");
+    }
+
+private slots:
 };
 
 ADD_TEST(FeeStatsDeserializerTest)

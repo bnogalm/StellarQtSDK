@@ -3,6 +3,8 @@
 
 #include <QObject>
 #include <QtTest>
+#include "../src/changetrustasset.h"
+#include <stdexcept>
 #include "testcollector.h"
 
 #include "../src/liquiditypool.h"
@@ -91,8 +93,11 @@ private slots:
         QCOMPARE(id1, id2);
     }
 
-    /** Different fee → different ID. */
-    void testPoolIdDependsOnFee()
+    /**
+     * 30 is the only fee a pool has: an id for any other names no pool (js and
+     * py refuse it; core refuses the changeTrust). It used to be computed.
+     */
+    void testPoolFeeIsThirty()
     {
         AssetTypeNative native;
         QScopedPointer<Asset> usd(Asset::create("USD", "GCACCFMIWJAHUUASSE2WC7V6VVDLYRLSJYZ3DJEXCG523FSHTNII6KOG"));
@@ -100,10 +105,15 @@ private slots:
         QByteArray id30 = LiquidityPool::getLiquidityPoolID(
             stellar::LiquidityPoolType::LIQUIDITY_POOL_CONSTANT_PRODUCT,
             &native, usd.data(), 30);
-        QByteArray id100 = LiquidityPool::getLiquidityPoolID(
-            stellar::LiquidityPoolType::LIQUIDITY_POOL_CONSTANT_PRODUCT,
-            &native, usd.data(), 100);
-        QVERIFY(id30 != id100);
+        QCOMPARE(id30.size(), 32);
+        for (const qint32 fee : {0, 29, 31, 100, -30}) {
+            QVERIFY_EXCEPTION_THROWN(LiquidityPool::getLiquidityPoolID(
+                stellar::LiquidityPoolType::LIQUIDITY_POOL_CONSTANT_PRODUCT, &native, usd.data(), fee),
+                std::runtime_error);
+            QVERIFY_EXCEPTION_THROWN(LiquidityPoolShareChangeTrustAsset(
+                new AssetTypeNative(), Asset::create("USD", "GCACCFMIWJAHUUASSE2WC7V6VVDLYRLSJYZ3DJEXCG523FSHTNII6KOG"), fee),
+                std::runtime_error);
+        }
     }
 
     /** XDR round-trip for LiquidityPoolParameters. */
@@ -177,6 +187,39 @@ private slots:
 
         QCOMPARE(actual.size(), 32);
         QCOMPARE(actual.toHex(), expectedHash.toHex());
+    }
+
+    /**
+     * An asset whose XDR cannot be encoded (here one that names POOL_SHARE,
+     * which is no arm of a plain Asset) is neither ordered nor hashed into a
+     * pool id. It encoded as nothing, and nothing sorts before every asset,
+     * so it passed as the lesser of any pair.
+     */
+    void testAnAssetThatCannotBeEncodedIsNeitherOrderedNorHashed()
+    {
+        struct NoArmAsset : public Asset
+        {
+            QString getType() override { return QStringLiteral("liquidity_pool_shares"); }
+            stellar::Asset toXdr() override
+            {
+                stellar::Asset xdr;
+                xdr.type = stellar::AssetType::ASSET_TYPE_POOL_SHARE;
+                return xdr;
+            }
+            QString toString() const override { return QStringLiteral("pool share"); }
+        };
+        NoArmAsset noArm;
+        AssetTypeNative native;
+        auto throws = [](auto&& call) {
+            try { call(); } catch (const std::runtime_error&) { return true; }
+            return false;
+        };
+        QVERIFY(throws([&] { LiquidityPool::compareAssets(&noArm, &native); }));
+        QVERIFY(throws([&] { LiquidityPool::compareAssets(&native, &noArm); }));
+        QVERIFY(throws([&] {
+            LiquidityPool::getLiquidityPoolID(stellar::LiquidityPoolType::LIQUIDITY_POOL_CONSTANT_PRODUCT,
+                                              &noArm, &native, LiquidityPool::FEE);
+        }));
     }
 };
 

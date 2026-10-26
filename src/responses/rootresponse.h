@@ -21,6 +21,9 @@ class RootResponse : public Response
     Q_PROPERTY(qint32 protocol_version MEMBER m_protocolVersion)
     Q_PROPERTY(qint32 current_protocol_version MEMBER m_currentProtocolVersion)
     Q_PROPERTY(qint32 core_supported_protocol_version MEMBER m_coreSupportedProtocolVersion)
+    Q_PROPERTY(qint64 ingest_latest_ledger MEMBER m_ingestLatestLedger)
+    Q_PROPERTY(QString history_latest_ledger_closed_at MEMBER m_historyLatestLedgerClosedAt)
+    Q_PROPERTY(qint32 supported_protocol_version MEMBER m_supportedProtocolVersion)
 
     QString m_horizonVersion;
     QString m_coreVersion;
@@ -31,6 +34,9 @@ class RootResponse : public Response
     qint32 m_protocolVersion;
     qint32 m_currentProtocolVersion;
     qint32 m_coreSupportedProtocolVersion;
+    qint64 m_ingestLatestLedger = 0;
+    QString m_historyLatestLedgerClosedAt;
+    qint32 m_supportedProtocolVersion = 0;
 public:
     RootResponse(QNetworkReply *reply=nullptr);
     virtual ~RootResponse();
@@ -54,6 +60,18 @@ public:
     qint32 getCurrentProtocolVersion() const;
 
     qint32 getCoreSupportedProtocolVersion() const;
+
+    /** The last ledger Horizon ingested. 0 if absent. */
+    qint64 getIngestLatestLedger() const { return m_ingestLatestLedger; }
+
+    /** When history_latest_ledger closed, as Horizon writes it (ISO 8601). Empty if absent. */
+    QString getHistoryLatestLedgerClosedAt() const { return m_historyLatestLedgerClosedAt; }
+
+    /**
+     * The newest protocol this Horizon supports. During an upgrade window it
+     * is ahead of getCurrentProtocolVersion(). 0 if absent.
+     */
+    qint32 getSupportedProtocolVersion() const { return m_supportedProtocolVersion; }
 };
 
 QSTELLAR_END_NS

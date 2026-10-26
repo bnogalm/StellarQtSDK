@@ -57,6 +57,27 @@ TradesRequestBuilder &TradesRequestBuilder::tradeType(const QString& type) {
     return *this;
 }
 
+TradesRequestBuilder &TradesRequestBuilder::cursor(QString token) {
+    RequestBuilder::cursor(token);
+    return *this;
+}
+
+TradesRequestBuilder &TradesRequestBuilder::limit(int number) {
+    RequestBuilder::limit(number);
+    return *this;
+}
+
+TradesRequestBuilder &TradesRequestBuilder::order(RequestBuilder::Order direction) {
+    RequestBuilder::order(direction);
+    return *this;
+}
+
+TradesRequestBuilder &TradesRequestBuilder::stream()
+{
+    setStreamMode();
+    return *this;
+}
+
 Page<TradeResponse>* TradesRequestBuilder::execute(QUrl uri)
 {
     this->setRequestUri(uri);//we overwrite the uri

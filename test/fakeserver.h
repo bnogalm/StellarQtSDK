@@ -5,6 +5,7 @@
 #include <QTcpSocket>
 #include <QTest>
 #include <QThread>
+#include <QSet>
 
 /**
  * @brief The FakeServer class
@@ -30,6 +31,7 @@ private:
     // --- SSE / streaming support ---
     struct Stream { QStringList rounds; int served = 0; };
     QHash<QString, Stream> m_streams;   // keyed by path (query string stripped)
+    QSet<QString> m_hangs;              // paths that are never answered
     QByteArray m_lastRequestHeaders;    // accumulated raw headers of all stream requests
 public:
     /**
@@ -107,6 +109,14 @@ public:
         Stream s; s.rounds = rounds;
         m_streams.insert(path, s);
     }
+    /**
+     * Never answer a request (any method) for `path` (query string ignored):
+     * the connection stays open and silent, for the client's own timeout.
+     */
+    void addHang(const QString& path)
+    {
+        m_hangs.insert(path);
+    }
     /** Raw headers of all stream requests, accumulated (lets a test assert that a
      *  reconnect sent `Last-Event-ID`, regardless of how many reconnects followed). */
     QByteArray lastRequestHeaders() const { return m_lastRequestHeaders; }
@@ -135,6 +145,11 @@ private slots:
             if(tokens.size()>=2){
 
                 QString reqPath = tokens[1].section('?', 0, 0);
+                if (m_hangs.contains(reqPath)) {
+                    while (socket->canReadLine())
+                        socket->readLine();
+                    return;
+                }
                 if (tokens[0] == "GET" && m_streams.contains(reqPath)) {
                     serveStream(socket, reqPath);
                     return; // socket is being closed; stop processing it

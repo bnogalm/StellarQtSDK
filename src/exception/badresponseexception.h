@@ -10,8 +10,10 @@ namespace exception {
 /**
  * @brief HTTP 5xx — server-side error.
  *
- * If the response body was application/problem+json the parsed Problem is
- * attached and owned by this exception.
+ * If the response body was a JSON object (Horizon's problem document), the
+ * parsed Problem is attached and owned by this exception, whatever the
+ * Content-Type, as js and py read it; before 1.0.4, only when it was
+ * application/problem+json.
  */
 class BadResponseException : public NetworkException
 {

@@ -61,7 +61,12 @@ class LiquidityPoolShareChangeTrustAsset : public ChangeTrustAsset
     Asset* m_assetB;
     qint32 m_fee;
 public:
-    /** Takes ownership of both assets. Order must be canonical (a < b XDR-byte). */
+    /**
+     * Takes ownership of both assets once it is constructed. Order must be
+     * canonical (a < b XDR-byte) and the fee 30. When it throws (null, out of
+     * order, another fee) it has taken neither: they are still the caller's
+     * to delete. TxRep and fromXdr hold them in a unique_ptr until then.
+     */
     LiquidityPoolShareChangeTrustAsset(Asset* assetA, Asset* assetB, qint32 fee);
     ~LiquidityPoolShareChangeTrustAsset() override;
 

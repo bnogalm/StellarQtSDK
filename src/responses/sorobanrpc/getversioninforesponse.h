@@ -17,6 +17,8 @@ class GetVersionInfoResponse
     QString m_captiveCoreVersion;
     qint32 m_protocolVersion = 0;
 public:
+    /** Throws std::runtime_error when a field is missing or not what the RPC
+     *  sends (a string, or a JSON integer for protocolVersion). */
     static GetVersionInfoResponse fromJson(const QJsonObject& result);
     QString getVersion() const { return m_version; }
     QString getCommitHash() const { return m_commitHash; }

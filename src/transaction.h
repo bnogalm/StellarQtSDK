@@ -36,10 +36,13 @@ class Transaction : public AbstractTransaction
     friend class TransactionBuilder;        // qstellar::TransactionBuilder
     friend class FeeBumpTransaction;
     friend class SorobanServer;
+    friend class Txrep;                     // sets the document's exact fee
     /** Legacy ctor — only time bounds. The TimeBounds* is consumed (TransactionPreconditions takes ownership). */
     Transaction(AccountConverter accountConverter, QString sourceAccount, qint64 fee, qint64 sequenceNumber, QVector<Operation*> operations, Memo* memo, TimeBounds *timeBounds, Network* network);
     /** CAP-21 ctor — full preconditions bundle. Pass via std::move to preserve pointer identity. */
     Transaction(AccountConverter accountConverter, QString sourceAccount, qint64 fee, qint64 sequenceNumber, QVector<Operation*> operations, Memo* memo, TransactionPreconditions preconditions, Network* network);
+    // The envelope decoders' common tail: frees what it decoded if a part is refused.
+    static Transaction* fromParts(AccountConverter accountConverter, const QString& sourceAccount, qint64 fee, qint64 sequenceNumber, const QVector<stellar::Operation>& xdrOperations, stellar::Memo& xdrMemo, TransactionPreconditions preconditions, Network* network);
 
 
 public:

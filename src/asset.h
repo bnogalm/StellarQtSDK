@@ -1,6 +1,8 @@
 #ifndef ASSET_H
 #define ASSET_H
 #include <exception>
+#include <stdexcept>
+#include <string>
 #include "xdr/stellarledgerentries.h"
 #include "stellaraddress.h"
 #include "keypair.h"
@@ -8,9 +10,38 @@
 
 QSTELLAR_BEGIN_NS
 
-class AssetCodeLengthInvalidException: public std::exception
+/**
+ * An asset code that is not one the network takes: 1 to 4 (credit_alphanum4)
+ * or 5 to 12 (credit_alphanum12) ASCII letters and digits (stellar-core's
+ * isAssetValid; js and py refuse the same). A std::runtime_error, so what()
+ * says which code and why (it was a bare std::exception: "Unknown
+ * exception").
+ */
+class AssetCodeLengthInvalidException: public std::runtime_error
 {
+public:
+    explicit AssetCodeLengthInvalidException(const std::string& message =
+        "an asset code is 1 to 4 (credit_alphanum4) or 5 to 12 (credit_alphanum12) ASCII letters and digits")
+        : std::runtime_error(message) {}
 };
+
+/**
+ * Throws AssetCodeLengthInvalidException unless `code` is `min` to `max`
+ * ASCII letters and digits. Only the length was checked: "US D", "US$" and
+ * "\u00e9" were signed, and core refuses them as malformed.
+ */
+inline void checkAssetCode(const QString& code, int min, int max, const char* type)
+{
+    bool ok = code.size() >= min && code.size() <= max;
+    for (const QChar c : code) {
+        const ushort u = c.unicode();
+        ok = ok && ((u >= '0' && u <= '9') || (u >= 'A' && u <= 'Z') || (u >= 'a' && u <= 'z'));
+    }
+    if (!ok)
+        throw AssetCodeLengthInvalidException(
+            QStringLiteral("a %1 asset code is %2 to %3 ASCII letters and digits, not \"%4\"")
+                .arg(QLatin1String(type)).arg(min).arg(max).arg(code).toStdString());
+}
 
 /**
  * @brief The Asset class
@@ -31,6 +62,17 @@ public:
     static Asset* createNonNativeAsset(QString code, KeyPair* issuer);
     static Asset* createNonNativeAsset(QString code, const KeyPair& issuer);//makes a copy of issuer
     static Asset* createNonNativeAsset(QString code, QString issuer);
+    /**
+     * The asset Horizon names by type, code and issuer: "native" with no
+     * code and no issuer (empty or null), "credit_alphanum4" with a code of
+     * 1 to 4 ASCII letters or digits, or "credit_alphanum12" with one of 5 to
+     * 12, and the issuer's account id. Throws std::runtime_error naming the
+     * type and the code for anything else (and whatever KeyPair::fromAccountId
+     * throws for an issuer that is not an account id): every type but
+     * "native" used to become the asset the code's length made, so
+     * "credit_alphanum12" with "USD" was an alphanum4 asset, and a type
+     * nobody knows an issued asset.
+     */
     static Asset* create(QString type, QString code, QString issuer);
 
 

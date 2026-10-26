@@ -74,6 +74,19 @@ void ClaimableBalanceClaimantCreatedEffectResponse::setBalanceID(QString balance
     emit balanceIDChanged();
 }
 
+bool ClaimableBalanceClaimantCreatedEffectResponse::readMember(const QString &key, const QJsonValue &value,
+                                                               const QString &field)
+{
+    if (key != QLatin1String("predicate") || value.isNull())
+        return false;
+    Predicate* read = ResponseConverters::exactPredicate(value, field);
+    if (m_predicate)
+        delete m_predicate;
+    m_predicate = read;
+    emit predicateChanged();
+    return true;
+}
+
 void ClaimableBalanceClaimantCreatedEffectResponse::setPredicate(Predicate *predicate)
 {
     if (m_predicate == predicate)

@@ -2,6 +2,7 @@
 #define OPERATIONTEST_H
 #include <QObject>
 #include <QtTest>
+#include <limits>
 #include "testcollector.h"
 
 
@@ -24,6 +25,7 @@
 #include "src/managedataoperation.h"
 #include "src/signer.h"
 #include "src/setoptionsoperation.h"
+#include "src/txrep.h"
 #include "src/account.h"
 #include "src/network.h"
 #include "src/transaction.h"
@@ -47,6 +49,9 @@
 
 #include "src/claimclaimablebalanceoperation.h"
 #include "src/clawbackoperation.h"
+#include <functional>
+#include "src/createclaimablebalanceoperation.h"
+#include "src/liquiditypoolwithdrawoperation.h"
 #include "src/clawbackclaimablebalanceoperation.h"
 #include "src/settrustlineflagsoperation.h"
 
@@ -295,6 +300,7 @@ private slots:
 
         Asset* asset = new AssetTypeNative();
         QString limit = "922337203685.4775807";
+        QCOMPARE(QString(ChangeTrustOperation::MAX_LIMIT), limit);
 
         ChangeTrustOperation* operation = new ChangeTrustOperation(asset, limit);
         operation->setSourceAccount(source->getAccountId());
@@ -519,8 +525,248 @@ private slots:
         QCOMPARE(Integer(10), parsedOperation->getSignerWeight());
         QCOMPARE(opSource->getAccountId(), parsedOperation->getSourceAccount());
 
+        // The pre-auth hash of a TIMEOUT_INFINITE transaction, now time bounds
+        // {0, 0} as in js and java (py-stellar-sdk 14.1.0 gives these bytes).
         QCOMPARE(operation->toXdrBase64()
-                 ,QString("AAAAAQAAAAC7JAuE3XvquOnbsgv2SRztjuk4RoBVefQ0rlrFMMQvfAAAAAUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAAB1vRBIRC3w7ZH5rQa17hIBKUwZTvBP4kNmSP7jVyw1fQAAAAK"));
+                 ,QString("AAAAAQAAAAC7JAuE3XvquOnbsgv2SRztjuk4RoBVefQ0rlrFMMQvfAAAAAUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAABD3LjpEQU2FIuahtjHnoJvAvRwe4U9DXFHaM/DdSpzHAAAAAK"));
+    }
+
+    /**
+     * The full SetOptions constructor passed the home domain through
+     * QUrl::toAce: "Example.COM" was signed as "example.com", and what Qt
+     * takes for no host name ("stellar.org/", "a:b", "x..y") as an EMPTY home
+     * domain, which clears the account's. A null QString cleared it too. It is
+     * signed now as given, like setHomeDomain() and js/py.
+     */
+    void testSetOptionsCtorSignsTheHomeDomainAsGiven() {
+        const stellar::SignerKey signer =
+            Signer::ed25519PublicKey(KeyPair::fromAccountId(QString("GDW6AUTBXTOC7FIKUO5BOO3OGLK4SF7ZPOBLMQHMZDI45J2Z6VXRB5NR")));
+        auto ctor = [&](const QString& domain) {
+            return SetOptionsOperation(nullptr, Integer(), Integer(), Integer(), Integer(),
+                                       Integer(), Integer(), domain, signer, 1).getHomeDomainBytes();
+        };
+        for (const QString& domain : {QString("stellar.org/"), QString("Example.COM"), QString("a:b"),
+                                      QString("x..y"), QString("-bad-.com"),
+                                      QString::fromUtf8("m\xc3\xbcnchen.de")}) {
+            QScopedPointer<SetOptionsOperation> setter(SetOptionsOperation::create());
+            setter->setHomeDomain(domain);
+            QCOMPARE(ctor(domain), domain.toUtf8());
+            QCOMPARE(ctor(domain), setter->getHomeDomainBytes());
+        }
+        QVERIFY(ctor(QString()).isNull());                  // unchanged
+        QVERIFY(!ctor(QString("")).isNull());               // cleared
+        QCOMPARE(ctor(QString("")), QByteArray(""));
+        QVERIFY_EXCEPTION_THROWN(ctor(QString(33, QLatin1Char('a'))), std::runtime_error);
+        QCOMPARE(ctor(QString(32, QLatin1Char('a'))), QByteArray(32, 'a'));
+    }
+
+    /**
+     * The C++ constructors took 0 for amounts js-stellar-base and core
+     * require above zero (payment, path payments, passive offer, claimable
+     * balance, clawback, pool withdrawal): 0 was signed, and the network
+     * refused the operation as malformed. Where 0 means something (a new
+     * account's balance, deleting an offer, removing a trustline) it stays.
+     */
+    void testZeroIsRefusedWhereJsAndCoreRefuseIt()
+    {
+        const QString dest = QStringLiteral("GA6U5X6WOPNKKDKQULBR7IDHDBAQKOWPHYEC7WSXHZBFEYFD3XVZAKOO");
+        const QString issuer = QStringLiteral("GAJZR5RMNUNEK7CRXJVEWXZ5XUXWT7FJGILCDDOITF7EC26RPWJ4UVOE");
+        auto usd = [&]() { return Asset::createNonNativeAsset(QStringLiteral("USD"), issuer); };
+        auto refuses = [](const std::function<Operation*()>& make) {
+            try { delete make(); } catch (const std::exception&) { return true; }
+            return false;
+        };
+        for (const QString& zero : {QStringLiteral("0"), QStringLiteral("0.0000000"), QStringLiteral("-0")}) {
+            QVERIFY(refuses([&]() { return PaymentOperation::create(dest, new AssetTypeNative(), zero); }));
+            QVERIFY(refuses([&]() { return PathPaymentStrictReceiveOperation::create(new AssetTypeNative(), zero, dest, usd(), QStringLiteral("1")); }));
+            QVERIFY(refuses([&]() { return PathPaymentStrictReceiveOperation::create(new AssetTypeNative(), QStringLiteral("1"), dest, usd(), zero); }));
+            QVERIFY(refuses([&]() { return PathPaymentStrictSendOperation::create(new AssetTypeNative(), zero, dest, usd(), QStringLiteral("1")); }));
+            QVERIFY(refuses([&]() { return PathPaymentStrictSendOperation::create(new AssetTypeNative(), QStringLiteral("1"), dest, usd(), zero); }));
+            QVERIFY(refuses([&]() { return CreatePassiveSellOfferOperation::create(new AssetTypeNative(), usd(), zero, QStringLiteral("1")); }));
+            QVERIFY(refuses([&]() { return ClawbackOperation::create(dest, usd(), zero); }));
+            QVERIFY(refuses([&]() {
+                QList<Claimant> claimants;
+                claimants.append(Claimant(dest, new Predicate::Unconditional()));
+                return CreateClaimableBalanceOperation::create(zero, new AssetTypeNative(), claimants);
+            }));
+            QVERIFY(refuses([&]() { return LiquidityPoolWithdrawOperation::create(QByteArray(32, '\x07'), zero, QStringLiteral("0"), QStringLiteral("0")); }));
+        }
+        // 0 where it is an instruction or a valid value, as js allows it.
+        QVERIFY(!refuses([&]() { return CreateAccountOperation::create(dest, QStringLiteral("0")); }));
+        QVERIFY(!refuses([&]() { return new ManageSellOfferOperation(new AssetTypeNative(), usd(), QStringLiteral("0"), Price(1, 1), 12345); }));
+        QVERIFY(!refuses([&]() { return new ChangeTrustOperation(usd(), QStringLiteral("0")); }));
+        QVERIFY(!refuses([&]() { return LiquidityPoolWithdrawOperation::create(QByteArray(32, '\x07'), QStringLiteral("1"), QStringLiteral("0"), QStringLiteral("0")); }));
+        QVERIFY(!refuses([&]() { return PaymentOperation::create(dest, new AssetTypeNative(), QStringLiteral("0.0000001")); }));
+    }
+
+    /**
+     * Amounts in the decimal forms js-stellar-base (BigNumber) and py
+     * (Decimal) both read: ".5", "5.", "+1", "1e2", "5E-1". Only
+     * [-]digits[.digits] was read, so these were refused where js and py sign
+     * them; the stroops are js-stellar-sdk 17.1.0's. Still exact: more than
+     * seven decimals, out of range, a comma, or js's hex and binary forms
+     * (py refuses those) are refused.
+     */
+    void testAmountsInEveryDecimalFormJsAndPyRead()
+    {
+        const QList<QPair<QString, qint64>> read = {
+            {QStringLiteral(".5"), 5000000}, {QStringLiteral("5."), 50000000}, {QStringLiteral("+1"), 10000000}, {QStringLiteral("1e2"), 1000000000},
+            {QStringLiteral("1E-7"), 1}, {QStringLiteral("5e-1"), 5000000}, {QStringLiteral("1.5e1"), 150000000}, {QStringLiteral("1.23456789e1"), 123456789},
+            {QStringLiteral("9.223372036854775807e11"), Q_INT64_C(9223372036854775807)}, {QStringLiteral("00012.5000000"), 125000000},
+            {QStringLiteral("0.00000000"), 0}, {QStringLiteral("-0"), 0}, {QStringLiteral("0e99"), 0}, {QStringLiteral("-1.5"), -15000000}, {QStringLiteral("1.000000000e0"), 10000000},
+            {QStringLiteral("12345678901234567890e-8"), Q_INT64_C(1234567890123456789)},
+        };
+        for (const auto& pair : read)
+            QCOMPARE(Operation::toXdrAmount(pair.first), pair.second);
+        for (const QString& bad : {QStringLiteral("1e-8"), QStringLiteral("922337203685.4775808"), QStringLiteral("1e1000"),
+                                   QStringLiteral("0x10"), QStringLiteral("0b11"), QStringLiteral("1,5"), QStringLiteral("."),
+                                   QStringLiteral("e5"), QStringLiteral("1e"), QStringLiteral("+"), QStringLiteral(""),
+                                   QStringLiteral("1.5.1"), QStringLiteral("--1"), QStringLiteral("1e+"), QStringLiteral("inf")}) {
+            bool threw = false;
+            try { Operation::toXdrAmount(bad); } catch (const std::exception&) { threw = true; }
+            QVERIFY2(threw, qPrintable(bad));
+        }
+    }
+
+    /**
+     * Refused on purpose, as the header says: digits grouped with '_', which
+     * js and py both sign ("1_0" as 100000000 stroops, "1_000.5" as
+     * 10005000000 in js-stellar-sdk 17.1.0 and py-stellar-sdk 14.1.0, which
+     * disagree on "_1" and "1__0"), and js's radix forms (py refuses them;
+     * js signs "0o7" as 7). Easy to misread in an amount about to be signed.
+     */
+    void testAmountsWithUnderscoresOrARadixPrefixAreRefused()
+    {
+        for (const QString& bad : {QStringLiteral("1_0"), QStringLiteral("1_000.5"), QStringLiteral("_1"),
+                                   QStringLiteral("1__0"), QStringLiteral("1_"), QStringLiteral("1e1_0"),
+                                   QStringLiteral("0x10"), QStringLiteral("0X10"), QStringLiteral("0b11"),
+                                   QStringLiteral("0o7")}) {
+            bool threw = false;
+            try { Operation::toXdrAmount(bad); } catch (const std::exception&) { threw = true; }
+            QVERIFY2(threw, qPrintable(bad));
+        }
+    }
+
+    /**
+     * A decoded PATH_PAYMENT_STRICT_RECEIVE was the deprecated
+     * PathPaymentOperation, a separate copy of PathPaymentStrictReceiveOperation:
+     * dynamic_cast<PathPaymentStrictReceiveOperation*> gave nullptr for every
+     * one. It is a PathPaymentStrictReceiveOperation now, and still a
+     * PathPaymentOperation for 1.0.x callers.
+     */
+    void testDecodedStrictReceiveIsAStrictReceiveOperation()
+    {
+        const QString dest = QStringLiteral("GA6U5X6WOPNKKDKQULBR7IDHDBAQKOWPHYEC7WSXHZBFEYFD3XVZAKOO");
+        QScopedPointer<PathPaymentStrictReceiveOperation> original(PathPaymentStrictReceiveOperation::create(
+            new AssetTypeNative(), QStringLiteral("10"), dest,
+            Asset::createNonNativeAsset(QStringLiteral("USD"), QStringLiteral("GAJZR5RMNUNEK7CRXJVEWXZ5XUXWT7FJGILCDDOITF7EC26RPWJ4UVOE")),
+            QStringLiteral("5")));
+        stellar::Operation xdr = original->toXdr();
+        QScopedPointer<Operation> decoded(Operation::fromXdr(xdr));
+        auto* strict = dynamic_cast<PathPaymentStrictReceiveOperation*>(decoded.data());
+        QVERIFY(strict != nullptr);
+        QVERIFY(dynamic_cast<PathPaymentOperation*>(decoded.data()) != nullptr);
+        QCOMPARE(strict->getSendMax(), QStringLiteral("10"));
+        QCOMPARE(strict->getDestAmount(), QStringLiteral("5"));
+        QCOMPARE(strict->getDestination(), dest);
+        QCOMPARE(decoded->toXdrBase64(), original->toXdrBase64());
+    }
+
+    /**
+     * getHomeDomain went through QUrl::fromAce: "Example.COM" (which core
+     * takes, and Horizon shows) read as "example.com", an xn-- name as its
+     * Unicode form, and UTF-8 garbled. It is the signed text now, as js and
+     * py read it.
+     */
+    void testSetOptionsHomeDomainReadsAsSigned() {
+        for (const QString& domain : {QStringLiteral("Example.COM"), QStringLiteral("xn--and-6ma2c.es"),
+                                      QString::fromUtf8("\xc3\xb1" "and\xc3\xba" ".es"), QStringLiteral("STELLAR.ORG")}) {
+            QScopedPointer<SetOptionsOperation> op(SetOptionsOperation::create());
+            op->setHomeDomain(domain);
+            stellar::Operation xdr = op->toXdr();
+            QScopedPointer<Operation> decoded(Operation::fromXdr(xdr));
+            QCOMPARE(dynamic_cast<SetOptionsOperation*>(decoded.data())->getHomeDomain(), domain);
+            QCOMPARE(op->getHomeDomain(), domain);
+        }
+        QScopedPointer<SetOptionsOperation> cleared(SetOptionsOperation::create());
+        cleared->setHomeDomain(QStringLiteral(""));
+        QVERIFY(!cleared->getHomeDomain().isNull());
+        QVERIFY(cleared->getHomeDomain().isEmpty());
+        QScopedPointer<SetOptionsOperation> unset(SetOptionsOperation::create());
+        QVERIFY(unset->getHomeDomain().isNull());
+    }
+
+    /**
+     * Master weight and thresholds above 255 were set and signed as given
+     * (they are uint32 in the XDR, one byte to the network, which refuses the
+     * operation). The setters and the constructor now refuse them, as
+     * js-stellar-base does, and leave the operation as it was. setSigner
+     * already refused a weight of 256, but only after it had filled in the
+     * signer: the operation then carried that key with weight 0, a delete.
+     */
+    void testSetOptionsWeightsAboveAByteAreRefused() {
+        SetOptionsOperation* operation = SetOptionsOperation::create();
+        QVERIFY_EXCEPTION_THROWN(operation->setMasterKeyWeight(256), std::runtime_error);
+        QVERIFY_EXCEPTION_THROWN(operation->setLowThreshold(256), std::runtime_error);
+        QVERIFY_EXCEPTION_THROWN(operation->setMediumThreshold(1000), std::runtime_error);
+        QVERIFY_EXCEPTION_THROWN(operation->setHighThreshold(0xFFFFFFFFu), std::runtime_error);
+        auto signer = Signer::ed25519PublicKey(KeyPair::fromAccountId(QString("GDW6AUTBXTOC7FIKUO5BOO3OGLK4SF7ZPOBLMQHMZDI45J2Z6VXRB5NR")));
+        QVERIFY_EXCEPTION_THROWN(operation->setSigner(signer, 256), std::runtime_error);
+        QVERIFY(operation->getMasterKeyWeight().isNull());
+        QVERIFY(operation->getLowThreshold().isNull());
+        QVERIFY(operation->getMediumThreshold().isNull());
+        QVERIFY(operation->getHighThreshold().isNull());
+        QVERIFY(operation->getSigner() == nullptr);
+
+        // 255 is a byte, and 0 a real instruction (retire the master key).
+        operation->setMasterKeyWeight(255)->setLowThreshold(0)->setMediumThreshold(255)
+                 ->setHighThreshold(255)->setSigner(signer, 255);
+        QCOMPARE(static_cast<int>(operation->getMasterKeyWeight()), 255);
+        QCOMPARE(static_cast<int>(operation->getLowThreshold()), 0);
+        QCOMPARE(static_cast<int>(operation->getSignerWeight()), 255);
+        delete operation;
+
+        const stellar::SignerKey noSigner = signer;
+        QVERIFY_EXCEPTION_THROWN(SetOptionsOperation(nullptr, Integer(), Integer(), Integer(256),
+                                                     Integer(), Integer(), Integer(), QString(),
+                                                     noSigner, 1),
+                                 std::runtime_error);
+        QVERIFY_EXCEPTION_THROWN(SetOptionsOperation(nullptr, Integer(), Integer(), Integer(),
+                                                     Integer(), Integer(), Integer(300), QString(),
+                                                     noSigner, 1),
+                                 std::runtime_error);
+    }
+
+    /**
+     * TxRep reads set-options through the same setters: a document with a
+     * master weight of 256 was signed as 256. It is refused now, as a
+     * std::runtime_error from fromTxrep.
+     */
+    void testSetOptionsTxrepWeightAboveAByteIsRefused() {
+        KeyPair* source = KeyPair::fromSecretSeed(QString("SC4CGETADVYTCR5HEAVZRB3DZQY5Y4J7RFNJTRA6ESMHIPEZUSTE2QDK"));
+        Account* account = new Account(source, 2908908335136768L);
+        Transaction* transaction = Transaction::Builder(AccountConverter().enableMuxed(), account, Network::testnetNetwork())
+                .addOperation(SetOptionsOperation::create()->setMasterKeyWeight(1)->setHighThreshold(2))
+                .setTimeout(Transaction::Builder::TIMEOUT_INFINITE)
+                .setBaseFee(Transaction::Builder::BASE_FEE)
+                .build();
+        const QString txrep = Txrep::toTxrep(transaction);
+        Transaction* back = Txrep::fromTxrep(txrep, Network::testnetNetwork());
+        QVERIFY(back);
+        delete back;
+
+        for (const char* field : {"masterWeight", "highThreshold"}) {
+            const QString line = QStringLiteral("setOptionsOp.%1: ").arg(QLatin1String(field));
+            const int at = txrep.indexOf(line);
+            QVERIFY2(at >= 0, field);
+            const int end = txrep.indexOf(QLatin1Char('\n'), at);
+            QString tooBig = txrep;
+            tooBig.replace(at, end - at, line + QStringLiteral("256"));
+            QVERIFY_EXCEPTION_THROWN(Txrep::fromTxrep(tooBig, Network::testnetNetwork()),
+                                     std::runtime_error);
+        }
+        delete transaction;
+        delete account;
     }
 
 
@@ -606,7 +852,8 @@ private slots:
         auto & opXdr = transactionEnvelope.v0.tx.operations.value[0];
         ManageSellOfferOperation* op = (ManageSellOfferOperation*)Operation::fromXdr(opXdr);
 
-        QCOMPARE(op->getPrice(),"3397.893306099996");
+        // n/d exactly, as js-stellar-sdk prints it (it was a double's 16 digits).
+        QCOMPARE(op->getPrice(),"3397.89330609999592518642");
     }
 
     void testManageBuyOfferOperation_BadArithmeticRegression(){
@@ -624,7 +871,7 @@ private slots:
 
         ManageBuyOfferOperation* op = (ManageBuyOfferOperation*)t->getOperations().first();//Operation::fromXdr(transactionEnvelope.tx.operations.value[0]);
 
-        QCOMPARE(op->getPrice(),"3397.893306099996");//3397.893306099995925186
+        QCOMPARE(op->getPrice(),"3397.89330609999592518642");
     }
 
     void testCreatePassiveSellOfferOperation() {
@@ -717,6 +964,18 @@ private slots:
                  ,QString("AAAAAQAAAAC7JAuE3XvquOnbsgv2SRztjuk4RoBVefQ0rlrFMMQvfAAAAAoAAAAEdGVzdAAAAAA="));
     }
 
+    /** A negative bumpTo is refused when built (core answers BAD_SEQ), and
+     *  still read when decoded from an existing operation. */
+    void testNegativeBumpToIsRefused() {
+        QVERIFY_EXCEPTION_THROWN(delete BumpSequenceOperation::create(-1), std::runtime_error);
+        QScopedPointer<BumpSequenceOperation> zero(BumpSequenceOperation::create(0));
+        QCOMPARE(zero->getBumpTo(), qint64(0));
+        stellar::BumpSequenceOp op;
+        op.bumpTo = -5;
+        QScopedPointer<BumpSequenceOperation> decoded(BumpSequenceOperation::build(op));
+        QCOMPARE(decoded->getBumpTo(), qint64(-5));
+    }
+
     void testBumpSequence() {
         // GC5SIC4E3V56VOHJ3OZAX5SJDTWY52JYI2AFK6PUGSXFVRJQYQXXZBZF
         KeyPair* source = KeyPair::fromSecretSeed(QString("SC4CGETADVYTCR5HEAVZRB3DZQY5Y4J7RFNJTRA6ESMHIPEZUSTE2QDK"));
@@ -769,6 +1028,15 @@ private slots:
         QCOMPARE(QString("0"), Operation::fromXdrAmount(0L));
         QCOMPARE(QString("0.0000001"), Operation::fromXdrAmount(1L));
         QCOMPARE(QString("1"), Operation::fromXdrAmount(10000000L));
+        // Negative values (a balance change, a delta) keep their sign in
+        // front: they came out as "-1.-5" and "0.-5".
+        QCOMPARE(Operation::fromXdrAmount(Q_INT64_C(-15000000)), QString("-1.5"));
+        QCOMPARE(Operation::fromXdrAmount(Q_INT64_C(-5000000)), QString("-0.5"));
+        QCOMPARE(Operation::fromXdrAmount(Q_INT64_C(-1)), QString("-0.0000001"));
+        QCOMPARE(Operation::fromXdrAmount(Q_INT64_C(-10000000)), QString("-1"));
+        QCOMPARE(Operation::fromXdrAmount(std::numeric_limits<qint64>::min()), QString("-922337203685.4775808"));
+        QCOMPARE(Operation::fromXdrAmount(std::numeric_limits<qint64>::max()), QString("922337203685.4775807"));
+        QCOMPARE(Operation::toXdrAmount(Operation::fromXdrAmount(Q_INT64_C(-15000000))), Q_INT64_C(-15000000));
         QCOMPARE(QString("1.1234567"), Operation::fromXdrAmount(11234567L));
         QCOMPARE(QString("72991284.3007381"), Operation::fromXdrAmount(729912843007381L));
         QCOMPARE(QString("101401671144.6800155"), Operation::fromXdrAmount(1014016711446800155L));
@@ -857,6 +1125,48 @@ private slots:
         QCOMPARE(accountId, parsedOperation->getAccountId());
         QCOMPARE(source, parsedOperation->getSourceAccount());
         QCOMPARE(dataName, parsedOperation->getDataName());
+    }
+
+    /**
+     * A revoke of the data entry BOM + "k" read back as a revoke of "k", and
+     * a home domain BOM + "example.com" as "example.com": QString::fromUtf8
+     * drops a leading BOM. js and py keep U+FEFF (17.1.0 and 14.1.0 give back
+     * both names whole), as getName did since G24. TxRep refuses that revoke
+     * now for its hidden U+FEFF; it wrote it as a revoke of "k", which only
+     * its read-back check refused (as no document that reads back).
+     */
+    void testRevokeDataNameAndHomeDomainKeepALeadingByteOrderMark() {
+        const QString bom(QChar(0xFEFF));
+        const QString account = QStringLiteral("GAGQ7DNQUVQR6OWYOI563L5EMJE6KCAHPQSFCZFLY5PDRYMRCA5UWCMP");
+        const QStringList names = {bom + QStringLiteral("k"), bom + bom + QStringLiteral("k"),
+                                   QStringLiteral("k") + bom, QStringLiteral("k")};
+        for (const QString& name : names) {
+            QScopedPointer<RevokeDataSponsorshipOperation> op(RevokeDataSponsorshipOperation::create(account, name));
+            stellar::Operation xdr = op->toXdr();
+            QScopedPointer<Operation> decoded(Operation::fromXdr(xdr));
+            QCOMPARE(dynamic_cast<RevokeDataSponsorshipOperation*>(decoded.data())->getDataName(), name);
+
+            QScopedPointer<SetOptionsOperation> options(SetOptionsOperation::create());
+            options->setHomeDomain(name + QStringLiteral("example.com"));
+            stellar::Operation optionsXdr = options->toXdr();
+            QScopedPointer<Operation> readBack(Operation::fromXdr(optionsXdr));
+            QCOMPARE(dynamic_cast<SetOptionsOperation*>(readBack.data())->getHomeDomain(),
+                     name + QStringLiteral("example.com"));
+        }
+
+        Account source(KeyPair::random(), 41);
+        QScopedPointer<Transaction> tx(Transaction::Builder(AccountConverter().enableMuxed(), &source, Network::testnetNetwork())
+                .addOperation(RevokeDataSponsorshipOperation::create(account, bom + QStringLiteral("k")))
+                .setTimeout(300)
+                .setBaseFee(100)
+                .build());
+        QString refusal;
+        try {
+            Txrep::toTxrep(tx.data());
+        } catch (const std::runtime_error& e) {
+            refusal = QString::fromUtf8(e.what());
+        }
+        QVERIFY2(refusal.contains(QStringLiteral("revoke-data name")), qPrintable(refusal));
     }
 
     void testRevokeClaimableBalanceSponsorshipOperation() {

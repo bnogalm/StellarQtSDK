@@ -61,6 +61,14 @@ QByteArray SorobanCredentialsSigner::hashedSignaturePayload(
     s << validUntilLedger;
     if (isV2) s << entry.credentials.address.address;
     s << entry.rootInvocation;
+    // What is signed is the hash of these bytes, so they are whole or there is
+    // no hash: an invocation with an arm XDR has no encoding for used to be
+    // hashed as the prefix written before it, and that hash signed.
+    if (s.status() != QDataStream::Ok) {
+        throw std::runtime_error(
+            "SorobanCredentialsSigner: the authorization preimage cannot be encoded as XDR: "
+            "the entry holds a value the format has no encoding for");
+    }
     return Util::hash(xdr);
 }
 

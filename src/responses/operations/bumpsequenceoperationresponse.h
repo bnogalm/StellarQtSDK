@@ -23,6 +23,9 @@ public:
     QString bumpTo() const;
 public slots:
     void setBumpTo(QString bump_to);
+protected:
+    /** bump_to exactly: the setter's toLongLong() read text that is not a number as 0. */
+    bool readMember(const QString& key, const QJsonValue& value, const QString& field) override;
 };
 
 QSTELLAR_END_NS

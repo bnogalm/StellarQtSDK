@@ -112,9 +112,28 @@ public:
         throw std::runtime_error("invalid address length");
     }
 
-    //encoded here is the ASCII encoded address, not the binary format
+    /**
+     * The kind of a strkey from its FIRST BYTE ONLY: the checksum, the
+     * length and the rest are not checked, so a damaged key gets a kind.
+     * Use it to choose a decoder; decodeAny() checks the whole key.
+     * `encoded` is the text (G..., S...), not the binary form.
+     */
     static VersionByte decodeVersionByte(QByteArray encoded);
     static VersionByte decodeVersionByte(QString encoded);
+
+    /** A strkey decoded whole: its kind and its payload. */
+    struct Decoded
+    {
+        VersionByte version;
+        QByteArray payload;     // 32 bytes, 40 for M, 33 for B, 40-100 for P
+    };
+
+    /**
+     * Any strkey, checked as its own decoder checks it (checksum, length,
+     * canonical spelling, as js and py): its kind and payload. Throws
+     * std::runtime_error on anything that is not one, without repeating it.
+     */
+    static Decoded decodeAny(const QString& encoded);
 
 
     static QByteArray decodeStellarAccountId(QString data) {
@@ -190,6 +209,13 @@ public:
 
     static QByteArray encodeCheck(VersionByte versionByte, QByteArray data);
 
+    /**
+     * The body of `encoded`, a strkey of kind `versionByte`, checked whole
+     * as js's decodeCheck checks it: the kind, the checksum, the body length
+     * of the kind, its one canonical spelling and, for a signed payload
+     * (P...), the framing (a declared length of 1 to 64 that the data
+     * matches, zero padding). Throws std::runtime_error otherwise.
+     */
     static QByteArray decodeCheck(VersionByte versionByte, QByteArray encoded);
 
     static QByteArray calculateChecksum(QByteArray bytes);

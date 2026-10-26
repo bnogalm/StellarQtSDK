@@ -36,7 +36,25 @@ public:
     void sign(QByteArray preimage);
 
     /**
+      * Appends a signature made elsewhere, as it is: a CAP-40 signed-payload
+      * signature from KeyPair::signPayloadDecorated, or one from a wallet or
+      * an HSM. Nothing is checked, as in js addDecoratedSignature and py
+      * envelope.signatures.append.
+      */
+    void addSignature(const stellar::DecoratedSignature& signature);
+
+    /**
+      * Appends the ed25519 signature of this transaction's hash by
+      * publicKey (a G... address), given in base64, as js addSignature does.
+      * Throws unless it verifies against the hash, so a signature for another
+      * transaction or network is not attached.
+      */
+    void addSignature(const QString& publicKey, const QString& signatureBase64);
+
+    /**
       * Returns transaction hash.
+      * Throws, like signatureBase(), when the transaction holds a value XDR
+      * has no encoding for.
       */
     QByteArray hash() const;
 
@@ -49,6 +67,9 @@ public:
 
     /**
       * Returns signature base.
+      * Throws when the transaction holds a value XDR has no encoding for (an
+      * arm the writer does not know): the bytes would be short, and a hash or
+      * a signature over them would stand for a different transaction.
       */
     virtual QByteArray signatureBase() const= 0;
 
@@ -59,11 +80,13 @@ public:
 
     /**
      * Generates TransactionEnvelope XDR object.
+     * Throws when the envelope could not be encoded in full (see signatureBase()).
      */
     virtual stellar::TransactionEnvelope toEnvelopeXdr() = 0;
 
     /**
      * Returns base64-encoded TransactionEnvelope XDR object. Transaction need to have at least one signature.
+     * Throws when the envelope could not be encoded in full (see signatureBase()).
      */
     QString toEnvelopeXdrBase64();
 
@@ -75,9 +98,13 @@ public:
 
     /**
      * Creates a <code>Transaction</code> instance from previously build <code>TransactionEnvelope</code>
-     * @param envelope Base-64 encoded <code>TransactionEnvelope</code>
-     * @return
-     * @throws IOException
+     * @param envelope Base-64 encoded <code>TransactionEnvelope</code> (whitespace is ignored)
+     * @return a new object the caller owns
+     *
+     * Throws unless the text is strict base64 of exactly one envelope, and
+     * the SDK writes that envelope back byte for byte: a truncated envelope,
+     * trailing bytes, or anything the SDK cannot represent exactly is refused
+     * rather than read as a different transaction.
      */
     static AbstractTransaction* fromEnvelopeXdr(QString envelope, Network* network= Network::current());
 

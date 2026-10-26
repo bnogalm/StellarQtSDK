@@ -145,6 +145,104 @@ private slots:
                  static_cast<int>(stellar::SCValType::SCV_SYMBOL));
         QCOMPARE(QString::fromUtf8(k.contractData.key.symbol), QString("totalSupply"));
     }
+
+    /** A footprint names accounts and trustlines too — every Stellar Asset
+     *  Contract transfer does. This is the transactionData a live testnet RPC
+     *  returned for a native XLM SAC transfer (two ACCOUNT keys read-write);
+     *  it used to throw "unsupported LedgerEntryType on read". */
+    void testASacTransferFootprintReads()
+    {
+        const QByteArray raw = QByteArray::fromBase64(
+            "AAAAAAAAAAEAAAAGAAAAAdeSi3LCcDzP6vfrn/TvTVBKVai5efybRQ6iyEK00c5hAAAAFAAAAAEAAAACAAAAAAAAAAAQ"
+            "fdFrLDgzSIIugR73qs8U0ZiKbwBUclTTPh5thlbgnAAAAAAAAAAAd9ReqV+O5vqxNU4gMjC/qRPPVmouNhHWi2pRS7/k"
+            "VToAA19bAAABIAAAASAAAAAAAABbrA==");
+        QDataStream in(raw);
+        stellar::SorobanTransactionData data;
+        in >> data;
+        QCOMPARE(in.status(), QDataStream::Ok);
+        QVERIFY(in.atEnd());
+        QCOMPARE(data.resources.footprint.readWrite.size(), 2);
+        QVERIFY(data.resources.footprint.readWrite.at(0).type == stellar::LedgerEntryType::ACCOUNT);
+        QVERIFY(data.resources.footprint.readWrite.at(1).type == stellar::LedgerEntryType::ACCOUNT);
+        QByteArray again;
+        { QDataStream out(&again, QIODevice::WriteOnly); out << data; }
+        QCOMPARE(again, raw);
+    }
+
+    /** Protocol 23's ext v1 (archived entries to restore): it was read as a
+     *  "reserved" int and the list misread as the footprint. */
+    void testTheArchivedEntriesExtensionReads()
+    {
+        auto be32 = [](quint32 v) {
+            QByteArray b(4, '\0');
+            b[0] = char(v >> 24); b[1] = char(v >> 16); b[2] = char(v >> 8); b[3] = char(v);
+            return b;
+        };
+        QByteArray raw;
+        raw += be32(1);                                  // ext v = 1
+        raw += be32(2) + be32(0) + be32(3);              // archivedSorobanEntries [0, 3]
+        raw += be32(1);                                  // readOnly: one key
+        raw += be32(7) + QByteArray(32, '\x55');         //   CONTRACT_CODE hash
+        raw += be32(0);                                  // readWrite: none
+        raw += be32(1000000) + be32(200) + be32(300);    // instructions, read, write bytes
+        raw += be32(0) + be32(5000);                     // resourceFee 5000
+        QDataStream in(raw);
+        stellar::SorobanTransactionData data;
+        in >> data;
+        QCOMPARE(in.status(), QDataStream::Ok);
+        QVERIFY(in.atEnd());
+        QCOMPARE(data.ext.v, 1);
+        QCOMPARE(data.ext.archivedSorobanEntries, (QVector<quint32>{0, 3}));
+        QCOMPARE(data.resources.footprint.readOnly.size(), 1);
+        QCOMPARE(data.resourceFee, qint64(5000));
+        QByteArray again;
+        { QDataStream out(&again, QIODevice::WriteOnly); out << data; }
+        QCOMPARE(again, raw);
+
+        QByteArray v2 = raw;
+        v2[3] = char(2);                                 // an arm that does not exist
+        QDataStream in2(v2);
+        stellar::SorobanTransactionData bad;
+        in2 >> bad;
+        QVERIFY(in2.status() != QDataStream::Ok);
+    }
+
+    /** A footprint stops at the first key that runs dry. Two keys claimed with
+     *  eight bytes left passed the count check, and the loop then appended a
+     *  default key for the one that was not there. */
+    void testAFootprintStopsAtATruncatedKey()
+    {
+        auto be32 = [](quint32 v) {
+            QByteArray b(4, '\0');
+            b[0] = char(v >> 24); b[1] = char(v >> 16); b[2] = char(v >> 8); b[3] = char(v);
+            return b;
+        };
+        // readOnly: two keys, then an ACCOUNT key cut short after its type.
+        const QByteArray raw = be32(2) + be32(0) + be32(0);
+        QDataStream in(raw);
+        stellar::LedgerFootprint footprint;
+        QString outcome = QStringLiteral("no exception");
+        try { in >> footprint; } catch (const std::runtime_error& e) { outcome = QString::fromUtf8(e.what()); }
+        QCOMPARE(outcome, QStringLiteral("LedgerFootprint readOnly: truncated or malformed element"));
+    }
+
+    /**
+     * toXdr() is whole or throws. Data holding something XDR has no encoding
+     * for (an ext arm that does not exist) came back as the bytes written up
+     * to it, with nothing to say they were not a SorobanTransactionData.
+     */
+    void testToXdrRefusesWhatXdrCannotEncode()
+    {
+        stellar::SorobanTransactionData data =
+            SorobanDataBuilder().setResources(1u, 2u, 3u).setResourceFee(4).build();
+        QVERIFY(!SorobanDataBuilder(data).toXdr().isEmpty());
+
+        data.ext.v = 2;
+        bool threw = false;
+        try { (void)SorobanDataBuilder(data).toXdr(); }
+        catch (const std::runtime_error&) { threw = true; }
+        QVERIFY(threw);
+    }
 };
 
 ADD_TEST(SorobanDataBuilderTest)

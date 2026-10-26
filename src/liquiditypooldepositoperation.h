@@ -15,6 +15,13 @@ class LiquidityPoolDepositOperation : public Operation
 {
     stellar::LiquidityPoolDepositOp m_op;
 public:
+    /**
+     * Throws std::runtime_error when a maximum amount or a price term is not
+     * positive, or when minPrice is greater than maxPrice: Core refuses each
+     * of these as malformed.
+     * The XDR constructor below accepts anything, so an existing envelope can
+     * still be read.
+     */
     LiquidityPoolDepositOperation(const QByteArray& liquidityPoolID,
                                   QString maxAmountA, QString maxAmountB,
                                   const Price& minPrice, const Price& maxPrice);

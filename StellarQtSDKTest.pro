@@ -22,6 +22,10 @@ CONFIG -= app_bundle
 
 TEMPLATE = app
 
+# Exercise the optional QML layer in the SDK's own suite: it is part of the
+# public surface, so it must not be the app's job to discover it is broken.
+DEFINES += STELLAR_QT_QML
+
 include(StellarQtSDK.pri)
 
 
@@ -45,6 +49,16 @@ HEADERS += \
     test/xdrhelpertest.h \
     test/liquiditypooltest.h \
     test/changetrustassettest.h \
+    test/wasmsectionstest.h \
+    test/xdr/resultcodebyteordertest.h \
+    test/xdr/voidunionarmtest.h \
+    test/xdr/ledgerkeyenumrangetest.h \
+    test/xdr/transactionmetatest.h \
+    test/contractspectest.h \
+    test/qml/stellarqmltest.h \
+    test/qml/sorobanqmltest.h \
+    test/qml/txbuilderqmltest.h \
+    test/qml/sepsqmltest.h \
     test/operations/regressionfixestest.h \
     test/operations/exactofferpricetest.h \
     test/operations/liquiditypooldepositoperationtest.h \

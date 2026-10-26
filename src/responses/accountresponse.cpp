@@ -2,6 +2,8 @@
 #include "../keypair.h"
 #include "../util.h"
 #include <QCoreApplication>
+#include <limits>
+#include <stdexcept>
 #include "qtcompat.h"
 
 QSTELLAR_BEGIN_NS
@@ -19,6 +21,13 @@ static void registerTypes()
     QMetaType::registerConverter<QVariantList, QList<AccountResponseAttach::Balance> >(&ResponseConverters::convert<AccountResponseAttach::Balance>);
     QMetaType::registerConverter<QVariantList, QList<AccountResponseAttach::Signer> >(&ResponseConverters::convert<AccountResponseAttach::Signer>);
     QMetaType::registerConverter<QVariantMap, AccountResponseAttach::Data>(&ResponseConverters::Account::convertData);
+    // Read exactly by Response::fillObject (the converters above wrote each
+    // member with no check: a limit given as a number became empty, a weight
+    // given as text 0).
+    ResponseConverters::registerExactGadgetList<AccountResponseAttach::Balance>();
+    ResponseConverters::registerExactGadgetList<AccountResponseAttach::Signer>();
+    ResponseConverters::registerExactReader(qMetaTypeId<AccountResponseAttach::Data>(),
+                                            &ResponseConverters::Account::exactData);
 }
 Q_COREAPP_STARTUP_FUNCTION(registerTypes)
 
@@ -59,10 +68,15 @@ qint64 AccountResponse::getSequenceNumber() const{
 }
 
 qint64 AccountResponse::getIncrementedSequenceNumber() const{
+    // None follows INT64_MAX: the +1 overflowed to INT64_MIN.
+    if (m_sequence == std::numeric_limits<qint64>::max())
+        throw std::runtime_error("the account sequence number is at its maximum (9223372036854775807)");
     return m_sequence + 1;
 }
 
 void AccountResponse::incrementSequenceNumber(){
+    if (m_sequence == std::numeric_limits<qint64>::max())
+        throw std::runtime_error("the account sequence number is at its maximum (9223372036854775807)");
     m_sequence++;
 }
 
@@ -129,7 +143,11 @@ void AccountResponse::setAccountID(QString account_id)
 
 namespace AccountResponseAttach
 {
-Balance::Balance():m_isClawbackEnabled(false),m_assetIssuerKeypair(nullptr),m_asset(nullptr){
+// Every member starts defined: a native balance has no is_authorized and
+// no last_modified_ledger, and getAuthorized() read whatever the memory held.
+Balance::Balance()
+    :m_isAuthorized(false),m_isAuthorizedToMaintainLiabilities(false),m_isClawbackEnabled(false)
+    ,m_lastModifiedLedger(0),m_assetIssuerKeypair(nullptr),m_asset(nullptr){
 }
 
 Balance::Balance(const Balance& other)
@@ -156,6 +174,7 @@ Balance& Balance::operator=(const Balance& other)
     m_isAuthorized = other.m_isAuthorized;
     m_isAuthorizedToMaintainLiabilities = other.m_isAuthorizedToMaintainLiabilities;
     m_isClawbackEnabled = other.m_isClawbackEnabled;
+    m_sent = other.m_sent;
     m_lastModifiedLedger = other.m_lastModifiedLedger;
     m_sponsor = other.m_sponsor;
     m_liquidityPoolId = other.m_liquidityPoolId;
@@ -449,6 +468,13 @@ Data::Data(const QVariantMap &data)
 
 }
 
+QStringList Data::keys() const
+{
+    QStringList names = m_data.keys();
+    names.sort();
+    return names;
+}
+
 int Data::size() const
 {
     return m_data.size();
@@ -459,7 +485,11 @@ QString Data::get(QString key) const{
 }
 
 QByteArray Data::getDecoded(QString key) const{
-    return QByteArray::fromBase64(m_data.value(key),XDR_BASE64ENCODING);
+    // Strict: a value that is not base64 is no value (empty), rather than
+    // the bytes a lenient decoder makes of it.
+    const auto bytes = QByteArray::fromBase64Encoding(
+        m_data.value(key), XDR_BASE64ENCODING | QByteArray::AbortOnBase64DecodingErrors);
+    return bytes ? *bytes : QByteArray();
 }
 
 QByteArray Data::getRaw(QString key) const{
@@ -481,5 +511,30 @@ bool Data::operator ==(const Data &data) const
 AccountResponseAttach::Data ResponseConverters::Account::convertData(const QVariantMap &source)
 {
     return AccountResponseAttach::Data(source);
+}
+
+QVariant ResponseConverters::Account::exactData(const QJsonValue &value, const QString &field)
+{
+    // Each value is the base64 of an entry's (at most 64) bytes. Anything else was
+    // kept as it came, and getDecoded() turned it into other bytes: SEP-29's
+    // config.memo_required among them.
+    if (!value.isObject())
+        throw std::runtime_error(QStringLiteral("%1: expected an object").arg(field).toStdString());
+    const QJsonObject entries = value.toObject();
+    QVariantMap data;
+    for (auto it = entries.constBegin(); it != entries.constEnd(); ++it) {
+        const QString entry = field + QLatin1Char('.') + it.key();
+        if (!it.value().isString())
+            throw std::runtime_error(QStringLiteral("%1: expected base64 text").arg(entry).toStdString());
+        const QByteArray raw = it.value().toString().toLatin1();
+        const QByteArray::FromBase64Result decoded =
+            QByteArray::fromBase64Encoding(raw, QByteArray::AbortOnBase64DecodingErrors);
+        if (decoded.decodingStatus != QByteArray::Base64DecodingStatus::Ok
+                || decoded.decoded.size() > 64 || decoded.decoded.toBase64() != raw)
+            throw std::runtime_error(QStringLiteral("%1: \"%2\" is not the base64 of a data entry value")
+                                         .arg(entry, it.value().toString()).toStdString());
+        data.insert(it.key(), it.value().toString());
+    }
+    return QVariant::fromValue(AccountResponseAttach::Data(data));
 }
 QSTELLAR_END_NS

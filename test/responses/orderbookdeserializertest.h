@@ -7,6 +7,10 @@
 #include "../../src/keypair.h"
 #include "../../src/assettypecreditalphanum.h"
 #include "../../src/assettypenative.h"
+#include <QJsonArray>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <limits>
 
 class OrderBookDeserializerTest: public QObject
 {
@@ -374,6 +378,91 @@ private slots:
 
 
 
+
+    // ---- Exact reading (1.0.4) -------------------------------------------
+private:
+    /** `json` with the member at `path` ("a.b[1].c") set to `value`, or removed when undefined. */
+    static QJsonValue edited(const QJsonValue& json, QStringList path, const QJsonValue& value)
+    {
+        const QString step = path.takeFirst();
+        const int bracket = step.indexOf(QLatin1Char('['));
+        const QString key = bracket < 0 ? step : step.left(bracket);
+        QJsonObject object = json.toObject();
+        if (bracket >= 0) {
+            const int index = step.mid(bracket + 1, step.size() - bracket - 2).toInt();
+            QJsonArray array = object.value(key).toArray();
+            array[index] = path.isEmpty() ? value : edited(array.at(index), path, value);
+            object[key] = array;
+        } else if (path.isEmpty()) {
+            if (value.isUndefined())
+                object.remove(key);
+            else
+                object[key] = value;
+        } else {
+            object[key] = edited(object.value(key), path, value);
+        }
+        return object;
+    }
+
+    /** What a T loading `json` with `member` set to `value` throws; empty if it loads. */
+    template<class T>
+    static QString refusalOf(const QByteArray& json, const QString& member, const QJsonValue& value)
+    {
+        const QJsonValue changed = edited(QJsonDocument::fromJson(json).object(),
+                                          member.split(QLatin1Char('.')), value);
+        T response;
+        try {
+            response.loadFromJson(QJsonDocument(changed.toObject()).toJson());
+        } catch (const std::exception& e) {
+            return QString::fromUtf8(e.what());
+        }
+        return QString();
+    }
+
+private slots:
+
+    /**
+     * An order book's prices, amounts and assets, exactly: a row's price
+     * term given as a fraction, or an amount given as a number, used to read
+     * as 0 or empty, and a base asset whose code does not fit its type came
+     * out as another asset.
+     */
+    void testOrderBookIsReadExactly()
+    {
+        const QByteArray real = realPubnetOrderBook();
+        QVERIFY(refusalOf<OrderBookResponse>(real, "bids[0].price_r.n", 2282047.5).startsWith("bids[0].price_r.n: "));
+        QVERIFY(refusalOf<OrderBookResponse>(real, "asks[1].price_r.d", 0).startsWith("asks[1].price_r.d: "));
+        QVERIFY(refusalOf<OrderBookResponse>(real, "asks[1].amount", 2083.6559177).startsWith("asks[1].amount: "));
+        QVERIFY(refusalOf<OrderBookResponse>(real, "bids[2].price", QJsonValue(QJsonValue::Undefined)).startsWith("bids[2].price: "));
+        QVERIFY(refusalOf<OrderBookResponse>(real, "counter.asset_code", QString("USDCOIN")).startsWith("counter.asset_code: "));
+        QVERIFY(refusalOf<OrderBookResponse>(real, "base", QJsonObject{{"asset_type", "native"}, {"asset_code", "XLM"}})
+                    .startsWith("base.asset_code: "));
+        QVERIFY(refusalOf<OrderBookResponse>(real, "bids", QJsonValue(QJsonValue::Undefined)).startsWith("bids: "));
+        QVERIFY(refusalOf<OrderBookResponse>(real, "asks", QJsonObject()).startsWith("asks: "));
+    }
+
+    /** The real pubnet XLM/USDC order book loads with its exact prices. */
+    void testRealHorizonOrderBook()
+    {
+        OrderBookResponse book;
+        book.loadFromJson(realPubnetOrderBook());
+        QCOMPARE(book.getBids().size(), 3);
+        QCOMPARE(book.getAsks().size(), 3);
+        QCOMPARE(book.getBids()[0].getPriceR().getNumerator(), 2282047);
+        QCOMPARE(book.getBids()[0].getPriceR().getDenominator(), 10000100);
+        QCOMPARE(book.getAsks()[0].getAmount(), QString("2083.6559177"));
+        QCOMPARE(book.getBase()->getType(), QString("native"));
+        QCOMPARE(book.getCounter()->getType(), QString("credit_alphanum4"));
+    }
+private:
+    /** The real pubnet XLM/USDC order book, three bids and three asks. */
+    static QByteArray realPubnetOrderBook()
+    {
+        return QByteArray(
+            "{\"bids\":[{\"price_r\":{\"n\":2282047,\"d\":10000100},\"price\":\"0.2282024\",\"amount\":\"1.3955662\"},{\"price_r\":{\"n\":135555687,\"d\":594802331},\"price\":\"0.2279004\",\"amount\":\"499.0141952\"},{\"price_r\":{\"n\":142417,\"d\":625000},\"price\":\"0.2278672\",\"amount\":\"486.6675955\"}],\"asks\":[{\"price_r\":{\"n\":1141449,\"d\":5000000},\"price\":\"0.2282898\",\"amount\":\"2083.6559177\"},{\"price_r\":{\"n\":2282899,\"d\":10000000},\"price\":\"0.2282899\",\"amount\":\"1500.0000000\"},{\"price_r\":{\"n\":2283793,\"d\":10000000},\"price\":\"0.2283793\",\"amount\":\"4000.0000000\"}],\"base\":{\"asset_type\":\"native\"},\"counter\":{\"asset_type\":\"credit_alphanum4\",\"asset_code\":\"USDC\",\"asset_issuer\":\"GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN\"}}");
+    }
+
+private slots:
 };
 
 

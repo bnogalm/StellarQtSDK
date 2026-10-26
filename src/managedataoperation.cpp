@@ -44,13 +44,24 @@ ManageDataOperation::ManageDataOperation(stellar::ManageDataOp &op):m_op(op)
 }
 
 QString ManageDataOperation::getName() {
-    return QString::fromUtf8(m_op.dataName.value.data(),m_op.dataName.value.size());
+    // QString::fromUtf8 drops a leading UTF-8 BOM, so "\xEF\xBB\xBFclient_domain"
+    // read as "client_domain" and TxRep re-signed a different name. js, java
+    // and py keep it as U+FEFF; so does this.
+    return Util::fromUtf8KeepingBom(getNameBytes());
+}
+
+QByteArray ManageDataOperation::getNameBytes() {
+    return QByteArray(m_op.dataName.value.data(), m_op.dataName.value.size());
 }
 
 QByteArray ManageDataOperation::getValue() {
     if(m_op.dataValue.filled)
     {
-        return QByteArray((char*)m_op.dataValue.value.value.data(),m_op.dataValue.value.value.size());
+        // Present and empty is not absent: an empty value must not come back
+        // null, or a SEP-10 web_auth_domain of "" reads as "no value" (which
+        // js and py accept and this refused).
+        const QByteArray value((char*)m_op.dataValue.value.value.data(),m_op.dataValue.value.value.size());
+        return value.isNull() ? QByteArray("") : value;
     }
     return QByteArray();
 }

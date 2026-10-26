@@ -34,7 +34,9 @@ QString ManageSellOfferOperationResponse::getPrice() const{
 }
 
 Price ManageSellOfferOperationResponse::getPriceR() const{
-    return Price(m_priceR.value("n").toUInt(), m_priceR.value("d").toUInt());
+    // Exactly, or not at all: toInt() made a term that was text, a fraction
+    // or past int32 into 0, and the price into another.
+    return ResponseConverters::exactPrice(m_priceR, "price_r");
 }
 
 Asset* ManageSellOfferOperationResponse::getBuyingAsset() {

@@ -1,5 +1,6 @@
 #include "contractclient.h"
 
+#include <memory>
 #include <stdexcept>
 
 #include "account.h"
@@ -38,34 +39,51 @@ AssembledTransaction* ContractClient::invoke(const QString& functionName,
                                              const QList<stellar::SCVal>& args,
                                              Account* sourceAccount,
                                              qint64 baseFee,
-                                             KeyPair* authSigner)
+                                             KeyPair* authSigner,
+                                             qint64 timeoutSeconds)
 {
     if (!sourceAccount) throw std::runtime_error("ContractClient::invoke: null sourceAccount");
 
+    // build() takes the next sequence number from the caller's account, so a
+    // transaction built on it while the simulation below waits in its event
+    // loop gets the one after. A simulation or auth signing that failed used
+    // to keep the number, and the next transaction was refused with
+    // tx_bad_seq: it is handed back — unless a later one was taken meanwhile.
     TransactionBuilder b(sourceAccount, m_network);
     b.addOperation(
         InvokeHostFunctionOperation::invokeContractFunctionOperationBuilder(
             m_contract, functionName, args));
     b.setBaseFee(baseFee);
-    b.setTimeout(TransactionBuilder::TIMEOUT_INFINITE);
+    b.setTimeout(timeoutSeconds);
 
-    Transaction* tx = b.build();
-    auto* at = new AssembledTransaction(tx, m_server, m_network);
-    at->simulate();
-    if (authSigner) {
-        at->signAuthEntries(authSigner);
+    std::unique_ptr<AssembledTransaction> at(new AssembledTransaction(b.build(), m_server, m_network));
+    const qint64 reserved = sourceAccount->getSequenceNumber();
+    try {
+        at->simulate();
+        if (authSigner) {
+            at->signAuthEntries(authSigner);
+        }
+    } catch (...) {
+        if (sourceAccount->getSequenceNumber() == reserved)
+            sourceAccount->decrementSequenceNumber();
+        throw;
     }
-    return at;
+    return at.release();
 }
 
 stellar::SCVal ContractClient::read(const QString& functionName,
                                     const QList<stellar::SCVal>& args,
                                     Account* sourceAccount,
-                                    qint64 baseFee)
+                                    qint64 baseFee,
+                                    qint64 timeoutSeconds)
 {
-    AssembledTransaction* at = invoke(functionName, args, sourceAccount, baseFee, nullptr);
-    stellar::SCVal r = at->result();
-    delete at;
-    return r;
+    if (!sourceAccount) throw std::runtime_error("ContractClient::read: null sourceAccount");
+
+    // Simulated only, never sent: it must not use up the caller's sequence
+    // number, as every read() did.
+    Account scratch(sourceAccount->getAccountId(), sourceAccount->getSequenceNumber());
+    std::unique_ptr<AssembledTransaction> at(
+        invoke(functionName, args, &scratch, baseFee, nullptr, timeoutSeconds));
+    return at->result();
 }
 QSTELLAR_END_NS

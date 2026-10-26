@@ -2,6 +2,7 @@
 #include "external/cyoencode/src/CyoEncode.h"
 #include "external/cyoencode/src/CyoDecode.h"
 #include <QDebug>
+#include <QScopeGuard>
 
 QSTELLAR_BEGIN_NS
 
@@ -65,7 +66,18 @@ StrKey::VersionByte StrKey::decodeVersionByte(QByteArray encoded) {
 
 StrKey::VersionByte StrKey::decodeVersionByte(QString encoded)
 {
-    return StrKey::decodeVersionByte(encoded.toLocal8Bit());
+    // Latin-1, as every decoder here: the local 8-bit codec made the same
+    // text read differently from one machine to another. A character
+    // outside base32 is refused either way.
+    return StrKey::decodeVersionByte(encoded.toLatin1());
+}
+
+StrKey::Decoded StrKey::decodeAny(const QString& encoded)
+{
+    const QByteArray text = encoded.toLatin1();
+    // Non-Latin-1 characters became '?', which no base32 alphabet has.
+    const VersionByte version = decodeVersionByte(text);
+    return Decoded{version, decodeCheck(version, text)};
 }
 
 QByteArray StrKey::encodeCheck(StrKey::VersionByte versionByte, QByteArray data) {
@@ -102,6 +114,33 @@ QByteArray StrKey::encodeCheck(StrKey::VersionByte versionByte, QByteArray data)
 //is would be better to use a constexp to fill it
 uchar b32Table[] = {0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0x1a,0x1b,0x1c,0x1d,0x1e,0x1f,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0a,0x0b,0x0c,0x0d,0x0e,0x0f,0x10,0x11,0x12,0x13,0x14,0x15,0x16,0x17,0x18,0x19,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff};
 
+namespace {
+
+/**
+ * Why a signed payload's body is not framed as SEP-23 frames it (the
+ * ed25519 key, a big-endian length of 1 to 64, the payload, zeros to the
+ * next multiple of 4), null when it is: js's assertSignedPayloadFraming.
+ * py 14.1.0 takes non-zero padding, which core's XDR refuses.
+ */
+const char* signedPayloadFramingProblem(const QByteArray& body)
+{
+    if (body.size() < 32 + 4)
+        return "signed payload: too short to carry a payload length";
+    const quint32 declared = (quint32(quint8(body.at(32))) << 24) | (quint32(quint8(body.at(33))) << 16)
+                           | (quint32(quint8(body.at(34))) << 8) | quint32(quint8(body.at(35)));
+    if (declared < 1 || declared > 64)
+        return "signed payload: declared length outside 1-64";
+    if (body.size() != int(32 + 4 + (declared + 3) / 4 * 4))
+        return "signed payload: declared length does not match the data";
+    for (int i = int(32 + 4 + declared); i < body.size(); ++i) {
+        if (body.at(i) != 0)
+            return "signed payload: non-zero padding";
+    }
+    return nullptr;
+}
+
+} // namespace
+
 QByteArray StrKey::decodeCheck(StrKey::VersionByte versionByte, QByteArray encoded) {
 
     // The minimal binary decoded length is 3 bytes (version byte and 2-byte CRC) which,
@@ -129,10 +168,16 @@ QByteArray StrKey::decodeCheck(StrKey::VersionByte versionByte, QByteArray encod
         throw std::runtime_error("decoding secret to wrong place");//this can be dangerous as it can expose a secret key on public application places
     }
     for(int i=0;i< encoded.length();i++){
-        if((quint8)encoded.at(i)>127){            
+        const quint8 c = (quint8)encoded.at(i);
+        // The base32 alphabet only, upper case (SEP-23): lower case was taken
+        // ("gcfiry65..." signed where js and py refuse it), and so was '=',
+        // which the padding-aware decoder read as zero bits — the same key
+        // under another spelling.
+        if(c>127 || b32Table[c] == 0xff){
             throw std::runtime_error("Illegal characters in encoded char array.");
         }
     }
+    const QByteArray original = encoded;
     //TODO delete Cyo dependency, we don't want padding and we only use base32 encoding decoding.
     int cyoWorkaroundPaddingLength = encoded.size()%8;
     if(cyoWorkaroundPaddingLength>0)
@@ -144,6 +189,26 @@ QByteArray StrKey::decodeCheck(StrKey::VersionByte versionByte, QByteArray encod
 
     if(decoded.isEmpty())
         throw FormatException();
+
+    // What an S... decodes to is the seed, give or take a typo: the copies
+    // made of it below are wiped on every way out, each throw included (a
+    // seed with one character mistyped fails the checksum with 32 bytes of
+    // it in hand). `data` is what a good one returns: kept on success.
+    QByteArray payload;
+    QByteArray data;
+    QByteArray reencoded;
+    bool returningData = false;
+    auto wipeSeedCopies = qScopeGuard([&] {
+        if (versionByte != VersionByte::SEED
+                && (decoded.isEmpty() || StrKey::VersionByte(quint8(decoded.at(0))) != VersionByte::SEED))
+            return;
+        decoded.fill('\0', decoded.length());
+        payload.fill('\0', payload.length());
+        // The re-encoding is the S... strkey again: wiped, not just freed.
+        reencoded.fill('\0', reencoded.length());
+        if (!returningData)
+            data.fill('\0', data.length());
+    });
 
     CyoDecode::Base32::Decode((CyoEncode::byte_t*)decoded.data(),encoded.data(),encoded.length());
     //TODO delete Cyo dependency, we don't want padding and we only use base32 encoding decoding.
@@ -158,8 +223,8 @@ QByteArray StrKey::decodeCheck(StrKey::VersionByte versionByte, QByteArray encod
     }
 
     StrKey::VersionByte decodedVersionByte = (StrKey::VersionByte)decoded.at(0);
-    QByteArray payload(decoded.data(),decoded.length()-2);
-    QByteArray data(decoded.data()+1,decoded.length()-3);
+    payload = QByteArray(decoded.data(),decoded.length()-2);
+    data = QByteArray(decoded.data()+1,decoded.length()-3);
     QByteArray checksum(decoded.data()+ decoded.length()-2,2);
     if(decodedVersionByte != versionByte){
         throw std::runtime_error("Version byte is invalid");
@@ -169,11 +234,50 @@ QByteArray StrKey::decodeCheck(StrKey::VersionByte versionByte, QByteArray encod
     if(expectedChecksum!=checksum){
         throw std::runtime_error("Checksum invalid");
     }
-    if (VersionByte::SEED == decodedVersionByte) {
-        decoded.fill('\0',decoded.length());
-        payload.fill('\0',payload.length());
+
+    // The body each kind has (SEP-23), as js's decodeCheck requires: a G of
+    // five bytes or an M of 32 carried a good checksum and was accepted.
+    bool lengthOk = false;
+    switch (decodedVersionByte) {
+    case VersionByte::ACCOUNT_ID:
+    case VersionByte::SEED:
+    case VersionByte::PRE_AUTH_TX:
+    case VersionByte::SHA256_HASH:
+    case VersionByte::CONTRACT:
+    case VersionByte::LIQUIDITY_POOL:
+        lengthOk = data.size() == 32;
+        break;
+    case VersionByte::MUXED_ACCOUNT:
+        lengthOk = data.size() == 40;
+        break;
+    case VersionByte::CLAIMABLE_BALANCE:
+        // One byte of ClaimableBalanceIDType, and V0 is the only one.
+        lengthOk = data.size() == 33 && data.at(0) == 0;
+        break;
+    case VersionByte::SIGNED_PAYLOAD:
+        // ed25519 key, a length, then 1..64 payload bytes padded to 4.
+        lengthOk = data.size() >= 40 && data.size() <= 100 && (data.size() - 36) % 4 == 0;
+        break;
+    default:
+        break;
+    }
+    // And exactly one spelling: what decodes must encode back to the input.
+    if (lengthOk)
+        reencoded = encodeCheck(decodedVersionByte, data);
+    const bool canonical = lengthOk && reencoded == original;
+    if (!lengthOk)
+        throw std::runtime_error("invalid encoded string length");
+    if (!canonical)
+        throw std::runtime_error("invalid encoded string: not canonical");
+    // A P... body framed as its declared length says, here and not only in
+    // decodeSignedPayload: js's decodeCheck refuses one that is not, py's
+    // one whose length does not match.
+    if (VersionByte::SIGNED_PAYLOAD == decodedVersionByte) {
+        if (const char* problem = signedPayloadFramingProblem(data))
+            throw std::runtime_error(problem);
     }
 
+    returningData = true;
     return data;
 }
 

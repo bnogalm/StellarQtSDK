@@ -67,6 +67,13 @@ public:
      */
     TransactionsRequestBuilder& forClaimableBalance(QString claimableBalance);
 
+    /**
+     * Builds request to <code>GET /liquidity_pools/{pool_id}/transactions</code>,
+     * as js's forLiquidityPool and py's for_liquidity_pool.
+     * @param liquidityPoolId 64-char hex pool id.
+     */
+    TransactionsRequestBuilder& forLiquidityPool(const QString& liquidityPoolId);
+
 
     Page<TransactionResponse> *execute(QUrl uri);
 

@@ -71,9 +71,9 @@ class Balance {
 
     Q_PROPERTY(QString buying_liabilities MEMBER m_buyingLiabilities)
     Q_PROPERTY(QString selling_liabilities MEMBER m_sellingLiabilities)
-    Q_PROPERTY(bool is_authorized MEMBER m_isAuthorized)
-    Q_PROPERTY(bool is_authorized_to_maintain_liabilities MEMBER m_isAuthorizedToMaintainLiabilities)
-    Q_PROPERTY(bool is_clawback_enabled MEMBER m_isClawbackEnabled)
+    Q_PROPERTY(bool is_authorized READ getAuthorized WRITE setAuthorized)
+    Q_PROPERTY(bool is_authorized_to_maintain_liabilities READ getAuthorizedToMaintainLiabilities WRITE setAuthorizedToMaintainLiabilities)
+    Q_PROPERTY(bool is_clawback_enabled READ getClawbackEnabled WRITE setClawbackEnabled)
     Q_PROPERTY(int last_modified_ledger MEMBER m_lastModifiedLedger)
     Q_PROPERTY(QString sponsor READ getSponsor MEMBER m_sponsor)
     Q_PROPERTY(QString liquidity_pool_id MEMBER m_liquidityPoolId)
@@ -91,6 +91,10 @@ class Balance {
     bool m_isAuthorized;
     bool m_isAuthorizedToMaintainLiabilities;
     bool m_isClawbackEnabled;
+    // Which of the three Horizon sent: it leaves them out of the native line
+    // and is_clawback_enabled out of pool-share lines, and false is a value.
+    enum Sent { Authorized = 1, AuthorizedToMaintainLiabilities = 2, ClawbackEnabled = 4 };
+    int m_sent = 0;
     int m_lastModifiedLedger;
 
     KeyPair *m_assetIssuerKeypair;
@@ -120,6 +124,11 @@ public:
 
     QString getBuyingLiabilities() const;
     QString getSellingLiabilities() const;
+    /**
+     * Horizon's is_authorized. Horizon leaves it out of the native (XLM)
+     * line, where authorization does not apply; there it reads false and
+     * means nothing.
+     */
     bool getAuthorized() const;
     bool getAuthorizedToMaintainLiabilities() const;
     int getLastModifiedLedger() const;
@@ -132,6 +141,17 @@ public:
     QString getLiquidityPoolId() const { return m_liquidityPoolId; }
     /** Whether clawback is enabled for this trustline (Protocol 17 CAP-35). */
     bool getClawbackEnabled() const { return m_isClawbackEnabled; }
+    /**
+     * Whether Horizon sent is_authorized / is_authorized_to_maintain_liabilities
+     * / is_clawback_enabled for this line. A flag it left out reads false;
+     * these tell it apart from a false it sent (js: undefined).
+     */
+    bool hasAuthorized() const { return m_sent & Authorized; }
+    bool hasAuthorizedToMaintainLiabilities() const { return m_sent & AuthorizedToMaintainLiabilities; }
+    bool hasClawbackEnabled() const { return m_sent & ClawbackEnabled; }
+    void setAuthorized(bool v) { m_isAuthorized = v; m_sent |= Authorized; }
+    void setAuthorizedToMaintainLiabilities(bool v) { m_isAuthorizedToMaintainLiabilities = v; m_sent |= AuthorizedToMaintainLiabilities; }
+    void setClawbackEnabled(bool v) { m_isClawbackEnabled = v; m_sent |= ClawbackEnabled; }
 };
 
 /**
@@ -202,6 +222,8 @@ public:
     Data();
     Data(const QVariantMap& data);
     int size() const;
+    /** The names of the account's data entries, sorted (js: Object.keys(data_attr)). */
+    QStringList keys() const;
      /**
      * Gets base64-encoded value for a given key or utf8 representation.
      * @param key Data entry name
@@ -229,6 +251,8 @@ namespace Account{
 // Defined (non-inline) in accountresponse.cpp, where it is registered as a
 // QVariantMap->Data converter (its address is taken, so it needs a real symbol).
 AccountResponseAttach::Data convertData(const QVariantMap& source);
+/** The account's data map read exactly (each value the base64 of at most 64 bytes); registered for Response::fillObject. */
+QVariant exactData(const QJsonValue& value, const QString& field);
 }
 }
 
@@ -257,6 +281,8 @@ private:
     Q_PROPERTY(qint64 num_sponsoring READ getNumSponsoring MEMBER m_numSponsoring NOTIFY numSponsoringChanged)
     Q_PROPERTY(qint64 num_sponsored READ getNumSponsored MEMBER m_numSponsored NOTIFY numSponsoredChanged)
     Q_PROPERTY(QString sponsor READ getSponsor MEMBER m_sponsor NOTIFY sponsorChanged)
+    Q_PROPERTY(qint64 last_modified_ledger MEMBER m_lastModifiedLedger)
+    Q_PROPERTY(QString last_modified_time MEMBER m_lastModifiedTime)
 
     QString m_account_id;
     KeyPair * m_keypair;//generated with m_account_id
@@ -278,6 +304,8 @@ private:
     qint64 m_numSponsoring;
     qint64 m_numSponsored;
     QString m_sponsor;
+    qint64 m_lastModifiedLedger = 0;
+    QString m_lastModifiedTime;
 
 public:
     Q_INVOKABLE explicit AccountResponse(QNetworkReply* reply=nullptr);
@@ -293,6 +321,10 @@ public:
     qint64 getSequenceNumber() const;
     qint64 getIncrementedSequenceNumber() const;
     void incrementSequenceNumber();
+    /** Ledger in which the account entry last changed (Horizon's last_modified_ledger). 0 if absent. */
+    qint64 getLastModifiedLedger() const { return m_lastModifiedLedger; }
+    /** When the account entry last changed, as Horizon writes it (ISO 8601). Empty if absent. */
+    QString getLastModifiedTime() const { return m_lastModifiedTime; }
     /** Ledger sequence in which the account's sequence number was last bumped (CAP-21). 0 if absent. */
     qint64 getSequenceLedger() const { return m_sequenceLedger; }
     /** Unix timestamp (string) when the sequence number was last bumped. Empty if absent. */

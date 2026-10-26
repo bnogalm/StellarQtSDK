@@ -5,7 +5,7 @@ DEFINES += STELLAR_QT_REPLY_TIMEOUT=30000
 DEFINES *= ED25519_NO_SEED
 
 DEFINES += STELLAR_QT_SDK_CLIENT_NAME=\"\\\"qtcpp-stellar-sdk\\\"\"
-DEFINES += STELLAR_QT_SDK_CLIENT_VERSION=\"\\\"1.0.3\\\"\"
+DEFINES += STELLAR_QT_SDK_CLIENT_VERSION=\"\\\"1.0.4\\\"\"
 
 #DEFINES += STELLAR_QT_AUTOSET_BASE_FEE
 
@@ -44,6 +44,8 @@ lessThan(QT_MAJOR_VERSION, 6) {
 
 
 SOURCES += \
+    $$PWD/src/wasmsections.cpp \
+    $$PWD/src/contractspec.cpp \
     $$PWD/src/liquiditypool.cpp \
     $$PWD/src/changetrustasset.cpp \
     $$PWD/src/trustlineasset.cpp \
@@ -83,6 +85,9 @@ SOURCES += \
     $$PWD/src/sep45challenge.cpp \
     $$PWD/src/sep7.cpp \
     $$PWD/src/stellartoml.cpp \
+    $$PWD/src/stellartomlresolver.cpp \
+    $$PWD/src/sep7origincheck.cpp \
+    $$PWD/src/bip39wordlists.cpp \
     $$PWD/src/responses/problem.cpp \
     $$PWD/src/responses/effects/liquiditypooleffectsresponses.cpp \
     $$PWD/src/responses/liquiditypoolresponse.cpp \
@@ -206,6 +211,7 @@ SOURCES += \
     $$PWD/src/responses/accountresponse.cpp \
     $$PWD/src/responses/response.cpp \
     $$PWD/src/responses/submittransactionresponse.cpp \
+    $$PWD/src/responses/submittransactionasyncresponse.cpp \
     $$PWD/src/responses/link.cpp \
     $$PWD/src/responses/transactionresponse.cpp \
     $$PWD/src/responses/page.cpp \
@@ -288,6 +294,9 @@ DEFINES += QT_DEPRECATED_WARNINGS
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 HEADERS += \
+    $$PWD/src/wasmsections.h \
+    $$PWD/src/contractspec.h \
+    $$PWD/xdr/contractspec.h \
     $$PWD/src/liquiditypool.h \
     $$PWD/src/changetrustasset.h \
     $$PWD/src/trustlineasset.h \
@@ -330,6 +339,10 @@ HEADERS += \
     $$PWD/src/sep45challenge.h \
     $$PWD/src/sep7.h \
     $$PWD/src/stellartoml.h \
+    $$PWD/src/stellartomlresolver.h \
+    $$PWD/src/sep7origincheck.h \
+    $$PWD/src/bip39wordlists.h \
+    $$PWD/src/sep29.h \
     $$PWD/src/exception/invalidsep45challengeexception.h \
     $$PWD/src/exception/assembledtransactionexception.h \
     $$PWD/src/exception/simulationfailedexception.h \
@@ -338,6 +351,7 @@ HEADERS += \
     $$PWD/xdr/scval.h \
     $$PWD/xdr/sorobantxdata.h \
     $$PWD/xdr/sorobanops.h \
+    $$PWD/xdr/stellarledgermeta.h \
     $$PWD/src/responses/assetamount.h \
     $$PWD/src/responses/liquiditypool.h \
     $$PWD/src/responses/liquiditypoolclaimableassetamount.h \
@@ -362,6 +376,7 @@ HEADERS += \
     $$PWD/src/exception/connectionerrorexception.h \
     $$PWD/src/exception/accountnotfoundexception.h \
     $$PWD/src/exception/accountrequiresmemoexception.h \
+    $$PWD/src/exception/federationexception.h \
     $$PWD/src/exception/invalidsep10challengeexception.h \
     $$PWD/src/exception/unexpectedexception.h \
     $$PWD/src/exception/unknownresponseexception.h \
@@ -486,6 +501,7 @@ HEADERS += \
     $$PWD/src/responses/accountresponse.h \
     $$PWD/src/responses/response.h \
     $$PWD/src/responses/submittransactionresponse.h \
+    $$PWD/src/responses/submittransactionasyncresponse.h \
     $$PWD/src/responses/link.h \
     $$PWD/src/responses/transactionresponse.h \
     $$PWD/src/responses/page.h \
@@ -556,9 +572,42 @@ HEADERS += \
     $$PWD/src/slip10.h \
     $$PWD/src/checkaccountrequiresmemo.h
 
-#to maintain it easier, until we dont support more than read FEDERATION_SERVER address, we dont use CPPTOML
-#CPPTOML is not compiling in android caused by some problems in android NDK
-#!android{
-#    HEADERS+= $$PWD/external/cpptoml/include/cpptoml.h
-#    DEFINES+= USE_CPPTOML
-#}
+# A stellar.toml is read by src/stellartoml.cpp (TOML 1.0) and fetched by
+# src/stellartomlresolver.cpp.
+
+# ─── Optional QML layer ──────────────────────────────────────────────────
+#
+# Off by default: it links QtQml, which a plain C++ consumer has no reason to
+# pull in. Enable it from the consuming project BEFORE including this file:
+#
+#     DEFINES += STELLAR_QT_QML
+#     include(StellarQtSDK/StellarQtSDK.pri)
+#
+# It makes the SDK usable from QML — invokable methods, string-keyed factories,
+# no raw pointers and no exceptions crossing the boundary. See
+# src/qml/qstellarqml.h.
+contains(DEFINES, STELLAR_QT_QML) {
+    QT *= qml network
+    SOURCES += \
+        $$PWD/src/qml/assetregistry.cpp \
+        $$PWD/src/qml/horizonqml.cpp \
+        $$PWD/src/qml/operationfactory.cpp \
+        $$PWD/src/qml/operationtable.cpp \
+        $$PWD/src/qml/sepsqml.cpp \
+        $$PWD/src/qml/xdrqml.cpp \
+        $$PWD/src/qml/sorobanqml.cpp \
+        $$PWD/src/qml/stellarqml.cpp \
+        $$PWD/src/qml/txbuilderqml.cpp \
+        $$PWD/src/qml/qstellarqml.cpp
+    HEADERS += \
+        $$PWD/src/qml/assetregistry.h \
+        $$PWD/src/qml/horizonqml.h \
+        $$PWD/src/qml/operationfactory.h \
+        $$PWD/src/qml/operationtable.h \
+        $$PWD/src/qml/sepsqml.h \
+        $$PWD/src/qml/xdrqml.h \
+        $$PWD/src/qml/sorobanqml.h \
+        $$PWD/src/qml/stellarqml.h \
+        $$PWD/src/qml/txbuilderqml.h \
+        $$PWD/src/qml/qstellarqml.h
+}

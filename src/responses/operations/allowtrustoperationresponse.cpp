@@ -21,7 +21,13 @@ AllowTrustOperationResponse::AllowTrustOperationResponse(QNetworkReply *reply)
 
 }
 
-AllowTrustOperationResponse::~AllowTrustOperationResponse(){}
+AllowTrustOperationResponse::~AllowTrustOperationResponse()
+{
+    // The objects the getters made were never freed.
+    delete m_trustorKeypair;
+    delete m_trusteeKeypair;
+    delete m_asset;
+}
 
 KeyPair& AllowTrustOperationResponse::getTrustor() {
     if(!m_trustorKeypair)

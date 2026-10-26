@@ -35,6 +35,12 @@ public:
     FeeBumpTransactionBuilder(AccountConverter accountConverter, Transaction* inner);
     ~FeeBumpTransactionBuilder();
 
+    // Not copyable: the builder owns the inner transaction. The implicit copy
+    // shared it, so `auto b = FeeBumpTransactionBuilder(...).setBaseFee(200);`
+    // left b with an inner the temporary had already deleted.
+    FeeBumpTransactionBuilder(const FeeBumpTransactionBuilder&) = delete;
+    FeeBumpTransactionBuilder& operator=(const FeeBumpTransactionBuilder&) = delete;
+
     FeeBumpTransactionBuilder& setBaseFee(qint64 baseFee);
     FeeBumpTransactionBuilder& setFeeAccount(QString feeAccount);
 

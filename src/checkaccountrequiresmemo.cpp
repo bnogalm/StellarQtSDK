@@ -1,4 +1,5 @@
 #include "checkaccountrequiresmemo.h"
+#include "sep29.h"
 #include "keypair.h"
 #include "exception/networkexception.h"
 #include <QTimer>
@@ -10,12 +11,12 @@ QSTELLAR_BEGIN_NS
  * ACCOUNT_REQUIRES_MEMO_VALUE is the base64 encoding of "1".
  * SEP 29 uses this value to define transaction memo requirements for incoming payments.
  */
-const QString ACCOUNT_REQUIRES_MEMO_VALUE = "MQ==";
+const QString ACCOUNT_REQUIRES_MEMO_VALUE = QString::fromLatin1(Sep29::DATA_VALUE_BASE64);
 
 /**
  * ACCOUNT_REQUIRES_MEMO_KEY is the data name described in SEP 29.
  */
-const QString ACCOUNT_REQUIRES_MEMO_KEY = "config.memo_required";
+const QString ACCOUNT_REQUIRES_MEMO_KEY = QString::fromLatin1(Sep29::DATA_NAME);
 
 CheckAccountRequiresMemo::CheckAccountRequiresMemo(Server *server, QList<QString> pendingCheckAddressMemos) : QObject(server)
   ,m_pendingCheckAddressMemos(pendingCheckAddressMemos)

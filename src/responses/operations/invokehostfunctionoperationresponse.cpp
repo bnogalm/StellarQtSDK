@@ -15,6 +15,10 @@ static void registerInvokeHostFnTypes()
     regType<QList<InvokeHostFunctionOperationResponseAttach::AssetBalanceChange> >();
     QMetaType::registerConverter<QVariantList, QList<InvokeHostFunctionOperationResponseAttach::Parameter> >(&ResponseConverters::convert<InvokeHostFunctionOperationResponseAttach::Parameter>);
     QMetaType::registerConverter<QVariantList, QList<InvokeHostFunctionOperationResponseAttach::AssetBalanceChange> >(&ResponseConverters::convert<InvokeHostFunctionOperationResponseAttach::AssetBalanceChange>);
+    // What Response::fillObject reads them with (the converters above wrote
+    // each member unchecked).
+    ResponseConverters::registerExactGadgetList<InvokeHostFunctionOperationResponseAttach::Parameter>();
+    ResponseConverters::registerExactGadgetList<InvokeHostFunctionOperationResponseAttach::AssetBalanceChange>();
 }
 Q_COREAPP_STARTUP_FUNCTION(registerInvokeHostFnTypes)
 

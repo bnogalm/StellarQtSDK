@@ -75,14 +75,37 @@ public:
         return m_links;
     }
     /**
-       * @return The next page of results or null when there is no more results
-       * @throws URISyntaxException
-       * @throws IOException
-       */
+     * Requests the page _links.next names, into this same object, and
+     * returns this: wait for ready() or error() as for the first page (the
+     * records and links are replaced when it arrives). js's next() and py's
+     * next() follow the same link. Returns null when the page has no next
+     * link, and when it has no reply to ask through: a page read with
+     * loadFromJson(), or one whose reply or QNetworkAccessManager was
+     * deleted (that used to crash).
+     */
     PageBase* getNextPage();
+    /**
+     * The same for _links.prev, as js's prev() and py's prev(). Horizon's
+     * prev link asks for the records before this page in the other order,
+     * and they come in that order, as in js and py.
+     */
+    PageBase* getPrevPage();
+    /**
+     * Reads the page exactly (see Response::fillObject): a record, its
+     * `_embedded.records` or its `_links` that cannot be read throws
+     * std::runtime_error naming the member, and the page keeps none of the
+     * records it had read by then.
+     */
     virtual void loadFromJson(QByteArray data);
 protected:
+    /** Record `index` of `records`, which must be a JSON object; throws otherwise. */
+    QJsonObject recordObject(const QJsonArray& records, int index) const;
+    /** How errors name record `index` ("_embedded.records[3]"; nothing in a stream). */
+    QString recordField(int index) const;
     virtual void reset();
+private:
+    /** getNextPage() and getPrevPage(), following `href`. */
+    PageBase* followLink(const QString& href);
 
 public slots:
     void setRecords(QList<Response*> records);
@@ -120,11 +143,14 @@ public:
     }
     /**
      * @brief streamedElement We use pages to also get streamed elements
-     * @return last updated streamed element
+     * @return last updated streamed element, or nullptr before the first
+     * one and after an event that could not be read (it indexed an empty
+     * list). The record is the page's, valid until the next event or
+     * reconnect.
      */
     T* streamedElement()
     {
-        return static_cast<T*>(this->m_records[0]);
+        return this->m_records.isEmpty() ? nullptr : static_cast<T*>(this->m_records[0]);
     }
 };
 

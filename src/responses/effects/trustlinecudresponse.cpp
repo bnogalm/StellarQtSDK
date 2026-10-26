@@ -2,6 +2,7 @@
 #include "../../keypair.h"
 #include "../../assettypenative.h"
 #include "../../assettypecreditalphanum.h"
+#include <stdexcept>
 
 QSTELLAR_BEGIN_NS
 
@@ -26,6 +27,8 @@ Asset *TrustlineCUDResponse::getAsset() {
     if(!m_asset){
         if (m_assetType=="native") {
             m_asset= new AssetTypeNative();
+        } else if (m_assetType == QLatin1String("liquidity_pool_shares")) {
+            throw std::runtime_error("a pool-share trustline has no asset: its pool is getLiquidityPoolId()");
         } else {
             KeyPair* issuer = KeyPair::fromAccountId(m_assetIssuer);
             m_asset= Asset::createNonNativeAsset(m_assetCode, issuer);

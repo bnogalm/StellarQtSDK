@@ -9,6 +9,7 @@ class BumpSequenceOperation : public Operation
 {
     stellar::BumpSequenceOp m_op;
 public:
+    /** Throws std::runtime_error for a negative bumpTo, which core refuses (BAD_SEQ). */
     BumpSequenceOperation(qint64 bumpTo);
     BumpSequenceOperation(stellar::BumpSequenceOp& op);
     virtual ~BumpSequenceOperation();

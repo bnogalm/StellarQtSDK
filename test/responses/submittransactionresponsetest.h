@@ -6,6 +6,10 @@
 #include <QtTest>
 #include "../testcollector.h"
 #include "../../src/responses/submittransactionresponse.h"
+#include <QJsonArray>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <limits>
 
 class SubmitTransactionResponseTest: public QObject
 {
@@ -162,6 +166,105 @@ private slots:
     }
 
 
+    /**
+     * getOfferIdFromResult answers 0 for any result it cannot read, and never
+     * throws. A 20-byte result_xdr counting 0x7fffffff operations made it
+     * reserve gigabytes and throw std::bad_alloc into the app; a count in Qt's
+     * 64-bit framing (FFFFFFFE, then the count) was read and its offer id
+     * handed back, though js and py refuse those bytes.
+     */
+    void testAnUnreadableResultHasNoOfferIdAndDoesNotThrow() {
+        auto offerId = [](const char* resultXdr) -> qint64 {
+            SubmitTransactionResponse response(nullptr, nullptr);
+            response.loadFromJson(QByteArray("{\"hash\": \"ee14b93fcd31d4cfe835b941a0a8744e23a6677097db1fafe0552d8657bed940\", \"envelope_xdr\": \"AAAAAA==\", \"ledger\": 5, \"result_xdr\": \"") + resultXdr + "\"}");
+            try {
+                return response.getOfferIdFromResult(0);
+            } catch (...) {
+                return -1;
+            }
+        };
+        // One created offer, 777001: read as it should be.
+        QCOMPARE(offerId("AAAAAAAAAGQAAAAAAAAAAQAAAAAAAAADAAAAAAAAAAAAAAAAAAAAABERERERERERERERERERERERERERERERERERERERERERAAAAAAAL2ykAAAAAAAAAAVVTRAAAAAAAIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIAAAAAAA9CQAAAAAEAAAACAAAAAAAAAAAAAAAA"),
+                 qint64(777001));
+        const char* unreadable[] = {
+            // the same, results counted FFFFFFFE + int64 1
+            "AAAAAAAAAGQAAAAA/////gAAAAAAAAABAAAAAAAAAAMAAAAAAAAAAAAAAAAAAAAAEREREREREREREREREREREREREREREREREREREREREREAAAAAAAvbKQAAAAAAAAABVVNEAAAAAAAiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIgAAAAAAD0JAAAAAAQAAAAIAAAAAAAAAAAAAAAA=",
+            "AAAAAAAAAGQAAAAAf////wAAAAA=",                      // results 0x7fffffff, nothing after
+            "AAAAAAAAAGQAAAAA/////gAAAQAAAAAAAAAAAA==",          // results FFFFFFFE + int64 2^40
+            // offersClaimed 0x7fffffff, then FFFFFFFE + int64 0
+            "AAAAAAAAAGQAAAAAAAAAAQAAAAAAAAADAAAAAH////8AAAAAAAAAABERERERERERERERERERERERERERERERERERERERERERAAAAAAAL2yoAAAAAAAAAAVVTRAAAAAAAIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIAAAAAAA9CQAAAAAEAAAACAAAAAAAAAAAAAAAA",
+            "AAAAAAAAAGQAAAAAAAAAAQAAAAAAAAADAAAAAP////4AAAAAAAAAAAAAAAAAAAAAEREREREREREREREREREREREREREREREREREREREREREAAAAAAAvbKwAAAAAAAAABVVNEAAAAAAAiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIgAAAAAAD0JAAAAAAQAAAAIAAAAAAAAAAAAAAAA=",
+            // a fee bump's inner results: 0x7fffffff, then FFFFFFFE + int64 1
+            "AAAAAAAAAMgAAAABMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMAAAAAAAAAZAAAAAB/////AAAAAAAAAAA=",
+            "AAAAAAAAAMgAAAABMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMAAAAAAAAAZAAAAAD////+AAAAAAAAAAEAAAAAAAAAAwAAAAAAAAAAAAAAAAAAAAAREREREREREREREREREREREREREREREREREREREREREQAAAAAAC9ssAAAAAAAAAAFVU0QAAAAAACIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiAAAAAAAPQkAAAAABAAAAAgAAAAAAAAAAAAAAAAAAAAA=",
+            "AAAAAAAAAGQAAAAAAAAAAQAAAAAAAAANAAAAAH////8AAAAA",  // path payment offers 0x7fffffff
+            "AAAAAAAAAGQAAAAAAAAAAQAAAAAAAAAJAAAAAH////8AAAAA",  // inflation payouts 0x7fffffff
+        };
+        for (const char* resultXdr : unreadable)
+            QCOMPARE(offerId(resultXdr), qint64(0));
+    }
+
+
+    /**
+     * A submission Horizon took is the transaction as applied. Without its
+     * ledger it read as not successful, without result_xdr the offer ids
+     * read 0, and without its hash or envelope getHash() and
+     * getEnvelopeXdr() read empty; a ledger that is not a number read as 0,
+     * a failure. A problem document (a refused submission) is still read as
+     * one.
+     */
+    void testASuccessIsReadWhole()
+    {
+        const QByteArray success = QJsonDocument(QJsonObject{
+            {"hash", "ee14b93fcd31d4cfe835b941a0a8744e23a6677097db1fafe0552d8657bed940"},
+            {"ledger", 3128812},
+            {"envelope_xdr", "AAAAAA=="},
+            {"result_xdr", "AAAAAAAAAGQAAAAAAAAAAQAAAAAAAAADAAAAAAAAAAAAAAAA"}}).toJson();
+        for (const char* key : { "hash", "ledger", "envelope_xdr", "result_xdr" }) {
+            QJsonObject missing = QJsonDocument::fromJson(success).object();
+            missing.remove(QLatin1String(key));
+            SubmitTransactionResponse response(nullptr, nullptr);
+            QVERIFY_EXCEPTION_THROWN(response.loadFromJson(QJsonDocument(missing).toJson()), std::runtime_error);
+        }
+        QJsonObject wrong = QJsonDocument::fromJson(success).object();
+        wrong["ledger"] = QString("3128812th");
+        SubmitTransactionResponse notANumber(nullptr, nullptr);
+        QVERIFY_EXCEPTION_THROWN(notANumber.loadFromJson(QJsonDocument(wrong).toJson()), std::runtime_error);
+
+        SubmitTransactionResponse applied(nullptr, nullptr);
+        applied.loadFromJson(success);
+        QVERIFY(applied.isSuccess());
+        QCOMPARE(applied.getLedger(), Q_INT64_C(3128812));
+        QVERIFY(!applied.isTimeout());
+
+        const QByteArray refused = "{\"type\":\"https://stellar.org/horizon-errors/transaction_failed\","
+                                   "\"title\":\"Transaction Failed\",\"status\":400,"
+                                   "\"extras\":{\"envelope_xdr\":\"AAAAAA==\",\"result_codes\":{\"transaction\":\"tx_bad_seq\"},"
+                                   "\"result_xdr\":\"AAAAAAAAAGT////7AAAAAA==\"}}";
+        SubmitTransactionResponse failure(nullptr, nullptr);
+        failure.loadFromJson(refused);
+        QVERIFY(!failure.isSuccess());
+        QCOMPARE(failure.getExtras().getResultCodes().getTransactionResultCode(), QString("tx_bad_seq"));
+    }
+
+    /**
+     * result_xdr is decoded as base64 exactly: the lenient decoder skipped
+     * characters that are not base64, so a garbled result still produced an
+     * offer id.
+     */
+    void testOfferIdNeedsAResultThatIsBase64()
+    {
+        auto offerId = [](const QByteArray& resultXdr) -> qint64 {
+            SubmitTransactionResponse response(nullptr, nullptr);
+            response.loadFromJson(QByteArray("{\"hash\": \"ee14b93fcd31d4cfe835b941a0a8744e23a6677097db1fafe0552d8657bed940\", \"envelope_xdr\": \"AAAAAA==\", \"ledger\": 5, \"result_xdr\": \"") + resultXdr + "\"}");
+            return response.getOfferIdFromResult(0);
+        };
+        const QByteArray result = "AAAAAAAAAGQAAAAAAAAAAQAAAAAAAAADAAAAAAAAAAAAAAAAAAAAABERERERERERERERERERERERERERERERERERERERERERAAAAAAAL2ykAAAAAAAAAAVVTRAAAAAAAIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIAAAAAAA9CQAAAAAEAAAACAAAAAAAAAAAAAAAA";
+        QCOMPARE(offerId(result), qint64(777001));
+        QByteArray garbled = result;
+        garbled.insert(20, "!*");
+        QCOMPARE(offerId(garbled), qint64(0));
+    }
 };
 
 ADD_TEST(SubmitTransactionResponseTest)

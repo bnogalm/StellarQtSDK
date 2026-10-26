@@ -7,12 +7,42 @@
 #include <QtTest>
 #include "testcollector.h"
 #include "../src/memo.h"
+#include "../src/responses/accountresponse.h"
 #include "../xdr/stellartransaction.h"
 class MemoTest: public QObject
 {
     Q_OBJECT
 
 private slots:
+
+    /**
+     * A hash / return memo from Horizon is decoded strictly, as js and py
+     * decode it: the lenient decoder skipped characters it did not know, so
+     * a URL-safe '-' / '_' or a damaged value became other bytes.
+     */
+    void testHorizonMemoHashIsStrictBase64() {
+        const QByteArray hash(32, '\xfb');
+        const QByteArray good = hash.toBase64();
+        Memo *ok = Memo::parse(QString("hash"), good);
+        QVERIFY(dynamic_cast<MemoHash*>(ok));
+        QCOMPARE(dynamic_cast<MemoHash*>(ok)->getBytes(), hash);
+        delete ok;
+
+        const QByteArray urlSafe = hash.toBase64(QByteArray::Base64UrlEncoding);
+        QVERIFY(urlSafe != good);
+        QVERIFY_EXCEPTION_THROWN(delete Memo::parse(QString("hash"), urlSafe), std::runtime_error);
+        QVERIFY_EXCEPTION_THROWN(delete Memo::parse(QString("return"), QByteArray("!") + good), std::runtime_error);
+    }
+
+    /** An account data value that is not base64 decodes to nothing, not to other bytes. */
+    void testAccountDataDecodesStrictly() {
+        QVariantMap map;
+        map.insert("good", QString("dGVzdA=="));
+        map.insert("bad", QString("dGVz-dA=="));
+        AccountResponseAttach::Data data(map);
+        QCOMPARE(data.getDecoded("good"), QByteArray("test"));
+        QVERIFY(data.getDecoded("bad").isEmpty());
+    }
 
     void testMemoNone() {
         MemoNone* memo = Memo::none();
@@ -69,15 +99,32 @@ private slots:
         MemoId *memoId = dynamic_cast<MemoId*>(Memo::parse("id",longId));
         QCOMPARE(QString::number(memoId->getId()),longId);
     }
+
+    /**
+     * A memo id from text (Horizon's memo, or a form) is a uint64 in decimal
+     * digits, as js Memo.id takes it ("Expects a uint64 as a string"; "01"
+     * is read). Anything else was memo id 0, the id deposits are routed by.
+     */
+    void testParseMemoIdRefusesWhatIsNotAUint64() {
+        QScopedPointer<Memo> max(Memo::parse(QString("id"), QByteArray("18446744073709551615")));
+        QCOMPARE(dynamic_cast<MemoId*>(max.data())->getId(), Q_UINT64_C(18446744073709551615));
+        QScopedPointer<Memo> zeros(Memo::parse(QString("id"), QString("007")));
+        QCOMPARE(dynamic_cast<MemoId*>(zeros.data())->getId(), quint64(7));
+        for (const char* text : {"abc", "", "-1", "+1", " 1", "1 ", "1.5", "1e3", "0x10",
+                                 "18446744073709551616"}) {
+            QVERIFY_EXCEPTION_THROWN(delete Memo::parse(QString("id"), QByteArray(text)), std::runtime_error);
+            QVERIFY_EXCEPTION_THROWN(delete Memo::parse(QString("id"), QString(text)), std::runtime_error);
+        }
+    }
     void testMemoHashSuccess() {
-        MemoHash* memo = Memo::hash(QString("4142434445464748494a4b4c"));
+        MemoHash* memo = Memo::hash(QString("4142434445464748494a4b4c0000000000000000000000000000000000000000"));
         QCOMPARE(stellar::MemoType::MEMO_HASH, memo->toXdr().type);
         QString test = "ABCDEFGHIJKL";
         QCOMPARE(test, Util::paddedByteArrayToString(memo->getBytes()));
         QCOMPARE(QString("4142434445464748494a4b4c"), memo->getTrimmedHexValue());
     }
     void testMemoHashBytesSuccess() {
-        QByteArray bytes(10,'A');
+        QByteArray bytes = QByteArray(10,'A') + QByteArray(22, '\0');
         MemoHash* memo = Memo::hash(bytes);
         QCOMPARE(stellar::MemoType::MEMO_HASH, memo->toXdr().type);
         QCOMPARE(QString("AAAAAAAAAA"), Util::paddedByteArrayToString(memo->getBytes()));
@@ -96,8 +143,19 @@ private slots:
             Memo::hash(longer);
             QFAIL("Expected exception");
         } catch (const std::runtime_error& exception) {
-            QVERIFY(QString(exception.what()).contains("MEMO_HASH can contain 32 bytes at max."));
+            QVERIFY(QString(exception.what()).contains("exactly 32 bytes"));
         }
+    }
+    /** Shorter than 32 bytes was padded with zeros and signed: "" as the
+     *  all-zero hash. js and py refuse it; so does this now. */
+    void testMemoHashTooShortIsRefused() {
+        for (const QString& hex : {QString(""), QString("ab"), QString(62, QLatin1Char('a'))}) {
+            QVERIFY_EXCEPTION_THROWN(Memo::hash(hex), std::runtime_error);
+            QVERIFY_EXCEPTION_THROWN(Memo::returnHash(hex), std::runtime_error);
+        }
+        QVERIFY_EXCEPTION_THROWN(Memo::hash(QByteArray(31, 'a')), std::runtime_error);
+        QVERIFY_EXCEPTION_THROWN(Memo::hash(QByteArray()), std::runtime_error);
+        QCOMPARE(Memo::hash(QByteArray(32, 'a'))->getBytes(), QByteArray(32, 'a'));
     }
     void testMemoHashInvalidHex() {
         try {
@@ -108,7 +166,7 @@ private slots:
         }
     }
     void testMemoReturnHashSuccess() {
-        MemoReturnHash* memo = Memo::returnHash(QString("4142434445464748494a4b4c"));
+        MemoReturnHash* memo = Memo::returnHash(QString("4142434445464748494a4b4c0000000000000000000000000000000000000000"));
         QCOMPARE(stellar::MemoType::MEMO_RETURN, memo->toXdr().type);
         QCOMPARE(QString("4142434445464748494a4b4c"), memo->getTrimmedHexValue());
         stellar::Memo memoXdr = memo->toXdr();
@@ -120,8 +178,8 @@ private slots:
         MemoNone* memoObjectNone = Memo::none();
         MemoText* memoObjectText = Memo::text("test");
         MemoId* memoObjectId = Memo::id(9223372036854775807L);
-        MemoHash* memoObjectHash = Memo::hash(QString("4142434445464748494a4b4c"));
-        MemoReturnHash* memoObjectReturnHash = Memo::returnHash(QString("4142434445464748494a4b4c"));
+        MemoHash* memoObjectHash = Memo::hash(QString("4142434445464748494a4b4c0000000000000000000000000000000000000000"));
+        MemoReturnHash* memoObjectReturnHash = Memo::returnHash(QString("4142434445464748494a4b4c0000000000000000000000000000000000000000"));
 
         QByteArray dataSerialized;
         QDataStream streamSerialize(&dataSerialized,QIODevice::WriteOnly);

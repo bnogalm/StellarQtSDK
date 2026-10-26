@@ -22,6 +22,13 @@ public:
 
     static CreateAccountOperation* build(stellar::CreateAccountOp& op);
     static CreateAccountOperation* create(KeyPair* destination, QString startingBalance);
+    /**
+     * Same, with the destination as a G-address. The constructor already
+     * accepted a QString; only the factory was missing, which forced callers
+     * that hold text (a QML front end, a parser) to build a throwaway KeyPair
+     * just to ask. PaymentOperation::create already offers both.
+     */
+    static CreateAccountOperation* create(QString destination, QString startingBalance);
 
     /**
      * Amount of XLM to send to the newly created account.

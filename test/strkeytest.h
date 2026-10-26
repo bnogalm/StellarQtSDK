@@ -6,6 +6,10 @@
 #include "src/accountconverter.h"
 
 #include <QtTest>
+#include <QScopedPointer>
+#include "../src/keypair.h"
+#include "../src/assettypenative.h"
+#include "../src/paymentoperation.h"
 #include "testcollector.h"
 
 
@@ -33,6 +37,36 @@ private slots:
 
     }
 
+    /**
+     * A strkey is upper case (SEP-23). The base32 decoder also took lower
+     * case, so "gcfiry65..." was accepted as a destination and signed, where
+     * js ("destination is invalid") and py refuse it.
+     */
+    void testLowerCaseStrkeysAreRefused() {
+        const QString account = QStringLiteral("GCFIRY65OQE7DFP5KLNS2PF2LVZMUZYJX4OZIEQ36N2IQANUB5XVYOJR");
+        QCOMPARE(StrKey::decodeStellarAccountId(account).size(), 32);
+        for (const QString& bad : {account.toLower(), account.left(10) + account.mid(10).toLower(),
+                                   account.left(55) + account.right(1).toLower()}) {
+            bool threw = false;
+            try { StrKey::decodeStellarAccountId(bad); } catch (const std::exception&) { threw = true; }
+            QVERIFY2(threw, qPrintable(bad));
+            threw = false;
+            try { delete KeyPair::fromAccountId(bad); } catch (const std::exception&) { threw = true; }
+            QVERIFY2(threw, qPrintable(bad));
+        }
+        bool threw = false;
+        try { delete PaymentOperation::create(account.toLower(), new AssetTypeNative(), QStringLiteral("1")); }
+        catch (const std::exception&) { threw = true; }
+        // The destination is decoded when the operation is encoded, at the latest.
+        if (!threw) {
+            try {
+                QScopedPointer<PaymentOperation> op(PaymentOperation::create(account.toLower(), new AssetTypeNative(), QStringLiteral("1")));
+                op->toXdrBase64();
+            } catch (const std::exception&) { threw = true; }
+        }
+        QVERIFY(threw);
+    }
+
     void testDecodeInvalidVersionByte() {
         QString address = "GCZHXL5HXQX5ABDM26LHYRCQZ5OJFHLOPLZX47WEBP3V2PF5AVFK2A5D";
         try {
@@ -52,6 +86,32 @@ private slots:
         }
     }
 
+    /**
+     * A seed decodeCheck refused is refused as before now that the copies
+     * it made of it are wiped on each throw: one mistyped character (32
+     * bytes that are almost the seed) fails the checksum, a T for the S
+     * fails the version byte, and 55 characters with a good checksum give
+     * a 31-byte body. js 17.1.0 and py 14.1.0 refuse all three. The good
+     * seed still decodes to py's bytes. The wiping is not visible here.
+     */
+    void testRefusedSeedsAreRefusedAsBefore() {
+        const QList<QPair<QByteArray, QString>> refused = {
+            {"SDJHRQF4GCMIIKAAAQ6IBY42X73FQFLHUULAPSKKD4DFDM7UXWWCRHBE", QStringLiteral("Checksum invalid")},
+            {"TDJHRQF4GCMIIKAAAQ6IHY42X73FQFLHUULAPSKKD4DFDM7UXWWCRHBE", QStringLiteral("Version byte is invalid")},
+            {"SDJHRQF4GCMIIKAAAQ6IHY42X73FQFLHUULAPSKKD4DFDM7UXWWOONI", QStringLiteral("invalid encoded string length")},
+        };
+        for (const auto &r : refused) {
+            try {
+                StrKey::decodeCheck(StrKey::VersionByte::SEED, r.first);
+                QFAIL(r.first.constData());
+            } catch (const std::runtime_error& e) {
+                QCOMPARE(QString::fromLatin1(e.what()), r.second);
+            }
+        }
+        QCOMPARE(StrKey::decodeCheck(StrKey::VersionByte::SEED,
+                 QByteArray("SDJHRQF4GCMIIKAAAQ6IHY42X73FQFLHUULAPSKKD4DFDM7UXWWCRHBE")).toHex(),
+                 QByteArray("d278c0bc3098842800043c83e39abff6581567a51607c94a1f0651b3f4bdac28"));
+    }
 
     void testDecodedVersionByte() {        
         QCOMPARE( StrKey::VersionByte::ACCOUNT_ID,StrKey::decodeVersionByte(QString("GDW6AUTBXTOC7FIKUO5BOO3OGLK4SF7ZPOBLMQHMZDI45J2Z6VXRB5NR")));
@@ -281,6 +341,140 @@ private slots:
                    static_cast<int>(StrKey::VersionByte::CLAIMABLE_BALANCE));
           QCOMPARE(static_cast<int>(StrKey::decodeVersionByte(l)),
                    static_cast<int>(StrKey::VersionByte::LIQUIDITY_POOL));
+      }
+
+    /**
+     * decodeAny checks a strkey whole, whatever its kind; decodeVersionByte
+     * reads only the first byte, so a damaged key still has a kind there.
+     */
+    void testDecodeAnyChecksTheWholeKey()
+    {
+        const QString account = QStringLiteral("GA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJVSGZ");
+        const StrKey::Decoded decoded = StrKey::decodeAny(account);
+        QVERIFY(decoded.version == StrKey::VersionByte::ACCOUNT_ID);
+        QCOMPARE(decoded.payload, StrKey::decodeStellarAccountId(account));
+        const QString p32 = QStringLiteral(
+            "PA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUAAAAAQACAQDAQCQMBYIBEFAWDANBYHRAEISCMKBKFQXDAMRUGY4DUPB6IBZGM");
+        QVERIFY(StrKey::decodeAny(p32).version == StrKey::VersionByte::SIGNED_PAYLOAD);
+        QCOMPARE(StrKey::decodeAny(p32).payload.size(), 68);
+
+        QString damaged = account;
+        damaged[30] = damaged[30] == QLatin1Char('A') ? QLatin1Char('B') : QLatin1Char('A');
+        QVERIFY(StrKey::decodeVersionByte(damaged) == StrKey::VersionByte::ACCOUNT_ID);   // the first byte only
+        for (const QString& bad : {damaged, account.left(55), account.toLower(), QString(),
+                                   account.left(55) + QChar(0x00e9), QStringLiteral("not a key")}) {
+            QVERIFY_EXCEPTION_THROWN(StrKey::decodeAny(bad), std::runtime_error);
+        }
+    }
+
+    /**
+     * SEP-23's signed-payload vectors, literally (the spec's examples, which
+     * py-stellar-sdk 14.1.0 and js 17.1.0 read alike): a 32-byte and a
+     * 29-byte payload (padded to 32 in the XDR) for
+     * GA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJVSGZ, both ways.
+     * Refused: the spec's two invalid ones, whose declared length does not
+     * match the data (32 with 72 bytes, 29 with 64; js and py refuse both),
+     * and the 29-byte payload padded with 00 00 07 instead of zeros, which
+     * js and core refuse and py 14.1.0 accepts.
+     */
+    void testSep23SignedPayloadVectors()
+    {
+        const QString signer = QStringLiteral("GA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJVSGZ");
+        const QByteArray key = StrKey::decodeStellarAccountId(signer);
+        QByteArray payload32;
+        for (char c = 1; c <= 32; ++c)
+            payload32.append(c);
+        const QByteArray payload29 = payload32.left(29);
+
+        const QString p32 = QStringLiteral(
+            "PA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUAAAAAQACAQDAQCQMBYIBEFAWDANBYHRAEISCMKBKFQXDAMRUGY4DUPB6IBZGM");
+        const QString p29 = QStringLiteral(
+            "PA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUAAAAAOQCAQDAQCQMBYIBEFAWDANBYHRAEISCMKBKFQXDAMRUGY4DUAAAAFGBU");
+        QCOMPARE(StrKey::encodeSignedPayload(key, payload32), p32);
+        QCOMPARE(StrKey::encodeSignedPayload(key, payload29), p29);
+        QCOMPARE(StrKey::decodeSignedPayload(p32).first, key);
+        QCOMPARE(StrKey::decodeSignedPayload(p32).second, payload32);
+        QCOMPARE(StrKey::decodeSignedPayload(p29).first, key);
+        QCOMPARE(StrKey::decodeSignedPayload(p29).second, payload29);
+
+        for (const char* refused : {
+                 "PA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUAAAAAQACAQDAQCQMBYIBEFAWDANBYHRAEISCMKBKFQXDAMRUGY4DUPB6IAAAAAAAAPM",
+                 "PA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUAAAAAOQCAQDAQCQMBYIBEFAWDANBYHRAEISCMKBKFQXDAMRUGY4Z2PQ",
+                 "PA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUAAAAAOQCAQDAQCQMBYIBEFAWDANBYHRAEISCMKBKFQXDAMRUGY4DUAAAB2BPU"}) {
+            QVERIFY_EXCEPTION_THROWN(StrKey::decodeSignedPayload(QString::fromLatin1(refused)), std::runtime_error);
+        }
+    }
+
+    /**
+     * decodeCheck(SIGNED_PAYLOAD) frames the body as decodeSignedPayload
+     * does: it returned the 72 bytes of a key declaring a 32-byte payload,
+     * where js 17.1.0's decodeCheck throws "declared length 32 needs 68
+     * bytes, got 72" and py 14.1.0's "Invalid Ed25519 Signed Payload Key".
+     * Refused: SEP-23's two invalid keys, non-zero padding (js; py accepts
+     * it), a declared length of 0 and one of 65 (js and py), each with a
+     * good checksum. SEP-23's good keys pass. The key declaring 65 has a
+     * 100-byte body (key, length, 64 zero bytes), which the length rule
+     * lets through, so it is the framing check that refuses it, as js's
+     * "declared length 65 outside 1-64".
+     */
+    void testDecodeCheckFramesASignedPayload()
+    {
+        using V = StrKey::VersionByte;
+        static const char declares65[] =
+                "PA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUAAAABAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+                "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABPOU";
+        for (const char* refused : {
+                 "PA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUAAAAAQACAQDAQCQMBYIBEFAWDANBYHRAEISCMKBKFQXDAMRUGY4DUPB6IAAAAAAAAPM",
+                 "PA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUAAAAAOQCAQDAQCQMBYIBEFAWDANBYHRAEISCMKBKFQXDAMRUGY4Z2PQ",
+                 "PA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUAAAAAOQCAQDAQCQMBYIBEFAWDANBYHRAEISCMKBKFQXDAMRUGY4DUAAAB2BPU",
+                 "PA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUAAAAAAAAAAAABO6A",
+                 declares65}) {
+            QVERIFY_EXCEPTION_THROWN(StrKey::decodeCheck(V::SIGNED_PAYLOAD, QByteArray(refused)), std::runtime_error);
+        }
+        try {
+            StrKey::decodeCheck(V::SIGNED_PAYLOAD, QByteArray(declares65));
+            QFAIL("a declared length of 65 was accepted");
+        } catch (const std::runtime_error& e) {
+            QCOMPARE(QString::fromLatin1(e.what()), QStringLiteral("signed payload: declared length outside 1-64"));
+        }
+        QCOMPARE(StrKey::decodeCheck(V::SIGNED_PAYLOAD,
+                 "PA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUAAAAAQACAQDAQCQMBYIBEFAWDANBYHRAEISCMKBKFQXDAMRUGY4DUPB6IBZGM").size(), 68);
+        QCOMPARE(StrKey::decodeCheck(V::SIGNED_PAYLOAD,
+                 "PA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUAAAAAOQCAQDAQCQMBYIBEFAWDANBYHRAEISCMKBKFQXDAMRUGY4DUAAAAFGBU").size(), 68);
+    }
+
+    /**
+     * A strkey is accepted only with the body its kind has and in its one
+     * canonical spelling, as js's decodeCheck requires (SEP-23). Every
+     * string below carries a CORRECT checksum and was accepted: a G of five
+     * bytes, a G of 35, an M of 32, a C of 20, a B whose type byte is 1, a
+     * valid G with '=' in the middle (read as the same key) and one with
+     * trailing padding. js 17.1.0 refuses each one; the good ones pass.
+     */
+    void testOnlyWellFormedCanonicalStrkeysDecode() {
+          using V = StrKey::VersionByte;
+          const QList<QPair<V, QByteArray>> bad = {
+              {V::ACCOUNT_ID, "GADQOBYHA6KXK"},
+              {V::ACCOUNT_ID, "GADQOBYHA4DQOBYHA4DQOBYHA4DQOBYHA4DQOBYHA4DQOBYHA4DQOBYHA6XZC"},
+              {V::MUXED_ACCOUNT, "MADQOBYHA4DQOBYHA4DQOBYHA4DQOBYHA4DQOBYHA4DQOBYHA4DQPLGX"},
+              {V::CONTRACT, "CADQOBYHA4DQOBYHA4DQOBYHA4DQOBYHA4K5I"},
+              {V::CLAIMABLE_BALANCE, "BAAQOBYHA4DQOBYHA4DQOBYHA4DQOBYHA4DQOBYHA4DQOBYHA4DQOB2NEE"},
+              {V::ACCOUNT_ID, "GA7QYNF7SOWQ3GLR2BGMZEHXAVIRZ=4KVWLTJJFC7MGXUA74P7UJVSGZ"},
+              {V::ACCOUNT_ID, "GA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJVSGZ===="},
+          };
+          for (const auto& c : bad) {
+              QVERIFY_EXCEPTION_THROWN(StrKey::decodeCheck(c.first, c.second), std::exception);
+          }
+          QCOMPARE(StrKey::decodeCheck(V::ACCOUNT_ID, "GADQOBYHA4DQOBYHA4DQOBYHA4DQOBYHA4DQOBYHA4DQOBYHA4DQOZPI"),
+                   QByteArray(32, 7));
+          QCOMPARE(StrKey::decodeCheck(V::MUXED_ACCOUNT,
+                   "MADQOBYHA4DQOBYHA4DQOBYHA4DQOBYHA4DQOBYHA4DQOBYHA4DQOBYHA4DQOBYHA6OSU"),
+                   QByteArray(40, 7));
+          QByteArray b(33, 7);
+          b[0] = 0;
+          QCOMPARE(StrKey::decodeCheck(V::CLAIMABLE_BALANCE,
+                   "BAAAOBYHA4DQOBYHA4DQOBYHA4DQOBYHA4DQOBYHA4DQOBYHA4DQOB4RVQ"), b);
+          QCOMPARE(StrKey::decodeCheck(V::ACCOUNT_ID, "GA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJVSGZ").size(), 32);
       }
 
       /** SEP-23 cross-check: an all-zero G-strkey is well-known. Verify the

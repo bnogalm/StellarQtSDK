@@ -42,7 +42,7 @@ private slots:
                     "\"GCACCFMIWJAHUUASSE2WC7V6VVDLYRLSJYZ3DJEXCG523FSHTNII6KOG\""
                 "]"
             "},"
-            "\"_links\":{}"
+            "\"_links\":{\"self\":{\"href\":\"https://horizon-testnet.stellar.org/transactions/abc\"},\"account\":{\"href\":\"https://horizon-testnet.stellar.org/accounts/GCACCFMIWJAHUUASSE2WC7V6VVDLYRLSJYZ3DJEXCG523FSHTNII6KOG\"},\"ledger\":{\"href\":\"https://horizon-testnet.stellar.org/ledgers/1\"},\"operations\":{\"href\":\"https://horizon-testnet.stellar.org/transactions/abc/operations{?cursor,limit,order}\",\"templated\":true},\"effects\":{\"href\":\"https://horizon-testnet.stellar.org/transactions/abc/effects{?cursor,limit,order}\",\"templated\":true},\"precedes\":{\"href\":\"https://horizon-testnet.stellar.org/transactions?order=asc&cursor=1\"},\"succeeds\":{\"href\":\"https://horizon-testnet.stellar.org/transactions?order=desc&cursor=1\"}}"
         "}";
 
         TransactionResponse r;
@@ -78,7 +78,7 @@ private slots:
             "\"preconditions\":{"
                 "\"timebounds\":{\"min_time\":\"100\",\"max_time\":\"200\"}"
             "},"
-            "\"_links\":{}"
+            "\"_links\":{\"self\":{\"href\":\"https://horizon-testnet.stellar.org/transactions/abc\"},\"account\":{\"href\":\"https://horizon-testnet.stellar.org/accounts/GCACCFMIWJAHUUASSE2WC7V6VVDLYRLSJYZ3DJEXCG523FSHTNII6KOG\"},\"ledger\":{\"href\":\"https://horizon-testnet.stellar.org/ledgers/1\"},\"operations\":{\"href\":\"https://horizon-testnet.stellar.org/transactions/abc/operations{?cursor,limit,order}\",\"templated\":true},\"effects\":{\"href\":\"https://horizon-testnet.stellar.org/transactions/abc/effects{?cursor,limit,order}\",\"templated\":true},\"precedes\":{\"href\":\"https://horizon-testnet.stellar.org/transactions?order=asc&cursor=1\"},\"succeeds\":{\"href\":\"https://horizon-testnet.stellar.org/transactions?order=desc&cursor=1\"}}"
         "}";
 
         TransactionResponse r;
@@ -109,7 +109,7 @@ private slots:
             "\"envelope_xdr\":\"\",\"result_xdr\":\"\",\"result_meta_xdr\":\"\","
             "\"memo_type\":\"none\","
             "\"signatures\":[\"sig1\"],"
-            "\"_links\":{}"
+            "\"_links\":{\"self\":{\"href\":\"https://horizon-testnet.stellar.org/transactions/abc\"},\"account\":{\"href\":\"https://horizon-testnet.stellar.org/accounts/GCACCFMIWJAHUUASSE2WC7V6VVDLYRLSJYZ3DJEXCG523FSHTNII6KOG\"},\"ledger\":{\"href\":\"https://horizon-testnet.stellar.org/ledgers/1\"},\"operations\":{\"href\":\"https://horizon-testnet.stellar.org/transactions/abc/operations{?cursor,limit,order}\",\"templated\":true},\"effects\":{\"href\":\"https://horizon-testnet.stellar.org/transactions/abc/effects{?cursor,limit,order}\",\"templated\":true},\"precedes\":{\"href\":\"https://horizon-testnet.stellar.org/transactions?order=asc&cursor=1\"},\"succeeds\":{\"href\":\"https://horizon-testnet.stellar.org/transactions?order=desc&cursor=1\"}}"
         "}";
 
         TransactionResponse r;

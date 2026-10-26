@@ -3,6 +3,7 @@
 #include <limits>
 #include <cstring>
 #include <stdexcept>
+#include <QScopedPointer>
 #include "createclaimablebalanceoperation.h"
 #include "accountconverter.h"
 
@@ -51,16 +52,17 @@ Transaction::~Transaction(){
 
 
 QByteArray Transaction::signatureBase() const{
-    try {
-
-        QByteArray output;
-        QDataStream outputStream(&output,QIODevice::WriteOnly);
-        stellar::TransactionSignaturePayload payload(this->toV1Xdr(), m_network->getNetworkId());
-        outputStream << payload;
-        return output;
-    } catch (...) {
-        return QByteArray();
-    }
+    // No catch-all here. It used to turn any failure to build the envelope
+    // into an empty payload, and sign() then signed sha256("") and returned
+    // normally: a signature over nothing, reported as success. Nor a failed
+    // write: a payload cut short where the writer met an arm it does not know
+    // was hashed and signed as if it were the transaction.
+    // With the converter the envelope is written with: a transaction built
+    // with muxing off sends its M... accounts as G..., and signing the M...
+    // form gave a signature over a transaction nobody submits.
+    stellar::TransactionSignaturePayload payload(this->toV1Xdr(m_accountConverter),
+                                                 m_network->getNetworkId());
+    return xdr::encodeOrThrow(payload, "the transaction signature payload");
 }
 
 QString Transaction::getSourceAccount() const {
@@ -119,17 +121,11 @@ QString Transaction::getClaimableBalanceId(int index) {
     result.type = stellar::ClaimableBalanceIDType::CLAIMABLE_BALANCE_ID_TYPE_V0;
 
 
-    QByteArray serializedId;
-    QDataStream outputStream(&serializedId,QIODevice::WriteOnly);
-    outputStream << id;
-    auto v0 = Util::hash(serializedId);
+    // Hashed, so checked: short bytes would name a balance that is not this one.
+    auto v0 = Util::hash(xdr::encodeOrThrow(id, "the claimable balance operation id"));
     memcpy(result.v0, v0,sizeof(result.v0));
 
-    QByteArray outputResult;
-    QDataStream outputStreamResult(&outputResult,QIODevice::WriteOnly);
-    outputStreamResult << result;
-
-    return Util::bytesToHex(outputResult).toLower();
+    return Util::bytesToHex(xdr::encodeOrThrow(result, "the claimable balance id")).toLower();
 }
 
 stellar::TransactionV0 Transaction::toV0Xdr(AccountConverter accountConverter) const{
@@ -142,11 +138,15 @@ stellar::TransactionV0 Transaction::toV0Xdr(AccountConverter accountConverter) c
     TimeBounds* tb = m_preconditions.getTimeBounds();
     if (tb) {
         stellar::TimeBounds& tm = transaction.timeBounds.filler();
-        tm.minTime=static_cast<quint64>(tb->getMinTime());
-        tm.maxTime=static_cast<quint64>(tb->getMaxTime());
+        tm.minTime=tb->getMinTimePoint();
+        tm.maxTime=tb->getMaxTimePoint();
     }
-    // fee
-    transaction.fee = m_fee;
+    // fee — a uint32 on the wire. Refuse rather than truncate: a truncated fee
+    // would be signed while getFee() reports another.
+    if (m_fee < 0 || m_fee > static_cast<qint64>(std::numeric_limits<quint32>::max())) {
+        throw std::runtime_error("transaction fee does not fit the envelope's uint32 fee field");
+    }
+    transaction.fee = static_cast<quint32>(m_fee);
     // sequenceNumber
     transaction.seqNum = m_sequenceNumber;
     // sourceAccount
@@ -171,13 +171,24 @@ stellar::Transaction Transaction::toV1Xdr(AccountConverter accountConverter) con
     transaction.memo = m_memo->toXdr();
     // CAP-21 — emits PRECOND_NONE / TIME / V2 based on which fields are set.
     transaction.cond = m_preconditions.toXdr();
-    // fee
-    transaction.fee = m_fee;
+    // fee — a uint32 on the wire. Refuse rather than truncate: a truncated fee
+    // would be signed while getFee() reports another.
+    if (m_fee < 0 || m_fee > static_cast<qint64>(std::numeric_limits<quint32>::max())) {
+        throw std::runtime_error("transaction fee does not fit the envelope's uint32 fee field");
+    }
+    transaction.fee = static_cast<quint32>(m_fee);
     // sequenceNumber
     transaction.seqNum = m_sequenceNumber;
-    // sourceAccount
-    transaction.sourceAccount =StrKey::encodeToXDRMuxedAccount(m_sourceAccount);
-    // operations
+    // sourceAccount: through the converter, as the operations' accounts are
+    // (and as java writes it). With muxing off an M... source stayed M...
+    // while everything else in the envelope went out as G...
+    transaction.sourceAccount = accountConverter.encode(m_sourceAccount);
+    // operations — the same guard as toV0Xdr: stellar::Array drops anything
+    // past its maximum without a word, and this is the envelope that is
+    // actually signed and sent.
+    if (m_operations.size() > transaction.operations.maxSize()) {
+        throw std::runtime_error("transaction exceeds the maximum number of operations");
+    }
     for (int i = 0; i < m_operations.length(); i++) {
         transaction.operations.append(m_operations.at(i)->toXdr(accountConverter));
     }
@@ -199,15 +210,39 @@ Transaction *Transaction::fromV1EnvelopeXdr(stellar::TransactionV1Envelope &enve
     return fromV1EnvelopeXdr(AccountConverter().enableMuxed(), envelope, network);
 }
 
+// Builds the Transaction from what an envelope decoded to. Anything in it can
+// refuse malformed input (an operation it cannot read, no operations at all);
+// the parts already decoded are freed then, not leaked.
+Transaction* Transaction::fromParts(AccountConverter accountConverter, const QString& sourceAccount,
+                                    qint64 fee, qint64 sequenceNumber,
+                                    const QVector<stellar::Operation>& xdrOperations,
+                                    stellar::Memo& xdrMemo, TransactionPreconditions preconditions,
+                                    Network* network)
+{
+    QScopedPointer<Memo> memo(Memo::fromXdr(xdrMemo));
+    QVector<Operation*> ops;
+    try {
+        for (auto op : xdrOperations)
+            ops.append(Operation::fromXdr(accountConverter, op));
+        Transaction* t = new Transaction(accountConverter, sourceAccount, fee, sequenceNumber,
+                                         ops, memo.data(), std::move(preconditions), network);
+        memo.take();
+        return t;
+    } catch (...) {
+        qDeleteAll(ops);
+        throw;
+    }
+}
+
 Transaction *Transaction::fromV0EnvelopeXdr(AccountConverter accountConverter, stellar::TransactionV0Envelope &envelope, Network *network)
 {    
     QString sourceAccount = StrKey::encodeStellarAccountId(envelope.tx.sourceAccountEd25519);
-    QVector<Operation*> ops;
-    for(auto op : envelope.tx.operations.value)
-    {
-        ops.append(Operation::fromXdr(accountConverter, op));
-    }
-    Transaction *t = new Transaction(accountConverter, sourceAccount,envelope.tx.fee,envelope.tx.seqNum,ops,Memo::fromXdr(envelope.tx.memo), envelope.tx.timeBounds.filled ? TimeBounds::fromXdr(envelope.tx.timeBounds.value) : nullptr, network);
+    TransactionPreconditions preconditions;
+    if (envelope.tx.timeBounds.filled)
+        preconditions.setTimeBounds(TimeBounds::fromXdr(envelope.tx.timeBounds.value));
+    Transaction *t = fromParts(accountConverter, sourceAccount, envelope.tx.fee, envelope.tx.seqNum,
+                               envelope.tx.operations.value, envelope.tx.memo,
+                               std::move(preconditions), network);
     t->m_envelopeType = stellar::EnvelopeType::ENVELOPE_TYPE_TX_V0;
     for (stellar::DecoratedSignature& signature : envelope.signatures.value) {
         t->m_signatures.append(signature);
@@ -219,12 +254,9 @@ Transaction *Transaction::fromV0EnvelopeXdr(AccountConverter accountConverter, s
 Transaction *Transaction::fromV1EnvelopeXdr(AccountConverter accountConverter, stellar::TransactionV1Envelope &envelope, Network *network)
 {    
     QString sourceAccount = accountConverter.decode(envelope.tx.sourceAccount);
-    QVector<Operation*> ops;
-    for(auto op : envelope.tx.operations.value)
-    {
-        ops.append(Operation::fromXdr(accountConverter, op));
-    }
-    Transaction * t = new Transaction(accountConverter, sourceAccount,envelope.tx.fee,envelope.tx.seqNum,ops,Memo::fromXdr(envelope.tx.memo), TransactionPreconditions::fromXdr(envelope.tx.cond), network);
+    Transaction * t = fromParts(accountConverter, sourceAccount, envelope.tx.fee, envelope.tx.seqNum,
+                                envelope.tx.operations.value, envelope.tx.memo,
+                                TransactionPreconditions::fromXdr(envelope.tx.cond), network);
     t->m_envelopeType = stellar::EnvelopeType::ENVELOPE_TYPE_TX;
     if (envelope.tx.ext.v == 1) {
         t->m_sorobanData = QSharedPointer<stellar::SorobanTransactionData>::create(envelope.tx.ext.sorobanData);
@@ -251,7 +283,11 @@ stellar::TransactionEnvelope Transaction::toEnvelopeXdr(){
         for(stellar::DecoratedSignature& signature : this->m_signatures){
             envelope.signatures.append(signature);
         }
-        return stellar::TransactionEnvelope(envelope);
+        stellar::TransactionEnvelope result(envelope);
+        // Whatever the caller does with it next, it can be encoded in full:
+        // see AbstractTransaction::signatureBase.
+        xdr::encodeOrThrow(result, "the transaction envelope");
+        return result;
     }
     case stellar::EnvelopeType::ENVELOPE_TYPE_TX_V0:
     {
@@ -265,8 +301,9 @@ stellar::TransactionEnvelope Transaction::toEnvelopeXdr(){
         for(stellar::DecoratedSignature& signature : this->m_signatures){
             envelope.signatures.append(signature);
         }
-        return stellar::TransactionEnvelope(envelope);
-        break;
+        stellar::TransactionEnvelope result(envelope);
+        xdr::encodeOrThrow(result, "the transaction envelope");    // as above
+        return result;
     }
     default:
     {

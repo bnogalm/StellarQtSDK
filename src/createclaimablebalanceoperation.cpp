@@ -8,7 +8,7 @@ CreateClaimableBalanceOperation::CreateClaimableBalanceOperation(QString amount,
     checkNotNull(amount, "amount cannot be null");
     checkNotNull(asset, "asset cannot be null");
     checkNotNull(claimants, "claimants cannot be null");
-    m_op.amount = Operation::toXdrAmount(amount);
+    m_op.amount = Operation::toXdrAmountPositive(amount);
     m_op.asset = asset->toXdr();
     m_op.claimants.clear();
     // stellar::Array silently drops anything past its max: with 11 or more

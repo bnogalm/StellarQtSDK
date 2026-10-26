@@ -11,7 +11,7 @@ PaymentOperation::PaymentOperation(QString destination, Asset *asset, QString am
     checkNotNull(amount, "amount cannot be null");
     m_op.destination = StrKey::encodeToXDRMuxedAccount(checkNotNull(destination, "destination cannot be null"));// recipient of the payment
     m_op.asset = asset->toXdr();  // what they end up with
-    m_op.amount = Operation::toXdrAmount(amount);// amount they end up with
+    m_op.amount = Operation::toXdrAmountPositive(amount);// amount they end up with
 }
 
 PaymentOperation::PaymentOperation(stellar::PaymentOp &op)

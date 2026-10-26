@@ -120,6 +120,29 @@ private slots:
           fakeServer->deleteLater();
       }
 
+    /**
+     * /claimable_balances with sponsor, claimant and asset, and
+     * /claimable_balances/{id}, as
+     * js-stellar-sdk 17.1.0 (the call builder's url after checkFilter(),
+     * what call() requests) and py-stellar-sdk 14.1.0 (the builder's url and
+     * params as requests encodes them) build these URLs, the same in both.
+     */
+    void testUrlsMatchJsAndPy() {
+        Server server("https://horizon-testnet.stellar.org");
+        const QString id("00000000929b20b72e5890ab51c24f1cc46fa01c4f318d8d33367d24dd614cfdf5491072");
+        QScopedPointer<Asset> usd(Asset::createNonNativeAsset("USD", QString("GDVDKQFP665JAO7A2LSHNLQIUNYNAAIGJ6FYJVMG4DT3YJQQJSRBLQDG")));
+        QScopedPointer<Asset> xlm(new AssetTypeNative());
+        QCOMPARE(server.claimableBalances().forSponsor("GD42RQNXTRIW6YR3E2HXV5T2AI27LBRHOERV2JIYNFMXOBA234SWLQQB")
+                     .forClaimant("GDSBCQO34HWPGUGQSP3QBFEXVTSR2PW46UIGTHVWGWJGQKH3AFNHXHXN")
+                     .forAsset(usd.data()).limit(3).buildUri().toString(),
+                 QString("https://horizon-testnet.stellar.org/claimable_balances?sponsor=GD42RQNXTRIW6YR3E2HXV5T2AI27LBRHOERV2JIYNFMXOBA234SWLQQB&claimant=GDSBCQO34HWPGUGQSP3QBFEXVTSR2PW46UIGTHVWGWJGQKH3AFNHXHXN&asset=USD%3AGDVDKQFP665JAO7A2LSHNLQIUNYNAAIGJ6FYJVMG4DT3YJQQJSRBLQDG&limit=3"));
+        QCOMPARE(server.claimableBalances().forAsset(xlm.data()).buildUri().toString(),
+                 QString("https://horizon-testnet.stellar.org/claimable_balances?asset=native"));
+        // The single balance: the request is dropped before the event loop sends it.
+        ClaimableBalancesRequestBuilder one = server.claimableBalances();
+        delete one.claimableBalance(id);
+        QCOMPARE(one.requestUri().toString(), QString("https://horizon-testnet.stellar.org/claimable_balances/00000000929b20b72e5890ab51c24f1cc46fa01c4f318d8d33367d24dd614cfdf5491072"));
+    }
 };
 
 ADD_TEST(ClaimableBalancesRequestBuilderTest)

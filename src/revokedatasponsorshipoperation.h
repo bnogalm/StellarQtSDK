@@ -13,6 +13,7 @@ public:
     RevokeDataSponsorshipOperation(QString accountID, QString dataName);
     RevokeDataSponsorshipOperation(stellar::RevokeSponsorshipOp& op);
     QString getAccountId() const;
+    /** The entry's name; a leading byte order mark is kept as U+FEFF. */
     QString getDataName() const;
 
 

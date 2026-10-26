@@ -1,5 +1,7 @@
 #include "claimablebalanceresponse.h"
 #include <QCoreApplication>
+#include <QDateTime>
+#include <stdexcept>
 #include "qtcompat.h"
 
 QSTELLAR_BEGIN_NS
@@ -7,12 +9,15 @@ QSTELLAR_BEGIN_NS
 static void registerTypes()
 {
     regType<ClaimableBalanceResponseAttach::Links>();
+    regType<ClaimableBalanceResponseAttach::Flags>();
 }
 Q_COREAPP_STARTUP_FUNCTION(registerTypes)
 
 
 
+// The two times start at 0: left out, they read whatever the memory held.
 ClaimableBalanceResponse::ClaimableBalanceResponse(QNetworkReply *reply):Response(reply),m_asset(nullptr)
+  ,m_lastModifiedLedger(0),m_lastModifiedTime(0)
 {
 
 }
@@ -122,6 +127,19 @@ void ClaimableBalanceResponse::setLastModifiedLedger(qint64 lastModifiedLedger)
 
     m_lastModifiedLedger = lastModifiedLedger;
     emit lastModifiedLedgerChanged();
+}
+
+bool ClaimableBalanceResponse::readMember(const QString &key, const QJsonValue &value, const QString &field)
+{
+    // Horizon writes the time as ISO 8601 text ("2021-08-04T20:01:24Z"), or
+    // null; into this integer property it never converted, and read as 0.
+    if (key != QLatin1String("last_modified_time") || value.isNull())
+        return false;
+    const QDateTime time = value.isString() ? QDateTime::fromString(value.toString(), Qt::ISODate) : QDateTime();
+    if (!time.isValid())
+        throw std::runtime_error(QStringLiteral("%1: expected an ISO 8601 time").arg(field).toStdString());
+    setLastModifiedTime(time.toSecsSinceEpoch());
+    return true;
 }
 
 void ClaimableBalanceResponse::setLastModifiedTime(qint64 lastModifiedTime)

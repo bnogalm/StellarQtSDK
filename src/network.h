@@ -54,6 +54,12 @@ public:
     static const QString& PUBLIC_NETWORK_PASSPHRASE();
     /** Canonical passphrase for the Stellar test network. */
     static const QString& TESTNET_NETWORK_PASSPHRASE();
+    /** SDF's futurenet, as js Networks.FUTURENET and py name it. */
+    static const QString& FUTURENET_NETWORK_PASSPHRASE();
+    /** A standalone core (the quickstart's local network), as js and py name it. */
+    static const QString& STANDALONE_NETWORK_PASSPHRASE();
+    /** The local sandbox network, as js Networks.SANDBOX and py name it. */
+    static const QString& SANDBOX_NETWORK_PASSPHRASE();
 
     /**
      * Creates a new Network object for a given passphrase.

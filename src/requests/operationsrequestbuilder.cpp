@@ -21,7 +21,9 @@ GenericOperation* OperationsRequestBuilder::operation(QUrl uri) {
 }
 
 GenericOperation* OperationsRequestBuilder::operation(qint64 operationId) {
-    setSegments(QStringList()<< "operation"<< QString::number(operationId));
+    // Horizon's route is /operations/{id}, as js and py request it: this
+    // asked /operation/{id}, which Horizon answers with 404.
+    setSegments(QStringList()<< "operations"<< QString::number(operationId));
     return operation(buildUri());
 }
 

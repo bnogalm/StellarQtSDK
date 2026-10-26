@@ -45,7 +45,14 @@ class TransactionBuilder
     QSharedPointer<stellar::SorobanTransactionData> m_sorobanData;
     bool m_timeoutSet;
     quint32 m_baseFee;
+    bool m_baseFeeSet = false;      // setBaseFee(0) is a fee, not "none given"
     static quint32 s_defaultOperationFee;
+
+    // Txrep rebuilds a PRECOND_NONE document (or a V2 one without time bounds)
+    // as it was written: setTimeout(TIMEOUT_INFINITE) would add {0, 0} and
+    // change its hash.
+    friend class Txrep;
+    void markTimeoutHandled() { m_timeoutSet = true; }
 
 public:
     static const quint32 BASE_FEE       = 100;
@@ -97,11 +104,19 @@ public:
      */
     TransactionBuilder(TransactionBuilder& other);
 
+    /**
+     * Not assignable. The implicit one copied the operation and memo pointers,
+     * so two builders owned them: `x = y` ended in a double free, or in x
+     * signing whatever was allocated where y's operations had been.
+     */
+    TransactionBuilder& operator=(const TransactionBuilder&) = delete;
+
     ~TransactionBuilder();
 
     int getOperationsCount();
 
-    static void setDefaultOperationFee(quint32 opFee);
+    /** Used only with STELLAR_QT_AUTOSET_BASE_FEE: 100 to 4294967295, or it throws. */
+    static void setDefaultOperationFee(qint64 opFee);
 
     /**
      * @param operation, you lose ownership of the object — don't delete it.
@@ -120,12 +135,23 @@ public:
 
     /**
      * Convenience: sets a relative timeout (in seconds) from now.
+     *
+     * TIMEOUT_INFINITE (0) writes time bounds {0, 0} when none are set yet, as
+     * js-stellar-sdk and java do, so the same transaction has the same hash in
+     * each. After addTimeBounds(min, 0) with a min, it throws, as py does: js
+     * would write {0, 0}, dropping that min, and this kept it, so the same
+     * calls signed different transactions. A timeout of n seconds keeps the
+     * min, as js does.
      */
     TransactionBuilder& setTimeout(qint64 timeout);
 
     // ─── CAP-21 setters ──────────────────────────────────────────────────
 
-    /** Replaces the entire preconditions bundle. Copies the input. */
+    /**
+     * Replaces the entire preconditions bundle, time bounds included. Copies
+     * the input. Without time bounds in it, a timeout set before no longer
+     * applies: call setTimeout after this, or build() throws.
+     */
     TransactionBuilder& addPreconditions(const TransactionPreconditions& preconditions);
 
     /** @param ledgerBounds ownership transferred. */
@@ -134,11 +160,20 @@ public:
     /** Sets the minimum source account sequence number. */
     TransactionBuilder& setMinSeqNumber(qint64 seqNum);
 
-    /** Sets the minimum source account sequence age (seconds). */
-    TransactionBuilder& setMinSeqAge(quint64 minSeqAge);
+    /**
+     * Sets the minimum source account sequence age (seconds). Takes a qint64,
+     * as setBaseFee does, so that a negative value reaches the check: as a
+     * quint64, -1 arrived as 2^64 - 1 and was signed. js refuses it too
+     * ("min_account_sequence_age cannot be negative"). An age of 2^63 or more
+     * goes through TransactionPreconditions::setMinSeqAge.
+     */
+    TransactionBuilder& setMinSeqAge(qint64 minSeqAge);
 
-    /** Sets the minimum source account sequence ledger gap. */
-    TransactionBuilder& setMinSeqLedgerGap(quint32 gap);
+    /**
+     * Sets the minimum source account sequence ledger gap, 0 to 4294967295:
+     * a negative gap was signed as 2^32 - 1 and is refused, as js refuses it.
+     */
+    TransactionBuilder& setMinSeqLedgerGap(qint64 gap);
 
     /** Adds an extra signer (max 2 per CAP-21). */
     TransactionBuilder& addExtraSigner(const SignerKey& key);
@@ -151,11 +186,27 @@ public:
      */
     TransactionBuilder& setSorobanData(const stellar::SorobanTransactionData& data);
 
-    TransactionBuilder& setBaseFee(quint32 baseFee);
+    /**
+     * The fee per operation, in stroops: 0 to 4294967295, or it throws.
+     * Below the network's minimum (100) a transaction is refused when
+     * submitted on its own; it is what the inner transaction of a fee bump
+     * carries (commonly 0: the fee source pays), which js and py build too.
+     * 100 and up was all this took.
+     *
+     * Takes a qint64 so that a negative value reaches the check. As a quint32
+     * parameter, -5 from a caller holding a signed number arrived as
+     * 4294967291 and was accepted.
+     */
+    TransactionBuilder& setBaseFee(qint64 baseFee);
 
     /**
      * Builds the Transaction. Sequence number of the source account is
-     * incremented after a successful build. Caller takes ownership.
+     * incremented after a successful build. Caller takes ownership. Throws
+     * when the account's sequence number is INT64_MAX: none follows it.
+     *
+     * The builder can build again, but each build() needs its own timeout
+     * (setTimeout, addTimeBounds or preconditions with time bounds): the time
+     * bounds go with the transaction built.
      */
     Transaction* build();
 };

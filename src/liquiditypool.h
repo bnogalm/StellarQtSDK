@@ -11,8 +11,23 @@ QSTELLAR_BEGIN_NS
 /**
  * Static helpers around CAP-38 Liquidity Pools.
  *
+ * The Horizon pool resource in src/responses/liquiditypool.h has the same
+ * class name (both part of the 1.0 API): include one of the two headers in a
+ * translation unit, not both.
+ *
  * Pool ID = SHA-256 of the XDR-encoded LiquidityPoolParameters union.
- * Assets must be in canonical order (XDR-byte lex). LIQUIDITY_POOL_FEE_V18 = 30.
+ * Assets must be in canonical order (XDR-byte lex). LIQUIDITY_POOL_FEE_V18 = 30,
+ * the only fee a pool has (any other is refused).
+ *
+ * The order is stellar-core's (isPoolParamsValid compares the XDR). js-stellar-
+ * base (Asset.compare) and py-stellar-sdk compare the issuers' G... strkeys as
+ * ASCII text instead, which differs for two assets of one type and code whose
+ * issuers first differ where one strkey has a letter and the other a digit
+ * (in base32 the digits 2-7 come after Z; in ASCII before A). For such a pair
+ * js and py accept the order core refuses, and refuse the one core takes:
+ * this SDK computes the id of the pool that can exist (checked on testnet:
+ * core returns op_malformed for the other order). No real pubnet pool is such
+ * a pair (39,621 checked).
  */
 class LiquidityPool
 {

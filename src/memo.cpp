@@ -3,6 +3,24 @@
 
 QSTELLAR_BEGIN_NS
 
+namespace {
+// A MEMO_ID from text: decimal digits only, as js Memo.id reads it.
+// toULongLong turned what it could not read ("abc", "", 2^64) into 0, a memo
+// id an exchange routes deposits by, and took a sign or spaces.
+quint64 memoIdFromText(const QString& text)
+{
+    bool ok = !text.isEmpty();
+    for (const QChar c : text) {
+        if (c.unicode() < '0' || c.unicode() > '9')
+            ok = false;
+    }
+    const quint64 id = ok ? text.toULongLong(&ok, 10) : 0;
+    if (!ok)
+        throw std::runtime_error("memo id is not a uint64 in decimal digits");
+    return id;
+}
+}
+
 Memo::Memo()
 {
 
@@ -19,8 +37,9 @@ Memo *Memo::fromXdr(stellar::Memo& memo)
         return Memo::none();
     case stellar::MemoType::MEMO_TEXT:
     {
-        QString text = QString::fromUtf8(memo.text.value.data(),memo.text.value.size());
-        return Memo::text(text);
+        // The bytes, not text decoded from them: a memo that is not UTF-8 was
+        // re-encoded with U+FFFD in it, and signed as a different memo.
+        return MemoText::fromBytes(QByteArray(memo.text.value.data(), memo.text.value.size()));
     }
     case stellar::MemoType::MEMO_ID:
     {
@@ -54,7 +73,7 @@ Memo *Memo::parse(QString type, QString memo)
             else
                 return Memo::text("");//null!=empty
         } else if (type=="id") {
-            return Memo::id(memo.toULongLong());
+            return Memo::id(memoIdFromText(memo));
         } else if (type=="hash") {
             return Memo::hash(memo);
         } else if (type=="return") {
@@ -81,12 +100,18 @@ Memo *Memo::parse(QString type, QByteArray memo)
                 return Memo::text("");//null!=empty
         } else if (type=="id") {
             // FIX §9.8: Memo Id is uint64. toLongLong() rejected IDs > 2^63;
-            // toULongLong() covers the full range.
-            return Memo::id(QString::fromUtf8(memo).toULongLong());
-        } else if (type=="hash") {
-            return Memo::hash(QByteArray::fromBase64(memo,XDR_BASE64ENCODING));
-        } else if (type=="return") {
-            return Memo::returnHash(QByteArray::fromBase64(memo,XDR_BASE64ENCODING));
+            // the full range is read, and nothing else.
+            return Memo::id(memoIdFromText(QString::fromUtf8(memo)));
+        } else if (type=="hash" || type=="return") {
+            // Strict: the lenient decoder skipped what it could not read, so
+            // a damaged value read as other bytes.
+            const auto bytes = QByteArray::fromBase64Encoding(
+                memo, XDR_BASE64ENCODING | QByteArray::AbortOnBase64DecodingErrors);
+            if (!bytes)
+                throw std::runtime_error("memo is not base64");
+            if (type=="hash")
+                return Memo::hash(*bytes);
+            return Memo::returnHash(*bytes);
         } else {
             throw std::runtime_error("Unknown memo type.");
         }
@@ -132,7 +157,7 @@ bool Memo::operator==(const Memo &memo) const
     {
         if(const MemoText * text = dynamic_cast<const MemoText*>(this))
         {
-            return text->getText()==dynamic_cast<const MemoText&>(memo).getText();
+            return text->getBytes()==dynamic_cast<const MemoText&>(memo).getBytes();
         }
         if(dynamic_cast<const MemoNone*>(this))
         {
@@ -182,11 +207,26 @@ stellar::Memo MemoReturnHash::toXdr() {
 
 MemoText::MemoText(QString text) {
     this->m_text = checkNotNull(text, "text cannot be null");
-
-    int length = text.toUtf8().length();
-    if (length > 28) {
+    m_bytes = text.toUtf8();
+    if (Util::hasUnpairedSurrogate(text)) {
+        throw std::runtime_error("memo text is not valid Unicode (an unpaired surrogate?)");
+    }
+    if (m_bytes.length() > 28) {
         throw std::runtime_error("text must be <= 28 bytes.");
     }
+}
+
+MemoText::MemoText(const QByteArray& bytes, FromBytes)
+    : m_text(QString::fromUtf8(bytes.constData(), bytes.size())), m_bytes(bytes)
+{
+    if (m_bytes.length() > 28) {
+        throw std::runtime_error("text must be <= 28 bytes.");
+    }
+}
+
+MemoText* MemoText::fromBytes(const QByteArray& bytes)
+{
+    return new MemoText(bytes, FromBytes());
 }
 
 MemoText::~MemoText(){
@@ -198,24 +238,28 @@ QString MemoText::getText() const{
     return m_text;
 }
 
+QByteArray MemoText::getBytes() const{
+    return m_bytes;
+}
+
 stellar::Memo MemoText::toXdr() {
     using namespace stellar;
     stellar::Memo memo;
     memo.type = MemoType::MEMO_TEXT;
-    QByteArray ba  = m_text.toUtf8();
-    memo.text.set(ba.data(),ba.length());
+    QByteArray bytes = m_bytes;
+    memo.text.set(bytes.data(), bytes.length());
     return memo;
 }
 
 MemoHashAbstract::MemoHashAbstract(QByteArray bytes) {
-    if (bytes.length() < 32) {
-        this->m_bytes = Util::paddedByteArray(bytes, 32);
-    } else if (bytes.length() > 32) {
-        throw std::runtime_error("MEMO_HASH can contain 32 bytes at max.");
+    // Exactly 32 bytes (64 hex characters), as js and py require. Shorter
+    // input was padded with zeros and signed: "" as the all-zero hash, 31
+    // bytes as a hash nobody gave.
+    if (bytes.length() != 32) {
+        throw std::runtime_error(QStringLiteral("a MEMO_HASH / MEMO_RETURN is exactly 32 bytes "
+                                                "(64 hex characters), not %1").arg(bytes.length()).toStdString());
     }
-    else{
-        this->m_bytes = bytes;
-    }
+    this->m_bytes = bytes;
 }
 
 

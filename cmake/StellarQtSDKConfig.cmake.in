@@ -1,0 +1,54 @@
+# CMake package configuration for StellarQtSDK @PROJECT_VERSION@.
+#
+#     find_package(StellarQtSDK 1.0 REQUIRED)
+#     target_link_libraries(yourapp PRIVATE StellarQtSDK::StellarQtSDK)
+#
+# Link StellarQtSDK::StellarQtSDK, never StellarQtSDK::StellarQtSDKStatic.
+# The first links the static archive WHOLE; the second is the bare archive,
+# from which the linker drops the response files that nothing but a
+# Q_COREAPP_STARTUP_FUNCTION refers to. Their type registrations never run
+# then, and Horizon responses deserialise with empty lists (a liquidity pool
+# with no reserves) without any error. See the SDK's CMakeLists.txt.
+#
+# Set by this file:
+#   StellarQtSDK_QML   ON when the package was built with the QML layer
+#                      (src/qml/, STELLAR_QT_QML); it then also needs QtQml.
+
+@PACKAGE_INIT@
+
+# The whole-archive request travels as $<LINK_LIBRARY:WHOLE_ARCHIVE,…>, which
+# only CMake 3.24 and newer can evaluate. Refuse here, with the reason, rather
+# than fail later on an expression the consumer never wrote.
+if(CMAKE_VERSION VERSION_LESS 3.24)
+    set(StellarQtSDK_FOUND FALSE)
+    set(StellarQtSDK_NOT_FOUND_MESSAGE "StellarQtSDK must be linked \
+whole-archive, which needs CMake 3.24 or newer in the consuming project \
+(this is ${CMAKE_VERSION}).")
+    return()
+endif()
+
+set(StellarQtSDK_QML @STELLAR_QT_QML@)
+
+# The archive was compiled against Qt @QT_VERSION@; an older Qt of the same
+# major may lack symbols it calls, and another major is another ABI.
+include(CMakeFindDependencyMacro)
+if(StellarQtSDK_QML)
+    find_dependency(Qt@QT_VERSION_MAJOR@ @QT_VERSION_MAJOR@.@QT_VERSION_MINOR@
+                    COMPONENTS Core Network Qml)
+else()
+    find_dependency(Qt@QT_VERSION_MAJOR@ @QT_VERSION_MAJOR@.@QT_VERSION_MINOR@
+                    COMPONENTS Core Network)
+endif()
+
+include("${CMAKE_CURRENT_LIST_DIR}/StellarQtSDKTargets.cmake")
+
+# Debug and Release can be installed side by side (Debug as StellarQtSDKd).
+# A consumer built as RelWithDebInfo or MinSizeRel has no configuration of
+# its own here, and CMake then took the first one imported (often Debug):
+# with MSVC the link failed on a runtime mismatch (/MDd against /MD). Both
+# take the release archive, and the one of their own name if one is installed.
+set_target_properties(StellarQtSDK::StellarQtSDKStatic PROPERTIES
+    MAP_IMPORTED_CONFIG_RELWITHDEBINFO "RelWithDebInfo;Release;MinSizeRel"
+    MAP_IMPORTED_CONFIG_MINSIZEREL "MinSizeRel;Release;RelWithDebInfo")
+
+check_required_components(StellarQtSDK)

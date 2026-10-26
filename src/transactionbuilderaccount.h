@@ -20,6 +20,14 @@ public:
     virtual KeyPair *getKeypair() = 0;
 
     /**
+     * The address the transaction is sent from: G..., or M... for a muxed
+     * source. The default is the key pair's G address; Account returns the
+     * address it was made from, so Account("M...", n) sends from M... (it
+     * used to be signed as its G account, the muxed id dropped).
+     */
+    virtual QString getAccountId() const { return const_cast<TransactionBuilderAccount*>(this)->getKeypair()->getAccountId(); }
+
+    /**
      * Returns current sequence number ot this Account.
      */
     virtual qint64 getSequenceNumber() = 0;

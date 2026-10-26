@@ -32,6 +32,11 @@ EffectsRequestBuilder &EffectsRequestBuilder::forOperation(qint64 operationId) {
     return *this;
 }
 
+EffectsRequestBuilder &EffectsRequestBuilder::forLiquidityPool(const QString& liquidityPoolId) {
+    this->setSegments(QStringList() << "liquidity_pools" << liquidityPoolId << "effects");
+    return *this;
+}
+
 EffectsPage *EffectsRequestBuilder::execute(QUrl uri) {
     this->setRequestUri(uri);//we overwrite the uri
     return server()->get<EffectsPage >(this);

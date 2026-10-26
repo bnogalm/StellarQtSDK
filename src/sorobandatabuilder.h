@@ -52,7 +52,9 @@ public:
     /** Current snapshot (copy). */
     stellar::SorobanTransactionData build() const { return m_data; }
 
-    /** Convenience XDR serializer for tests / inspection. */
+    /** Convenience XDR serializer for tests / inspection. Throws
+     *  std::runtime_error when the data holds something XDR has no encoding
+     *  for (it used to return the bytes written up to that point). */
     QByteArray toXdr() const;
 };
 

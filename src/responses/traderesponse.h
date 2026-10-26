@@ -73,7 +73,9 @@ class TradeResponse : public Response
     Q_PROPERTY(QString counter_asset_code MEMBER m_counterAssetCode WRITE setCounterAssetCode)
     Q_PROPERTY(QString counter_asset_issuer MEMBER m_counterAssetIssuer WRITE setCounterAssetIssuer)
 
-    Q_PROPERTY(Price price MEMBER m_price)
+    // Horizon sends n and d as int64 strings; a Price gadget wrapped them
+    // mod 2^32 (4294967297/4294967296 read as 1/0).
+    Q_PROPERTY(QVariantMap price MEMBER m_priceR)
     Q_PROPERTY(QString trade_type MEMBER m_tradeType)
     Q_PROPERTY(qint32 liquidity_pool_fee_bp MEMBER m_liquidityPoolFeeBp)
     Q_PROPERTY(QString base_liquidity_pool_id MEMBER m_baseLiquidityPoolId)
@@ -106,7 +108,7 @@ class TradeResponse : public Response
     QString m_counterAssetType;
     QString m_counterAssetCode;
     QString m_counterAssetIssuer;
-    Price m_price;
+    QVariantMap m_priceR;
     QString m_tradeType;
     qint32 m_liquidityPoolFeeBp;
     QString m_baseLiquidityPoolId;
@@ -153,7 +155,18 @@ public:
 
     QString getCounterAssetIssuer() const;
 
+    /**
+     * The trade price as an int32 Price: n/d as Horizon sent them when both
+     * fit, otherwise reduced by their gcd. Liquidity-pool trades often have
+     * int64 terms that do not fit even then, and this throws
+     * std::runtime_error for those rather than return a different price:
+     * getPriceN()/getPriceD() always hold the exact value.
+     */
     Price getPrice() const;
+    /** Numerator of the trade price, exactly as Horizon sent it (int64). */
+    qint64 getPriceN() const;
+    /** Denominator of the trade price, exactly as Horizon sent it (int64). */
+    qint64 getPriceD() const;
     QString getTradeType() const;
     /** Liquidity-pool fee in basis points for LP trades (0 for orderbook trades). */
     qint32 getLiquidityPoolFeeBp() const;
@@ -169,6 +182,16 @@ public:
 
     Asset* getBaseAsset();
     Asset* getCounterAsset();
+
+    /**
+     * One int64 term of a Horizon price object ({"n": "...", "d": "..."}),
+     * as text (exact over the whole int64 range, as Horizon sends it) or as a
+     * JSON number (exact only below 2^53, refused from there). Throws
+     * std::runtime_error when it is missing or not a whole number read
+     * exactly: never rounded, never wrapped. Shared with
+     * TradeAggregationResponse.
+     */
+    static qint64 priceTerm(const QVariantMap& price, const char* key);
 public slots:
     void setBaseAccount(QString base_account);
     void setCounterAccount(QString counter_account);

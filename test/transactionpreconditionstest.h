@@ -3,6 +3,7 @@
 
 #include <QObject>
 #include <QtTest>
+#include <limits>
 #include "testcollector.h"
 
 #include "../src/transactionpreconditions.h"
@@ -41,6 +42,25 @@ private slots:
                  static_cast<int>(stellar::PreconditionType::PRECOND_TIME));
         QCOMPARE(xdr.timeBounds.minTime, quint64(100));
         QCOMPARE(xdr.timeBounds.maxTime, quint64(200));
+    }
+
+    /**
+     * A TimePoint is uint64. getMinTime()/getMaxTime() return the 1.0 qint64,
+     * negative from 2^63; the TimePoint getters read what core, js and py
+     * read, and the XDR carries it unchanged.
+     */
+    void testTimePointsAtOrAbove2Pow63ReadUnsigned()
+    {
+        stellar::TimeBounds wire;
+        wire.minTime = quint64(1) << 63;
+        wire.maxTime = std::numeric_limits<quint64>::max();
+        QScopedPointer<TimeBounds> tb(TimeBounds::fromXdr(wire));
+        QCOMPARE(tb->getMinTimePoint(), quint64(1) << 63);
+        QCOMPARE(tb->getMaxTimePoint(), std::numeric_limits<quint64>::max());
+        QVERIFY(tb->getMaxTime() < 0);
+        const stellar::TimeBounds back = tb->toXdr();
+        QCOMPARE(back.minTime, wire.minTime);
+        QCOMPARE(back.maxTime, wire.maxTime);
     }
 
     void testLedgerBoundsForcesV2()

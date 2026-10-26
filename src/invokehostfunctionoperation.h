@@ -46,7 +46,8 @@ public:
 
     // ─── Factories (Java-aligned) ────────────────────────────────────
 
-    /** Invokes `functionName` on `contractAddress` with `args`. */
+    /** Invokes `functionName` on `contractAddress` with `args`. The name must
+     *  be a symbol the host accepts (1 to 32 of [A-Za-z0-9_]), or this throws. */
     static InvokeHostFunctionOperation* invokeContractFunctionOperationBuilder(
         const StellarAddress& contractAddress,
         const QString& functionName,
@@ -56,7 +57,13 @@ public:
     static InvokeHostFunctionOperation* uploadContractWasmOperationBuilder(
         const QByteArray& wasm);
 
-    /** Creates a contract instance from address+salt (no constructor args). */
+    /**
+     * Creates a contract instance from address+salt with the v1 host function
+     * (HOST_FUNCTION_TYPE_CREATE_CONTRACT, no constructor). js and py never
+     * sign it for a wasm deploy: they sign createContractV2OperationBuilder
+     * with an empty argument list, which is another host function, hash and
+     * auth tree. Use that one to match them; this is kept for 1.0.x callers.
+     */
     static InvokeHostFunctionOperation* createContractOperationBuilder(
         const StellarAddress& fromAddress,
         const QByteArray& salt,

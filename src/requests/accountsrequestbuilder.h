@@ -15,6 +15,14 @@ QSTELLAR_BEGIN_NS
  */
 class AccountsRequestBuilder : public RequestBuilder
 {
+     /**
+      * Horizon's /accounts takes one of signer, sponsor, asset and
+      * liquidity_pool: throws std::runtime_error when one other than
+      * `filter` is set already. Only forLiquidityPool checked all three,
+      * so forLiquidityPool(id).forSigner(...) went out and Horizon
+      * answered 400. js and py check none.
+      */
+     void checkOneFilter(const QString& filter) const;
 public:
      AccountsRequestBuilder(Server* server);
 
@@ -102,7 +110,7 @@ public:
        */
       Page<AccountResponse>* execute(QUrl uri);
      /**
-        * Build and execute request. <strong>Warning!</strong> {@link AccountResponse}s in {@link Page} will contain only <code>keypair</code> field.
+        * Build and execute request. Each {@link AccountResponse} in the {@link Page} is a whole account, read exactly (see Response::fillObject): a record Horizon sent without its sequence, balances, thresholds, flags or signers makes the page emit error().
         * @return {@link Page} of {@link AccountResponse}
         * @throws TooManyRequestsException when too many requests were sent to the Horizon server.
         * @throws IOException

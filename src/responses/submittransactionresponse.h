@@ -17,12 +17,19 @@ namespace SubmitTransactionResponseAttach
 class ResultCodes {
     Q_GADGET
     Q_PROPERTY(QString transaction MEMBER m_transaction)
+    Q_PROPERTY(QString inner_transaction MEMBER m_innerTransaction)
     Q_PROPERTY(QStringList operations MEMBER m_operations)
     QString m_transaction;
+    QString m_innerTransaction;
     QStringList m_operations;
 public:
     QString getTransactionResultCode() {
         return m_transaction;
+    }
+
+    /** A failed fee bump's inner transaction code (tx_fee_bump_inner_failed's cause); empty otherwise. */
+    QString getInnerTransactionResultCode() const {
+        return m_innerTransaction;
     }
 
     QStringList getOperationsResultCodes() {
@@ -31,6 +38,7 @@ public:
     bool operator ==(const ResultCodes& rc) const
     {
         return m_transaction == rc.m_transaction
+                && m_innerTransaction == rc.m_innerTransaction
                 && m_operations == rc.m_operations;
     }
     bool operator !=(const ResultCodes& rc) const
@@ -58,8 +66,17 @@ class Extras
 public:
 
     /**
-    * Returns XDR TransactionEnvelope base64-encoded string.
+    * Returns XDR TransactionEnvelope base64-encoded string (envelope_xdr).
     * Use <a href="http://stellar.github.io/xdr-viewer/">xdr-viewer</a> to debug.
+    */
+    QString getEnvelopeXdr() const
+    {
+        return m_envelopeXdr;
+    }
+    /**
+    * The ENVELOPE, as getEnvelopeXdr(), despite its name: kept as it was for
+    * 1.0.x callers. The transaction's result code is
+    * getResultCodes().getTransaction().
     */
     QString getTransactionResultCode() const
     {
@@ -123,9 +140,37 @@ class SubmitTransactionResponse : public Response
 
     QString m_envelope_xdr;
     AbstractTransaction *m_transactionRequest;
+
+    // Set once the reply to the POST of the envelope is attached (or an error
+    // arrives while one is): from then on the transaction may land.
+    // isTimeout() used to read that from m_reply, which is cleared when the
+    // reply is destroyed (with its Server, say): a posted submission that had
+    // timed out then read false.
+    bool m_posted;
+
+    // Server stops a submission before anything is posted (SEP-29) and
+    // reports why here, through Response::emitError, so the caller reads a
+    // typed AccountRequiresMemoException from lastException().
+    friend class Server;
 public:
     explicit SubmitTransactionResponse(QNetworkReply* reply, AbstractTransaction *transactionRequest=nullptr);
     virtual ~SubmitTransactionResponse();
+    /**
+     * Attaches `reply`, the answer to the POST of the envelope, as
+     * Response::loadFromReply does, and records that the envelope was
+     * posted (see isTimeout()).
+     */
+    void loadFromReply(QNetworkReply *reply);
+
+protected:
+    /**
+     * A failed transaction (Horizon's 400 transaction_failed, and any error
+     * body with extras) keeps its extras: getExtras() and getResultXdr()
+     * return the result Horizon sent. They were empty, and the result codes
+     * only reachable through the BadRequestException's Problem.
+     */
+    void readFailureBody(int httpStatus, const QJsonObject& body) override;
+public:
     AbstractTransaction * transactionRequest() const;
     QString getHash() const;
 
@@ -136,13 +181,18 @@ public:
     SubmitTransactionResponseAttach::Extras& getExtras();
     bool isSuccess() const;
     /**
-     * True when Horizon replied with HTTP 504 (Gateway Timeout). On a timeout the
+     * True when Horizon replied with HTTP 504 (Gateway Timeout), or when the SDK
+     * gave up waiting for the answer to the submission (lastException() is a
+     * ClientTimeoutException; before 1.0.4 that case read false, as a failure).
+     * A SEP-29 lookup that timed out stops the submission before anything is
+     * posted, and reads false. It stays true once the reply is gone (the
+     * Server deleted, say); before 1.0.4 it then read false. On a timeout the
      * transaction MAY still have been included. Re-submit the SAME signed envelope
      * (idempotent — the sequence number guards against double-apply); NEVER rebuild
      * with a new sequence until `GET /transactions/{hash}` confirms the original was
      * not included (otherwise you risk paying twice). See `Account::decrementSequenceNumber`.
      */
-    bool isTimeout() const { return getStatus() == 504; }
+    bool isTimeout() const;
     /** The HTTP status code Horizon returned for this submit (0 if none). */
     int getStatusCode() const { return getStatus(); }
     QString getEnvelopeXdr();

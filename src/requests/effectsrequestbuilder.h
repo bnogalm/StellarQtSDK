@@ -45,6 +45,13 @@ public:
     EffectsRequestBuilder& forOperation(qint64 operationId);
 
     /**
+     * Builds request to <code>GET /liquidity_pools/{pool_id}/effects</code>,
+     * as js's forLiquidityPool and py's for_liquidity_pool.
+     * @param liquidityPoolId 64-char hex pool id.
+     */
+    EffectsRequestBuilder& forLiquidityPool(const QString& liquidityPoolId);
+
+    /**
      * Requests specific <code>uri</code> and returns {@link Page} of {@link EffectResponse}.
      * This method is helpful for getting the next set of results.
      * @return {@link Page} of {@link EffectResponse}

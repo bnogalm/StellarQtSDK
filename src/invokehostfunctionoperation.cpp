@@ -52,6 +52,39 @@ InvokeHostFunctionOperation* InvokeHostFunctionOperation::build(const stellar::I
     return new InvokeHostFunctionOperation(op);
 }
 
+namespace {
+
+/**
+ * Refuses a claimable-balance (B...) or liquidity-pool (L...) address among
+ * contract arguments, at any depth. CAP-67 made them SCAddress kinds for
+ * events only: the host refuses them as contract input, so a transaction
+ * carrying one was signed and then failed on chain, its fee paid. js refuses
+ * them ("claimable balances and liquidity pools cannot be arguments to
+ * invokeHostFunction"); it checks the top level, the host every level.
+ */
+void refuseEventOnlyAddresses(const stellar::SCVal& v, int depth = 0)
+{
+    if (depth > stellar::MAX_SCVAL_DEPTH)
+        return;             // too deep to sign anyway: the encoder refuses it
+    if (v.type == stellar::SCValType::SCV_ADDRESS
+            && (v.address.type == stellar::SCAddressType::SC_ADDRESS_TYPE_CLAIMABLE_BALANCE
+                || v.address.type == stellar::SCAddressType::SC_ADDRESS_TYPE_LIQUIDITY_POOL))
+        throw std::runtime_error("claimable balances and liquidity pools cannot be arguments "
+                                 "to invokeHostFunction");
+    if (v.type == stellar::SCValType::SCV_VEC && v.vec) {
+        for (const stellar::SCVal& item : *v.vec)
+            refuseEventOnlyAddresses(item, depth + 1);
+    }
+    if (v.type == stellar::SCValType::SCV_MAP && v.map) {
+        for (const stellar::SCMapEntry& entry : *v.map) {
+            refuseEventOnlyAddresses(entry.key, depth + 1);
+            refuseEventOnlyAddresses(entry.val, depth + 1);
+        }
+    }
+}
+
+} // namespace
+
 // ─── Factories ──────────────────────────────────────────────────────
 
 InvokeHostFunctionOperation* InvokeHostFunctionOperation::invokeContractFunctionOperationBuilder(
@@ -62,10 +95,15 @@ InvokeHostFunctionOperation* InvokeHostFunctionOperation::invokeContractFunction
     if (contractAddress.getType() != StellarAddress::Type::CONTRACT) {
         throw std::runtime_error("invokeContract: address must be a contract (C-strkey)");
     }
-    QByteArray fnBytes = functionName.toUtf8();
-    if (fnBytes.size() > 32) {
-        throw std::runtime_error("functionName must be ≤ 32 bytes");
+    // The name is an SCSymbol, so the host takes only what Scv::toSymbol does:
+    // at most 32 of [A-Za-z0-9_]. "trans-fer" or "a b" was signed and then
+    // refused by the host. No contract exports an empty name either.
+    if (functionName.isEmpty()) {
+        throw std::runtime_error("functionName must not be empty");
     }
+    const QByteArray fnBytes = Scv::toSymbol(functionName).symbol;
+    for (const stellar::SCVal& arg : args)
+        refuseEventOnlyAddresses(arg);
 
     InvokeHostFunctionOperation* op = new InvokeHostFunctionOperation();
     op->m_hostFunction.type = stellar::HostFunctionType::HOST_FUNCTION_TYPE_INVOKE_CONTRACT;
@@ -126,6 +164,8 @@ InvokeHostFunctionOperation* InvokeHostFunctionOperation::createContractV2Operat
     if (salt.size() != 32) {
         throw std::runtime_error("salt must be 32 bytes");
     }
+    for (const stellar::SCVal& arg : constructorArgs)
+        refuseEventOnlyAddresses(arg);
     InvokeHostFunctionOperation* op = new InvokeHostFunctionOperation();
     op->m_hostFunction.type = stellar::HostFunctionType::HOST_FUNCTION_TYPE_CREATE_CONTRACT_V2;
     op->m_hostFunction.createContractV2.contractIDPreimage.type =

@@ -14,7 +14,19 @@ QSTELLAR_BEGIN_NS
 class DataUpdatedEffectResponse : public EffectResponse
 {
     Q_OBJECT
+    // The entry's name and (base64) value, as Horizon sends them and js
+    // types them. They were dropped: nothing said which entry changed.
+    Q_PROPERTY(QString name MEMBER m_name)
+    Q_PROPERTY(QString value MEMBER m_value)
+    QString m_name;
+    QString m_value;
 public:
+    /** The data entry's name. */
+    QString getName() const { return m_name; }
+    /** Its value, base64 as Horizon sends it (empty for an empty value). */
+    QString getValue() const { return m_value; }
+    /** Its value, decoded. */
+    QByteArray getValueBytes() const { return QByteArray::fromBase64(m_value.toLatin1()); }
     DataUpdatedEffectResponse(QNetworkReply *reply = nullptr);
     virtual ~DataUpdatedEffectResponse();
 signals:

@@ -19,6 +19,13 @@ class PaymentsRequestBuilder : public RequestBuilder
 public:
     PaymentsRequestBuilder(Server* server);
 
+    /**
+     * Adds a parameter defining whether to include payments of failed
+     * transactions, as js's includeFailed and py's include_failed. By
+     * default only payments of successful transactions are returned.
+     * @param value Set to <code>true</code> to include payments of failed transactions.
+     */
+    PaymentsRequestBuilder& includeFailed(bool value);
 
     /**
      * Builds request to <code>GET /accounts/{account}/payments</code>

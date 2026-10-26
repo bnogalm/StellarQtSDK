@@ -42,17 +42,28 @@ public:
 
     /** Hex pool ID the deposit targets. */
     QString            getLiquidityPoolId()  const { return m_liquidityPoolId; }
-    /** Maximum reserves the depositor was willing to add (asset/amount pairs). */
+    /**
+     * Maximum reserves the depositor was willing to add (asset/amount pairs).
+     * When the transaction failed (isTransactionSuccessful() false) each
+     * asset is an EMPTY QString: Horizon names the pool's assets only for a
+     * transaction that succeeded, and leaves them out otherwise. The amounts
+     * are still the operation's.
+     */
     QList<AssetAmount> getReservesMax()       const { return m_reservesMax; }
     /** Minimum price (reserveA/reserveB) the deposit accepted, as a decimal string. */
     QString            getMinPrice()          const { return m_minPrice; }
     /** Maximum price (reserveA/reserveB) the deposit accepted, as a decimal string. */
     QString            getMaxPrice()          const { return m_maxPrice; }
-    /** Exact min price as a rational {n,d}. Prefer over getMinPrice() for fund-critical math. */
-    Price              getMinPriceR()         const { return Price(m_minPriceR.value("n").toUInt(), m_minPriceR.value("d").toUInt()); }
-    /** Exact max price as a rational {n,d}. Prefer over getMaxPrice() for fund-critical math. */
-    Price              getMaxPriceR()         const { return Price(m_maxPriceR.value("n").toUInt(), m_maxPriceR.value("d").toUInt()); }
-    /** Reserves actually deposited into the pool (asset/amount pairs). */
+    /** Exact min price as a rational {n,d}. Prefer over getMinPrice() for fund-critical math. Throws std::runtime_error when a term is not an exact int32 (it read as 0). */
+    Price              getMinPriceR()         const { return ResponseConverters::exactPrice(m_minPriceR, "min_price_r"); }
+    /** Exact max price as a rational {n,d}. Prefer over getMaxPrice() for fund-critical math. Throws std::runtime_error when a term is not an exact int32 (it read as 0). */
+    Price              getMaxPriceR()         const { return ResponseConverters::exactPrice(m_maxPriceR, "max_price_r"); }
+    /**
+     * Reserves actually deposited into the pool (asset/amount pairs). When
+     * the transaction failed (isTransactionSuccessful() false) each asset is
+     * an EMPTY QString, as for getReservesMax(), and nothing was deposited
+     * (the amounts read 0).
+     */
     QList<AssetAmount> getReservesDeposited() const { return m_reservesDeposited; }
     /** Pool shares received by the depositor. */
     QString            getSharesReceived()    const { return m_sharesReceived; }

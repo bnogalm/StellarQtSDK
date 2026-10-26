@@ -22,5 +22,9 @@ static void registerLiquidityPoolEffectTypes()
     regType<QList<LiquidityPoolClaimableAssetAmount> >();
     QMetaType::registerConverter<QVariantList, QList<AssetAmount> >(&ResponseConverters::convert<AssetAmount>);
     QMetaType::registerConverter<QVariantList, QList<LiquidityPoolClaimableAssetAmount> >(&ResponseConverters::convert<LiquidityPoolClaimableAssetAmount>);
+    // What Response::fillObject reads them with: the converters above wrote
+    // each member unchecked, so an amount given as a number became empty.
+    ResponseConverters::registerExactGadgetList<AssetAmount>();
+    ResponseConverters::registerExactGadgetList<LiquidityPoolClaimableAssetAmount>();
 }
 Q_COREAPP_STARTUP_FUNCTION(registerLiquidityPoolEffectTypes)

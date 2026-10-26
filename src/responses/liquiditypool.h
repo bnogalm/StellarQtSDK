@@ -1,5 +1,5 @@
-#ifndef LIQUIDITYPOOL_H
-#define LIQUIDITYPOOL_H
+#ifndef RESPONSES_LIQUIDITYPOOL_H
+#define RESPONSES_LIQUIDITYPOOL_H
 
 #include <QObject>
 #include <QString>
@@ -13,6 +13,11 @@ QSTELLAR_BEGIN_NS
 /**
  * Liquidity pool shape returned by Horizon (used by LP effects and the
  * /liquidity_pools endpoint).
+ *
+ * Its name is also that of the pool-id helper in src/liquiditypool.h (both
+ * part of the 1.0 API): a translation unit can include one of the two
+ * headers, not both. They shared an include guard, so including both
+ * silently dropped the second; it is a clear redefinition error now.
  */
 class LiquidityPool
 {
@@ -61,4 +66,4 @@ QSTELLAR_ALIAS(LiquidityPool)
 
 Q_DECLARE_METATYPE(qstellar::LiquidityPool)
 
-#endif // LIQUIDITYPOOL_H
+#endif // RESPONSES_LIQUIDITYPOOL_H

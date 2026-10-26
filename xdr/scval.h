@@ -7,6 +7,7 @@
 #include <QList>
 #include <QSharedPointer>
 #include <stdexcept>
+#include <string>
 
 #include "xdrhelper.h"
 #include "stellartypes.h"
@@ -15,6 +16,86 @@
 namespace stellar
 {
     using namespace xdr;
+
+    /**
+     * A count or length read from the wire, checked against what is left of
+     * the input BEFORE anything is allocated for it. Every element takes at
+     * least `minBytesEach` bytes, so a count the rest of the input cannot hold
+     * is refused: 12 bytes claiming 3,000,000 vector elements used to commit
+     * 3 GB before the read ran dry, and 2^31-1 ended in std::bad_alloc. The
+     * SDK decodes from a QByteArray, so bytesAvailable() is exact.
+     */
+    inline void checkWireCount(QDataStream& in, qint32 n, qint64 minBytesEach, const char* what)
+    {
+        if (n < 0)
+            throw std::runtime_error(std::string(what) + ": negative length");
+        if (in.device() && qint64(n) * minBytesEach > in.device()->bytesAvailable())
+            throw std::runtime_error(std::string(what) + ": length exceeds the remaining input");
+    }
+
+    /** QDataStream never throws when it runs dry: it flags ReadPastEnd and
+     *  hands back zeros. An element loop stops at the first error instead of
+     *  appending default values for the rest of the claimed count. */
+    inline void checkWireElement(QDataStream& in, const char* what)
+    {
+        if (in.status() != QDataStream::Ok)
+            throw std::runtime_error(std::string(what) + ": truncated or malformed element");
+    }
+
+    /** The 0-3 bytes that pad an opaque or string of `n` bytes to a 4-byte
+     *  boundary are zeros: core (xdrpp), the Rust stellar-xdr and js refuse
+     *  anything else (py-stellar-sdk 14.1.0 takes it and writes zeros back).
+     *  They used to be read and thrown away here; anything else now marks
+     *  the stream corrupt and throws, as xdr::Array and readXdrOpaque do. */
+    inline void readXdrPadding(QDataStream& in, qint32 n, const char* what)
+    {
+        const int pad = int((4 - (static_cast<quint32>(n) % 4)) % 4);
+        if (!pad)
+            return;
+        char z[4] = {0, 0, 0, 0};
+        in.readRawData(z, pad);
+        for (int i = 0; i < pad; ++i) {
+            if (z[i] != 0) {
+                in.setStatus(QDataStream::ReadCorruptData);
+                throw std::runtime_error(std::string(what) + ": non-zero padding");
+            }
+        }
+    }
+
+    /** An XDR bool or optional-present flag is 0 or 1 (see xdr::isXdrBool).
+     *  Anything else used to read as true and was written back as 1; it now
+     *  marks the stream corrupt and, like every other malformed value here,
+     *  throws. */
+    inline void checkXdrFlag(QDataStream& in, qint32 flag, const char* what)
+    {
+        if (!isXdrBool(flag)) {
+            in.setStatus(QDataStream::ReadCorruptData);
+            throw std::runtime_error(std::string(what) + ": a bool or present flag is 0 or 1");
+        }
+    }
+
+    /**
+     * SCVal nests (vec, map, contract-instance storage), so decoding is
+     * depth-limited: a level costs a few bytes of wire and a few KB of stack,
+     * and ~400 nested vectors (5 KB of hostile XDR) overflowed the stack — a
+     * crash no catch() can intercept. The Soroban host refuses values nested
+     * deeper than 100 (DEFAULT_HOST_DEPTH_LIMIT), so every value it produces
+     * or accepts is well inside the limit. Depth 1 is a value with no
+     * containers around it.
+     */
+    static const int MAX_SCVAL_DEPTH = 128;
+
+    inline int& scValDepth() { static thread_local int depth = 0; return depth; }
+    struct SCValDepthGuard
+    {
+        SCValDepthGuard() {
+            if (++scValDepth() > MAX_SCVAL_DEPTH) {
+                --scValDepth();   // no destructor runs when a ctor throws
+                throw std::runtime_error("SCVal: nesting too deep");
+            }
+        }
+        ~SCValDepthGuard() { --scValDepth(); }
+    };
 
     /**
      * CAP-46 — SCValType enumerates all the value kinds Soroban exposes.
@@ -111,13 +192,20 @@ namespace stellar
         qint32 disc = 0;
         switch (a.type) {
         case SCAddressType::SC_ADDRESS_TYPE_ACCOUNT:
-            in >> disc; in >> a.accountId; break;
+            in >> disc;
+            // PublicKey has one arm, ed25519 (0). Any other was read as an
+            // ed25519 key and written back as 0: a different address.
+            if (disc != 0) throw std::runtime_error("SCAddress: unknown public key type");
+            in >> a.accountId; break;
         case SCAddressType::SC_ADDRESS_TYPE_CONTRACT:
             in >> a.contractId; break;
         case SCAddressType::SC_ADDRESS_TYPE_MUXED_ACCOUNT:
             in >> a.muxedId >> a.muxedEd25519; break;   // id first — see the writer
         case SCAddressType::SC_ADDRESS_TYPE_CLAIMABLE_BALANCE:
-            in >> disc; in >> a.claimableHash; break;
+            in >> disc;
+            // ClaimableBalanceID has one arm, V0 (0); same reason as above.
+            if (disc != 0) throw std::runtime_error("SCAddress: unknown claimable balance id type");
+            in >> a.claimableHash; break;
         case SCAddressType::SC_ADDRESS_TYPE_LIQUIDITY_POOL:
             in >> a.liquidityPoolId; break;
         default:
@@ -164,7 +252,41 @@ namespace stellar
         quint32 contractCode = 0;                // for SCE_CONTRACT
         SCErrorCode code = SCErrorCode::SCEC_ARITH_DOMAIN; // for the rest
     };
+
+    /** stellar-xdr's union has an arm for SCE_CONTRACT (any uint32) and one for
+     *  each of the nine other types (an SCErrorCode), and no default. */
+    inline bool isKnownSCErrorType(SCErrorType t)
+    {
+        const qint32 raw = static_cast<qint32>(t);
+        return raw >= static_cast<qint32>(SCErrorType::SCE_CONTRACT)
+            && raw <= static_cast<qint32>(SCErrorType::SCE_AUTH);
+    }
+    inline bool isKnownSCErrorCode(SCErrorCode c)
+    {
+        const qint32 raw = static_cast<qint32>(c);
+        return raw >= static_cast<qint32>(SCErrorCode::SCEC_ARITH_DOMAIN)
+            && raw <= static_cast<qint32>(SCErrorCode::SCEC_UNEXPECTED_SIZE);
+    }
+    /** An SCError the XDR can carry: see isKnownSCErrorType. */
+    inline bool isEncodableSCError(const SCError& e)
+    {
+        if (!isKnownSCErrorType(e.type))
+            return false;
+        return e.type == SCErrorType::SCE_CONTRACT || isKnownSCErrorCode(e.code);
+    }
+
+    /**
+     * A type above SCE_AUTH, or a code outside SCErrorCode, used to go out with
+     * the stream Ok and come back in the same way: bytes that survived the
+     * byte-exact re-encode check and were signed, and that neither
+     * js-stellar-sdk nor Core can decode. Nothing is written for them now, and
+     * reading one marks the stream corrupt (the SCVal reader then throws).
+     */
     inline QDataStream& operator<<(QDataStream& out, const SCError& e) {
+        if (!isEncodableSCError(e)) {
+            out.setStatus(QDataStream::WriteFailed);
+            return out;
+        }
         out << e.type;
         if (e.type == SCErrorType::SCE_CONTRACT) out << e.contractCode;
         else out << e.code;
@@ -172,8 +294,18 @@ namespace stellar
     }
     inline QDataStream& operator>>(QDataStream& in, SCError& e) {
         in >> e.type;
-        if (e.type == SCErrorType::SCE_CONTRACT) in >> e.contractCode;
-        else in >> e.code;
+        if (!isKnownSCErrorType(e.type)) {
+            // No arm: whatever follows is not this value's.
+            in.setStatus(QDataStream::ReadCorruptData);
+            return in;
+        }
+        if (e.type == SCErrorType::SCE_CONTRACT) {
+            in >> e.contractCode;
+        } else {
+            in >> e.code;
+            if (!isKnownSCErrorCode(e.code))
+                in.setStatus(QDataStream::ReadCorruptData);
+        }
         return in;
     }
 
@@ -208,12 +340,11 @@ namespace stellar
     }
     inline QDataStream& operator>>(QDataStream& in, ContractExecutableExternalRef& r) {
         in >> r.executableOwner;
-        qint32 n; in >> n;
-        if (n < 0) throw std::runtime_error("ContractExecutableExternalRef: negative tag length");
+        qint32 n = 0; in >> n;
+        checkWireCount(in, n, 1, "ContractExecutableExternalRef tag");
         r.tag.resize(n);
         if (n > 0) in.readRawData(r.tag.data(), n);
-        const quint32 pad = (4 - (static_cast<quint32>(n) % 4)) % 4;
-        if (pad) { char z[4]; in.readRawData(z, static_cast<int>(pad)); }
+        readXdrPadding(in, n, "ContractExecutableExternalRef tag");
         return in;
     }
 
@@ -337,6 +468,11 @@ namespace stellar
 
     inline QDataStream& operator<<(QDataStream& out, const SCVal& v)
     {
+        // An error the XDR cannot carry: not even its SCV_ERROR discriminant.
+        if (v.type == SCValType::SCV_ERROR && !isEncodableSCError(v.error)) {
+            out.setStatus(QDataStream::WriteFailed);
+            return out;
+        }
         out << v.type;
         switch (v.type) {
         case SCValType::SCV_VOID: break;
@@ -460,11 +596,14 @@ namespace stellar
 
     inline QDataStream& operator>>(QDataStream& in, SCVal& v)
     {
+        SCValDepthGuard depthGuard;
         in >> v.type;
         switch (v.type) {
         case SCValType::SCV_VOID: break;
         case SCValType::SCV_BOOL: {
-            qint32 b; in >> b; v.b = (b != 0); break;
+            qint32 flag = 0; in >> flag;
+            checkXdrFlag(in, flag, "SCV_BOOL");
+            v.b = (flag == 1); break;
         }
         case SCValType::SCV_U32:
             in >> v.u32; break;
@@ -479,30 +618,28 @@ namespace stellar
         case SCValType::SCV_DURATION:
             in >> v.duration; break;
         case SCValType::SCV_BYTES: {
-            qint32 n; in >> n;
-            if (n < 0) throw std::runtime_error("SCBytes negative length");
+            qint32 n = 0; in >> n;
+            checkWireCount(in, n, 1, "SCBytes");
             v.bytes.resize(n);
             if (n > 0) in.readRawData(v.bytes.data(), n);
-            const quint32 pad = (4 - (static_cast<quint32>(n) % 4)) % 4;
-            if (pad) { char z[4]; in.readRawData(z, static_cast<int>(pad)); }
+            readXdrPadding(in, n, "SCBytes");
             break;
         }
         case SCValType::SCV_STRING: {
-            qint32 n; in >> n;
-            if (n < 0) throw std::runtime_error("SCString negative length");
+            qint32 n = 0; in >> n;
+            checkWireCount(in, n, 1, "SCString");
             v.str.resize(n);
             if (n > 0) in.readRawData(v.str.data(), n);
-            const quint32 pad = (4 - (static_cast<quint32>(n) % 4)) % 4;
-            if (pad) { char z[4]; in.readRawData(z, static_cast<int>(pad)); }
+            readXdrPadding(in, n, "SCString");
             break;
         }
         case SCValType::SCV_SYMBOL: {
-            qint32 n; in >> n;
+            qint32 n = 0; in >> n;
             if (n < 0 || n > 32) throw std::runtime_error("SCSymbol invalid length");
+            checkWireCount(in, n, 1, "SCSymbol");
             v.symbol.resize(n);
             if (n > 0) in.readRawData(v.symbol.data(), n);
-            const quint32 pad = (4 - (static_cast<quint32>(n) % 4)) % 4;
-            if (pad) { char z[4]; in.readRawData(z, static_cast<int>(pad)); }
+            readXdrPadding(in, n, "SCSymbol");
             break;
         }
         case SCValType::SCV_U128:
@@ -515,20 +652,28 @@ namespace stellar
             in >> v.i256.hiHi >> v.i256.hiLo >> v.i256.loHi >> v.i256.loLo; break;
         case SCValType::SCV_VEC: {
             qint32 present = 0; in >> present;   // XDR optional (see the writer)
+            checkXdrFlag(in, present, "SCVec");
             if (!present) { v.vec.reset(); break; }
-            qint32 n; in >> n;
-            if (n < 0) throw std::runtime_error("SCVec negative length");
+            qint32 n = 0; in >> n;
+            checkWireCount(in, n, 4, "SCVec");   // each element starts with its 4-byte type
+            // Not reserved: an SCVal is ~120x its smallest encoding, and every
+            // level of a nested value could claim the rest of the input again.
             v.vec = QSharedPointer<QList<SCVal>>::create();
-            for (qint32 i = 0; i < n; ++i) { SCVal e; in >> e; v.vec->append(e); }
+            for (qint32 i = 0; i < n; ++i) {
+                checkWireElement(in, "SCVec");
+                SCVal e; in >> e; v.vec->append(e);
+            }
             break;
         }
         case SCValType::SCV_MAP: {
             qint32 present = 0; in >> present;   // XDR optional (see the writer)
+            checkXdrFlag(in, present, "SCMap");
             if (!present) { v.map.reset(); break; }
-            qint32 n; in >> n;
-            if (n < 0) throw std::runtime_error("SCMap negative length");
-            v.map = QSharedPointer<QList<SCMapEntry>>::create();
+            qint32 n = 0; in >> n;
+            checkWireCount(in, n, 8, "SCMap");   // a key and a value, 4 bytes each at least
+            v.map = QSharedPointer<QList<SCMapEntry>>::create();   // not reserved, as SCVec
             for (qint32 i = 0; i < n; ++i) {
+                checkWireElement(in, "SCMap");
                 SCMapEntry e;
                 in >> e.key;
                 in >> e.val;
@@ -539,34 +684,37 @@ namespace stellar
         case SCValType::SCV_ADDRESS:
             in >> v.address; break;
         case SCValType::SCV_ERROR:
-            in >> v.error; break;
+            in >> v.error;
+            if (in.status() == QDataStream::ReadCorruptData)
+                throw std::runtime_error("SCError: no such error type, or no such code for it");
+            break;
         case SCValType::SCV_LEDGER_KEY_NONCE:
             in >> v.nonceKey; break;
         case SCValType::SCV_LEDGER_KEY_CONTRACT_INSTANCE:
             break;
         case SCValType::SCV_EXECUTABLE_TAG: {
-            qint32 n; in >> n;
-            if (n < 0) throw std::runtime_error("SCV_EXECUTABLE_TAG negative length");
+            qint32 n = 0; in >> n;
+            checkWireCount(in, n, 1, "SCV_EXECUTABLE_TAG");
             v.executableTag.resize(n);
             if (n > 0) in.readRawData(v.executableTag.data(), n);
-            const quint32 pad = (4 - (static_cast<quint32>(n) % 4)) % 4;
-            if (pad) { char z[4]; in.readRawData(z, static_cast<int>(pad)); }
+            readXdrPadding(in, n, "SCV_EXECUTABLE_TAG");
             break;
         }
         case SCValType::SCV_CONTRACT_INSTANCE: {
             v.instance = QSharedPointer<SCContractInstance>::create();
             in >> v.instance->executable;
             qint32 present = 0; in >> present;
+            checkXdrFlag(in, present, "SCContractInstance storage");
             if (present) {
                 // Bare SCMap on the wire (see the writer); rebuild it as the
                 // SCV_MAP the rest of the SDK expects to find here.
                 qint32 n = 0; in >> n;
-                if (n < 0) throw std::runtime_error("SCContractInstance storage: negative map length");
+                checkWireCount(in, n, 8, "SCContractInstance storage");
                 v.instance->storage = QSharedPointer<SCVal>::create();
                 v.instance->storage->type = SCValType::SCV_MAP;
-                v.instance->storage->map = QSharedPointer<QList<SCMapEntry>>::create();
-                v.instance->storage->map->reserve(n);
+                v.instance->storage->map = QSharedPointer<QList<SCMapEntry>>::create();   // not reserved, as SCVec
                 for (qint32 i = 0; i < n; ++i) {
+                    checkWireElement(in, "SCContractInstance storage");
                     SCMapEntry e;
                     in >> e.key;
                     in >> e.val;

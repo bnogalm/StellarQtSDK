@@ -5,6 +5,9 @@
 #include <QCoreApplication>
 #include "qtcompat.h"
 
+#include <cmath>
+#include <stdexcept>
+
 QSTELLAR_BEGIN_NS
 
 static void registerTypes()
@@ -118,7 +121,56 @@ QString TradeResponse::getCounterAssetIssuer() const{
 }
 
 Price TradeResponse::getPrice() const{
-    return m_price;
+    const qint64 n = getPriceN(), d = getPriceD();
+    Price price;
+    if (!Price::fromInt64(n, d, price))
+        throw std::runtime_error(QStringLiteral("trade price %1/%2 does not fit a Price (int32 terms, "
+                                                "positive denominator); use getPriceN()/getPriceD()")
+                                     .arg(n).arg(d).toStdString());
+    return price;
+}
+
+qint64 TradeResponse::getPriceN() const{
+    return priceTerm(m_priceR, "n");
+}
+
+qint64 TradeResponse::getPriceD() const{
+    return priceTerm(m_priceR, "d");
+}
+
+qint64 TradeResponse::priceTerm(const QVariantMap &price, const char *key)
+{
+    const QVariant v = price.value(QLatin1String(key));
+    bool ok = false;
+    qint64 term = 0;
+    switch (v.userType()) {
+    case QMetaType::QString:
+        // How Horizon sends it: int64 terms as text.
+        term = v.toString().toLongLong(&ok, 10);
+        break;
+    case QMetaType::Int:
+    case QMetaType::LongLong:
+        // A JSON number: at 2^53 and above the parser may already have
+        // rounded it (2^53 + 1 reads as 2^53), so only text is exact there.
+        term = v.toLongLong();
+        ok = term > -9007199254740992LL && term < 9007199254740992LL;
+        break;
+    case QMetaType::Double: {
+        // A JSON number (Qt 5 reads every number as a double): exact only
+        // below 2^53, and only when it is whole.
+        const double x = v.toDouble();
+        ok = std::isfinite(x) && x == std::trunc(x) && std::fabs(x) < 9007199254740992.0;
+        if (ok)
+            term = static_cast<qint64>(x);
+        break;
+    }
+    default:
+        break;
+    }
+    if (!ok)
+        throw std::runtime_error(QStringLiteral("price.%1 is missing or not an int64: %2")
+                                     .arg(QLatin1String(key), v.toString()).toStdString());
+    return term;
 }
 
 QString TradeResponse::getTradeType() const{

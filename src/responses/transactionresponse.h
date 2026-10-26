@@ -189,7 +189,7 @@ class InnerTransaction {
     Q_PROPERTY(qint64 max_fee MEMBER m_maxFee)
     QString m_hash;
     QStringList m_signatures;
-    qint64 m_maxFee;
+    qint64 m_maxFee = 0;
 public:
     QString getHash() const
     {
@@ -321,6 +321,12 @@ public:
 
       QString getResultMetaXdr() const;
 
+      /**
+       * The memo, owned by this response. A text memo is built from
+       * memo_bytes when Horizon sends it: the memo's exact bytes, which need
+       * not be UTF-8 (before 1.0.4 it was the "memo" text, where such bytes
+       * had become U+FFFD).
+       */
       Memo* getMemo();
 
       TransactionResponseAttach::Links& getLinks();

@@ -20,6 +20,10 @@ class ChangeTrustOperationResponse : public OperationResponse
 {
     Q_OBJECT
     Q_PROPERTY(QString trustor READ trustor WRITE setTrustor)
+    // The muxed (M...) form and id Horizon adds when the account was
+    // given muxed. They were dropped.
+    Q_PROPERTY(QString trustor_muxed MEMBER m_trustorMuxed)
+    Q_PROPERTY(QString trustor_muxed_id MEMBER m_trustorMuxedId)
     Q_PROPERTY(QString trustee READ trustee WRITE setTrustee)
     Q_PROPERTY(QString asset_type READ assetType WRITE setAssetType)
     Q_PROPERTY(QString asset_code READ assetCode WRITE setAssetCode)
@@ -38,7 +42,13 @@ class ChangeTrustOperationResponse : public OperationResponse
     QString m_liquidityPoolId; // hex pool ID when asset_type=="liquidity_pool_shares"
     QString m_limit;
 
+    QString m_trustorMuxed;
+    QString m_trustorMuxedId;
 public:
+    /** The muxed (M...) address when the account was given muxed; empty otherwise. */
+    QString getTrustorMuxed() const { return m_trustorMuxed; }
+    /** Its muxed id (a uint64, as text); empty otherwise. */
+    QString getTrustorMuxedId() const { return m_trustorMuxedId; }
     ChangeTrustOperationResponse(QNetworkReply* reply=nullptr);
     virtual ~ChangeTrustOperationResponse();
     KeyPair& getTrustor();

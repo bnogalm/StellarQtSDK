@@ -39,6 +39,20 @@ public:
      */
     TradesRequestBuilder& tradeType(const QString& type);
 
+    TradesRequestBuilder& cursor(QString token);
+
+    TradesRequestBuilder& limit(int number);
+
+    TradesRequestBuilder& order(Order direction);
+
+    /**
+     * Allows to stream SSE events from horizon, as js's and py's
+     * trades().stream(): each trade Horizon pushes is the page's
+     * streamedElement() when it emits ready(). cursor("now") starts at the
+     * trades that come next.
+     */
+    TradesRequestBuilder& stream();
+
     /**
      * Requests specific <code>uri</code> and returns {@link TradeResponse}.
      * This method is helpful for getting the links.

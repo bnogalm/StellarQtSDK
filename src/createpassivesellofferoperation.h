@@ -24,6 +24,8 @@ public:
     /**
      * Same as the one above, but taking the price as an EXACT FRACTION.
      * The `QString price` variant only approximates (see Price(QString)).
+     * Throws std::runtime_error ("price must be positive") unless both
+     * terms are above zero.
      */
     CreatePassiveSellOfferOperation(Asset* selling, Asset* buying, QString amount, const Price& price);
     virtual ~CreatePassiveSellOfferOperation();

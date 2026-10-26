@@ -199,9 +199,9 @@ private slots:
         QCOMPARE(vec.size(), 1);
         auto map = Scv::fromMap(vec.first());
         QCOMPARE(map.size(), 2);
-        // Look the entry up by key: an SCMap is sorted by encoded key, and the
-        // length prefix sorts first, so "signature" (9 bytes) comes before
-        // "public_key" (10) — indexing positionally would pick the wrong one.
+        // Look the entry up by key, not by position: the map is in the host's
+        // key order (public_key before signature), which
+        // ScvVecMapTest::testAccountSignatureMatchesJsAuthorizeEntry pins.
         QByteArray sig;
         for (const auto& e : map) {
             if (QString::fromUtf8(e.key.symbol) == QLatin1String("signature"))
@@ -240,6 +240,63 @@ private slots:
                 entry, kp.data(), 4321, Network::testnetNetwork()->getNetworkPassphrase());
         } catch (const std::exception&) { threw = true; }
         QVERIFY(threw);
+    }
+
+    /**
+     * An invocation holding an arm XDR has no encoding for — an unknown
+     * function type, at the root or nested, an unknown contract-id preimage,
+     * a pool share as an asset — has no preimage to sign. The bytes written up
+     * to it (with a bare discriminant for the unknown arms) used to be hashed,
+     * and authorizeEntry signed that hash.
+     */
+    void testAnInvocationXdrCannotEncodeIsNotSigned()
+    {
+        using FnType = stellar::SorobanAuthorizedFunctionType;
+        QList<stellar::SorobanAuthorizationEntry> entries;
+
+        stellar::SorobanAuthorizationEntry unknownRoot = makeAddressEntry();
+        unknownRoot.rootInvocation.function.type = static_cast<FnType>(7);
+        entries.append(unknownRoot);
+
+        stellar::SorobanAuthorizationEntry unknownNested = makeAddressEntry();
+        stellar::SorobanAuthorizedInvocation child;
+        child.function.type = static_cast<FnType>(7);
+        unknownNested.rootInvocation.subInvocations =
+            QSharedPointer<QList<stellar::SorobanAuthorizedInvocation>>::create();
+        unknownNested.rootInvocation.subInvocations->append(child);
+        entries.append(unknownNested);
+
+        stellar::SorobanAuthorizationEntry unknownPreimage = makeAddressEntry();
+        unknownPreimage.rootInvocation.function.type = FnType::SOROBAN_AUTHORIZED_FUNCTION_TYPE_CREATE_CONTRACT_HOST_FN;
+        unknownPreimage.rootInvocation.function.createContractHostFn.contractIDPreimage.type =
+            static_cast<stellar::ContractIDPreimageType>(9);
+        entries.append(unknownPreimage);
+
+        stellar::SorobanAuthorizationEntry poolShare = makeAddressEntry();
+        poolShare.rootInvocation.function.type = FnType::SOROBAN_AUTHORIZED_FUNCTION_TYPE_CREATE_CONTRACT_HOST_FN;
+        poolShare.rootInvocation.function.createContractHostFn.contractIDPreimage.type =
+            stellar::ContractIDPreimageType::CONTRACT_ID_PREIMAGE_FROM_ASSET;
+        poolShare.rootInvocation.function.createContractHostFn.contractIDPreimage.fromAssetAsset.type =
+            stellar::AssetType::ASSET_TYPE_POOL_SHARE;
+        entries.append(poolShare);
+
+        const QString net = Network::testnetNetwork()->getNetworkPassphrase();
+        QScopedPointer<KeyPair> kp(signer());
+        for (int i = 0; i < entries.size(); ++i) {
+            bool hashed = true;
+            try { SorobanCredentialsSigner::hashedSignaturePayload(stamped(entries.at(i), 4321), 4321, net); }
+            catch (const std::runtime_error&) { hashed = false; }
+            QVERIFY2(!hashed, qPrintable(QString::number(i)));
+
+            bool signed_ = true;
+            try { SorobanCredentialsSigner::authorizeEntry(entries.at(i), kp.data(), 4321, net); }
+            catch (const std::runtime_error&) { signed_ = false; }
+            QVERIFY2(!signed_, qPrintable(QString::number(i)));
+        }
+
+        // The well-formed entry they were made from still signs.
+        const auto ok = SorobanCredentialsSigner::authorizeEntry(makeAddressEntry(), kp.data(), 4321, net);
+        QCOMPARE(ok.credentials.address.signature.type, stellar::SCValType::SCV_VEC);
     }
 };
 

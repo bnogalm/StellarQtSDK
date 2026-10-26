@@ -15,6 +15,9 @@ static void registerTypes()
     regType<OrderBookResponseAttach::Row>();
     regType<QList<OrderBookResponseAttach::Row> >();
     QMetaType::registerConverter<QVariantList, QList<OrderBookResponseAttach::Row> >(&ResponseConverters::convert<OrderBookResponseAttach::Row>);
+    // What Response::fillObject reads rows with (the converter above wrote
+    // each member unchecked).
+    ResponseConverters::registerExactGadgetList<OrderBookResponseAttach::Row>();
 }
 Q_COREAPP_STARTUP_FUNCTION(registerTypes)
 
@@ -27,7 +30,9 @@ QString OrderBookResponseAttach::Row::getPrice() {
 }
 
 Price OrderBookResponseAttach::Row::getPriceR() {
-    return Price(m_priceR.value("n").toUInt(), m_priceR.value("d").toUInt());
+    // Exactly, or not at all: toInt() made a term that was text, a fraction
+    // or past int32 into 0, and the price into another.
+    return ResponseConverters::exactPrice(m_priceR, "price_r");
 }
 
 bool OrderBookResponseAttach::Row::operator !=(const Row &row) const

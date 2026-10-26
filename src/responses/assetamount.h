@@ -10,7 +10,17 @@ QSTELLAR_BEGIN_NS
 
 /**
  * Asset / amount pair used in Horizon responses (trades, LP effects, ...).
- * `asset` is in canonical form "code:issuer" or "native".
+ * `asset` is in canonical form "code:issuer" or "native", with one
+ * exception: it is an EMPTY QString in the reserves of a
+ * liquidity_pool_deposit or liquidity_pool_withdraw operation whose
+ * transaction failed (reserves_max / reserves_deposited, reserves_min /
+ * reserves_received), because Horizon leaves the asset out there: it names
+ * the pool's assets only for a transaction that succeeded (and for one that
+ * failed, nothing was deposited or received, which read 0). Everywhere else
+ * (a pool's reserves, a pool effect, those reserves when the transaction
+ * succeeded) it is always present, and a record without it is refused.
+ * Check isTransactionSuccessful() (or an empty asset) before reading one of
+ * those reserves as an asset.
  */
 class AssetAmount
 {

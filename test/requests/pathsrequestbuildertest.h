@@ -183,6 +183,33 @@ private slots:
         }
     }
 
+    /**
+     * /paths/strict-receive from an account and from source assets, and
+     * /paths/strict-send to an account and to destination assets, as
+     * js-stellar-sdk 17.1.0 builds them (the call builder's url after
+     * checkFilter(), what call() requests). py-stellar-sdk 14.1.0 sends the
+     * same parameters with the same values, amounts first.
+     */
+    void testUrlsMatchJsAndPy() {
+        Server server("https://horizon-testnet.stellar.org");
+        QScopedPointer<Asset> xlm(new AssetTypeNative());
+        QScopedPointer<Asset> usd(Asset::createNonNativeAsset("USD", QString("GDVDKQFP665JAO7A2LSHNLQIUNYNAAIGJ6FYJVMG4DT3YJQQJSRBLQDG")));
+        QScopedPointer<Asset> banana(Asset::createNonNativeAsset("BANANA", QString("GD42RQNXTRIW6YR3E2HXV5T2AI27LBRHOERV2JIYNFMXOBA234SWLQQB")));
+        QCOMPARE(server.strictReceivePaths()
+                     .sourceAccount(KeyPair("GD42RQNXTRIW6YR3E2HXV5T2AI27LBRHOERV2JIYNFMXOBA234SWLQQB"))
+                     .destinationAmount("20.5").destinationAsset(usd.data()).buildUri().toString(),
+                 QString("https://horizon-testnet.stellar.org/paths/strict-receive?source_account=GD42RQNXTRIW6YR3E2HXV5T2AI27LBRHOERV2JIYNFMXOBA234SWLQQB&destination_amount=20.5&destination_asset_type=credit_alphanum4&destination_asset_code=USD&destination_asset_issuer=GDVDKQFP665JAO7A2LSHNLQIUNYNAAIGJ6FYJVMG4DT3YJQQJSRBLQDG"));
+        QCOMPARE(server.strictReceivePaths()
+                     .sourceAssets(QList<Asset*>() << xlm.data() << banana.data())
+                     .destinationAmount("20.5").destinationAsset(usd.data()).buildUri().toString(),
+                 QString("https://horizon-testnet.stellar.org/paths/strict-receive?source_assets=native%2CBANANA%3AGD42RQNXTRIW6YR3E2HXV5T2AI27LBRHOERV2JIYNFMXOBA234SWLQQB&destination_amount=20.5&destination_asset_type=credit_alphanum4&destination_asset_code=USD&destination_asset_issuer=GDVDKQFP665JAO7A2LSHNLQIUNYNAAIGJ6FYJVMG4DT3YJQQJSRBLQDG"));
+        QCOMPARE(server.strictSendPaths().sourceAsset(usd.data()).sourceAmount("10")
+                     .destinationAccount(KeyPair("GDSBCQO34HWPGUGQSP3QBFEXVTSR2PW46UIGTHVWGWJGQKH3AFNHXHXN")).buildUri().toString(),
+                 QString("https://horizon-testnet.stellar.org/paths/strict-send?source_asset_type=credit_alphanum4&source_asset_code=USD&source_asset_issuer=GDVDKQFP665JAO7A2LSHNLQIUNYNAAIGJ6FYJVMG4DT3YJQQJSRBLQDG&source_amount=10&destination_account=GDSBCQO34HWPGUGQSP3QBFEXVTSR2PW46UIGTHVWGWJGQKH3AFNHXHXN"));
+        QCOMPARE(server.strictSendPaths().sourceAsset(xlm.data()).sourceAmount("10")
+                     .destinationAssets(QList<Asset*>() << usd.data() << banana.data()).buildUri().toString(),
+                 QString("https://horizon-testnet.stellar.org/paths/strict-send?source_asset_type=native&source_amount=10&destination_assets=USD%3AGDVDKQFP665JAO7A2LSHNLQIUNYNAAIGJ6FYJVMG4DT3YJQQJSRBLQDG%2CBANANA%3AGD42RQNXTRIW6YR3E2HXV5T2AI27LBRHOERV2JIYNFMXOBA234SWLQQB"));
+    }
 };
 
 ADD_TEST(PathsRequestBuilderTest)

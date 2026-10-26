@@ -11,9 +11,7 @@ AssetTypeCreditAlphaNum12::AssetTypeCreditAlphaNum12(QString code, KeyPair *issu
     // The check counted QChars while the memcpy in toXdr copies UTF-8 BYTES:
     // a non-ASCII code takes up more and was silently truncated, signing
     // operations over an asset other than the one chosen.
-    if (code.length() < 5 || code.length() > 12 || code.toUtf8().length() > 12) {
-        throw new AssetCodeLengthInvalidException();
-    }
+    checkAssetCode(code, 5, 12, "credit_alphanum12");
 }
 AssetTypeCreditAlphaNum12::AssetTypeCreditAlphaNum12(QString code,const KeyPair &issuer)
     :AssetTypeCreditAlphaNum(code, issuer) {
@@ -21,9 +19,7 @@ AssetTypeCreditAlphaNum12::AssetTypeCreditAlphaNum12(QString code,const KeyPair 
     // The check counted QChars while the memcpy in toXdr copies UTF-8 BYTES:
     // a non-ASCII code takes up more and was silently truncated, signing
     // operations over an asset other than the one chosen.
-    if (code.length() < 5 || code.length() > 12 || code.toUtf8().length() > 12) {
-        throw new AssetCodeLengthInvalidException();
-    }
+    checkAssetCode(code, 5, 12, "credit_alphanum12");
 }
 QString AssetTypeCreditAlphaNum12::getType() {
     return QString("credit_alphanum12");

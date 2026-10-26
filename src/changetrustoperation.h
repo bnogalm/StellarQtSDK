@@ -45,6 +45,8 @@ public:
     QString getLimit();
     void fillOperationBody(AccountConverter& accountConverter, stellar::Operation &operation);
     static ChangeTrustOperation* build(stellar::ChangeTrustOp &op);
+    /** The largest limit, INT64_MAX stroops: js's and py's default when no limit is given. */
+    static constexpr const char* MAX_LIMIT = "922337203685.4775807";
     static ChangeTrustOperation* create(Asset* asset, QString limit);
     static ChangeTrustOperation* create(ChangeTrustAsset* line, QString limit);
 

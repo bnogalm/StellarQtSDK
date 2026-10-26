@@ -3,6 +3,7 @@
 
 #include <QObject>
 #include <QtTest>
+#include <stdexcept>
 #include "testcollector.h"
 
 #include "../src/changetrustasset.h"
@@ -220,6 +221,107 @@ private slots:
         }
         // ChangeTrustAsset for native = 4 bytes type (0) + 0 payload, plus 8 bytes limit.
         QCOMPARE(bytes.size(), 4 + 8);
+    }
+
+    /**
+     * A wrapped Asset whose type names no arm is refused, not passed on. It
+     * became a ChangeTrustAsset of that type with no arm at all, which was
+     * written as a bare discriminant.
+     */
+    void testAWrappedAssetOfNoKnownTypeIsRefused()
+    {
+        struct UnknownTypeAsset : public Asset
+        {
+            QString getType() override { return QStringLiteral("unknown"); }
+            stellar::Asset toXdr() override
+            {
+                stellar::Asset xdr;
+                xdr.type = stellar::AssetType(7);
+                return xdr;
+            }
+            QString toString() const override { return QStringLiteral("unknown"); }
+        };
+        QScopedPointer<ChangeTrustAsset> wrapped(ChangeTrustAsset::wrap(new UnknownTypeAsset));
+        bool threw = false;
+        try { wrapped->toXdr(); } catch (const std::runtime_error&) { threw = true; }
+        QVERIFY(threw);
+    }
+
+    /**
+     * A pool share of a pool type that does not exist is refused. Its
+     * parameters were read as a constant-product pool's regardless.
+     */
+    void testAPoolShareOfAnUnknownPoolTypeIsRefused()
+    {
+        stellar::ChangeTrustAsset xdr;
+        xdr.fillLiquidityPool().type = stellar::LiquidityPoolType(1);
+        bool threw = false;
+        try { delete ChangeTrustAsset::fromXdr(xdr); } catch (const std::runtime_error&) { threw = true; }
+        QVERIFY(threw);
+    }
+
+    /**
+     * A decoded pool share whose assets are out of order or whose fee is not
+     * 30 is refused, as js, py and core refuse it, and the two assets
+     * decoded for it are freed: they leaked on every such decode (a leak
+     * checker shows it; the refusal is what this can see). A caller of the
+     * constructor still owns what it refused, as before.
+     */
+    void testARefusedPoolShareFromXdrIsRefusedWithoutLeaking()
+    {
+        Asset* a = new AssetTypeNative();
+        Asset* b = Asset::create("USD", "GCACCFMIWJAHUUASSE2WC7V6VVDLYRLSJYZ3DJEXCG523FSHTNII6KOG");
+        QScopedPointer<ChangeTrustAsset> pool(new LiquidityPoolShareChangeTrustAsset(a, b, LiquidityPool::FEE));
+        const stellar::ChangeTrustAsset good = pool->toXdr();
+        QScopedPointer<ChangeTrustAsset> back(ChangeTrustAsset::fromXdr(good));
+        QVERIFY(back->equals(pool.data()));
+
+        stellar::ChangeTrustAsset otherFee = good;
+        otherFee.liquidityPool().constantProduct.fee = 31;
+        stellar::ChangeTrustAsset swapped = good;
+        auto& cp = swapped.liquidityPool().constantProduct;
+        const stellar::Asset first = cp.assetA;
+        cp.assetA = cp.assetB;
+        cp.assetB = first;
+        for (const stellar::ChangeTrustAsset& bad : {otherFee, swapped}) {
+            for (int i = 0; i < 3; ++i)
+                QVERIFY_EXCEPTION_THROWN(delete ChangeTrustAsset::fromXdr(bad), std::runtime_error);
+        }
+
+        Asset* c = new AssetTypeNative();
+        Asset* d = Asset::create("USD", "GCACCFMIWJAHUUASSE2WC7V6VVDLYRLSJYZ3DJEXCG523FSHTNII6KOG");
+        QVERIFY_EXCEPTION_THROWN(LiquidityPoolShareChangeTrustAsset(c, d, 31), std::runtime_error);
+        delete c;   // still the caller's
+        delete d;
+    }
+
+    /**
+     * A plain Asset becomes the same TrustLineAsset, byte for byte after the
+     * discriminant, which is how a trustline key filled with an Asset still
+     * builds now that the key holds a TrustLineAsset. An Asset that names
+     * POOL_SHARE carries no pool id and is refused, not turned into pool zero.
+     */
+    void testATrustLineAssetFromAnAsset()
+    {
+        QScopedPointer<Asset> usd(new AssetTypeCreditAlphaNum4(
+            QStringLiteral("USD"), QStringLiteral("GD6ROJBYLKQMOW3E7N4M2YBPUHMZD7PL65VRHRMO24BOVSBV5H3BQRSL")));
+        const stellar::Asset plain = usd->toXdr();
+        const stellar::TrustLineAsset line = plain;
+        auto bytes = [](const auto& value) {
+            QByteArray out;
+            QDataStream s(&out, QIODevice::WriteOnly);
+            s << value;
+            return out;
+        };
+        QCOMPARE(bytes(line), bytes(plain));
+        const stellar::TrustLineAsset native = stellar::Asset();
+        QCOMPARE(bytes(native), bytes(stellar::Asset()));
+
+        stellar::Asset pool;
+        pool.type = stellar::AssetType::ASSET_TYPE_POOL_SHARE;
+        bool threw = false;
+        try { stellar::TrustLineAsset converted = pool; Q_UNUSED(converted) } catch (const std::runtime_error&) { threw = true; }
+        QVERIFY(threw);
     }
 };
 

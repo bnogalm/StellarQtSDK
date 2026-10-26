@@ -15,7 +15,7 @@ ClawbackOperation::ClawbackOperation(QString from, Asset *asset, QString amount)
 
     m_op.from = StrKey::encodeToXDRMuxedAccount(from);
     m_op.asset = assetAlphaNum->toXdr();
-    m_op.amount = Operation::toXdrAmount(amount);
+    m_op.amount = Operation::toXdrAmountPositive(amount);
 }
 
 ClawbackOperation::ClawbackOperation(stellar::ClawbackOp &op)

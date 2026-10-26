@@ -57,3 +57,193 @@ jobs:
       # 5) Run the tests. Exit code = number of failed tests → red on failure.
       - name: Run tests
         run: ./StellarQtSDKTest
+
+  # The CMake build. It compiles the same sources (read from StellarQtSDK.pri)
+  # and the same suite (read from StellarQtSDKTest.pro) as the job above, but as
+  # a static library linked whole-archive, and it installs a package that a
+  # CMake project finds with find_package(). Until this job existed nothing ran
+  # any of that, which is how the suite came to not even link with the QML
+  # layer off.
+  cmake:
+    name: CMake · ${{ matrix.os }} · Qt ${{ matrix.qt }} · QML ${{ matrix.qml }}
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # STELLAR_QT_QML is a build option, OFF by default: OFF is what a plain
+          # C++ consumer gets and ON is the full suite, so each is its own entry.
+          - { qt: '6.8.1',  os: 'ubuntu-latest', qml: 'ON'  }
+          - { qt: '6.8.1',  os: 'ubuntu-latest', qml: 'OFF' }
+          # Qt 5 goes through its own branches of CMakeLists.txt (QIODevice
+          # enums, the forced <limits>), on GCC 11 for the reason given above.
+          - { qt: '5.15.2', os: 'ubuntu-22.04',  qml: 'ON'  }
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: ${{ matrix.qt }}
+          cache: true
+
+      # 1) Configure. The install prefix is where step 5's consumer looks.
+      - name: Configure
+        run: >-
+          cmake -S . -B build
+          -DCMAKE_BUILD_TYPE=Release
+          -DCMAKE_PREFIX_PATH="$QT_ROOT_DIR"
+          -DSTELLAR_QT_QML=${{ matrix.qml }}
+          -DCMAKE_INSTALL_PREFIX="$RUNNER_TEMP/stellar"
+
+      # 2) The library and the suite (which is EXCLUDE_FROM_ALL, so it is named).
+      #    '-k' for the same reason as the qmake build: every error in one run.
+      - name: Build
+        run: cmake --build build --target all StellarQtSDKTest --parallel $(nproc) -- -k
+
+      # 3) Run the suite. Exit code 1 on any failed test → red.
+      - name: Run tests
+        run: ctest --test-dir build --output-on-failure
+
+      # 4) Install the library, its headers and the CMake package.
+      - name: Install
+        run: cmake --install build
+
+      # 5) Build a separate project against the INSTALLED package and run it. It
+      #    parses a Horizon page whose records carry lists; if the package did
+      #    not link the archive whole, those lists come back empty and the
+      #    program exits 1. The test suite cannot catch that: it links from the
+      #    build tree, not through the installed export.
+      - name: find_package() consumer
+        run: |
+          mkdir -p "$RUNNER_TEMP/consumer"
+          cd "$RUNNER_TEMP/consumer"
+          cat > CMakeLists.txt <<'EOF'
+          cmake_minimum_required(VERSION 3.24)
+          project(StellarQtSDKConsumer LANGUAGES CXX)
+          set(CMAKE_CXX_STANDARD 17)
+          set(CMAKE_CXX_STANDARD_REQUIRED ON)
+          find_package(StellarQtSDK 1.0 REQUIRED)
+          add_executable(consumer main.cpp)
+          target_link_libraries(consumer PRIVATE StellarQtSDK::StellarQtSDK)
+          EOF
+          cat > main.cpp <<'EOF'
+          // Parses a real Horizon /liquidity_pools page (pubnet, two records) through
+          // the installed package. Every reserves list comes back empty if the archive
+          // was not linked whole. The reader is strict: the page must be a complete
+          // Horizon answer, so it is a real one, not a hand-written sample.
+          #include <QCoreApplication>
+          #include <cstdio>
+          #include <exception>
+          #include "responses/page.h"
+          #include "responses/liquiditypoolresponse.h"
+
+          int main(int argc, char *argv[])
+          {
+              QCoreApplication app(argc, argv);
+              const QByteArray json = R"JSON(
+            {
+              "_links": {
+                "self": {
+                  "href": "https://horizon.stellar.org/liquidity_pools?cursor=&limit=3&order=desc"
+                },
+                "next": {
+                  "href": "https://horizon.stellar.org/liquidity_pools?cursor=fffda4cef31fa619b605cbd16973f2ddc1139d766a1856f2ce395bf0e0e96455&limit=3&order=desc"
+                },
+                "prev": {
+                  "href": "https://horizon.stellar.org/liquidity_pools?cursor=ffffe478b19c0d27c19fecdf36b6b60fefc563e1806109a58b86b4138abd085a&limit=3&order=asc"
+                }
+              },
+              "_embedded": {
+                "records": [
+                  {
+                    "_links": {
+                      "self": {
+                        "href": "https://horizon.stellar.org/liquidity_pools/ffffe478b19c0d27c19fecdf36b6b60fefc563e1806109a58b86b4138abd085a"
+                      },
+                      "transactions": {
+                        "href": "https://horizon.stellar.org/liquidity_pools/ffffe478b19c0d27c19fecdf36b6b60fefc563e1806109a58b86b4138abd085a/transactions{?cursor,limit,order}",
+                        "templated": true
+                      },
+                      "operations": {
+                        "href": "https://horizon.stellar.org/liquidity_pools/ffffe478b19c0d27c19fecdf36b6b60fefc563e1806109a58b86b4138abd085a/operations{?cursor,limit,order}",
+                        "templated": true
+                      }
+                    },
+                    "id": "ffffe478b19c0d27c19fecdf36b6b60fefc563e1806109a58b86b4138abd085a",
+                    "paging_token": "ffffe478b19c0d27c19fecdf36b6b60fefc563e1806109a58b86b4138abd085a",
+                    "fee_bp": 30,
+                    "type": "constant_product",
+                    "total_trustlines": "1",
+                    "total_shares": "90988.3130213",
+                    "reserves": [
+                      {
+                        "asset": "LIBRE:GAYCCWKECNGDRHYU3UTREBD2XLC3CUQN6FV22TKM4WCQER3IWR7TF5CY",
+                        "amount": "3549.1375854"
+                      },
+                      {
+                        "asset": "NFIUM:GD76B36XOOH432PICDIVEOD4RU7TEFJ5DZVA2C5MW5LKTSCARK45V3DB",
+                        "amount": "2349216.1095262"
+                      }
+                    ],
+                    "last_modified_ledger": 64683563,
+                    "last_modified_time": "2026-09-29T17:39:56Z"
+                  },
+                  {
+                    "_links": {
+                      "self": {
+                        "href": "https://horizon.stellar.org/liquidity_pools/ffff7fe3743b3c63b12e80f22aed5e8799aa986e25fe155a19277b660d547e71"
+                      },
+                      "transactions": {
+                        "href": "https://horizon.stellar.org/liquidity_pools/ffff7fe3743b3c63b12e80f22aed5e8799aa986e25fe155a19277b660d547e71/transactions{?cursor,limit,order}",
+                        "templated": true
+                      },
+                      "operations": {
+                        "href": "https://horizon.stellar.org/liquidity_pools/ffff7fe3743b3c63b12e80f22aed5e8799aa986e25fe155a19277b660d547e71/operations{?cursor,limit,order}",
+                        "templated": true
+                      }
+                    },
+                    "id": "ffff7fe3743b3c63b12e80f22aed5e8799aa986e25fe155a19277b660d547e71",
+                    "paging_token": "ffff7fe3743b3c63b12e80f22aed5e8799aa986e25fe155a19277b660d547e71",
+                    "fee_bp": 30,
+                    "type": "constant_product",
+                    "total_trustlines": "1",
+                    "total_shares": "15653.2744178",
+                    "reserves": [
+                      {
+                        "asset": "native",
+                        "amount": "1.6374287"
+                      },
+                      {
+                        "asset": "AAVE:GDTGN34MKUEO4BTJET4SX6TCRQ72FS2TPDNFO6JDXXVL4PNBSREHD2D5",
+                        "amount": "157892432.1726389"
+                      }
+                    ],
+                    "last_modified_ledger": 60027687,
+                    "last_modified_time": "2025-11-26T15:09:09Z"
+                  }
+                ]
+              }
+            }
+              )JSON";
+              try {
+                  qstellar::Page<qstellar::LiquidityPoolResponse> page;
+                  page.loadFromJson(json);
+                  int reserves = 0;
+                  for (int i = 0; i < page.size(); ++i)
+                      reserves += page.get(i).getReserves().size();
+                  std::printf("records=%d reserves=%d\n", page.size(), reserves);
+                  return page.size() == 2 && reserves == 4 ? 0 : 1;
+              } catch (const std::exception& e) {
+                  std::printf("refused: %s\n", e.what());
+                  return 2;
+              }
+          }
+          EOF
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release \
+                -DCMAKE_PREFIX_PATH="$RUNNER_TEMP/stellar;$QT_ROOT_DIR"
+          cmake --build build --parallel $(nproc)
+          ./build/consumer

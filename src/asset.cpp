@@ -16,7 +16,13 @@ Asset *Asset::createNonNativeAsset(QString code, KeyPair *issuer) {
     } else if (code.length() >= 5 && code.length() <= 12) {
         return new AssetTypeCreditAlphaNum12(code, issuer);
     } else {
-        throw new AssetCodeLengthInvalidException();
+        // Ownership of `issuer` transfers only by constructing one of the two
+        // assets above. On this arm nothing takes it, so throwing without
+        // deleting abandoned a KeyPair on every bad code length — and the
+        // caller cannot clean up, because it has already handed the pointer
+        // over and does not know which arm ran.
+        delete issuer;
+        throw AssetCodeLengthInvalidException(QStringLiteral("an asset code is 1 to 12 ASCII letters and digits, not \"%1\"").arg(code).toStdString());
     }
 }
 
@@ -27,7 +33,7 @@ Asset *Asset::createNonNativeAsset(QString code, const KeyPair &issuer)
     } else if (code.length() >= 5 && code.length() <= 12) {
         return new AssetTypeCreditAlphaNum12(code, issuer);
     } else {
-        throw new AssetCodeLengthInvalidException();
+        throw AssetCodeLengthInvalidException(QStringLiteral("an asset code is 1 to 12 ASCII letters and digits, not \"%1\"").arg(code).toStdString());
     }
 }
 
@@ -37,12 +43,40 @@ Asset *Asset::createNonNativeAsset(QString code, QString issuer)
 }
 
 Asset *Asset::create(QString type, QString code, QString issuer) {
-    if (type == "native") {
+    // Every type but "native" used to become the asset the code's length
+    // made: "credit_alphanum12" with "USD" an alphanum4 asset, and a type
+    // nobody knows (a typo, "liquidity_pool_shares") an issued asset.
+    if (type == QLatin1String("native")) {
+        if (!code.isEmpty() || !issuer.isEmpty())
+            throw std::runtime_error(QStringLiteral("a native asset has no code and no issuer: type \"%1\", code \"%2\"")
+                                         .arg(type, code).toStdString());
         return new AssetTypeNative();
     }
-    else{
-        return Asset::createNonNativeAsset(code, KeyPair::fromAccountId(issuer));
+    int minLength = 0, maxLength = 0;
+    if (type == QLatin1String("credit_alphanum4")) {
+        minLength = 1;
+        maxLength = 4;
+    } else if (type == QLatin1String("credit_alphanum12")) {
+        minLength = 5;
+        maxLength = 12;
+    } else {
+        throw std::runtime_error(QStringLiteral("unknown asset type \"%1\" (code \"%2\")")
+                                     .arg(type, code).toStdString());
     }
+    // Core's rule for a code (isAssetValid): ASCII letters and digits.
+    bool alphanumeric = true;
+    for (const QChar c : code) {
+        const ushort u = c.unicode();
+        alphanumeric = alphanumeric && ((u >= '0' && u <= '9') || (u >= 'A' && u <= 'Z') || (u >= 'a' && u <= 'z'));
+    }
+    if (code.size() < minLength || code.size() > maxLength || !alphanumeric)
+        throw std::runtime_error(QStringLiteral("asset type \"%1\" takes a code of %2 to %3 letters or digits, not \"%4\"")
+                                     .arg(type).arg(minLength).arg(maxLength).arg(code).toStdString());
+    KeyPair* keyPair = KeyPair::fromAccountId(issuer);
+    // Both constructors own keyPair from here on, and free it if they throw.
+    if (maxLength == 4)
+        return new AssetTypeCreditAlphaNum4(code, keyPair);
+    return new AssetTypeCreditAlphaNum12(code, keyPair);
 }
 
 Asset *Asset::create(QString code, QString issuer)

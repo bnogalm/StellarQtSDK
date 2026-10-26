@@ -1,4 +1,5 @@
 #include "extendfootprintttloperation.h"
+#include <new>
 
 QSTELLAR_BEGIN_NS
 
@@ -17,6 +18,10 @@ void ExtendFootprintTTLOperation::fillOperationBody(AccountConverter& accountCon
 {
     Q_UNUSED(accountConverter)
     operation.type = stellar::OperationType::EXTEND_FOOTPRINT_TTL;
+    // The body lives in a union whose members are not constructed for us, so
+    // without this the ExtensionPoint's four bytes were whatever the memory
+    // held: an invalid ext on the wire and a hash that changed run to run.
+    new (&operation.operationExtendFootprintTtl) stellar::ExtendFootprintTTLOp();
     operation.operationExtendFootprintTtl.extendTo = m_extendTo;
 }
 

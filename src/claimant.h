@@ -46,8 +46,19 @@ private:
 namespace ClaimantConverter
 {
     // Defined (non-inline) in claimant.cpp, where it is registered as a
-    // QVariantList->QList<Claimant> converter.
+    // QVariantList->QList<Claimant> converter. Reads `source` exactly, by
+    // fromJson: throws std::runtime_error for anything else.
     QList<Claimant> convertData(const QVariantList &source);
+
+    /**
+     * Claimants as Horizon writes them, exactly: an array of
+     * {"destination": G.., "predicate": {..}}, the destination an account id
+     * and the predicate read by Predicate::fromJson. Throws
+     * std::runtime_error naming `field` (the path of `json`, for the
+     * message) and the member at fault for anything else, another key
+     * included.
+     */
+    QList<Claimant> fromJson(const QJsonValue &json, const QString &field = QString());
 }
 
 QList<Claimant> checkNotNull(QList<Claimant> claimants, const char *error);

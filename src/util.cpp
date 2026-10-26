@@ -1,4 +1,8 @@
 #include "util.h"
+#include "bip39wordlists.h"
+#include <QHash>
+#include <QMutex>
+#include <QMutexLocker>
 
 #include "keypair.h"
 #include <QRandomGenerator>
@@ -79,26 +83,96 @@ QByteArray Util::generateRandomNonce(int n)
 }
 QList<QString> Util::mnemonicWords(SupportedMnemonicLanguages language)
 {
-    // FIX §2.9: only English wordlist available — fail loudly instead of
-    // silently ignoring `language`.
     if (language != SupportedMnemonicLanguages::EN) {
-        throw std::runtime_error("Only English BIP-39 wordlist is supported");
+        const char* const* list = bip39Wordlist(static_cast<int>(language));
+        if (!list)
+            throw std::runtime_error("unknown BIP-39 wordlist");
+        QList<QString> words;
+        words.reserve(2048);
+        for (int i = 0; i < 2048; ++i)
+            words.append(QString::fromUtf8(list[i]));
+        return words;
     }
     return QList<QString>({"abandon","ability","able","about","above","absent","absorb","abstract","absurd","abuse","access","accident","account","accuse","achieve","acid","acoustic","acquire","across","act","action","actor","actress","actual","adapt","add","addict","address","adjust","admit","adult","advance","advice","aerobic","affair","afford","afraid","again","age","agent","agree","ahead","aim","air","airport","aisle","alarm","album","alcohol","alert","alien","all","alley","allow","almost","alone","alpha","already","also","alter","always","amateur","amazing","among","amount","amused","analyst","anchor","ancient","anger","angle","angry","animal","ankle","announce","annual","another","answer","antenna","antique","anxiety","any","apart","apology","appear","apple","approve","april","arch","arctic","area","arena","argue","arm","armed","armor","army","around","arrange","arrest","arrive","arrow","art","artefact","artist","artwork","ask","aspect","assault","asset","assist","assume","asthma","athlete","atom","attack","attend","attitude","attract","auction","audit","august","aunt","author","auto","autumn","average","avocado","avoid","awake","aware","away","awesome","awful","awkward","axis","baby","bachelor","bacon","badge","bag","balance","balcony","ball","bamboo","banana","banner","bar","barely","bargain","barrel","base","basic","basket","battle","beach","bean","beauty","because","become","beef","before","begin","behave","behind","believe","below","belt","bench","benefit","best","betray","better","between","beyond","bicycle","bid","bike","bind","biology","bird","birth","bitter","black","blade","blame","blanket","blast","bleak","bless","blind","blood","blossom","blouse","blue","blur","blush","board","boat","body","boil","bomb","bone","bonus","book","boost","border","boring","borrow","boss","bottom","bounce","box","boy","bracket","brain","brand","brass","brave","bread","breeze","brick","bridge","brief","bright","bring","brisk","broccoli","broken","bronze","broom","brother","brown","brush","bubble","buddy","budget","buffalo","build","bulb","bulk","bullet","bundle","bunker","burden","burger","burst","bus","business","busy","butter","buyer","buzz","cabbage","cabin","cable","cactus","cage","cake","call","calm","camera","camp","can","canal","cancel","candy","cannon","canoe","canvas","canyon","capable","capital","captain","car","carbon","card","cargo","carpet","carry","cart","case","cash","casino","castle","casual","cat","catalog","catch","category","cattle","caught","cause","caution","cave","ceiling","celery","cement","census","century","cereal","certain","chair","chalk","champion","change","chaos","chapter","charge","chase","chat","cheap","check","cheese","chef","cherry","chest","chicken","chief","child","chimney","choice","choose","chronic","chuckle","chunk","churn","cigar","cinnamon","circle","citizen","city","civil","claim","clap","clarify","claw","clay","clean","clerk","clever","click","client","cliff","climb","clinic","clip","clock","clog","close","cloth","cloud","clown","club","clump","cluster","clutch","coach","coast","coconut","code","coffee","coil","coin","collect","color","column","combine","come","comfort","comic","common","company","concert","conduct","confirm","congress","connect","consider","control","convince","cook","cool","copper","copy","coral","core","corn","correct","cost","cotton","couch","country","couple","course","cousin","cover","coyote","crack","cradle","craft","cram","crane","crash","crater","crawl","crazy","cream","credit","creek","crew","cricket","crime","crisp","critic","crop","cross","crouch","crowd","crucial","cruel","cruise","crumble","crunch","crush","cry","crystal","cube","culture","cup","cupboard","curious","current","curtain","curve","cushion","custom","cute","cycle","dad","damage","damp","dance","danger","daring","dash","daughter","dawn","day","deal","debate","debris","decade","december","decide","decline","decorate","decrease","deer","defense","define","defy","degree","delay","deliver","demand","demise","denial","dentist","deny","depart","depend","deposit","depth","deputy","derive","describe","desert","design","desk","despair","destroy","detail","detect","develop","device","devote","diagram","dial","diamond","diary","dice","diesel","diet","differ","digital","dignity","dilemma","dinner","dinosaur","direct","dirt","disagree","discover","disease","dish","dismiss","disorder","display","distance","divert","divide","divorce","dizzy","doctor","document","dog","doll","dolphin","domain","donate","donkey","donor","door","dose","double","dove","draft","dragon","drama","drastic","draw","dream","dress","drift","drill","drink","drip","drive","drop","drum","dry","duck","dumb","dune","during","dust","dutch","duty","dwarf","dynamic","eager","eagle","early","earn","earth","easily","east","easy","echo","ecology","economy","edge","edit","educate","effort","egg","eight","either","elbow","elder","electric","elegant","element","elephant","elevator","elite","else","embark","embody","embrace","emerge","emotion","employ","empower","empty","enable","enact","end","endless","endorse","enemy","energy","enforce","engage","engine","enhance","enjoy","enlist","enough","enrich","enroll","ensure","enter","entire","entry","envelope","episode","equal","equip","era","erase","erode","erosion","error","erupt","escape","essay","essence","estate","eternal","ethics","evidence","evil","evoke","evolve","exact","example","excess","exchange","excite","exclude","excuse","execute","exercise","exhaust","exhibit","exile","exist","exit","exotic","expand","expect","expire","explain","expose","express","extend","extra","eye","eyebrow","fabric","face","faculty","fade","faint","faith","fall","false","fame","family","famous","fan","fancy","fantasy","farm","fashion","fat","fatal","father","fatigue","fault","favorite","feature","february","federal","fee","feed","feel","female","fence","festival","fetch","fever","few","fiber","fiction","field","figure","file","film","filter","final","find","fine","finger","finish","fire","firm","first","fiscal","fish","fit","fitness","fix","flag","flame","flash","flat","flavor","flee","flight","flip","float","flock","floor","flower","fluid","flush","fly","foam","focus","fog","foil","fold","follow","food","foot","force","forest","forget","fork","fortune","forum","forward","fossil","foster","found","fox","fragile","frame","frequent","fresh","friend","fringe","frog","front","frost","frown","frozen","fruit","fuel","fun","funny","furnace","fury","future","gadget","gain","galaxy","gallery","game","gap","garage","garbage","garden","garlic","garment","gas","gasp","gate","gather","gauge","gaze","general","genius","genre","gentle","genuine","gesture","ghost","giant","gift","giggle","ginger","giraffe","girl","give","glad","glance","glare","glass","glide","glimpse","globe","gloom","glory","glove","glow","glue","goat","goddess","gold","good","goose","gorilla","gospel","gossip","govern","gown","grab","grace","grain","grant","grape","grass","gravity","great","green","grid","grief","grit","grocery","group","grow","grunt","guard","guess","guide","guilt","guitar","gun","gym","habit","hair","half","hammer","hamster","hand","happy","harbor","hard","harsh","harvest","hat","have","hawk","hazard","head","health","heart","heavy","hedgehog","height","hello","helmet","help","hen","hero","hidden","high","hill","hint","hip","hire","history","hobby","hockey","hold","hole","holiday","hollow","home","honey","hood","hope","horn","horror","horse","hospital","host","hotel","hour","hover","hub","huge","human","humble","humor","hundred","hungry","hunt","hurdle","hurry","hurt","husband","hybrid","ice","icon","idea","identify","idle","ignore","ill","illegal","illness","image","imitate","immense","immune","impact","impose","improve","impulse","inch","include","income","increase","index","indicate","indoor","industry","infant","inflict","inform","inhale","inherit","initial","inject","injury","inmate","inner","innocent","input","inquiry","insane","insect","inside","inspire","install","intact","interest","into","invest","invite","involve","iron","island","isolate","issue","item","ivory","jacket","jaguar","jar","jazz","jealous","jeans","jelly","jewel","job","join","joke","journey","joy","judge","juice","jump","jungle","junior","junk","just","kangaroo","keen","keep","ketchup","key","kick","kid","kidney","kind","kingdom","kiss","kit","kitchen","kite","kitten","kiwi","knee","knife","knock","know","lab","label","labor","ladder","lady","lake","lamp","language","laptop","large","later","latin","laugh","laundry","lava","law","lawn","lawsuit","layer","lazy","leader","leaf","learn","leave","lecture","left","leg","legal","legend","leisure","lemon","lend","length","lens","leopard","lesson","letter","level","liar","liberty","library","license","life","lift","light","like","limb","limit","link","lion","liquid","list","little","live","lizard","load","loan","lobster","local","lock","logic","lonely","long","loop","lottery","loud","lounge","love","loyal","lucky","luggage","lumber","lunar","lunch","luxury","lyrics","machine","mad","magic","magnet","maid","mail","main","major","make","mammal","man","manage","mandate","mango","mansion","manual","maple","marble","march","margin","marine","market","marriage","mask","mass","master","match","material","math","matrix","matter","maximum","maze","meadow","mean","measure","meat","mechanic","medal","media","melody","melt","member","memory","mention","menu","mercy","merge","merit","merry","mesh","message","metal","method","middle","midnight","milk","million","mimic","mind","minimum","minor","minute","miracle","mirror","misery","miss","mistake","mix","mixed","mixture","mobile","model","modify","mom","moment","monitor","monkey","monster","month","moon","moral","more","morning","mosquito","mother","motion","motor","mountain","mouse","move","movie","much","muffin","mule","multiply","muscle","museum","mushroom","music","must","mutual","myself","mystery","myth","naive","name","napkin","narrow","nasty","nation","nature","near","neck","need","negative","neglect","neither","nephew","nerve","nest","net","network","neutral","never","news","next","nice","night","noble","noise","nominee","noodle","normal","north","nose","notable","note","nothing","notice","novel","now","nuclear","number","nurse","nut","oak","obey","object","oblige","obscure","observe","obtain","obvious","occur","ocean","october","odor","off","offer","office","often","oil","okay","old","olive","olympic","omit","once","one","onion","online","only","open","opera","opinion","oppose","option","orange","orbit","orchard","order","ordinary","organ","orient","original","orphan","ostrich","other","outdoor","outer","output","outside","oval","oven","over","own","owner","oxygen","oyster","ozone","pact","paddle","page","pair","palace","palm","panda","panel","panic","panther","paper","parade","parent","park","parrot","party","pass","patch","path","patient","patrol","pattern","pause","pave","payment","peace","peanut","pear","peasant","pelican","pen","penalty","pencil","people","pepper","perfect","permit","person","pet","phone","photo","phrase","physical","piano","picnic","picture","piece","pig","pigeon","pill","pilot","pink","pioneer","pipe","pistol","pitch","pizza","place","planet","plastic","plate","play","please","pledge","pluck","plug","plunge","poem","poet","point","polar","pole","police","pond","pony","pool","popular","portion","position","possible","post","potato","pottery","poverty","powder","power","practice","praise","predict","prefer","prepare","present","pretty","prevent","price","pride","primary","print","priority","prison","private","prize","problem","process","produce","profit","program","project","promote","proof","property","prosper","protect","proud","provide","public","pudding","pull","pulp","pulse","pumpkin","punch","pupil","puppy","purchase","purity","purpose","purse","push","put","puzzle","pyramid","quality","quantum","quarter","question","quick","quit","quiz","quote","rabbit","raccoon","race","rack","radar","radio","rail","rain","raise","rally","ramp","ranch","random","range","rapid","rare","rate","rather","raven","raw","razor","ready","real","reason","rebel","rebuild","recall","receive","recipe","record","recycle","reduce","reflect","reform","refuse","region","regret","regular","reject","relax","release","relief","rely","remain","remember","remind","remove","render","renew","rent","reopen","repair","repeat","replace","report","require","rescue","resemble","resist","resource","response","result","retire","retreat","return","reunion","reveal","review","reward","rhythm","rib","ribbon","rice","rich","ride","ridge","rifle","right","rigid","ring","riot","ripple","risk","ritual","rival","river","road","roast","robot","robust","rocket","romance","roof","rookie","room","rose","rotate","rough","round","route","royal","rubber","rude","rug","rule","run","runway","rural","sad","saddle","sadness","safe","sail","salad","salmon","salon","salt","salute","same","sample","sand","satisfy","satoshi","sauce","sausage","save","say","scale","scan","scare","scatter","scene","scheme","school","science","scissors","scorpion","scout","scrap","screen","script","scrub","sea","search","season","seat","second","secret","section","security","seed","seek","segment","select","sell","seminar","senior","sense","sentence","series","service","session","settle","setup","seven","shadow","shaft","shallow","share","shed","shell","sheriff","shield","shift","shine","ship","shiver","shock","shoe","shoot","shop","short","shoulder","shove","shrimp","shrug","shuffle","shy","sibling","sick","side","siege","sight","sign","silent","silk","silly","silver","similar","simple","since","sing","siren","sister","situate","six","size","skate","sketch","ski","skill","skin","skirt","skull","slab","slam","sleep","slender","slice","slide","slight","slim","slogan","slot","slow","slush","small","smart","smile","smoke","smooth","snack","snake","snap","sniff","snow","soap","soccer","social","sock","soda","soft","solar","soldier","solid","solution","solve","someone","song","soon","sorry","sort","soul","sound","soup","source","south","space","spare","spatial","spawn","speak","special","speed","spell","spend","sphere","spice","spider","spike","spin","spirit","split","spoil","sponsor","spoon","sport","spot","spray","spread","spring","spy","square","squeeze","squirrel","stable","stadium","staff","stage","stairs","stamp","stand","start","state","stay","steak","steel","stem","step","stereo","stick","still","sting","stock","stomach","stone","stool","story","stove","strategy","street","strike","strong","struggle","student","stuff","stumble","style","subject","submit","subway","success","such","sudden","suffer","sugar","suggest","suit","summer","sun","sunny","sunset","super","supply","supreme","sure","surface","surge","surprise","surround","survey","suspect","sustain","swallow","swamp","swap","swarm","swear","sweet","swift","swim","swing","switch","sword","symbol","symptom","syrup","system","table","tackle","tag","tail","talent","talk","tank","tape","target","task","taste","tattoo","taxi","teach","team","tell","ten","tenant","tennis","tent","term","test","text","thank","that","theme","then","theory","there","they","thing","this","thought","three","thrive","throw","thumb","thunder","ticket","tide","tiger","tilt","timber","time","tiny","tip","tired","tissue","title","toast","tobacco","today","toddler","toe","together","toilet","token","tomato","tomorrow","tone","tongue","tonight","tool","tooth","top","topic","topple","torch","tornado","tortoise","toss","total","tourist","toward","tower","town","toy","track","trade","traffic","tragic","train","transfer","trap","trash","travel","tray","treat","tree","trend","trial","tribe","trick","trigger","trim","trip","trophy","trouble","truck","true","truly","trumpet","trust","truth","try","tube","tuition","tumble","tuna","tunnel","turkey","turn","turtle","twelve","twenty","twice","twin","twist","two","type","typical","ugly","umbrella","unable","unaware","uncle","uncover","under","undo","unfair","unfold","unhappy","uniform","unique","unit","universe","unknown","unlock","until","unusual","unveil","update","upgrade","uphold","upon","upper","upset","urban","urge","usage","use","used","useful","useless","usual","utility","vacant","vacuum","vague","valid","valley","valve","van","vanish","vapor","various","vast","vault","vehicle","velvet","vendor","venture","venue","verb","verify","version","very","vessel","veteran","viable","vibrant","vicious","victory","video","view","village","vintage","violin","virtual","virus","visa","visit","visual","vital","vivid","vocal","voice","void","volcano","volume","vote","voyage","wage","wagon","wait","walk","wall","walnut","want","warfare","warm","warrior","wash","wasp","waste","water","wave","way","wealth","weapon","wear","weasel","weather","web","wedding","weekend","weird","welcome","west","wet","whale","what","wheat","wheel","when","where","whip","whisper","wide","width","wife","wild","will","win","window","wine","wing","wink","winner","winter","wire","wisdom","wise","wish","witness","wolf","woman","wonder","wood","wool","word","work","world","worry","worth","wrap","wreck","wrestle","wrist","write","wrong","yard","year","yellow","you","young","youth","zebra","zero","zone","zoo"});
 }
 
-QByteArray Util::mnemonicToBIP39Seed(QString words, QString passphrase)
+namespace {
+
+/**
+ * Text as BIP-39 feeds it to PBKDF2: UTF-8 of the NFKD form. Only the words
+ * used to be normalised; the passphrase went in as typed, so U+00FC (NFC,
+ * what most keyboards produce) and "u" + U+0308 gave two different wallets,
+ * and neither was the one other BIP-39 software derives from that passphrase.
+ *
+ * An unpaired surrogate is not text: toUtf8() writes it as U+FFFD, and the
+ * seed would come from a passphrase nobody typed. Refused.
+ */
+QString bip39Normalized(const QString& text, const char* what)
 {
-    QList<QString> mnemonicWords = Util::mnemonicWords();
-    QStringList wsplitted = words.split(' ', Qt::SkipEmptyParts);
+    if (!text.isValidUtf16()) {
+        throw std::runtime_error(QStringLiteral("the BIP-39 %1 is not valid Unicode "
+                                                "(an unpaired surrogate)")
+                                     .arg(QLatin1String(what)).toStdString());
+    }
+    return text.normalized(QString::NormalizationForm_KD);
+}
+
+/**
+ * The words of a mnemonic sentence, from its NFKD form as BIP-39 defines the
+ * sentence. Normalising the sentence rather than each word is what makes a
+ * no-break or ideographic space a separator, as it is for every other
+ * BIP-39 implementation; per word, it was part of the word and the phrase
+ * was refused.
+ */
+QStringList bip39Words(const QString& mnemonic)
+{
+    // Any run of whitespace separates words (spaces, tabs, line breaks), as
+    // the QML layer and other wallets read a pasted phrase; only U+0020 did,
+    // so a phrase pasted one word per line was refused here and accepted there.
+    // py 14.1.0 refuses it (it splits on single spaces), and a leading or
+    // trailing space too; the seed is the single-spaced phrase's either way.
+    return bip39Normalized(mnemonic, "mnemonic").simplified().split(QLatin1Char(' '), Qt::SkipEmptyParts);
+}
+
+/** "mnemonic" + passphrase, the PBKDF2 salt, as BIP-39 defines it: NFKD. */
+QString bip39Salt(const QString& passphrase)
+{
+    return bip39Normalized(QStringLiteral("mnemonic") + passphrase, "passphrase");
+}
+
+/**
+ * A list's words by their NFKD form, with their index. Only the English list
+ * is in sorted order, so the others cannot be searched as it was.
+ */
+QHash<QString, int> bip39Index(Util::SupportedMnemonicLanguages language)
+{
+    static QMutex mutex;
+    static QHash<int, QHash<QString, int>> indexes;
+    QMutexLocker lock(&mutex);
+    auto found = indexes.constFind(static_cast<int>(language));
+    if (found != indexes.constEnd())
+        return found.value();
+    QHash<QString, int> index;
+    const QList<QString> words = Util::mnemonicWords(language);
+    for (int i = 0; i < words.size(); ++i)
+        index.insert(words.at(i).normalized(QString::NormalizationForm_KD), i);
+    indexes.insert(static_cast<int>(language), index);
+    return index;
+}
+
+/**
+ * The PBKDF2 password: the words of the sentence joined by single spaces, in
+ * UTF-8, once every word is in the list and there are 12/15/18/21/24 of them.
+ */
+QByteArray bip39Password(const QString& words,
+                         Util::SupportedMnemonicLanguages language = Util::SupportedMnemonicLanguages::EN)
+{
+    const QHash<QString, int> index = bip39Index(language);
+    const QStringList wsplitted = bip39Words(words);
     QList<QString> acceptedWords;
-    for (const QString& ws : wsplitted)
+    for (const QString& normalized : wsplitted)
     {
-        QString normalized = ws.normalized(QString::NormalizationForm_KD);
-        // FIX §2.11: lower_bound returns end() when normalized > last word;
-        // *res would be UB. Check iterator first.
-        QList<QString>::iterator res = std::lower_bound(mnemonicWords.begin(), mnemonicWords.end(), normalized);
-        if (res == mnemonicWords.end() || *res != normalized)
+        if (!index.contains(normalized))
             throw std::runtime_error("invalid word");
         acceptedWords.append(normalized);
     }
@@ -106,21 +180,64 @@ QByteArray Util::mnemonicToBIP39Seed(QString words, QString passphrase)
     const int n = acceptedWords.size();
     if (n != 12 && n != 15 && n != 18 && n != 21 && n != 24)
         throw std::runtime_error("mnemonic must have 12, 15, 18, 21 or 24 words");
+    // The sentence, NFKD (its words are already).
+    return acceptedWords.join(QLatin1Char(' ')).toUtf8();
+}
 
+} // namespace
+
+QByteArray Util::mnemonicToBIP39Seed(QString words, QString passphrase, SupportedMnemonicLanguages language)
+{
+    // The checksum too, as py-stellar-sdk's to_bip39_seed checks it: two
+    // words swapped, or one mistyped into another list word, derived a
+    // different, valid-looking wallet without a word of complaint.
+    const QString problem = Util::mnemonicProblem(words, language);
+    if (!problem.isEmpty())
+        throw std::runtime_error(("invalid mnemonic: " + problem).toStdString());
+    // Salt: "mnemonic" + passphrase, NFKD as well. The password is the
+    // phrase, joined: wiped once used.
+    QByteArray password = bip39Password(words, language);
+    const QByteArray seed = QPasswordDigestor::deriveKeyPbkdf2(QCryptographicHash::Sha512
+                                       , password
+                                       , bip39Salt(passphrase).toUtf8()
+                                       ,2048,64);
+    password.fill('\0');
+    return seed;
+}
+
+QByteArray Util::mnemonicToBIP39SeedLegacyPassphrase(QString words, QString passphrase)
+{
+    // The salt as 1.0.3 and every release before it built it: the passphrase
+    // as typed, not normalised. Not BIP-39; it is here so that a wallet those
+    // releases created can still be opened after the upgrade. An unpaired
+    // surrogate is refused as mnemonicToBIP39Seed refuses it: it is not a
+    // passphrase anybody typed, and toUtf8() would derive from U+FFFD.
+    if (!passphrase.isValidUtf16()) {
+        throw std::runtime_error("the BIP-39 passphrase is not valid Unicode "
+                                 "(an unpaired surrogate)");
+    }
     return QPasswordDigestor::deriveKeyPbkdf2(QCryptographicHash::Sha512
-                                       , acceptedWords.join(' ').toUtf8()
-                                       , passphrase.prepend(QString("mnemonic")).toUtf8()
+                                       , bip39Password(words)
+                                       , (QStringLiteral("mnemonic") + passphrase).toUtf8()
                                        ,2048,64);
 }
 
-QString Util::entropyToMnemonic(const QByteArray& entropy)
+bool Util::legacyPassphraseDerivesDifferently(const QString& passphrase)
+{
+    if (!passphrase.isValidUtf16())
+        return false;
+    // The two salts, compared: the seeds differ when, and only when, these do.
+    return bip39Salt(passphrase) != QStringLiteral("mnemonic") + passphrase;
+}
+
+QString Util::entropyToMnemonic(const QByteArray& entropy, SupportedMnemonicLanguages language)
 {
     const int entBits = entropy.size() * 8;
     if (entBits < 128 || entBits > 256 || entBits % 32 != 0)
         throw std::runtime_error("BIP-39 entropy must be 16, 20, 24, 28 or 32 bytes");
     const int csBits = entBits / 32;                 // checksum bits
     const QByteArray cs = Util::hash(entropy);       // SHA-256 of the entropy
-    const QList<QString> words = Util::mnemonicWords();  // sorted == BIP-39 index order
+    const QList<QString> words = Util::mnemonicWords(language);  // BIP-39 index order
     const int total = entBits + csBits;              // a multiple of 11
     QStringList out;
     int idx = 0, bitsInIdx = 0;
@@ -135,23 +252,34 @@ QString Util::entropyToMnemonic(const QByteArray& entropy)
         idx = (idx << 1) | bit;
         if (++bitsInIdx == 11) { out.append(words.at(idx)); idx = 0; bitsInIdx = 0; }
     }
-    return out.join(' ');
+    // Japanese words are separated by the ideographic space (BIP-39, py).
+    return out.join(language == SupportedMnemonicLanguages::JA ? QChar(0x3000) : QChar(' '));
 }
 
-QString Util::generateMnemonic(int strengthBits)
+QString Util::generateMnemonic(int strengthBits, SupportedMnemonicLanguages language)
 {
     if (strengthBits < 128 || strengthBits > 256 || strengthBits % 32 != 0)
         throw std::runtime_error("strength must be 128, 160, 192, 224 or 256 bits");
-    return entropyToMnemonic(Util::generateRandomNonce(strengthBits / 8));
+    return entropyToMnemonic(Util::generateRandomNonce(strengthBits / 8), language);
 }
 
-bool Util::validateMnemonic(const QString& mnemonic)
+bool Util::validateMnemonic(const QString& mnemonic, SupportedMnemonicLanguages language)
 {
-    const QStringList parts = mnemonic.split(' ', Qt::SkipEmptyParts);
-    const int n = parts.size();
-    if (n != 12 && n != 15 && n != 18 && n != 21 && n != 24) return false;
+    return mnemonicProblem(mnemonic, language).isEmpty();
+}
 
-    const QList<QString> words = Util::mnemonicWords();
+QString Util::mnemonicProblem(const QString& mnemonic, SupportedMnemonicLanguages language)
+{
+    // The same words mnemonicToBIP39Seed reads, so the two cannot disagree
+    // about a phrase.
+    if (!mnemonic.isValidUtf16())
+        return QStringLiteral("the phrase is not valid Unicode (an unpaired surrogate)");
+    const QStringList parts = bip39Words(mnemonic);
+    const int n = parts.size();
+    if (n != 12 && n != 15 && n != 18 && n != 21 && n != 24)
+        return QStringLiteral("the phrase has %1 words; a BIP-39 phrase has 12, 15, 18, 21 or 24").arg(n);
+
+    const QHash<QString, int> index = bip39Index(language);
     const int totalBits = n * 11;
     const int entBits = totalBits / 33 * 32;
     const int csBits = totalBits / 33;
@@ -159,12 +287,15 @@ bool Util::validateMnemonic(const QString& mnemonic)
     QByteArray entropy(entBits / 8, '\0');
     QList<int> checksum;
     int globalBit = 0;
-    for (const QString& w : parts) {
-        const QString normalized = w.normalized(QString::NormalizationForm_KD);
-        QList<QString>::const_iterator it =
-            std::lower_bound(words.begin(), words.end(), normalized);
-        if (it == words.end() || *it != normalized) return false;
-        const int wi = static_cast<int>(it - words.begin());
+    for (int position = 0; position < parts.size(); ++position) {
+        const QString normalized = parts.at(position).normalized(QString::NormalizationForm_KD);
+        const auto it = index.constFind(normalized);
+        if (it == index.constEnd()) {
+            entropy.fill('\0');   // the words read so far
+            std::fill(checksum.begin(), checksum.end(), 0);
+            return QStringLiteral("word %1 is not in the wordlist").arg(position + 1);
+        }
+        const int wi = it.value();
         for (int b = 10; b >= 0; --b) {
             const int bit = (wi >> b) & 1;
             if (globalBit < entBits) {
@@ -179,33 +310,42 @@ bool Util::validateMnemonic(const QString& mnemonic)
             ++globalBit;
         }
     }
-    const QByteArray cs = Util::hash(entropy);
+    QByteArray cs = Util::hash(entropy);
+    entropy.fill('\0');
+    bool matches = true;
     for (int i = 0; i < csBits; ++i) {
-        const int expected = (static_cast<quint8>(cs[i / 8]) >> (7 - (i % 8))) & 1;
-        if (checksum.at(i) != expected) return false;
+        const int expected = (static_cast<quint8>(cs.at(i / 8)) >> (7 - (i % 8))) & 1;
+        if (checksum.at(i) != expected)
+            matches = false;
     }
-    return true;
+    cs.fill('\0');
+    std::fill(checksum.begin(), checksum.end(), 0);
+    if (!matches)
+        return QStringLiteral("the checksum does not match (a word is wrong or out of order)");
+    return QString();
 }
 
 void Util::claimableBalanceIdToXDR(QString balanceID, stellar::ClaimableBalanceID &balanceIdToFill) {
     // FIX §3.1: old reinterpret_cast ignored that XDR is big-endian; only
     // worked by accident for V0=0. Use QDataStream (big-endian by default).
-    QByteArray balanceIDDecoded = QByteArray::fromHex(balanceID.toLower().toLatin1());
+    QByteArray balanceIDDecoded = Util::hexToBytes(balanceID);
     if (balanceIDDecoded.length() != sizeof(stellar::ClaimableBalanceID))
         throw std::runtime_error("invalid balance id length");
     QDataStream stream(&balanceIDDecoded, QIODevice::ReadOnly);
     stream >> balanceIdToFill;
-    if (stream.status() != QDataStream::Ok)
+    // All of it, as a V0 id: "00000001" + 64 hex used to pass, drop the hash
+    // and build a four-byte balance id that no other SDK can decode.
+    if (stream.status() != QDataStream::Ok || !stream.atEnd())
         throw std::runtime_error("failed to decode claimable balance id");
 }
 
 QString Util::xdrToClaimableBalanceId(stellar::ClaimableBalanceID &balanceId) {
     // FIX §3.2: use the canonical operator<< via QDataStream so future
     // ClaimableBalanceIDType values work too (V0 worked by accident).
-    QByteArray buf;
-    QDataStream stream(&buf, QIODevice::WriteOnly);
-    stream << balanceId;
-    return QString::fromLatin1(buf.toHex());
+    // Checked: an id type with no arm writes nothing, and came back as an
+    // empty id rather than as the error it is.
+    return QString::fromLatin1(
+        xdr::encodeOrThrow(balanceId, "the claimable balance id").toHex());
 }
 
 AssetTypeCreditAlphaNum *Util::assertNonNativeAsset(Asset *asset) {
@@ -229,12 +369,14 @@ QByteArray hashContractIdPreimage(const QString& networkPassphrase,
     if (networkId.size() != 32) {
         throw std::runtime_error("networkId hash must be 32 bytes");
     }
-    QByteArray xdr;
-    QDataStream s(&xdr, QIODevice::WriteOnly);
-    s << stellar::EnvelopeType::ENVELOPE_TYPE_CONTRACT_ID;
-    s.writeRawData(networkId.constData(), 32);
-    s << preimage;
-    return Util::hash(xdr);
+    // Each part checked: an asset the preimage has no encoding for (a pool
+    // share) wrote only the preimage type, and the hash of that truncated
+    // preimage came back as a contract id.
+    QByteArray bytes = xdr::encodeOrThrow(stellar::EnvelopeType::ENVELOPE_TYPE_CONTRACT_ID,
+                                          "the contract id preimage type");
+    bytes.append(networkId);
+    bytes.append(xdr::encodeOrThrow(preimage, "the contract id preimage"));
+    return Util::hash(bytes);
 }
 
 } // namespace

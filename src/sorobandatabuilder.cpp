@@ -35,9 +35,8 @@ SorobanDataBuilder& SorobanDataBuilder::setResourceFee(qint64 resourceFee)
 
 QByteArray SorobanDataBuilder::toXdr() const
 {
-    QByteArray bytes;
-    QDataStream s(&bytes, QIODevice::WriteOnly);
-    s << m_data;
-    return bytes;
+    // Whole or not at all: a footprint key or an ext the writer has no arm
+    // for used to come back as a prefix of nothing, ready to be sent.
+    return xdr::encodeOrThrow(m_data, "SorobanDataBuilder: the SorobanTransactionData");
 }
 QSTELLAR_END_NS

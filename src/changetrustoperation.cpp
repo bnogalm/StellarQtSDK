@@ -40,7 +40,7 @@ ChangeTrustOperation::ChangeTrustOperation(Asset *asset, QString limit)
     checkNotNull(limit, "limit cannot be null");
 
     assignAssetToLine(m_op.line, asset->toXdr());
-    m_op.limit = Operation::toXdrAmount(limit);
+    m_op.limit = Operation::toXdrAmountNonNegative(limit);
 }
 
 ChangeTrustOperation::ChangeTrustOperation(ChangeTrustAsset* line, QString limit)
@@ -50,7 +50,7 @@ ChangeTrustOperation::ChangeTrustOperation(ChangeTrustAsset* line, QString limit
     checkNotNull(limit, "limit cannot be null");
 
     m_op.line = line->toXdr();
-    m_op.limit = Operation::toXdrAmount(limit);
+    m_op.limit = Operation::toXdrAmountNonNegative(limit);
 }
 
 ChangeTrustOperation::ChangeTrustOperation(stellar::ChangeTrustOp &op)

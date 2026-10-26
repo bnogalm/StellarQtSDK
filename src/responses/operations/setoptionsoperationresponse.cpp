@@ -12,8 +12,8 @@ SetOptionsOperationResponse::SetOptionsOperationResponse(QNetworkReply *reply)
 
 SetOptionsOperationResponse::~SetOptionsOperationResponse()
 {
-    if(m_inflationDestKeypair)
-        delete m_inflationDestKeypair;
+    delete m_inflationDestKeypair;
+    delete m_signerKeypair;          // was never freed
 }
 
 quint32 SetOptionsOperationResponse::getLowThreshold() const{
@@ -77,15 +77,17 @@ QString SetOptionsOperationResponse::signerKey() const
 
 void SetOptionsOperationResponse::setInflationDest(QString inflationDest)
 {
-    if(m_inflationDestKeypair)
-        delete m_inflationDestKeypair;
+    // The cached key pair is of the old value: freed and forgotten (it was
+    // freed and kept, and deleted a second time later).
+    delete m_inflationDestKeypair;
+    m_inflationDestKeypair = nullptr;
     m_inflationDest = inflationDest;
 }
 
 void SetOptionsOperationResponse::setSignerKey(QString signerKey)
 {
-    if(m_signerKeypair)
-        delete m_signerKeypair;
+    delete m_signerKeypair;
+    m_signerKeypair = nullptr;
     m_signerKey = signerKey;
 }
 QSTELLAR_END_NS

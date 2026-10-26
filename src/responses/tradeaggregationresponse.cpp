@@ -1,4 +1,7 @@
 #include "tradeaggregationresponse.h"
+#include "traderesponse.h"
+
+#include <stdexcept>
 
 QSTELLAR_BEGIN_NS
 
@@ -53,19 +56,68 @@ QString TradeAggregationResponse::getClose() const{
     return m_close;
 }
 
+namespace {
+
+Price exactPrice(const QVariantMap& r, const char* field, const char* getters)
+{
+    const qint64 n = TradeResponse::priceTerm(r, "n");
+    const qint64 d = TradeResponse::priceTerm(r, "d");
+    Price price;
+    if (!Price::fromInt64(n, d, price))
+        throw std::runtime_error(QStringLiteral("%1 %2/%3 does not fit a Price (int32 terms, "
+                                                "positive denominator); use %4")
+                                     .arg(QLatin1String(field)).arg(n).arg(d)
+                                     .arg(QLatin1String(getters)).toStdString());
+    return price;
+}
+
+} // namespace
+
 Price TradeAggregationResponse::getHighR() const{
-    return Price(m_highR.value("n").toUInt(), m_highR.value("d").toUInt());
+    return exactPrice(m_highR, "high_r", "getHighRN()/getHighRD()");
 }
 
 Price TradeAggregationResponse::getLowR() const{
-    return Price(m_lowR.value("n").toUInt(), m_lowR.value("d").toUInt());
+    return exactPrice(m_lowR, "low_r", "getLowRN()/getLowRD()");
 }
 
 Price TradeAggregationResponse::getOpenR() const{
-    return Price(m_openR.value("n").toUInt(), m_openR.value("d").toUInt());
+    return exactPrice(m_openR, "open_r", "getOpenRN()/getOpenRD()");
 }
 
 Price TradeAggregationResponse::getCloseR() const{
-    return Price(m_closeR.value("n").toUInt(), m_closeR.value("d").toUInt());
+    return exactPrice(m_closeR, "close_r", "getCloseRN()/getCloseRD()");
+}
+
+qint64 TradeAggregationResponse::getHighRN() const{
+    return TradeResponse::priceTerm(m_highR, "n");
+}
+
+qint64 TradeAggregationResponse::getHighRD() const{
+    return TradeResponse::priceTerm(m_highR, "d");
+}
+
+qint64 TradeAggregationResponse::getLowRN() const{
+    return TradeResponse::priceTerm(m_lowR, "n");
+}
+
+qint64 TradeAggregationResponse::getLowRD() const{
+    return TradeResponse::priceTerm(m_lowR, "d");
+}
+
+qint64 TradeAggregationResponse::getOpenRN() const{
+    return TradeResponse::priceTerm(m_openR, "n");
+}
+
+qint64 TradeAggregationResponse::getOpenRD() const{
+    return TradeResponse::priceTerm(m_openR, "d");
+}
+
+qint64 TradeAggregationResponse::getCloseRN() const{
+    return TradeResponse::priceTerm(m_closeR, "n");
+}
+
+qint64 TradeAggregationResponse::getCloseRD() const{
+    return TradeResponse::priceTerm(m_closeR, "d");
 }
 QSTELLAR_END_NS

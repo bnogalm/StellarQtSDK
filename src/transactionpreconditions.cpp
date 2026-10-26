@@ -19,6 +19,7 @@ TransactionPreconditions::TransactionPreconditions(TransactionPreconditions&& ot
     , m_minSeqAge(other.m_minSeqAge)
     , m_minSeqLedgerGap(other.m_minSeqLedgerGap)
     , m_extraSigners(std::move(other.m_extraSigners))
+    , m_v2(other.m_v2)
 {
     other.m_timeBounds = nullptr;
     other.m_ledgerBounds = nullptr;
@@ -39,6 +40,7 @@ TransactionPreconditions& TransactionPreconditions::operator=(TransactionPrecond
     m_minSeqAge = other.m_minSeqAge;
     m_minSeqLedgerGap = other.m_minSeqLedgerGap;
     m_extraSigners = std::move(other.m_extraSigners);
+    m_v2 = other.m_v2;
     other.m_timeBounds = nullptr;
     other.m_ledgerBounds = nullptr;
     other.m_minSeqNumber = nullptr;
@@ -54,8 +56,7 @@ TransactionPreconditions& TransactionPreconditions::operator=(const TransactionP
     delete m_ledgerBounds; m_ledgerBounds = nullptr;
     delete m_minSeqNumber; m_minSeqNumber = nullptr;
     if (other.m_timeBounds) {
-        m_timeBounds = new TimeBounds(other.m_timeBounds->getMinTime(),
-                                      other.m_timeBounds->getMaxTime());
+        m_timeBounds = new TimeBounds(*other.m_timeBounds);
     }
     if (other.m_ledgerBounds) {
         m_ledgerBounds = new LedgerBounds(*other.m_ledgerBounds);
@@ -66,6 +67,7 @@ TransactionPreconditions& TransactionPreconditions::operator=(const TransactionP
     m_minSeqAge = other.m_minSeqAge;
     m_minSeqLedgerGap = other.m_minSeqLedgerGap;
     m_extraSigners = other.m_extraSigners;
+    m_v2 = other.m_v2;
     return *this;
 }
 
@@ -110,7 +112,8 @@ void TransactionPreconditions::addExtraSigner(const SignerKey& key)
 
 bool TransactionPreconditions::hasV2() const
 {
-    return m_ledgerBounds != nullptr
+    return m_v2
+        || m_ledgerBounds != nullptr
         || m_minSeqNumber != nullptr
         || m_minSeqAge != 0
         || m_minSeqLedgerGap != 0
@@ -157,16 +160,15 @@ TransactionPreconditions TransactionPreconditions::fromXdr(const stellar::Precon
     case stellar::PreconditionType::PRECOND_NONE:
         break;
     case stellar::PreconditionType::PRECOND_TIME:
-        out.setTimeBounds(new TimeBounds(
-            static_cast<qint64>(xdr.timeBounds.minTime),
-            static_cast<qint64>(xdr.timeBounds.maxTime)));
+        out.setTimeBounds(TimeBounds::fromTimePoints(xdr.timeBounds.minTime,
+                                                     xdr.timeBounds.maxTime));
         break;
     case stellar::PreconditionType::PRECOND_V2: {
         const stellar::PreconditionsV2& v2 = xdr.v2;
+        out.setV2(true);
         if (v2.timeBounds.filled) {
-            out.setTimeBounds(new TimeBounds(
-                static_cast<qint64>(v2.timeBounds.value.minTime),
-                static_cast<qint64>(v2.timeBounds.value.maxTime)));
+            out.setTimeBounds(TimeBounds::fromTimePoints(v2.timeBounds.value.minTime,
+                                                         v2.timeBounds.value.maxTime));
         }
         if (v2.ledgerBounds.filled) {
             out.setLedgerBounds(new LedgerBounds(

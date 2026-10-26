@@ -26,13 +26,36 @@ Network::Network(QString networkPassphrase)
 const QString& Network::PUBLIC_NETWORK_PASSPHRASE()  { return PUBLIC_S; }
 const QString& Network::TESTNET_NETWORK_PASSPHRASE() { return TESTNET_S; }
 
+// Function statics: built on first use, so code that runs before main()
+// (another file's static) can use them too.
+const QString& Network::FUTURENET_NETWORK_PASSPHRASE()
+{
+    static const QString passphrase = QStringLiteral("Test SDF Future Network ; October 2022");
+    return passphrase;
+}
+
+const QString& Network::STANDALONE_NETWORK_PASSPHRASE()
+{
+    static const QString passphrase = QStringLiteral("Standalone Network ; February 2017");
+    return passphrase;
+}
+
+const QString& Network::SANDBOX_NETWORK_PASSPHRASE()
+{
+    static const QString passphrase = QStringLiteral("Local Sandbox Stellar Network ; September 2022");
+    return passphrase;
+}
+
 QString Network::getNetworkPassphrase() const {
     return m_networkPassphrase;
 }
 
 QByteArray Network::getNetworkId() const {
     // FIX §6.1: hash this instance's passphrase, not the singleton's.
-    return Util::hash(m_networkPassphrase.toLatin1());
+    // SHA-256 of the passphrase's UTF-8, as core, js and py hash it. It was
+    // Latin-1: a custom network whose passphrase has a character outside
+    // ASCII signed under another network id.
+    return Util::hash(m_networkPassphrase.toUtf8());
 }
 
 bool Network::isPublicNetwork() const  { return m_networkPassphrase == PUBLIC_S; }

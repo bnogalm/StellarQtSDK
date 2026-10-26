@@ -150,7 +150,15 @@ inline void compareBase64(QString a,QString b)
 
 
 
+// The registrar's name carries the class name.
+//
+// It used to be plain `test`, which is fine as long as no two test headers ever
+// meet in one translation unit — and under qmake they never do, because moc
+// emits one moc_*.cpp per header. CMake's AUTOMOC concatenates them all into a
+// single mocs_compilation.cpp instead, and then a hundred `static … test;`
+// definitions collide and nothing builds. Naming it after the class costs
+// nothing and makes the macro correct under either.
 #define ADD_TEST(className) static TestCollector::UnitTestClass<className> \
-    test(#className);
+    test_registrar_##className(#className);
 
 #endif // TESTCOLLECTOR_H

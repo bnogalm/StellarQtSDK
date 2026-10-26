@@ -24,6 +24,13 @@ public:
      */
     SetOptionsOperation();
 
+    /**
+     * Throws std::runtime_error when a weight or threshold given is above 255
+     * (the network takes one byte and refuses the operation), or when
+     * homeDomain is over 32 bytes. homeDomain is signed as its exact UTF-8
+     * bytes (as setHomeDomain()); a null QString leaves the account's home
+     * domain unchanged, an empty one clears it.
+     */
     SetOptionsOperation(KeyPair *inflationDestination, Integer clearFlags
                         , Integer setFlags, Integer masterKeyWeight, Integer lowThreshold
                         , Integer mediumThreshold, Integer highThreshold, QString homeDomain
@@ -70,9 +77,15 @@ public:
     Integer getHighThreshold();
 
     /**
-     * The home domain of an account.
+     * The home domain as signed, as js and py return it: null when the
+     * operation does not set it, "" when it clears it. It was IDN-decoded
+     * (QUrl::fromAce): "Example.COM" read as "example.com", an xn-- name as
+     * its Unicode form, and UTF-8 garbled.
      */
     QString getHomeDomain();
+
+    /** The home domain exactly as it is signed, as bytes (null when not set). */
+    QByteArray getHomeDomainBytes() const;
 
     /**
      * Additional signer added/removed in this operation.
@@ -121,6 +134,7 @@ public:
     /**
        * Weight of the master key.
        * @param masterKeyWeight Number between 0 and 255
+       * @throws std::runtime_error above 255, leaving the operation unchanged
        * @return SetOptionsOperation object so you can chain methods.
        */
     SetOptionsOperation* setMasterKeyWeight(quint32 masterKeyWeight);
@@ -128,6 +142,7 @@ public:
     /**
        * A number from 0-255 representing the threshold this account sets on all operations it performs that have a low threshold.
        * @param lowThreshold Number between 0 and 255
+       * @throws std::runtime_error above 255, leaving the operation unchanged
        * @return SetOptionsOperation object so you can chain methods.
        */
     SetOptionsOperation* setLowThreshold(quint32 lowThreshold);
@@ -135,6 +150,7 @@ public:
     /**
        * A number from 0-255 representing the threshold this account sets on all operations it performs that have a medium threshold.
        * @param mediumThreshold Number between 0 and 255
+       * @throws std::runtime_error above 255, leaving the operation unchanged
        * @return SetOptionsOperation object so you can chain methods.
        */
     SetOptionsOperation* setMediumThreshold(quint32 mediumThreshold);
@@ -142,6 +158,7 @@ public:
     /**
        * A number from 0-255 representing the threshold this account sets on all operations it performs that have a high threshold.
        * @param highThreshold Number between 0 and 255
+       * @throws std::runtime_error above 255, leaving the operation unchanged
        * @return SetOptionsOperation object so you can chain methods.
        */
     SetOptionsOperation* setHighThreshold(quint32 highThreshold);
@@ -157,6 +174,7 @@ public:
        * Add, update, or remove a signer from the account. Signer is deleted if the weight = 0;
        * @param signer The signer key. Use {@link org.stellar.sdk.Signer} helper to create this object.
        * @param weight The weight to attach to the signer (0-255).
+       * @throws std::runtime_error above 255, leaving the operation unchanged
        * @return SetOptionsOperation object so you can chain methods.
        */
     SetOptionsOperation* setSigner(stellar::SignerKey signer, quint32 weight);

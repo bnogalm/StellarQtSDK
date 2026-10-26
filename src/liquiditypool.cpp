@@ -17,11 +17,9 @@ QByteArray assetToXdrBytes(Asset* a)
     if (!a) {
         throw std::runtime_error("Asset cannot be null");
     }
-    QByteArray bytes;
-    QDataStream stream(&bytes, QIODevice::WriteOnly);
-    stellar::Asset xdr = a->toXdr();
-    stream << xdr;
-    return bytes;
+    // Checked: an asset the writer cannot encode wrote nothing, and nothing
+    // sorts before every asset, so it passed as the lesser of any pair.
+    return xdr::encodeOrThrow(a->toXdr(), "the asset");
 }
 
 } // namespace
@@ -47,6 +45,11 @@ QByteArray LiquidityPool::getLiquidityPoolID(stellar::LiquidityPoolType type,
     if (compareAssets(assetA, assetB) >= 0) {
         throw std::runtime_error("AssetA must be < AssetB in canonical XDR order");
     }
+    // 30 is the only fee a pool has: an id for any other names no pool (js
+    // and py refuse it).
+    if (fee != FEE)
+        throw std::runtime_error(QStringLiteral("a liquidity pool's fee is %1 basis points, not %2")
+                                     .arg(FEE).arg(fee).toStdString());
 
     stellar::LiquidityPoolParameters params;
     stellar::LiquidityPoolConstantProductParameters& cp = params.fillConstantProduct();
@@ -54,11 +57,9 @@ QByteArray LiquidityPool::getLiquidityPoolID(stellar::LiquidityPoolType type,
     cp.assetB = assetB->toXdr();
     cp.fee = fee;
 
-    QByteArray xdr;
-    QDataStream out(&xdr, QIODevice::WriteOnly);
-    out << params;
-
-    return QCryptographicHash::hash(xdr, QCryptographicHash::Sha256);
+    // Hashed, so checked: short bytes would name some other pool.
+    return QCryptographicHash::hash(xdr::encodeOrThrow(params, "the liquidity pool parameters"),
+                                    QCryptographicHash::Sha256);
 }
 
 QSTELLAR_END_NS

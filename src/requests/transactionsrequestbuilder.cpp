@@ -41,6 +41,11 @@ TransactionsRequestBuilder &TransactionsRequestBuilder::forClaimableBalance(QStr
     return *this;
 }
 
+TransactionsRequestBuilder &TransactionsRequestBuilder::forLiquidityPool(const QString& liquidityPoolId) {
+    setSegments(QStringList() << "liquidity_pools" << liquidityPoolId << "transactions");
+    return *this;
+}
+
 Page<TransactionResponse> *TransactionsRequestBuilder::execute(QUrl uri){
     this->setRequestUri(uri);//we overwrite the uri
     return server()->get<Page<TransactionResponse> >(this);

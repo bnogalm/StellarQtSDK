@@ -3,19 +3,9 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 
-#include "operations/createaccountoperationresponse.h"
-#include "operations/paymentoperationresponse.h"
-#include "operations/accountmergeoperationresponse.h"
-#include "operations/pathpaymentoperationresponse.h"
-#include "operations/inflationoperationresponse.h"
-#include "operations/allowtrustoperationresponse.h"
-#include "operations/changetrustoperationresponse.h"
-#include "operations/createpassiveofferoperationresponse.h"
-#include "operations/managedataoperationresponse.h"
-#include "operations/setoptionsoperationresponse.h"
-#include "operations/managesellofferoperationresponse.h"
-#include "operations/bumpsequenceoperationresponse.h"
-#include "operations/managebuyofferoperationresponse.h"
+#include "operationpage.h"
+#include <memory>
+#include <stdexcept>
 
 QSTELLAR_BEGIN_NS
 
@@ -45,52 +35,17 @@ void GenericOperation::loadFromJson(QByteArray data)
     if(check.error){
         throw std::runtime_error(check.errorString().toStdString());
     }
+    if (!doc.isObject())
+        throw std::runtime_error("expected a JSON object");
     QJsonObject obj = doc.object();
-    int type = obj.value("type").toInt();
-    switch (type) {
-    case 0:
-        m_operation = new CreateAccountOperationResponse(this->m_reply); break;
-    case 1:
-        m_operation = new PaymentOperationResponse(this->m_reply); break;
-    case 2:
-        m_operation = new PathPaymentOperationResponse(this->m_reply); break;
-    case 3:
-        m_operation = new ManageSellOfferOperationResponse(this->m_reply); break;
-    case 4:
-        m_operation = new CreatePassiveSellOfferOperationResponse(this->m_reply); break;
-    case 5:
-        m_operation = new SetOptionsOperationResponse(this->m_reply); break;
-    case 6:
-        m_operation = new ChangeTrustOperationResponse(this->m_reply); break;
-    case 7:
-#if defined(_MSC_VER)
-#  pragma warning(push)
-#  pragma warning(disable: 4996)
-#elif defined(__GNUC__) || defined(__clang__)
-#  pragma GCC diagnostic push
-#  pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-#endif
-        m_operation = new AllowTrustOperationResponse(this->m_reply);
-#if defined(_MSC_VER)
-#  pragma warning(pop)
-#elif defined(__GNUC__) || defined(__clang__)
-#  pragma GCC diagnostic pop
-#endif
-        break;
-    case 8:
-        m_operation = new AccountMergeOperationResponse(this->m_reply); break;
-    case 9:
-        m_operation = new InflationOperationResponse(this->m_reply); break;
-    case 10:
-        m_operation = new ManageDataOperationResponse(this->m_reply); break;
-    case 11:
-        m_operation = new BumpSequenceOperationResponse(this->m_reply); break;
-    case 12:
-        m_operation = new ManageBuyOfferOperationResponse(this->m_reply); break;
-    default:
-        throw std::runtime_error("Invalid operation type");
-    }
-    Response::fillObject(m_operation->metaObject(),m_operation,obj,true);//reply will not emit finished again, so it will not get filled. Anyway this way we skip parsing if json is valid again
+    // By type_i, like a page of operations. This read "type", which Horizon
+    // writes as a name ("payment"), as a number: every operation became a
+    // CreateAccountOperationResponse with its members left empty. Created
+    // without the reply, which this object owns and has already read.
+    std::unique_ptr<OperationResponse> operation(OperationPage::createRecord(obj, QString()));
+    Response::fillObject(operation->metaObject(), operation.get(), obj, true);
+    delete m_operation;
+    m_operation = operation.release();
 }
 
 QSTELLAR_END_NS

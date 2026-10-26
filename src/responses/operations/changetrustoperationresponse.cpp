@@ -1,4 +1,5 @@
 #include "changetrustoperationresponse.h"
+#include <stdexcept>
 #include "../../keypair.h"
 #include "../../asset.h"
 #include "../../assettypenative.h"
@@ -37,6 +38,9 @@ Asset* ChangeTrustOperationResponse::getAsset() {
         return m_asset;
     if (m_assetType =="native") {
         m_asset= new AssetTypeNative();
+    } else if (m_assetType == QLatin1String("liquidity_pool_shares")) {
+        // It threw on the empty issuer instead of saying why.
+        throw std::runtime_error("a pool-share trustline has no asset: its pool is getLiquidityPoolId()");
     } else {
         KeyPair* issuer = KeyPair::fromAccountId(m_assetIssuer);
         m_asset =Asset::createNonNativeAsset(m_assetCode, issuer);

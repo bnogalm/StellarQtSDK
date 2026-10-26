@@ -31,7 +31,7 @@ private slots:
             "\"id\":\"GA5...\",\"account_id\":\"GA5...\",\"sequence\":\"1\","
             "\"subentry_count\":0,"
             "\"thresholds\":{\"low_threshold\":0,\"med_threshold\":0,\"high_threshold\":0},"
-            "\"flags\":{\"auth_required\":false,\"auth_revocable\":false,\"auth_immutable\":false},"
+            "\"flags\":{\"auth_clawback_enabled\":false,\"auth_required\":false,\"auth_revocable\":false,\"auth_immutable\":false},"
             "\"balances\":[{"
                 "\"asset_type\":\"liquidity_pool_shares\","
                 "\"liquidity_pool_id\":\"abc1234\","
@@ -46,7 +46,7 @@ private slots:
             "\"num_sponsoring\":0,"
             "\"num_sponsored\":0,"
             "\"paging_token\":\"GA5...\","
-            "\"_links\":{}"
+            "\"_links\":{\"self\":{\"href\":\"https://horizon-testnet.stellar.org/accounts/GA5...\"},\"transactions\":{\"href\":\"https://horizon-testnet.stellar.org/accounts/GA5.../transactions{?cursor,limit,order}\",\"templated\":true},\"operations\":{\"href\":\"https://horizon-testnet.stellar.org/accounts/GA5.../operations{?cursor,limit,order}\",\"templated\":true},\"effects\":{\"href\":\"https://horizon-testnet.stellar.org/accounts/GA5.../effects{?cursor,limit,order}\",\"templated\":true},\"offers\":{\"href\":\"https://horizon-testnet.stellar.org/accounts/GA5.../offers{?cursor,limit,order}\",\"templated\":true}}"
         "}";
         AccountResponse r;
         r.loadFromJson(json);
@@ -59,7 +59,7 @@ private slots:
 
     void testLedgerTxSetOperationCount()
     {
-        QByteArray json = "{"
+        QByteArray json = "{\"_links\":{\"self\":{\"href\":\"https://horizon-testnet.stellar.org/ledgers/1\"},\"transactions\":{\"href\":\"https://horizon-testnet.stellar.org/ledgers/1/transactions{?cursor,limit,order}\",\"templated\":true},\"operations\":{\"href\":\"https://horizon-testnet.stellar.org/ledgers/1/operations{?cursor,limit,order}\",\"templated\":true},\"payments\":{\"href\":\"https://horizon-testnet.stellar.org/ledgers/1/payments{?cursor,limit,order}\",\"templated\":true},\"effects\":{\"href\":\"https://horizon-testnet.stellar.org/ledgers/1/effects{?cursor,limit,order}\",\"templated\":true}},"
             "\"id\":\"1\",\"paging_token\":\"1\",\"hash\":\"h\",\"prev_hash\":\"\","
             "\"sequence\":1,"
             "\"transaction_count\":3,"
@@ -84,7 +84,7 @@ private slots:
     {
         // Use a concrete OperationResponse subclass — the `sponsor` field is
         // declared on the base, so any subclass surfaces it.
-        QByteArray json = "{"
+        QByteArray json = "{\"_links\":{\"self\":{\"href\":\"https://horizon-testnet.stellar.org/operations/100\"},\"transaction\":{\"href\":\"https://horizon-testnet.stellar.org/transactions/deadbeef\"},\"effects\":{\"href\":\"https://horizon-testnet.stellar.org/operations/100/effects\"},\"succeeds\":{\"href\":\"https://horizon-testnet.stellar.org/effects?order=desc&cursor=100\"},\"precedes\":{\"href\":\"https://horizon-testnet.stellar.org/effects?order=asc&cursor=100\"}},"
             "\"id\":\"100\",\"paging_token\":\"100\","
             "\"transaction_successful\":true,"
             "\"source_account\":\"GA5...\","
@@ -103,7 +103,7 @@ private slots:
 
     void testEffectAccountMuxed()
     {
-        QByteArray json = "{"
+        QByteArray json = "{\"_links\":{\"operation\":{\"href\":\"https://horizon-testnet.stellar.org/operations/1\"},\"succeeds\":{\"href\":\"https://horizon-testnet.stellar.org/effects?order=desc&cursor=1\"},\"precedes\":{\"href\":\"https://horizon-testnet.stellar.org/effects?order=asc&cursor=1\"}},"
             "\"id\":\"0001\",\"paging_token\":\"1\","
             "\"account\":\"GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN\","
             "\"account_muxed\":\"MA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KAAAAAAAAAAB6IT4Y\","

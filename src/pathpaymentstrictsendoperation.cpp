@@ -40,11 +40,11 @@ PathPaymentStrictSendOperation::PathPaymentStrictSendOperation(Asset *sendAsset,
     checkArgument(path.size() <= 5, "The maximum number of assets in the path is 5");
 
     m_op.sendAsset = sendAsset->toXdr();
-    m_op.sendAmount = Operation::toXdrAmount(sendAmount);
+    m_op.sendAmount = Operation::toXdrAmountPositive(sendAmount);
     m_op.destination = StrKey::encodeToXDRMuxedAccount(checkNotNull(destination, "destination cannot be null"));
 
     m_op.destAsset = destAsset->toXdr();
-    m_op.destMin = Operation::toXdrAmount(destMin);
+    m_op.destMin = Operation::toXdrAmountPositive(destMin);
     for(int i=0;i<path.size();i++){
         m_op.path.append(path[i]->toXdr());
     }

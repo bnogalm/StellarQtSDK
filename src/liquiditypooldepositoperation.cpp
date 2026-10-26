@@ -15,12 +15,20 @@ LiquidityPoolDepositOperation::LiquidityPoolDepositOperation(
         throw std::runtime_error("LiquidityPoolID must be exactly 32 bytes");
     }
     std::memcpy(m_op.liquidityPoolID, liquidityPoolID.constData(), 32);
-    m_op.maxAmountA = Operation::toXdrAmount(maxAmountA);
-    m_op.maxAmountB = Operation::toXdrAmount(maxAmountB);
-    m_op.minPrice.n = minPrice.getNumerator();
-    m_op.minPrice.d = minPrice.getDenominator();
-    m_op.maxPrice.n = maxPrice.getNumerator();
-    m_op.maxPrice.d = maxPrice.getDenominator();
+    m_op.maxAmountA = Operation::toXdrAmountNonNegative(maxAmountA);
+    m_op.maxAmountB = Operation::toXdrAmountNonNegative(maxAmountB);
+    // Core refuses all of these as LIQUIDITY_POOL_DEPOSIT_MALFORMED; they
+    // used to be signed anyway ("0", or a default Price(), which is 0/0).
+    if (m_op.maxAmountA <= 0)
+        throw std::runtime_error("maxAmountA must be positive");
+    if (m_op.maxAmountB <= 0)
+        throw std::runtime_error("maxAmountB must be positive");
+    m_op.minPrice = minPrice.requirePositive("minPrice").toXdr();
+    m_op.maxPrice = maxPrice.requirePositive("maxPrice").toXdr();
+    // Core's own comparison; 64-bit, so the products cannot overflow.
+    if (static_cast<qint64>(m_op.minPrice.n) * m_op.maxPrice.d
+            > static_cast<qint64>(m_op.minPrice.d) * m_op.maxPrice.n)
+        throw std::runtime_error("minPrice must not be greater than maxPrice");
 }
 
 LiquidityPoolDepositOperation::LiquidityPoolDepositOperation(const stellar::LiquidityPoolDepositOp& op)

@@ -1,30 +1,31 @@
 #include "gettransactionsresponse.h"
-#include "qtcompat.h"
+#include "gethealthresponse.h"
 
 #include <QJsonArray>
 
 QSTELLAR_BEGIN_NS
 
 
-namespace {
-quint32 readU32(const QJsonObject& o, const QString& k) {
-    QJsonValue v = o.value(k);
-    return v.isString() ? v.toString().toUInt()
-                        : static_cast<quint32>(jsonToInt64(v));
-}
-}
-
 GetTransactionsResponse GetTransactionsResponse::fromJson(const QJsonObject& r)
 {
+    // Each field as the RPC sends it, or the answer is refused. The page's
+    // close times come as latestLedgerCloseTimestamp and
+    // oldestLedgerCloseTimestamp (JSON integers): they used to be looked for
+    // as latestLedgerCloseTime and oldestLedgerCloseTime, so every real answer
+    // gave them empty. A missing or non-numeric ledger number read as 0.
+    const sorobanrpcdetail::RpcFields fields(r, QStringLiteral("getTransactions"));
     GetTransactionsResponse out;
-    for (const QJsonValue& v : r.value("transactions").toArray()) {
-        out.m_transactions.append(GetTransactionResponse::fromJson(v.toObject()));
+    const QString transactionsKey = QStringLiteral("transactions");
+    const QJsonArray transactions = fields.array(transactionsKey);
+    for (int i = 0; i < transactions.size(); ++i) {
+        out.m_transactions.append(GetTransactionResponse::read(
+            fields.element(transactionsKey, transactions, i), false));
     }
-    out.m_latestLedger          = readU32(r, "latestLedger");
-    out.m_latestLedgerCloseTime = r.value("latestLedgerCloseTime").toString();
-    out.m_oldestLedger          = readU32(r, "oldestLedger");
-    out.m_oldestLedgerCloseTime = r.value("oldestLedgerCloseTime").toString();
-    out.m_cursor                = r.value("cursor").toString();
+    out.m_latestLedger          = fields.uint32(QStringLiteral("latestLedger"));
+    out.m_latestLedgerCloseTime = fields.int64Text(QStringLiteral("latestLedgerCloseTimestamp"));
+    out.m_oldestLedger          = fields.uint32(QStringLiteral("oldestLedger"));
+    out.m_oldestLedgerCloseTime = fields.int64Text(QStringLiteral("oldestLedgerCloseTimestamp"));
+    out.m_cursor                = fields.string(QStringLiteral("cursor"));
     return out;
 }
 QSTELLAR_END_NS

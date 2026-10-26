@@ -3,8 +3,10 @@
 #include <cstring>
 #include <stdexcept>
 #include <algorithm>
+#include <vector>
 
 #include "../stellaraddress.h"
+#include "../util.h"
 
 QSTELLAR_BEGIN_NS
 
@@ -147,7 +149,12 @@ QByteArray Scv::fromBytes(const stellar::SCVal& v)
 
 stellar::SCVal Scv::toString(const QString& s)
 {
-    return toString(s.toUtf8());
+    // Text UTF-8 cannot hold as given (an unpaired surrogate) is refused: it
+    // was signed with the surrogate dropped on Qt 6 and as '?' on Qt 5.
+    const QByteArray utf8 = s.toUtf8();
+    if (Util::hasUnpairedSurrogate(s))
+        throw std::runtime_error("string is not valid Unicode (an unpaired surrogate?)");
+    return toString(utf8);
 }
 
 stellar::SCVal Scv::toString(const QByteArray& raw)
@@ -170,6 +177,12 @@ stellar::SCVal Scv::toSymbol(const QString& s)
     if (utf8.size() > 32) {
         throw std::runtime_error("SCSymbol exceeds 32 bytes");
     }
+    // The host accepts only [a-zA-Z0-9_]; anything else would be signed and
+    // then fail on chain, fee paid.
+    for (const char c : utf8) {
+        if (!((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '_'))
+            throw std::runtime_error("a symbol may contain only a-z, A-Z, 0-9 and _");
+    }
     stellar::SCVal v;
     v.type = stellar::SCValType::SCV_SYMBOL;
     v.symbol = utf8;
@@ -190,6 +203,10 @@ namespace {
 // byte for sign-extension (0xFF when the top bit of the input is set).
 QByteArray padToBigEndian(const QByteArray& in, int target, bool signed_)
 {
+    // No bytes is not zero: it is what a failed QByteArray::fromHex gives, and
+    // it used to become a zero amount.
+    if (in.isEmpty())
+        throw std::runtime_error("a 128/256-bit integer needs at least one byte");
     if (in.size() == target) return in;
     if (in.size() > target) {
         // Accept a leading 0 byte (or 0xFF for signed-extension cases) so
@@ -271,6 +288,11 @@ stellar::SCVal Scv::toUint128(const QByteArray& bigEndian16)
     return v;
 }
 
+stellar::SCVal Scv::toUint128(quint64 n)
+{
+    return toUint128Parts(quint64(0), n);
+}
+
 stellar::SCVal Scv::toUint128Parts(quint64 hi, quint64 lo)
 {
     stellar::SCVal v;
@@ -296,6 +318,12 @@ stellar::SCVal Scv::toInt128(const QByteArray& bigEndian16)
     v.i128.hi = static_cast<qint64>(hi);
     v.i128.lo = lo;
     return v;
+}
+
+stellar::SCVal Scv::toInt128(qint64 n)
+{
+    // Sign-extended: -100 is hi = -1, lo = 2^64 - 100, the bytes js encodes.
+    return toInt128Parts(n < 0 ? qint64(-1) : qint64(0), static_cast<quint64>(n));
 }
 
 stellar::SCVal Scv::toInt128Parts(qint64 hi, quint64 lo)
@@ -349,28 +377,195 @@ QByteArray Scv::fromInt256(const stellar::SCVal& v)
                      v.i256.hiLo, v.i256.loHi, v.i256.loLo);
 }
 
+QString Scv::decimalText(const stellar::SCVal& v)
+{
+    QByteArray be;
+    bool isSigned = false;
+    switch (v.type) {
+    case stellar::SCValType::SCV_U128: be = fromUint128(v); break;
+    case stellar::SCValType::SCV_I128: be = fromInt128(v); isSigned = true; break;
+    case stellar::SCValType::SCV_U256: be = fromUint256(v); break;
+    case stellar::SCValType::SCV_I256: be = fromInt256(v); isSigned = true; break;
+    default:
+        throw std::runtime_error("decimalText takes a 128- or 256-bit integer");
+    }
+    unsigned char* bytes = reinterpret_cast<unsigned char*>(be.data());
+    const int size = static_cast<int>(be.size());
+    const bool negative = isSigned && (bytes[0] & 0x80);
+    if (negative) {
+        // Two's-complement magnitude: invert and add one. The minimum comes
+        // back as itself, 2^127 or 2^255, which read unsigned is right.
+        for (int i = 0; i < size; ++i) bytes[i] = static_cast<unsigned char>(~bytes[i]);
+        for (int i = size - 1; i >= 0; --i) { if (++bytes[i] != 0) break; }
+    }
+    // Big-endian 32-bit words, divided by 10^9 until nothing is left; each
+    // remainder is nine digits of the answer, least significant first.
+    std::vector<quint32> words(static_cast<size_t>(size / 4), 0);
+    for (int i = 0; i < size; ++i)
+        words[static_cast<size_t>(i / 4)] = (words[static_cast<size_t>(i / 4)] << 8) | bytes[i];
+    std::vector<quint32> chunks;
+    for (;;) {
+        bool zero = true;
+        quint64 rem = 0;
+        for (quint32& w : words) {
+            const quint64 cur = (rem << 32) | w;
+            w = static_cast<quint32>(cur / 1000000000u);
+            rem = cur % 1000000000u;
+            zero = zero && w == 0;
+        }
+        chunks.push_back(static_cast<quint32>(rem));
+        if (zero) break;
+    }
+    QString out = negative ? QStringLiteral("-") : QString();
+    out += QString::number(chunks.back());
+    for (size_t i = chunks.size() - 1; i-- > 0;)
+        out += QStringLiteral("%1").arg(chunks[i], 9, 10, QLatin1Char('0'));
+    return out;
+}
+
 // ─── Vec / Map / comparator ──────────────────────────────────────────
 
 namespace {
 
-QByteArray serializeScVal(const stellar::SCVal& v)
+template <typename T>
+int threeWay(const T& a, const T& b)
 {
-    QByteArray bytes;
-    QDataStream s(&bytes, QIODevice::WriteOnly);
-    s << v;
-    return bytes;
+    return (b < a) - (a < b);
+}
+
+/** Raw bytes, lexicographically: a prefix sorts first (Rust's Ord on Vec<u8>). */
+int compareBytes(const QByteArray& a, const QByteArray& b)
+{
+    const int common = static_cast<int>(std::min(a.size(), b.size()));
+    const int c = common ? std::memcmp(a.constData(), b.constData(), static_cast<size_t>(common)) : 0;
+    if (c != 0) return c < 0 ? -1 : 1;
+    return threeWay(a.size(), b.size());
+}
+
+/** For the fixed-size unsigned encodings (addresses, errors, hashes) the XDR
+ *  bytes are already in Ord order: the arm first, then the fields in order.
+ *  Checked: a value with no encoding (an SCError of no known type) writes
+ *  nothing, and unchecked, every such value compared equal to every other,
+ *  so a map took two different ones for one duplicate key. */
+template <typename T>
+QByteArray encoded(const T& v)
+{
+    return xdr::encodeOrThrow(v, "the SCVal being compared");
+}
+
+/** An XDR optional (Rust's Option): absent before present. */
+template <typename T, typename Compare>
+int compareOptional(const T* a, const T* b, Compare compareValue)
+{
+    if (!a || !b) return threeWay(a != nullptr, b != nullptr);
+    return compareValue(*a, *b);
+}
+
+int compareVec(const QList<stellar::SCVal>& a, const QList<stellar::SCVal>& b)
+{
+    const int common = static_cast<int>(std::min(a.size(), b.size()));
+    for (int i = 0; i < common; ++i) {
+        const int c = Scv::compare(a.at(i), b.at(i));
+        if (c != 0) return c;
+    }
+    return threeWay(a.size(), b.size());
+}
+
+int compareEntries(const QList<stellar::SCMapEntry>& a, const QList<stellar::SCMapEntry>& b)
+{
+    const int common = static_cast<int>(std::min(a.size(), b.size()));
+    for (int i = 0; i < common; ++i) {
+        int c = Scv::compare(a.at(i).key, b.at(i).key);
+        if (c == 0) c = Scv::compare(a.at(i).val, b.at(i).val);
+        if (c != 0) return c;
+    }
+    return threeWay(a.size(), b.size());
+}
+
+/** Contract-instance storage: an optional map, held as an SCV_MAP when present. */
+int compareStorage(const stellar::SCVal& a, const stellar::SCVal& b)
+{
+    const QList<stellar::SCMapEntry> none;
+    return compareEntries(a.map ? *a.map : none, b.map ? *b.map : none);
+}
+
+int compareExecutable(const stellar::ContractExecutable& a, const stellar::ContractExecutable& b)
+{
+    const int c = threeWay(static_cast<qint32>(a.type), static_cast<qint32>(b.type));
+    if (c != 0) return c;
+    switch (a.type) {
+    case stellar::ContractExecutableType::CONTRACT_EXECUTABLE_WASM: {
+        const int h = std::memcmp(a.wasmHash, b.wasmHash, sizeof a.wasmHash);
+        return (h > 0) - (h < 0);
+    }
+    case stellar::ContractExecutableType::CONTRACT_EXECUTABLE_EXTERNAL_REF: {
+        const int owner = compareBytes(encoded(a.externalRef.executableOwner),
+                                       encoded(b.externalRef.executableOwner));
+        return owner != 0 ? owner : compareBytes(a.externalRef.tag, b.externalRef.tag);
+    }
+    default:
+        return 0;
+    }
 }
 
 } // namespace
 
 int Scv::compare(const stellar::SCVal& a, const stellar::SCVal& b)
 {
-    const QByteArray ab = serializeScVal(a);
-    const QByteArray bb = serializeScVal(b);
-    const int c = std::memcmp(ab.constData(), bb.constData(),
-                              std::min(ab.size(), bb.size()));
-    if (c != 0) return c;
-    return ab.size() - bb.size();
+    using T = stellar::SCValType;
+    if (a.type != b.type)
+        return threeWay(static_cast<qint32>(a.type), static_cast<qint32>(b.type));
+    switch (a.type) {
+    case T::SCV_VOID:
+    case T::SCV_LEDGER_KEY_CONTRACT_INSTANCE:
+        return 0;
+    case T::SCV_BOOL:      return threeWay(a.b, b.b);
+    case T::SCV_U32:       return threeWay(a.u32, b.u32);
+    case T::SCV_I32:       return threeWay(a.i32, b.i32);
+    case T::SCV_U64:       return threeWay(a.u64, b.u64);
+    case T::SCV_I64:       return threeWay(a.i64, b.i64);
+    case T::SCV_TIMEPOINT: return threeWay(a.timepoint, b.timepoint);
+    case T::SCV_DURATION:  return threeWay(a.duration, b.duration);
+    case T::SCV_LEDGER_KEY_NONCE: return threeWay(a.nonceKey.nonce, b.nonceKey.nonce);
+    // Wide integers compare as tuples of their words, only the top one signed.
+    case T::SCV_U128: {
+        const int c = threeWay(a.u128.hi, b.u128.hi);
+        return c != 0 ? c : threeWay(a.u128.lo, b.u128.lo);
+    }
+    case T::SCV_I128: {
+        const int c = threeWay(a.i128.hi, b.i128.hi);
+        return c != 0 ? c : threeWay(a.i128.lo, b.i128.lo);
+    }
+    case T::SCV_U256: {
+        const quint64 x[4] = {a.u256.hiHi, a.u256.hiLo, a.u256.loHi, a.u256.loLo};
+        const quint64 y[4] = {b.u256.hiHi, b.u256.hiLo, b.u256.loHi, b.u256.loLo};
+        return std::lexicographical_compare(x, x + 4, y, y + 4) ? -1
+             : std::lexicographical_compare(y, y + 4, x, x + 4) ? 1 : 0;
+    }
+    case T::SCV_I256: {
+        const int c = threeWay(a.i256.hiHi, b.i256.hiHi);
+        if (c != 0) return c;
+        const quint64 x[3] = {a.i256.hiLo, a.i256.loHi, a.i256.loLo};
+        const quint64 y[3] = {b.i256.hiLo, b.i256.loHi, b.i256.loLo};
+        return std::lexicographical_compare(x, x + 3, y, y + 3) ? -1
+             : std::lexicographical_compare(y, y + 3, x, x + 3) ? 1 : 0;
+    }
+    case T::SCV_BYTES:   return compareBytes(a.bytes, b.bytes);
+    case T::SCV_STRING:  return compareBytes(a.str, b.str);
+    case T::SCV_SYMBOL:  return compareBytes(a.symbol, b.symbol);
+    case T::SCV_EXECUTABLE_TAG: return compareBytes(a.executableTag, b.executableTag);
+    case T::SCV_VEC:     return compareOptional(a.vec.data(), b.vec.data(), compareVec);
+    case T::SCV_MAP:     return compareOptional(a.map.data(), b.map.data(), compareEntries);
+    case T::SCV_ADDRESS: return compareBytes(encoded(a.address), encoded(b.address));
+    case T::SCV_ERROR:   return compareBytes(encoded(a.error), encoded(b.error));
+    case T::SCV_CONTRACT_INSTANCE:
+        return compareOptional(a.instance.data(), b.instance.data(),
+                               [](const stellar::SCContractInstance& x, const stellar::SCContractInstance& y) {
+            const int e = compareExecutable(x.executable, y.executable);
+            return e != 0 ? e : compareOptional(x.storage.data(), y.storage.data(), compareStorage);
+        });
+    }
+    throw std::runtime_error("SCVal compare: unknown type");
 }
 
 stellar::SCVal Scv::toVec(const QList<stellar::SCVal>& elements)
@@ -389,9 +584,9 @@ QList<stellar::SCVal> Scv::fromVec(const stellar::SCVal& v)
 
 stellar::SCVal Scv::toMap(const QList<stellar::SCMapEntry>& entries)
 {
-    // Canonicalize: sort entries by key in XDR-byte ascending order. This
-    // matches the ordering Soroban core uses to compare maps, so two
-    // semantically-equal SCMaps serialize byte-identical.
+    // The host refuses an SCMap whose keys are not strictly ascending in its
+    // own order, which compare() implements. compare() is 0 exactly when two
+    // keys encode to the same XDR, so it also finds the duplicates.
     QList<stellar::SCMapEntry> sorted = entries;
     std::sort(sorted.begin(), sorted.end(),
               [](const stellar::SCMapEntry& l, const stellar::SCMapEntry& r) {
@@ -533,9 +728,16 @@ stellar::SCVal Scv::toError(stellar::SCErrorType type, quint32 contractCodeOrEnu
     stellar::SCVal v;
     v.type = stellar::SCValType::SCV_ERROR;
     v.error.type = type;
+    // Only what the XDR can carry. A type above SCE_AUTH, or a code outside
+    // SCErrorCode, built a value that was signed although js-stellar-sdk and
+    // Core cannot decode it; it is refused here, where it is built.
+    if (!stellar::isKnownSCErrorType(type))
+        throw std::runtime_error("SCError: no such error type");
     if (type == stellar::SCErrorType::SCE_CONTRACT) {
         v.error.contractCode = contractCodeOrEnum;
     } else {
+        if (contractCodeOrEnum > static_cast<quint32>(stellar::SCErrorCode::SCEC_UNEXPECTED_SIZE))
+            throw std::runtime_error("SCError: no such error code");
         v.error.code = static_cast<stellar::SCErrorCode>(contractCodeOrEnum);
     }
     return v;

@@ -32,7 +32,7 @@ ManageBuyOfferOperation::ManageBuyOfferOperation(Asset *selling, Asset *buying, 
     m_op.selling = selling->toXdr();
     m_op.buying = buying->toXdr();
     m_op.price = Price(price).toXdr();
-    m_op.buyAmount = Operation::toXdrAmount(amount);
+    m_op.buyAmount = Operation::toXdrAmountNonNegative(amount);
     // offerId can be null
     m_op.offerID = offerId;
 }
@@ -45,8 +45,10 @@ ManageBuyOfferOperation::ManageBuyOfferOperation(Asset *selling, Asset *buying, 
     checkNotNull(amount, "amount cannot be null");
     m_op.selling = selling->toXdr();
     m_op.buying = buying->toXdr();
-    m_op.price = price.toXdr();   // exact fraction, no Price(QString) detour
-    m_op.buyAmount = Operation::toXdrAmount(amount);
+    // Exact fraction, no Price(QString) detour. Nonpositive terms (a default
+    // Price() is 0/0) used to be signed into an offer Core refuses.
+    m_op.price = price.requirePositive().toXdr();
+    m_op.buyAmount = Operation::toXdrAmountNonNegative(amount);
     // offerId can be null
     m_op.offerID = offerId;
 }

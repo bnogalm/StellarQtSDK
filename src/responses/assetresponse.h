@@ -61,14 +61,24 @@ class Flags {
     Q_GADGET
     Q_PROPERTY(bool auth_required MEMBER m_authRequired)
     Q_PROPERTY(bool auth_revocable MEMBER m_authRevocable)
+    Q_PROPERTY(bool auth_immutable MEMBER m_authImmutable)
+    Q_PROPERTY(bool auth_clawback_enabled MEMBER m_authClawbackEnabled)
     bool m_authRequired;
     bool m_authRevocable;
+    bool m_authImmutable = false;
+    bool m_authClawbackEnabled = false;
 public:
     Flags();
 
     bool isAuthRequired();
 
     bool isAuthRevocable();
+
+    /** The issuer's flags can never change again. */
+    bool isAuthImmutable() const { return m_authImmutable; }
+
+    /** The issuer can claw back balances of this asset. */
+    bool isAuthClawbackEnabled() const { return m_authClawbackEnabled; }
     bool operator ==(const Flags& t) const;
     bool operator !=(const Flags& t) const;
 };
@@ -154,8 +164,14 @@ public:
 
     QString getPagingToken() const;
 
+    /**
+     * "amount" and "num_accounts": Horizon no longer sends them (current
+     * Horizon leaves both out), so they read "" and 0. Use
+     * getBalances().authorized() and getAccounts().authorized().
+     */
     QString getAmount() const;
 
+    /** See getAmount(). */
     int getNumAccounts() const;
 
     AssetResponseAttach::Accounts getAccounts() const;

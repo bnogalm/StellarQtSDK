@@ -68,6 +68,39 @@ private slots:
         QCOMPARE(back.toString(), m);
     }
 
+    /**
+     * G, C and M addresses, against js-stellar-sdk 17.1.0 new Address(s)
+     * .toScVal() and scValToNative (py stellar_sdk 14.1.0 scval.to_address /
+     * from_address give the same bytes and strkeys). The muxed arm writes its
+     * 64-bit id before the key.
+     */
+    void testAddressesMatchJsAddressToScVal()
+    {
+        struct Row { const char* strkey; const char* jsXdr; };
+        const Row rows[] = {
+            { "GA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJVSGZ",
+              "0000001200000000000000003f0c34bf93ad0d9971d04ccc90f705511c838aad9734a4a2fb0d7a03fc7fe89a" },
+            { "CA3D5KRYM6CB7OWQ6TWYRR3Z4T7GNZLKERYNZGGA5SOAOPIFY6YQGAXE",
+              "0000001200000001363eaa3867841fbad0f4ed88c779e4fe66e56a2470dc98c0ec9c073d05c7b103" },
+            { "MA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJVAAAAAAAAAAAAAJLK",
+              "000000120000000280000000000000003f0c34bf93ad0d9971d04ccc90f705511c838aad9734a4a2fb0d7a03fc7fe89a" },
+        };
+        for (const Row& row : rows) {
+            const QString strkey = QString::fromLatin1(row.strkey);
+            QByteArray written;
+            { QDataStream s(&written, QIODevice::WriteOnly); s << Scv::toAddress(strkey); }
+            QCOMPARE(written.toHex(), QByteArray(row.jsXdr));
+
+            const QByteArray jsBytes = QByteArray::fromHex(row.jsXdr);
+            stellar::SCVal decoded;
+            QDataStream in(jsBytes);
+            in >> decoded;
+            QCOMPARE(in.status(), QDataStream::Ok);
+            QVERIFY(in.atEnd());
+            QCOMPARE(Scv::fromAddress(decoded).toString(), strkey);
+        }
+    }
+
     /** The muxed arm is `struct MuxedEd25519Account { uint64 id; uint256
      *  ed25519; }` — id FIRST. The SDK used to emit the SEP-23 strkey order
      *  (ed25519 then id); writer and reader were reversed together, so
@@ -239,6 +272,70 @@ private slots:
                  static_cast<int>(stellar::SCErrorCode::SCEC_EXCEEDED_LIMIT));
     }
 
+    /**
+     * stellar-xdr's SCError has an arm for SCE_CONTRACT (any uint32) and one
+     * for each of the nine other types (an SCErrorCode), and no default. A
+     * type above SCE_AUTH, or a code outside SCErrorCode, was written and read
+     * back with the stream Ok, so it passed the byte-exact re-encode check and
+     * was signed, although js-stellar-sdk 17.1.0 refuses each of the four
+     * below ("unknown enum value") and so does Core. Now nothing is written,
+     * the reader throws and toError() refuses to build one.
+     */
+    void testErrorWithNoArmIsRefused()
+    {
+        const auto decodes = [](const char* hex) {
+            stellar::SCVal v;
+            QDataStream in(QByteArray::fromHex(hex));
+            try { in >> v; } catch (const std::runtime_error&) { return false; }
+            return in.status() == QDataStream::Ok && in.atEnd();
+        };
+        const auto write = [](const stellar::SCVal& v, QByteArray* bytes) {
+            QDataStream out(bytes, QIODevice::WriteOnly);
+            out << v;
+            return out.status();
+        };
+
+        // The edges of what the XDR allows, each decoded by js-stellar-sdk.
+        QVERIFY(decodes("00000002" "00000000" "ffffffff"));   // SCE_CONTRACT, 2^32-1
+        QVERIFY(decodes("00000002" "00000001" "00000000"));   // SCE_WASM_VM, SCEC_ARITH_DOMAIN
+        QVERIFY(decodes("00000002" "00000009" "00000009"));   // SCE_AUTH, SCEC_UNEXPECTED_SIZE
+        // What it does not.
+        QVERIFY(!decodes("00000002" "0000000a" "00000005"));  // type 10
+        QVERIFY(!decodes("00000002" "ffffffff" "00000000"));  // type -1
+        QVERIFY(!decodes("00000002" "00000007" "0000000a"));  // SCE_BUDGET, code 10
+        QVERIFY(!decodes("00000002" "00000007" "ffffffff"));  // SCE_BUDGET, code -1
+
+        stellar::SCVal badType;
+        badType.type = stellar::SCValType::SCV_ERROR;
+        badType.error.type = static_cast<stellar::SCErrorType>(10);
+        stellar::SCVal badCode;
+        badCode.type = stellar::SCValType::SCV_ERROR;
+        badCode.error.type = stellar::SCErrorType::SCE_BUDGET;
+        badCode.error.code = static_cast<stellar::SCErrorCode>(10);
+        for (const stellar::SCVal& bad : { badType, badCode }) {
+            QByteArray bytes;
+            QVERIFY(write(bad, &bytes) == QDataStream::WriteFailed);
+            QVERIFY(bytes.isEmpty());      // not even the SCV_ERROR discriminant
+            QByteArray nested;
+            QVERIFY(write(Scv::toVec({ bad }), &nested) == QDataStream::WriteFailed);
+            QVERIFY_EXCEPTION_THROWN(xdr::encodeOrThrow(Scv::toVec({ bad }), "the value"),
+                                     std::runtime_error);
+            // Map keys are ordered by their bytes: two of these were "equal".
+            QVERIFY_EXCEPTION_THROWN(Scv::compare(bad, bad), std::runtime_error);
+        }
+
+        QVERIFY_EXCEPTION_THROWN(Scv::toError(static_cast<stellar::SCErrorType>(10), 0),
+                                 std::runtime_error);
+        QVERIFY_EXCEPTION_THROWN(Scv::toError(stellar::SCErrorType::SCE_BUDGET, 10),
+                                 std::runtime_error);
+        QVERIFY_EXCEPTION_THROWN(Scv::toError(stellar::SCErrorType::SCE_BUDGET, 0xffffffffu),
+                                 std::runtime_error);
+        // A contract's own code is any uint32.
+        QCOMPARE(Scv::fromError(roundtripXdr(
+                     Scv::toError(stellar::SCErrorType::SCE_CONTRACT, 0xffffffffu))).contractCode,
+                 0xffffffffu);
+    }
+
     // ─── NonceKey / LedgerKeyContractInstance ────────────────────────
 
     void testNonceKeyRoundTrip()
@@ -407,6 +504,32 @@ private slots:
         bool threw = false;
         try { s >> e; } catch (const std::runtime_error&) { threw = true; }
         QVERIFY(threw);
+    }
+
+    /** The public key inside an ACCOUNT address and the id inside a
+     *  CLAIMABLE_BALANCE one each have a single arm (0). Another used to be
+     *  read as that arm and written back as 0: a different address. */
+    void testUnknownInnerAddressArmIsRefused()
+    {
+        auto decodes = [](qint32 addressType, qint32 innerArm) {
+            QByteArray bytes;
+            {
+                QDataStream s(&bytes, QIODevice::WriteOnly);
+                s << static_cast<qint32>(stellar::SCValType::SCV_ADDRESS) << addressType << innerArm;
+                s.writeRawData(QByteArray(32, '\x5a').constData(), 32);
+            }
+            stellar::SCVal v;
+            QDataStream in(bytes);
+            try { in >> v; } catch (const std::runtime_error&) { return false; }
+            return in.status() == QDataStream::Ok && in.atEnd();
+        };
+        const qint32 account = static_cast<qint32>(stellar::SCAddressType::SC_ADDRESS_TYPE_ACCOUNT);
+        const qint32 balance = static_cast<qint32>(stellar::SCAddressType::SC_ADDRESS_TYPE_CLAIMABLE_BALANCE);
+        QVERIFY(decodes(account, 0));
+        QVERIFY(decodes(balance, 0));
+        QVERIFY(!decodes(account, 1));
+        QVERIFY(!decodes(account, -1));
+        QVERIFY(!decodes(balance, 1));
     }
 };
 

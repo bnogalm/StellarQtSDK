@@ -97,7 +97,15 @@ Memo *TransactionResponse::getMemo()
 {
     if(!m_memo)
     {
-        m_memo = Memo::parse(m_memoType,m_memoData);
+        // A text memo from its bytes when Horizon sends them (memo_bytes):
+        // "memo" is text, and a memo that is not UTF-8 arrives there with
+        // U+FFFD for the bytes it cannot hold, so two different memos read
+        // the same. Base64 checked when the response was read.
+        if (m_memoType == QLatin1String("text") && !m_memoBytes.isEmpty())
+            m_memo = MemoText::fromBytes(QByteArray::fromBase64Encoding(
+                m_memoBytes.toLatin1(), QByteArray::AbortOnBase64DecodingErrors).decoded);
+        else
+            m_memo = Memo::parse(m_memoType,m_memoData);
     }
     return m_memo;
 }

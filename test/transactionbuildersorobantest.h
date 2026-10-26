@@ -14,6 +14,8 @@
 #include "../src/invokehostfunctionoperation.h"
 #include "../src/restorefootprintoperation.h"
 #include "../src/extendfootprintttloperation.h"
+#include "../src/feebumptransactionbuilder.h"
+#include "../src/feebumptransaction.h"
 #include "../src/scval/scv.h"
 #include "../src/stellaraddress.h"
 #include "../src/strkey.h"
@@ -61,6 +63,66 @@ private slots:
         // baseFee(100) * numOps(1) + resourceFee(50'000) = 50'100
         QCOMPARE(tx->getFee(), qint64(50'100));
 
+        delete acc;
+    }
+
+    /**
+     * The footprint operations live in a union whose members nobody
+     * constructed, so their ExtensionPoint was four bytes of leftover memory:
+     * an invalid ext on the wire and a hash that changed from run to run.
+     * Encoded many times over so leftover garbage has every chance to show.
+     */
+    void testFootprintOperationsCarryAZeroExt()
+    {
+        for (int i = 0; i < 20; ++i) {
+            AccountConverter conv;
+            QScopedPointer<Operation> extend(ExtendFootprintTTLOperation::create(7));
+            QByteArray bytes;
+            {
+                QDataStream s(&bytes, QIODevice::WriteOnly);
+                s << extend->toXdr(conv);
+            }
+            QCOMPARE(bytes.toHex(), QByteArray("00000000" "00000019" "00000000" "00000007"));
+
+            QScopedPointer<Operation> restore(RestoreFootprintOperation::create());
+            QByteArray restoreBytes;
+            {
+                QDataStream s(&restoreBytes, QIODevice::WriteOnly);
+                s << restore->toXdr(conv);
+            }
+            QCOMPARE(restoreBytes.toHex(), QByteArray("00000000" "0000001a" "00000000"));
+        }
+    }
+
+    /**
+     * A fee bump over a Soroban transaction compares the bid against the
+     * inner INCLUSION fee and adds the resource fee back once, as
+     * js-stellar-base does. The resource fee used to be treated as a
+     * per-operation rate: base 200 was refused here, and the smallest bid
+     * accepted was 2,000,200 where 1,000,400 is right.
+     */
+    void testFeeBumpOverASorobanTransactionAddsTheResourceFeeOnce()
+    {
+        KeyPair* signer = sourceKeyPair();
+        Account* acc = new Account(sourceKeyPair(), 50);
+        TransactionBuilder b(acc, Network::testnetNetwork());
+        b.addOperation(makeRestoreOp());
+        b.setBaseFee(100);
+        b.setTimeout(TransactionBuilder::TIMEOUT_INFINITE);
+        b.setSorobanData(makeSorobanData(qint64(1'000'000)));
+        Transaction* inner = b.build();
+        QCOMPARE(inner->getFee(), qint64(1'000'100));
+        inner->sign(signer);
+
+        QScopedPointer<KeyPair> feeAccount(KeyPair::random());
+        QScopedPointer<FeeBumpTransaction> bump(
+            FeeBumpTransactionBuilder(AccountConverter().enableMuxed(), inner)
+                .setFeeAccount(feeAccount->getAccountId())
+                .setBaseFee(200)
+                .build());
+        QCOMPARE(bump->getFee(), qint64(200 * 2 + 1'000'000));
+
+        delete signer;
         delete acc;
     }
 

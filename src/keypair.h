@@ -3,6 +3,7 @@
 
 #include <QtGlobal>
 #include "strkey.h"
+#include "util.h"
 #include "xdr/stellartransaction.h"
 #include "qstellar_namespace.h"
 
@@ -53,18 +54,22 @@ public:
 
 
      /**
-      * <strong>Insecure</strong> Creates a new Stellar KeyPair from a strkey encoded Stellar secret seed.
-      * This method is <u>insecure</u>. Use only if you are aware of security implications.
-      * @see <a href="http://docs.oracle.com/javase/1.5.0/docs/guide/security/jce/JCERefGuide.html#PBEEx" target="_blank">Using Password-Based Encryption</a>
-      * @param seed The strkey encoded Stellar secret seed.
-      * @return {@link KeyPair} You take ownership of the destruction of this object
+      * The keypair of a secret seed in its strkey form (S...), as js's and
+      * py's Keypair.fromSecret / from_secret. Throws std::runtime_error on
+      * anything else, without repeating it.
+      *
+      * The seed is the account: whoever reads it controls the funds. Keep it
+      * out of logs, messages and source code. The SDK wipes the copies it
+      * makes here; a QString it is given cannot be wiped by anyone, so hold
+      * seeds as briefly as possible. You own the returned KeyPair.
       */
      static KeyPair* fromSecretSeed(QString seed);
 
      /**
-      * Creates a new Stellar keypair from a raw 32 byte secret seed.
-      * @param seed The 32 byte secret seed.
-      * @return {@link KeyPair}
+      * The keypair of a raw 32-byte secret seed (not its S... strkey, which
+      * fromSecretSeed(QString) reads; given here, it is refused saying so).
+      * The keypair keeps its own copy: the caller may wipe `seed`. You own
+      * the returned KeyPair.
       */
      static KeyPair *fromSecretSeed(QByteArray seed);
 
@@ -86,25 +91,75 @@ public:
       * Finds the KeyPair for the path m/44'/148'/accountNumber' using the method described in
       * <a href="https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0005.md">SEP-0005</a>.
       *
-      * @param bip39Seed     The output of BIP0039
-      * @param accountNumber The number of the account
+      * @param bip39Seed     The output of BIP0039 (64 bytes); anything outside
+      *                      the 16 to 64 bytes BIP-32 allows throws
+      *                      std::runtime_error
+      * @param accountNumber The number of the account, 0 to 2^31 - 1. As in
+      *                      the Java SDK, a number with the top bit set (a
+      *                      negative int) is taken as already hardened:
+      *                      100 | 0x80000000 is account 100 and -2^31 is
+      *                      account 0. fromMnemonic refuses a negative
+      *                      number, and the path overload an index of 2^31
+      *                      or more.
       * @return KeyPair with secret
       */
      static KeyPair *fromBip39Seed(QByteArray bip39Seed, int accountNumber);
 
      /**
-      * Generates a random Stellar keypair.
-      * DON'T USE IT, just for prototyping or tests
-      * This method is not recomended. You should mix std::random_device values with some other accesible noise.
-      * @return a random Stellar keypair. You take ownership of the destruction of this object
+      * The key at a SLIP-10 `path` of a BIP-39 seed, for another derivation
+      * than SEP-5's m/44'/148'/n' (which fromBip39Seed(seed, n) is): "m"
+      * followed by hardened indexes, each written n' or nH, as in
+      * "m/44'/148'/0'". Ed25519 has hardened children only, so an index
+      * without ' or H is refused rather than silently hardened, as is an
+      * index of 2^31 or more. You own the returned KeyPair.
+      */
+     static KeyPair *fromBip39Seed(QByteArray bip39Seed, const QString& path);
+
+     /**
+      * The account `accountNumber` (m/44'/148'/accountNumber') of a BIP-39
+      * phrase, as py-stellar-sdk's Keypair.from_mnemonic_phrase: the phrase is
+      * checked (every word in the list, 12/15/18/21/24 words, the checksum) and
+      * refused with std::runtime_error otherwise; `passphrase` is the optional
+      * BIP-39 passphrase. A negative `accountNumber` is refused too: it named
+      * another account (-2^31 gave account 0, -1 account 2^31 - 1), and py
+      * derives yet another, non-hardened key for it. You own the returned
+      * KeyPair.
+      */
+     static KeyPair *fromMnemonic(const QString& words, const QString& passphrase = QString(),
+                                  int accountNumber = 0,
+                                  Util::SupportedMnemonicLanguages language = Util::SupportedMnemonicLanguages::EN);
+
+     /**
+      * A new keypair from 32 bytes of the operating system's cryptographically
+      * secure generator (QRandomGenerator::system(): BCryptGenRandom on
+      * Windows, getrandom or /dev/urandom elsewhere), as js's Keypair.random
+      * (tweetnacl's randomBytes) and py's Keypair.random (os.urandom). This
+      * is the way to create an account's key. You own the returned KeyPair.
       */
      static KeyPair* random();
+
      /**
-      * @brief random
-      * @param rand 32 random bytes. rand will be mixed with std::random_device, it should be safer
-      * You should generate a new rand for each account. To generate it you can use any source like sensors or direct human input, but take care about devices without
-      * such sensors.
-      * @return a random Stellar keypair. You take ownership of the destruction of this object
+      * SEP-53: the signature of `message` (64 bytes), as js's
+      * Keypair.signMessage and py's sign_message; text is signed as UTF-8.
+      * Needs the secret seed. See MessageAuth.
+      */
+     QByteArray signMessage(const QByteArray& message);
+     QByteArray signMessage(const QString& message);
+     QByteArray signMessage(const char* message);
+     /**
+      * SEP-53: true when `signature` is this key's over `message`. It is
+      * verify() over SEP-53's hash of the message, so it is false for the
+      * small-order and non-canonical keys and signatures verify() refuses.
+      */
+     bool verifyMessage(const QByteArray& message, const QByteArray& signature) const;
+     bool verifyMessage(const QString& message, const QByteArray& signature) const;
+     bool verifyMessage(const char* message, const QByteArray& signature) const;
+     /**
+      * As random(), with `rand` (exactly 32 bytes) XORed into the system
+      * generator's bytes: for a caller that has entropy of its own to add
+      * (a hardware generator, dice). The result is never weaker than
+      * random(), whatever `rand` holds. Throws on another size. You own the
+      * returned KeyPair.
       */
      static KeyPair* random(QByteArray rand);
 
@@ -156,11 +211,18 @@ public:
      stellar::DecoratedSignature signPayloadDecorated(QByteArray signerPayload);
 
      /**
-      * Verify the provided data and signature match this keypair's public key.
-      * @param data The data that was signed.
-      * @param signature The signature.
-      * @return True if they match, false otherwise.
-      * @throws RuntimeException
+      * True when `signature` is this key's ed25519 signature of `data`;
+      * false otherwise, it does not throw. As stellar-core (libsodium's
+      * crypto_sign_verify_detached) it is false for a signature that is not
+      * exactly 64 bytes, whose S is not below the group order or whose R is
+      * of small order, and for a public key of small order (GAAQ...HV4,
+      * GAAAA...WHF and the rest of libsodium's blocklist) or not canonical
+      * (y >= p, a second account id for one key). With a small-order key
+      * anybody can make a signature that verifies, no secret needed. py
+      * 14.1.0 refuses all of these, and js 17.1.0 too except a small-order
+      * R: there R = the identity with S = h * a (which only the key holder
+      * can make) verifies. Core wins, the network refuses that signature.
+      * SEP-7, SEP-10, SEP-45 and SEP-53 verify through here.
       */
      bool verify(QByteArray data, QByteArray signature);
 

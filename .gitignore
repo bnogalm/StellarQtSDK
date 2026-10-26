@@ -52,3 +52,6 @@ compile_commands.json
 
 # QtCreator local machine specific files for imported projects
 *creator.user*
+
+# Qt Creator / CMake build trees: generated, machine-specific (absolute paths)
+/build/

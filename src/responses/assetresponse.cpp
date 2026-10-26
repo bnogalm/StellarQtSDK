@@ -128,7 +128,9 @@ bool AssetResponseAttach::Flags::isAuthRevocable(){
 bool AssetResponseAttach::Flags::operator ==(const AssetResponseAttach::Flags &t) const
 {
     return m_authRequired == t.m_authRequired
-            && m_authRevocable == t.m_authRevocable;
+            && m_authRevocable == t.m_authRevocable
+            && m_authImmutable == t.m_authImmutable
+            && m_authClawbackEnabled == t.m_authClawbackEnabled;
 }
 
 bool AssetResponseAttach::Flags::operator !=(const AssetResponseAttach::Flags &t) const

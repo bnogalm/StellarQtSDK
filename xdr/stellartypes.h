@@ -64,11 +64,13 @@ namespace stellar
     };
 
     inline QDataStream &operator<<(QDataStream &out, const  PublicKey &obj) {
-        out << obj.type;
         switch(obj.type){
         case PublicKeyType::PUBLIC_KEY_TYPE_ED25519:
-            out << obj.ed25519; break;
-        default: out << obj.ed25519; break;
+            out << obj.type << obj.ed25519; break;
+        // A type with no arm has no key: writing the 32 bytes anyway put
+        // whatever memory held there into a hashed and signed transaction.
+        // Nothing is written, not even the discriminant.
+        default: out.setStatus(QDataStream::WriteFailed); break;
         }
        return out;
     }
@@ -78,6 +80,7 @@ namespace stellar
         switch(obj.type){
         case PublicKeyType::PUBLIC_KEY_TYPE_ED25519:
             in >> obj.ed25519; break;
+        default: in.setStatus(QDataStream::ReadCorruptData); break;
         }
        return in;
     }
@@ -128,20 +131,22 @@ namespace stellar
         }
     };
     inline QDataStream &operator<<(QDataStream &out, const  SignerKey &obj) {
-        out << obj.type;
         switch(obj.type){
         case SignerKeyType::SIGNER_KEY_TYPE_ED25519:
-            out << obj.ed25519; break;
+            out << obj.type << obj.ed25519; break;
         case SignerKeyType::SIGNER_KEY_TYPE_PRE_AUTH_TX:
-            out << obj.preAuthTx; break;
+            out << obj.type << obj.preAuthTx; break;
         case SignerKeyType::SIGNER_KEY_TYPE_HASH_X:
-            out << obj.hashX; break;
+            out << obj.type << obj.hashX; break;
         case SignerKeyType::SIGNER_KEY_TYPE_ED25519_SIGNED_PAYLOAD: {
+            const quint32 n = obj.ed25519SignedPayload.payloadLen;
+            if (n > Ed25519SignedPayload::MAX_PAYLOAD) {   // opaque<64>: there is no longer one
+                out.setStatus(QDataStream::WriteFailed);
+                break;
+            }
+            out << obj.type;
             out << obj.ed25519SignedPayload.ed25519;
             out << obj.ed25519SignedPayload.payloadLen;
-            const quint32 n = obj.ed25519SignedPayload.payloadLen;
-            if (n > Ed25519SignedPayload::MAX_PAYLOAD)
-                throw std::runtime_error("signed payload exceeds 64 bytes");
             out.writeRawData(reinterpret_cast<const char*>(obj.ed25519SignedPayload.payload), n);
             // Pad to multiple of 4 bytes (XDR opaque<> convention).
             quint8 zero[4] = {0,0,0,0};
@@ -149,7 +154,9 @@ namespace stellar
             if (pad) out.writeRawData(reinterpret_cast<const char*>(zero), pad);
             break;
         }
-        default: break;
+        // A type with no arm went out as a bare discriminant, which nothing
+        // can decode. Nothing is written now, and the write fails.
+        default: out.setStatus(QDataStream::WriteFailed); break;
         }
        return out;
     }
@@ -167,18 +174,23 @@ namespace stellar
             in >> obj.ed25519SignedPayload.ed25519;
             in >> obj.ed25519SignedPayload.payloadLen;
             const quint32 n = obj.ed25519SignedPayload.payloadLen;
-            if (n > Ed25519SignedPayload::MAX_PAYLOAD)
-                throw std::runtime_error("signed payload exceeds 64 bytes");
+            if (n > Ed25519SignedPayload::MAX_PAYLOAD) {
+                obj.ed25519SignedPayload.payloadLen = 0;
+                in.setStatus(QDataStream::ReadCorruptData);
+                break;
+            }
             in.readRawData(reinterpret_cast<char*>(obj.ed25519SignedPayload.payload),
                            static_cast<int>(n));
             const quint32 pad = (4 - (n % 4)) % 4;
             if (pad) {
-                quint8 zero[4];
+                quint8 zero[4] = {0,0,0,0};
                 in.readRawData(reinterpret_cast<char*>(zero), static_cast<int>(pad));
+                for (quint32 i = 0; i < pad; ++i)
+                    if (zero[i] != 0) in.setStatus(QDataStream::ReadCorruptData);   // padding is zeros
             }
             break;
         }
-        default: break;
+        default: in.setStatus(QDataStream::ReadCorruptData); break;
         }
        return in;
     }

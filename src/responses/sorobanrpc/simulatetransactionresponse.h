@@ -35,7 +35,7 @@ struct SimulateStateChange
 struct SimulateRestorePreamble
 {
     QString transactionData;   // base64 SorobanTransactionData
-    QString minResourceFee;    // string to preserve uint64
+    QString minResourceFee;    // decimal text, to preserve int64
     bool present = false;
 };
 
@@ -45,12 +45,17 @@ class SimulateTransactionResponse
     quint32 m_latestLedger = 0;
     QStringList m_events;          // base64 ContractEvent XDR
     QString m_transactionData;     // base64 SorobanTransactionData
-    QString m_minResourceFee;      // string to preserve uint64 precision
+    QString m_minResourceFee;      // decimal text; empty when the RPC left it out (it does for 0)
     QList<SimulateHostFunctionResult> m_results;
     QList<SimulateStateChange> m_stateChanges;
     QString m_error;               // present when simulation failed
     SimulateRestorePreamble m_restorePreamble;
 public:
+    /** Throws std::runtime_error when a field is missing or not what the RPC
+     *  sends: a latestLedger that is not a JSON integer in range, a
+     *  minResourceFee that is not a decimal string (a JSON number included),
+     *  an empty error, XDR that is not base64, or a state change of an unknown
+     *  type or with an entry on the wrong side. */
     static SimulateTransactionResponse fromJson(const QJsonObject& result);
 
     quint32 getLatestLedger() const { return m_latestLedger; }

@@ -65,6 +65,27 @@ private slots:
         QVERIFY(s2.contains("/liquidity_pools"));
         QVERIFY(s2.contains("account=GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN"));
     }
+
+    /**
+     * /liquidity_pools by reserves and by account, and
+     * /liquidity_pools/{id}, as
+     * js-stellar-sdk 17.1.0 (the call builder's url after checkFilter(),
+     * what call() requests) and py-stellar-sdk 14.1.0 (the builder's url and
+     * params as requests encodes them) build these URLs, the same in both.
+     */
+    void testUrlsMatchJsAndPy() {
+        Server server("https://horizon-testnet.stellar.org");
+        QScopedPointer<Asset> xlm(new AssetTypeNative());
+        QScopedPointer<Asset> usd(Asset::createNonNativeAsset("USD", QString("GDVDKQFP665JAO7A2LSHNLQIUNYNAAIGJ6FYJVMG4DT3YJQQJSRBLQDG")));
+        QCOMPARE(server.liquidityPools().forReserves(QList<Asset*>() << xlm.data() << usd.data()).limit(10).buildUri().toString(),
+                 QString("https://horizon-testnet.stellar.org/liquidity_pools?reserves=native%2CUSD%3AGDVDKQFP665JAO7A2LSHNLQIUNYNAAIGJ6FYJVMG4DT3YJQQJSRBLQDG&limit=10"));
+        QCOMPARE(server.liquidityPools().forAccount(QString("GD42RQNXTRIW6YR3E2HXV5T2AI27LBRHOERV2JIYNFMXOBA234SWLQQB")).buildUri().toString(),
+                 QString("https://horizon-testnet.stellar.org/liquidity_pools?account=GD42RQNXTRIW6YR3E2HXV5T2AI27LBRHOERV2JIYNFMXOBA234SWLQQB"));
+        // The single pool: the request is dropped before the event loop sends it.
+        LiquidityPoolsRequestBuilder one = server.liquidityPools();
+        delete one.liquidityPool("dd7b1ab831c273310ddbec6f97870aa83c2fbd78ce22aded37ecbf4f3380fac7");
+        QCOMPARE(one.requestUri().toString(), QString("https://horizon-testnet.stellar.org/liquidity_pools/dd7b1ab831c273310ddbec6f97870aa83c2fbd78ce22aded37ecbf4f3380fac7"));
+    }
 };
 
 ADD_TEST(LiquidityPoolsRequestBuilderTest)

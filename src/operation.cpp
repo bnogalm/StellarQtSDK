@@ -55,54 +55,91 @@ Operation::~Operation()
 
 qint64 Operation::toXdrAmount(QString value) {
     value = checkNotNull(value, "value cannot be null").trimmed();
-    // Accept only the canonical amount format used by the other SDKs: an optional
-    // sign, integer digits, and an optional '.' with decimals. No locale guessing
-    // (a comma is rejected, not silently turned into a decimal point — see S2).
-    static const QRegularExpression re(QStringLiteral("^(-?)([0-9]+)(?:\\.([0-9]+))?$"));
+    // A decimal number, read exactly, in the forms js-stellar-base (BigNumber)
+    // and py-stellar-sdk (Decimal) read: an optional sign, digits with an
+    // optional point (".5" and "5." included) and an optional exponent
+    // ("1e3", "5E-1"). No locale guessing: a comma is refused, not taken for
+    // a point. Nothing is rounded: more than seven decimals that are not
+    // zeros, or a value outside int64 stroops, is refused. Only
+    // [-]digits[.digits] used to be read, and ".5", "+1" or "1e2" were
+    // refused where js and py sign them. '_' between digits (js and py) and
+    // 0x / 0b / 0o (js) are refused on purpose: see the header.
+    static const QRegularExpression re(
+        QStringLiteral("^([+-]?)([0-9]*)(?:\\.([0-9]*))?(?:[eE]([+-]?[0-9]+))?$"));
     const QRegularExpressionMatch m = re.match(value);
-    if(!m.hasMatch())
-        throw std::runtime_error("invalid amount format: expected [-]digits[.digits]");
+    const QString integralDigits = m.hasMatch() ? m.captured(2) : QString();
+    const QString fractionDigits = m.hasMatch() ? m.captured(3) : QString();
+    if (!m.hasMatch() || (integralDigits.isEmpty() && fractionDigits.isEmpty()))
+        throw std::runtime_error("invalid amount format: expected a decimal number such as 10, 10.5, .5 or 1e3");
+    const bool negative = m.captured(1) == QLatin1String("-");
 
-    const bool negative = !m.captured(1).isEmpty();
-    bool ok = false;
-    const qint64 integral = m.captured(2).toLongLong(&ok);
-    if(!ok)
-        throw std::runtime_error("amount integral part out of range");
-
-    QString fracStr = m.captured(3);
-    if(fracStr.length() > Operation::FRACTIONAL){
-        for(int i=Operation::FRACTIONAL ; i<fracStr.length(); i++)
-            if(fracStr[i]!=QChar('0'))
+    // The digits without the point, and where the point goes in stroops.
+    QString digits = integralDigits + fractionDigits;
+    while (digits.size() > 1 && digits.at(0) == QLatin1Char('0'))
+        digits.remove(0, 1);
+    qint64 exponent = 0;
+    if (!m.captured(4).isEmpty()) {
+        bool ok = false;
+        exponent = m.captured(4).toLongLong(&ok);
+        // A longer exponent is out of range, or zero.
+        if (!ok || exponent > 1000000 || exponent < -1000000)
+            exponent = m.captured(4).startsWith(QLatin1Char('-')) ? -1000000 : 1000000;
+    }
+    if (digits == QLatin1String("0"))
+        return 0;                                   // zero, whatever the exponent or sign
+    qint64 shift = exponent - fractionDigits.size() + Operation::FRACTIONAL;
+    if (shift < 0) {
+        // Digits past the seventh decimal: only zeros may go.
+        if (-shift >= digits.size())
+            throw std::runtime_error("amount with too many decimals");
+        const QString dropped = digits.right(int(-shift));
+        for (const QChar c : dropped)
+            if (c != QLatin1Char('0'))
                 throw std::runtime_error("amount with too many decimals");
-        fracStr = fracStr.left(Operation::FRACTIONAL);
+        digits.chop(int(-shift));
+        shift = 0;
     }
-    qint64 frac = 0;
-    if(!fracStr.isEmpty()){
-        frac = fracStr.toLongLong(&ok);
-        if(!ok)
-            throw std::runtime_error("amount fractional part invalid");
-        frac *= get_power(quint32(10), quint32(Operation::FRACTIONAL - fracStr.length()));
-    }
-    // result = integral*ONE + frac, with manual overflow detection (MSVC-safe).
-    const qint64 MAXV = std::numeric_limits<qint64>::max();
-    if(integral > MAXV / Operation::ONE)
+    if (digits.size() + shift > 19)
         throw std::runtime_error("amount overflows int64 stroops");
-    qint64 result = integral * Operation::ONE;
-    if(frac > MAXV - result)
+    digits.append(QString(int(shift), QLatin1Char('0')));
+    bool ok = false;
+    const quint64 stroops = digits.toULongLong(&ok);
+    if (!ok || stroops > quint64(std::numeric_limits<qint64>::max()))
         throw std::runtime_error("amount overflows int64 stroops");
-    result += frac;
-    return negative ? -result : result;   // sign applied to the whole amount
+    return negative ? -qint64(stroops) : qint64(stroops);
+}
+
+qint64 Operation::toXdrAmountPositive(QString value)
+{
+    const qint64 stroops = toXdrAmount(value);
+    if (stroops <= 0)
+        throw std::runtime_error(QStringLiteral("amount must be more than zero, not \"%1\"")
+                                     .arg(value).toStdString());
+    return stroops;
+}
+
+qint64 Operation::toXdrAmountNonNegative(QString value)
+{
+    const qint64 stroops = toXdrAmount(value);
+    if (stroops < 0)
+        throw std::runtime_error("amount cannot be negative");
+    return stroops;
 }
 
 
 QString Operation::fromXdrAmount(qint64 value) {
-    qint64 n= value/Operation::ONE;
-    qint64 decimal = value - n*Operation::ONE;
+    // The magnitude as unsigned (INT64_MIN has no positive qint64), and the
+    // sign in front: with a negative value the remainder is negative too, and
+    // -15000000 came out as "-1.-5", -5000000 as "0.-5" (the sign lost).
+    const bool negative = value < 0;
+    const quint64 magnitude = negative ? quint64(0) - quint64(value) : quint64(value);
+    const quint64 one = quint64(Operation::ONE);
+    const quint64 n = magnitude / one;
+    const quint64 decimal = magnitude % one;
+    const QString sign = negative ? QStringLiteral("-") : QString();
     if(decimal==0)
-        return  QString::number(value/Operation::ONE);
-    else{
-        return Util::removeTailChars(QString("%1.%2").arg(n).arg(decimal,7,10,QChar('0')),'0');
-    }
+        return sign + QString::number(n);
+    return sign + Util::removeTailChars(QString("%1.%2").arg(n).arg(decimal,7,10,QChar('0')),'0');
 }
 
 stellar::Operation Operation::toXdr(AccountConverter accountConverter) {
@@ -116,17 +153,11 @@ stellar::Operation Operation::toXdr(AccountConverter accountConverter) {
 }
 
 QString Operation::toXdrBase64() {
-    try {        
-        stellar::Operation operation = this->toXdr();
-        QByteArray outputStream;
-        QDataStream xdrOutputStream(&outputStream,QIODevice::WriteOnly);
-        xdrOutputStream << operation;
-        return outputStream.toBase64(XDR_BASE64ENCODING);
-    } catch (const std::exception& e) {
-        Q_UNUSED(e)
-        //throw new AssertionError(e);
-    }
-    return QString();
+    // Neither swallowed nor unchecked: any failure used to come back as an
+    // empty string, and a write that failed half way as the base64 of the
+    // half that was written. Either is now an exception.
+    stellar::Operation operation = this->toXdr();
+    return xdr::encodeOrThrow(operation, "the operation").toBase64(XDR_BASE64ENCODING);
 }
 
 Operation *Operation::fromXdr(AccountConverter accountConverter, stellar::Operation &xdr) {
@@ -214,6 +245,8 @@ Operation *Operation::fromXdr(AccountConverter accountConverter, stellar::Operat
               operation = RevokeAccountSponsorshipOperation::build(xdr.operationRevokeSponsorship);
               break;
             case stellar::LedgerEntryType::TRUSTLINE:
+              // Credit and pool-share trustlines alike: the key holds a
+              // TrustLineAsset, and the operation keeps it as it came.
               operation = RevokeTrustlineSponsorshipOperation::build(xdr.operationRevokeSponsorship);
               break;
             case stellar::LedgerEntryType::CLAIMABLE_BALANCE:
@@ -226,6 +259,10 @@ Operation *Operation::fromXdr(AccountConverter accountConverter, stellar::Operat
               throw std::runtime_error("Unknown revoke sponsorship ledger entry type");
           }
           break;
+        default:
+          // It fell through with no operation: nullptr came back, and a
+          // source account, when there was one, was set on it.
+          throw std::runtime_error("Unknown revoke sponsorship type");
       }
         break;
 

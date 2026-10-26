@@ -22,12 +22,24 @@ public:
      * <li>For Stellar address (ex. <code>bob*stellar.org`</code>) it splits Stellar address and then tries to find information about
      * federation server in <code>stellar.toml</code> file for a given domain.</li>
      * <li>For account ID (ex. <code>GB5XVAABEQMY63WTHDQ5RXADGYF345VWMNPTN2GFUDZT57D57ZQTJ7PS</code>) it simply returns the
-     * given Account ID.</li>
+     * given Account ID, once it has checked that it is one (G... or M...):
+     * json() is {"account_id": value}, the record js hands back (js takes a
+     * G address only).</li>
      * </ul>
+     * Throws, before asking anybody, whatever validate() refuses.
      * @param value Stellar address or account id
      * @return FederationResponse, you take ownership of the object so delete it when you don't need anymore.
      */
     static FederationResponse* resolve(QString value);
+
+    /**
+     * Throws, with the reason, on a value resolve() would refuse: a blank one,
+     * more than one '*', an empty name, a domain that is not a host name (an
+     * optional port aside, as js and py take one; see
+     * StellarTomlResolver::isHostName), or a value without '*' that is not an
+     * account id. Asks nobody.
+     */
+    static void validate(QString value);
 signals:
 
 public slots:

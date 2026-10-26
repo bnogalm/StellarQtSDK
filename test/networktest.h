@@ -32,6 +32,21 @@ private slots:
     // ============ New API (0.4.0) ============
 
     /** Public constructor with explicit passphrase. */
+    /**
+     * The network id is SHA-256 of the passphrase's UTF-8, as core, js and py
+     * hash it. It was hashed from Latin-1: a custom network whose passphrase
+     * has a character outside ASCII signed under another id. The expected id
+     * is js-stellar-sdk 17.1.0's hash().
+     */
+    void testNetworkIdIsTheUtf8Hash()
+    {
+        Network custom(QString::fromUtf8("Red de prueba \xc3\xb1" " ; 2026"));
+        QCOMPARE(QString::fromLatin1(custom.getNetworkId().toHex()),
+                 QStringLiteral("f6acc00604201e0f2307704af32c864471177c51a915326673dedd545ad195fb"));
+        Network testnet(QStringLiteral("Test SDF Network ; September 2015"));
+        QCOMPARE(testnet.getNetworkId(), Network::testnetNetwork()->getNetworkId());
+    }
+
     void testPublicConstructorWithPassphrase()
     {
         Network n(QStringLiteral("Custom Net ; 2026"));
@@ -47,6 +62,28 @@ private slots:
                  QStringLiteral("Public Global Stellar Network ; September 2015"));
         QCOMPARE(Network::TESTNET_NETWORK_PASSPHRASE(),
                  QStringLiteral("Test SDF Network ; September 2015"));
+    }
+
+    /**
+     * Futurenet's, a standalone core's and the local sandbox's passphrases,
+     * as js Networks (FUTURENET, STANDALONE, SANDBOX) and py Network
+     * (*_NETWORK_PASSPHRASE) give them in js-stellar-sdk 17.1.0 and
+     * py-stellar-sdk 14.1.0. The QML layer, TxRep and SEP-10 kept their own
+     * copies; the futurenet id is py's Network(...).network_id().
+     */
+    void testTheOtherPassphrasesJsAndPyName()
+    {
+        QCOMPARE(Network::FUTURENET_NETWORK_PASSPHRASE(),
+                 QStringLiteral("Test SDF Future Network ; October 2022"));
+        QCOMPARE(Network::STANDALONE_NETWORK_PASSPHRASE(),
+                 QStringLiteral("Standalone Network ; February 2017"));
+        QCOMPARE(Network::SANDBOX_NETWORK_PASSPHRASE(),
+                 QStringLiteral("Local Sandbox Stellar Network ; September 2022"));
+        QCOMPARE(QString::fromLatin1(Network(Network::FUTURENET_NETWORK_PASSPHRASE()).getNetworkId().toHex()),
+                 QStringLiteral("a3a1c6a78286713e29be0e9785670fa838d13917cd8eaeb4a3579ff1debc7fd5"));
+        Network futurenet(Network::FUTURENET_NETWORK_PASSPHRASE());
+        QVERIFY(!futurenet.isPublicNetwork());
+        QVERIFY(!futurenet.isTestNetwork());
     }
 
     /** Factories `publicNetwork()` / `testnetNetwork()` don't touch the singleton. */

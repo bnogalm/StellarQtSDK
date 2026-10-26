@@ -48,6 +48,14 @@ RequestBuilder &RequestBuilder::setSegments(QStringList segments) {
 
 void RequestBuilder::addParameter(QString key, QString value)
 {
+    // Each call used to append another key=value: limit(10).limit(20) sent
+    // both, and which one Horizon used was not the caller's to say.
+    for (auto& q : m_queries) {
+        if (q.first == key) {
+            q.second = value;
+            return;
+        }
+    }
     m_queries.append(std::pair<QString,QString>(key,value));
 }
 
@@ -62,17 +70,17 @@ QString RequestBuilder::parameter(QString key) const
 }
 
 RequestBuilder &RequestBuilder::cursor(QString cursor) {
-    m_queries.append(std::pair<QString,QString>("cursor",cursor));
+    addParameter("cursor", cursor);
     return *this;
 }
 
 RequestBuilder &RequestBuilder::limit(int number) {
-    m_queries.append(std::pair<QString,QString>("limit",QString::number(number)));
+    addParameter("limit", QString::number(number));
     return *this;
 }
 
 RequestBuilder &RequestBuilder::order(RequestBuilder::Order direction) {
-    m_queries.append(std::pair<QString,QString>("order",this->toString(direction)));
+    addParameter("order", this->toString(direction));
     return *this;
 }
 
@@ -98,7 +106,7 @@ RequestBuilder &RequestBuilder::setAssetsParameter(QString name, QList<Asset *> 
             throw std::runtime_error("unsupported asset");
         }
     }
-    m_queries.append(std::pair<QString,QString>(name,assetStrings.join("%2C"))); //%2C is ","   we already encode it to dont reencode everything
+    addParameter(name, assetStrings.join("%2C")); //%2C is ","   we already encode it to dont reencode everything
     return *this;
 }
 
@@ -165,6 +173,9 @@ RequestBuilder::Order RequestBuilder::orderFromString(QString s)
 {
     if(s==QString("asc"))
         return Order::ASC;
-    return Order::DESC;
+    // Anything else read as "desc": "ASC" or a typo reversed the order.
+    if(s==QString("desc"))
+        return Order::DESC;
+    throw std::runtime_error(QStringLiteral("not an order: \"%1\" (expected \"asc\" or \"desc\")").arg(s).toStdString());
 }
 QSTELLAR_END_NS

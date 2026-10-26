@@ -33,11 +33,22 @@ public:
 
     /** Hex pool ID the withdraw targets. */
     QString            getLiquidityPoolId()  const { return m_liquidityPoolId; }
-    /** Minimum reserves the withdrawer was willing to accept (asset/amount pairs). */
+    /**
+     * Minimum reserves the withdrawer was willing to accept (asset/amount
+     * pairs). When the transaction failed (isTransactionSuccessful() false)
+     * each asset is an EMPTY QString: Horizon names the pool's assets only
+     * for a transaction that succeeded, and leaves them out otherwise. The
+     * amounts are still the operation's.
+     */
     QList<AssetAmount> getReservesMin()       const { return m_reservesMin; }
     /** Pool shares burned by the withdraw. */
     QString            getShares()            const { return m_shares; }
-    /** Reserves actually received from the pool (asset/amount pairs). */
+    /**
+     * Reserves actually received from the pool (asset/amount pairs). When
+     * the transaction failed (isTransactionSuccessful() false) each asset is
+     * an EMPTY QString, as for getReservesMin(), and nothing was received
+     * (the amounts read 0).
+     */
     QList<AssetAmount> getReservesReceived()  const { return m_reservesReceived; }
 };
 

@@ -1,4 +1,5 @@
 #include "keypair.h"
+#include "util.h"
 #include <string.h>
 
 #include "external/ed25519/src/ed25519.h"
@@ -9,6 +10,8 @@
 #include <QDateTime>
 #include <QRandomGenerator>
 #include "slip10.h"
+#include "messageauth.h"
+#include <algorithm>
 
 
 // memset_s is a free function (NOT a member). Keep it in global scope so
@@ -125,15 +128,26 @@ bool KeyPair::canSign() {
 
 KeyPair *KeyPair::fromSecretSeed(QString seed) {
     QByteArray charSeed = seed.toLatin1();
-    QByteArray decoded = StrKey::decodeStellarSecretSeed(charSeed);
+    QByteArray decoded;
+    try {
+        decoded = StrKey::decodeStellarSecretSeed(charSeed);
+    } catch (...) {
+        charSeed.fill('\0');
+        throw;
+    }
+    charSeed.fill('\0');
     KeyPair* keypair = fromSecretSeed(decoded);
+    decoded.fill('\0');   // the keypair holds its own copy
     return keypair;
 }
 
 KeyPair* KeyPair::fromSecretSeed(QByteArray seed) {
 
     if(seed.size()!=keyLength){
-        throw std::runtime_error("you seems using an user encoded string as bytearray seed");
+        // Not repeated: it may be a seed.
+        if (seed.size() == 56 && seed.startsWith('S'))
+            throw std::runtime_error("this is a secret seed's strkey (S...): read it with fromSecretSeed(QString)");
+        throw std::runtime_error("a raw secret seed is 32 bytes");
     }
     quint8 publicKey[keyLength] ;
     quint8 privateKey[keyLength*2] ;
@@ -144,7 +158,9 @@ KeyPair* KeyPair::fromSecretSeed(QByteArray seed) {
 
     ed25519_create_keypair((uchar *) publicKey,(uchar *)privateKey, (uchar*)seed.data());
     auto kp = new KeyPair(publicKey, privateKey);
-    kp->m_secretSeed =seed;
+    // Its own copy, not the caller's buffer shared: a caller that wipes its
+    // seed (random(), fromMnemonic) wipes its own bytes, not the key's.
+    kp->m_secretSeed = QByteArray(seed.constData(), seed.size());
     memset_s((char*)privateKey,0,keyLength*2);//yeah, for sure nobody will never ever show the private key anywhere... we should convert all the QByteArray and QString to secure versions, but still it may be converted to other memory shape that will not be cleaned
     return  kp;
 }
@@ -163,8 +179,60 @@ KeyPair *KeyPair::fromPublicKey(QByteArray publicKey) {
     return new KeyPair((quint8*)publicKey.data());
 }
 
+KeyPair* KeyPair::fromMnemonic(const QString& words, const QString& passphrase, int accountNumber,
+                               Util::SupportedMnemonicLanguages language)
+{
+    // SEP-5 accounts are 0 to 2^31 - 1. A negative int reached
+    // fromBip39Seed's "top bit already hardened" rule and came back as
+    // another account.
+    if (accountNumber < 0)
+        throw std::runtime_error("an account number is 0 to 2^31 - 1");
+    QByteArray seed = Util::mnemonicToBIP39Seed(words, passphrase, language);
+    KeyPair* kp = KeyPair::fromBip39Seed(seed, accountNumber);
+    seed.fill('\0');
+    return kp;
+}
+
+KeyPair *KeyPair::fromBip39Seed(QByteArray bip39Seed, const QString& path)
+{
+    const QStringList parts = path.split(QLatin1Char('/'));
+    if (parts.isEmpty() || parts.first() != QLatin1String("m"))
+        throw std::runtime_error("a derivation path starts with \"m\", as in m/44'/148'/0'");
+    QVector<int> indexes;
+    for (int i = 1; i < parts.size(); ++i) {
+        QString part = parts.at(i);
+        if (!part.endsWith(QLatin1Char('\'')) && !part.endsWith(QLatin1Char('H')))
+            throw std::runtime_error("ed25519 derives hardened children only: write each index as n' (or nH)");
+        part.chop(1);
+        bool ok = false;
+        const qint64 index = part.toLongLong(&ok);
+        // Digits only: toLongLong takes a sign and spaces too.
+        const bool digits = !part.isEmpty() && std::all_of(part.cbegin(), part.cend(),
+                                                           [](QChar c) { return c >= QLatin1Char('0') && c <= QLatin1Char('9'); });
+        if (!ok || !digits || index >= 0x80000000LL)
+            throw std::runtime_error("a derivation index is a number below 2^31");
+        indexes.append(int(index));
+    }
+    if (bip39Seed.size() < 16 || bip39Seed.size() > 64)
+        throw std::runtime_error("BIP-39 seed must be 16 to 64 bytes (BIP-39 gives 64)");
+    QByteArray key = SLIP10::deriveEd25519PrivateKey(bip39Seed, indexes);
+    KeyPair* keypair = KeyPair::fromSecretSeed(key);
+    key.fill('\0');
+    return keypair;
+}
+
 KeyPair *KeyPair::fromBip39Seed(QByteArray bip39Seed, int accountNumber) {
-    return KeyPair::fromSecretSeed(SLIP10::deriveEd25519PrivateKey(bip39Seed, QVector<int>()<< 44<< 148<< accountNumber));
+    // (An accountNumber with the top bit set is taken as already hardened:
+    // 100 | 0x80000000 is account 100, as in the Java SDK.)
+    // BIP-32/SLIP-10 seeds are 128 to 512 bits (BIP-39's are 512). An empty
+    // or truncated one, e.g. from a hex decode that failed, derived a key
+    // anybody can derive from the same nothing.
+    if (bip39Seed.size() < 16 || bip39Seed.size() > 64)
+        throw std::runtime_error("BIP-39 seed must be 16 to 64 bytes (BIP-39 gives 64)");
+    QByteArray key = SLIP10::deriveEd25519PrivateKey(bip39Seed, QVector<int>()<< 44<< 148<< accountNumber);
+    KeyPair* keypair = KeyPair::fromSecretSeed(key);
+    key.fill('\0');   // the account's secret; the keypair holds its own copy
+    return keypair;
 }
 
 
@@ -175,7 +243,9 @@ KeyPair *KeyPair::random() {
     seed.resize(keyLength);
     QRandomGenerator *randomDevice = QRandomGenerator::system();
     randomDevice->fillRange((quint32*)seed.data(), keyLength/sizeof(quint32));
-    return fromSecretSeed(seed);
+    KeyPair* key = fromSecretSeed(seed);
+    seed.fill('\0');   // the key holds its own copy
+    return key;
 }
 
 KeyPair *KeyPair::random(QByteArray rand)
@@ -189,7 +259,39 @@ KeyPair *KeyPair::random(QByteArray rand)
     for(int i=0;i<keyLength;i++){
         seed[i] = rand[i] ^ seed[i];
     }
-    return fromSecretSeed(seed);
+    KeyPair* key = fromSecretSeed(seed);
+    seed.fill('\0');   // the key holds its own copy
+    return key;
+}
+
+QByteArray KeyPair::signMessage(const QByteArray& message)
+{
+    return MessageAuth::signMessage(message, this);
+}
+
+QByteArray KeyPair::signMessage(const QString& message)
+{
+    return MessageAuth::signMessage(message, this);
+}
+
+QByteArray KeyPair::signMessage(const char* message)
+{
+    return MessageAuth::signMessage(message, this);
+}
+
+bool KeyPair::verifyMessage(const QByteArray& message, const QByteArray& signature) const
+{
+    return MessageAuth::verifyMessage(getAccountId(), message, signature);
+}
+
+bool KeyPair::verifyMessage(const QString& message, const QByteArray& signature) const
+{
+    return MessageAuth::verifyMessage(getAccountId(), message, signature);
+}
+
+bool KeyPair::verifyMessage(const char* message, const QByteArray& signature) const
+{
+    return MessageAuth::verifyMessage(getAccountId(), message, signature);
 }
 
 QString KeyPair::getAccountId() const {
@@ -314,9 +416,12 @@ stellar::DecoratedSignature KeyPair::signPayloadDecorated(QByteArray signerPaylo
 }
 
 bool KeyPair::verify(QByteArray data, QByteArray signature) {
-    if(signature.size()>=64)
-        return ed25519_verify((uchar*)signature.data(),(uchar*)data.data(),data.length(),this->m_publicKey);
-    return false;
+    // An ed25519 signature is exactly 64 bytes. A longer one verified with
+    // its tail ignored, so a padded blob passed as the signature (js and py
+    // answer false for any other length).
+    if (signature.size() != 64)
+        return false;
+    return ed25519_verify((uchar*)signature.data(),(uchar*)data.data(),data.length(),this->m_publicKey);
 }
 
 bool KeyPair::equals(const KeyPair *obj) const{

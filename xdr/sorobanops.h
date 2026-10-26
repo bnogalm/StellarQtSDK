@@ -42,14 +42,17 @@ namespace stellar
         in >> v.contractAddress;
         qint32 n; in >> n;
         if (n < 0 || n > 32) throw std::runtime_error("functionName invalid length");
+        checkWireCount(in, n, 1, "functionName");
         v.functionName.resize(n);
         if (n > 0) in.readRawData(v.functionName.data(), n);
-        const quint32 pad = (4 - (static_cast<quint32>(n) % 4)) % 4;
-        if (pad) { char z[4]; in.readRawData(z, static_cast<int>(pad)); }
+        readXdrPadding(in, n, "functionName");
         in >> n;
-        if (n < 0) throw std::runtime_error("invokeContract args negative");
+        checkWireCount(in, n, 4, "invokeContract args");   // each starts with its 4-byte type
         v.args.clear(); v.args.reserve(n);
-        for (qint32 i = 0; i < n; ++i) { SCVal a; in >> a; v.args.append(a); }
+        for (qint32 i = 0; i < n; ++i) {
+            checkWireElement(in, "invokeContract args");
+            SCVal a; in >> a; v.args.append(a);
+        }
         return in;
     }
 
@@ -67,12 +70,14 @@ namespace stellar
         Asset fromAssetAsset;        // FROM_ASSET
     };
     inline QDataStream& operator<<(QDataStream& out, const ContractIDPreimage& v) {
-        out << v.type;
         switch (v.type) {
         case ContractIDPreimageType::CONTRACT_ID_PREIMAGE_FROM_ADDRESS:
-            out << v.fromAddressAddr << v.fromAddressSalt; break;
+            out << v.type << v.fromAddressAddr << v.fromAddressSalt; break;
         case ContractIDPreimageType::CONTRACT_ID_PREIMAGE_FROM_ASSET:
-            out << v.fromAssetAsset; break;
+            out << v.type << v.fromAssetAsset; break;
+        // No arm: it went out as a bare discriminant, inside a signed
+        // CreateContract and the contract id derived from it.
+        default: out.setStatus(QDataStream::WriteFailed); break;   // no arm: nothing to write
         }
         return out;
     }
@@ -83,6 +88,7 @@ namespace stellar
             in >> v.fromAddressAddr >> v.fromAddressSalt; break;
         case ContractIDPreimageType::CONTRACT_ID_PREIMAGE_FROM_ASSET:
             in >> v.fromAssetAsset; break;
+        default: in.setStatus(QDataStream::ReadCorruptData); break;
         }
         return in;
     }
@@ -113,10 +119,13 @@ namespace stellar
     }
     inline QDataStream& operator>>(QDataStream& in, CreateContractArgsV2& v) {
         in >> v.contractIDPreimage >> v.executable;
-        qint32 n; in >> n;
-        if (n < 0) throw std::runtime_error("constructorArgs negative");
+        qint32 n = 0; in >> n;
+        checkWireCount(in, n, 4, "constructorArgs");
         v.constructorArgs.clear(); v.constructorArgs.reserve(n);
-        for (qint32 i = 0; i < n; ++i) { SCVal a; in >> a; v.constructorArgs.append(a); }
+        for (qint32 i = 0; i < n; ++i) {
+            checkWireElement(in, "constructorArgs");
+            SCVal a; in >> a; v.constructorArgs.append(a);
+        }
         return in;
     }
 
@@ -137,13 +146,13 @@ namespace stellar
         CreateContractArgsV2 createContractV2;
     };
     inline QDataStream& operator<<(QDataStream& out, const HostFunction& v) {
-        out << v.type;
         switch (v.type) {
         case HostFunctionType::HOST_FUNCTION_TYPE_INVOKE_CONTRACT:
-            out << v.invokeContract; break;
+            out << v.type << v.invokeContract; break;
         case HostFunctionType::HOST_FUNCTION_TYPE_CREATE_CONTRACT:
-            out << v.createContract; break;
+            out << v.type << v.createContract; break;
         case HostFunctionType::HOST_FUNCTION_TYPE_UPLOAD_CONTRACT_WASM: {
+            out << v.type;
             out << static_cast<qint32>(v.uploadWasm.size());
             if (!v.uploadWasm.isEmpty())
                 out.writeRawData(v.uploadWasm.constData(), v.uploadWasm.size());
@@ -152,7 +161,9 @@ namespace stellar
             break;
         }
         case HostFunctionType::HOST_FUNCTION_TYPE_CREATE_CONTRACT_V2:
-            out << v.createContractV2; break;
+            out << v.type << v.createContractV2; break;
+        // No arm: a bare discriminant went into a signed InvokeHostFunction.
+        default: out.setStatus(QDataStream::WriteFailed); break;   // no arm: nothing to write
         }
         return out;
     }
@@ -164,16 +175,16 @@ namespace stellar
         case HostFunctionType::HOST_FUNCTION_TYPE_CREATE_CONTRACT:
             in >> v.createContract; break;
         case HostFunctionType::HOST_FUNCTION_TYPE_UPLOAD_CONTRACT_WASM: {
-            qint32 n; in >> n;
-            if (n < 0) throw std::runtime_error("uploadWasm negative");
+            qint32 n = 0; in >> n;
+            checkWireCount(in, n, 1, "uploadWasm");
             v.uploadWasm.resize(n);
             if (n > 0) in.readRawData(v.uploadWasm.data(), n);
-            const quint32 pad = (4 - (static_cast<quint32>(n) % 4)) % 4;
-            if (pad) { char z[4]; in.readRawData(z, static_cast<int>(pad)); }
+            readXdrPadding(in, n, "uploadWasm");
             break;
         }
         case HostFunctionType::HOST_FUNCTION_TYPE_CREATE_CONTRACT_V2:
             in >> v.createContractV2; break;
+        default: in.setStatus(QDataStream::ReadCorruptData); break;
         }
         return in;
     }
@@ -396,14 +407,16 @@ namespace stellar
         CreateContractArgsV2 createContractV2HostFn;
     };
     inline QDataStream& operator<<(QDataStream& out, const SorobanAuthorizedFunction& v) {
-        out << v.type;
         switch (v.type) {
         case SorobanAuthorizedFunctionType::SOROBAN_AUTHORIZED_FUNCTION_TYPE_CONTRACT_FN:
-            out << v.contractFn; break;
+            out << v.type << v.contractFn; break;
         case SorobanAuthorizedFunctionType::SOROBAN_AUTHORIZED_FUNCTION_TYPE_CREATE_CONTRACT_HOST_FN:
-            out << v.createContractHostFn; break;
+            out << v.type << v.createContractHostFn; break;
         case SorobanAuthorizedFunctionType::SOROBAN_AUTHORIZED_FUNCTION_TYPE_CREATE_CONTRACT_V2_HOST_FN:
-            out << v.createContractV2HostFn; break;
+            out << v.type << v.createContractV2HostFn; break;
+        // No arm: a bare discriminant went into auth entries and into the
+        // authorization preimage a signer hashes.
+        default: out.setStatus(QDataStream::WriteFailed); break;   // no arm: nothing to write
         }
         return out;
     }
@@ -416,9 +429,27 @@ namespace stellar
             in >> v.createContractHostFn; break;
         case SorobanAuthorizedFunctionType::SOROBAN_AUTHORIZED_FUNCTION_TYPE_CREATE_CONTRACT_V2_HOST_FN:
             in >> v.createContractV2HostFn; break;
+        default: in.setStatus(QDataStream::ReadCorruptData); break;
         }
         return in;
     }
+
+    /** subInvocations nest, so decoding is depth-limited for the reason
+     *  SCVal is (MAX_SCVAL_DEPTH): ~1000 nested levels of a hostile auth entry
+     *  overflowed the stack. The host's own limit is 100. */
+    static const int MAX_SOROBAN_INVOCATION_DEPTH = 128;
+
+    inline int& sorobanInvocationDepth() { static thread_local int depth = 0; return depth; }
+    struct SorobanInvocationDepthGuard
+    {
+        SorobanInvocationDepthGuard() {
+            if (++sorobanInvocationDepth() > MAX_SOROBAN_INVOCATION_DEPTH) {
+                --sorobanInvocationDepth();   // no destructor runs when a ctor throws
+                throw std::runtime_error("SorobanAuthorizedInvocation: nesting too deep");
+            }
+        }
+        ~SorobanInvocationDepthGuard() { --sorobanInvocationDepth(); }
+    };
 
     struct SorobanAuthorizedInvocation
     {
@@ -434,12 +465,16 @@ namespace stellar
         return out;
     }
     inline QDataStream& operator>>(QDataStream& in, SorobanAuthorizedInvocation& v) {
+        SorobanInvocationDepthGuard depthGuard;
         in >> v.function;
-        qint32 n; in >> n;
-        if (n < 0) throw std::runtime_error("subInvocations negative");
+        qint32 n = 0; in >> n;
+        // A lower bound only: an invocation is at least its function type and
+        // its own count. Nothing is reserved on it, since each element is a
+        // ~1.3 KB struct built from a few bytes.
+        checkWireCount(in, n, 8, "subInvocations");
         v.subInvocations = QSharedPointer<QList<SorobanAuthorizedInvocation>>::create();
-        v.subInvocations->reserve(n);
         for (qint32 i = 0; i < n; ++i) {
+            checkWireElement(in, "subInvocations");
             SorobanAuthorizedInvocation s; in >> s; v.subInvocations->append(s);
         }
         return in;
@@ -472,10 +507,13 @@ namespace stellar
     }
     inline QDataStream& operator>>(QDataStream& in, InvokeHostFunctionOp& v) {
         in >> v.hostFunction;
-        qint32 n; in >> n;
-        if (n < 0) throw std::runtime_error("auth array negative");
-        v.auth.clear(); v.auth.reserve(n);
+        qint32 n = 0; in >> n;
+        // Credentials type + function type + subInvocations count at least;
+        // not reserved, for the reason subInvocations is not.
+        checkWireCount(in, n, 12, "auth array");
+        v.auth.clear();
         for (qint32 i = 0; i < n; ++i) {
+            checkWireElement(in, "auth array");
             SorobanAuthorizationEntry e; in >> e; v.auth.append(e);
         }
         return in;
@@ -490,7 +528,9 @@ namespace stellar
         out << v.ext << v.extendTo; return out;
     }
     inline QDataStream& operator>>(QDataStream& in, ExtendFootprintTTLOp& v) {
-        in >> v.ext >> v.extendTo; return in;
+        in >> v.ext >> v.extendTo;
+        if (v.ext.reserved != 0) in.setStatus(QDataStream::ReadCorruptData);   // ext is void: 0 only
+        return in;
     }
 
     struct RestoreFootprintOp
@@ -501,7 +541,9 @@ namespace stellar
         out << v.ext; return out;
     }
     inline QDataStream& operator>>(QDataStream& in, RestoreFootprintOp& v) {
-        in >> v.ext; return in;
+        in >> v.ext;
+        if (v.ext.reserved != 0) in.setStatus(QDataStream::ReadCorruptData);   // ext is void: 0 only
+        return in;
     }
 
 } // namespace stellar

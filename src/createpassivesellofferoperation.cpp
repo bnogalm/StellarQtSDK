@@ -16,7 +16,7 @@ CreatePassiveSellOfferOperation::CreatePassiveSellOfferOperation(Asset *selling,
 
     m_op.selling = selling->toXdr();
     m_op.buying = buying->toXdr();
-    m_op.amount = Operation::toXdrAmount(amount);
+    m_op.amount = Operation::toXdrAmountPositive(amount);
     m_op.price = Price(price).toXdr();
 }
 
@@ -30,8 +30,10 @@ CreatePassiveSellOfferOperation::CreatePassiveSellOfferOperation(Asset *selling,
 
     m_op.selling = selling->toXdr();
     m_op.buying = buying->toXdr();
-    m_op.amount = Operation::toXdrAmount(amount);
-    m_op.price = price.toXdr();   // exact fraction, no Price(QString) detour
+    m_op.amount = Operation::toXdrAmountPositive(amount);
+    // Exact fraction, no Price(QString) detour. Nonpositive terms (a default
+    // Price() is 0/0) used to be signed into an offer Core refuses.
+    m_op.price = price.requirePositive().toXdr();
 }
 
 CreatePassiveSellOfferOperation::~CreatePassiveSellOfferOperation()

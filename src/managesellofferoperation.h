@@ -16,9 +16,12 @@ QSTELLAR_BEGIN_NS
 class ManageSellOfferOperation : public Operation
 {
 
-    stellar::ManageSellOfferOp m_op;
-    Asset *m_assetSelling;
-    Asset *m_assetBuying;
+    // Initialised here: the default constructor left all three
+    // uninitialised, so the destructor deleted garbage pointers and
+    // toXdrBase64() serialised whatever the heap held.
+    stellar::ManageSellOfferOp m_op{};
+    Asset *m_assetSelling = nullptr;
+    Asset *m_assetBuying = nullptr;
 public:
     ManageSellOfferOperation();
     virtual ~ManageSellOfferOperation();
@@ -28,11 +31,13 @@ public:
 
     /**
      * Same as the one above, but taking the price as an EXACT FRACTION.
-     * The `QString price` variant only approximates: it goes through
-     * `Price(QString)`, which truncates to 11 characters and re-derives the
-     * fraction over 1e9, so a price like 7/9 becomes 777777777/1000000000.
-     * Use this overload when the exact n/d matters (XDR round-trip, txrep,
-     * or a price read from the network).
+     * The `QString price` variant goes through `Price(QString)`: exact when
+     * the decimal is itself an int32 fraction, otherwise a continued-fraction
+     * approximation. A fraction like 7/9 has no finite decimal, so a string
+     * can only ever approximate it. Use this overload when the exact n/d matters (XDR
+     * round-trip, txrep, or a price read from the network).
+     * Throws std::runtime_error ("price must be positive") unless both
+     * terms are above zero.
      */
     ManageSellOfferOperation(Asset* selling, Asset* buying, QString amount, const Price& price, qint64 offerId);
 

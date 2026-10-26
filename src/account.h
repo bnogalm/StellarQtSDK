@@ -28,13 +28,16 @@ public:
 
     KeyPair* getKeypair();
 
-    QString getAccountId() const;
+    /** The address given: M... for a muxed account (the transaction source). */
+    QString getAccountId() const override;
 
     qint64 getSequenceNumber();
+
+    /** The next sequence number; throws at INT64_MAX, which has no next one. */
     qint64 getIncrementedSequenceNumber();
 
     /**
-     * Increments sequence number in this object by one.
+     * Increments sequence number in this object by one. Throws at INT64_MAX.
      */
     void incrementSequenceNumber();
 
@@ -43,6 +46,7 @@ public:
      * `TransactionBuilder::build()` whose transaction was NOT submitted, or whose
      * submission is *confirmed* failed, so later builds don't get `tx_bad_seq`.
      * Do NOT call it on a submit timeout — see `SubmitTransactionResponse::isTimeout()`.
+     * Throws at INT64_MIN.
      */
     void decrementSequenceNumber();
 

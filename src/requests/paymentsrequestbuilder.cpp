@@ -11,6 +11,11 @@ PaymentsRequestBuilder::PaymentsRequestBuilder(Server *server):RequestBuilder(se
 
 }
 
+PaymentsRequestBuilder &PaymentsRequestBuilder::includeFailed(bool value) {
+    addParameter("include_failed", value ? "true" : "false");
+    return *this;
+}
+
 PaymentsRequestBuilder &PaymentsRequestBuilder::forAccount(KeyPair *account) {
     account = checkNotNull(account, "account cannot be null");
     this->setSegments(QStringList() << "accounts"<< account->getAccountId()<< "payments");

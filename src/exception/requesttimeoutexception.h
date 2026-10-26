@@ -8,11 +8,14 @@ namespace qstellar {
 namespace exception {
 
 /**
- * @brief Request timed out.
+ * @brief Horizon timed the request out: it answered HTTP 504 (Gateway
+ * Timeout). A submitted transaction may still be applied.
  *
- * Raised when:
- *  - the server returned HTTP 504 (Gateway Timeout); or
- *  - the local QNetworkReply timed out client-side.
+ * When the SDK itself gives up waiting (Response::replyTimeout()), the error
+ * is a ClientTimeoutException instead (connectionerrorexception.h), which is
+ * a ConnectionErrorException: this comment used to say it was this class,
+ * but it never was. A caller that handles "timed out, the transaction may
+ * still land" must catch both.
  */
 class RequestTimeoutException : public NetworkException
 {

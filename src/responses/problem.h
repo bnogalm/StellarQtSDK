@@ -83,9 +83,12 @@ public:
     Extras  getExtras() const { return m_extras; }
 
     /**
-     * Parse JSON body into this Problem. Best-effort: missing fields are left
+     * Parse JSON body into this Problem. Missing (or null) fields are left
      * with default values. Throws qstellar::exception::SdkException on
-     * unparseable JSON.
+     * unparseable JSON, and on a member that is not what Horizon sends there
+     * (text, a whole number, an array of text): before 1.0.4 such a member
+     * read as empty, and an operation's result code that was not text was
+     * dropped, moving the codes after it onto the operations before.
      */
     void parseFromJson(const QByteArray& json);
 

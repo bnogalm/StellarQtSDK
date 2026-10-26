@@ -24,6 +24,12 @@ private:
     QStringList m_diagnosticEventsXdr;
 
 public:
+    /** Throws std::runtime_error when `status` is missing or not one of the
+     *  four the RPC answers with (it used to read as PENDING), and when any
+     *  other field is missing or not what the RPC sends: a hash that is not
+     *  64 hex digits, a latestLedger that is not a JSON integer in range, a
+     *  close time that is not a decimal string, or an errorResultXdr that is
+     *  not base64 XDR, missing with ERROR or there with another status. */
     static SendTransactionResponse fromJson(const QJsonObject& result);
 
     Status getStatus() const { return m_status; }

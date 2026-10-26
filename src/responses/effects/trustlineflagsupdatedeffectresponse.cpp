@@ -88,6 +88,7 @@ bool TrustlineFlagsUpdatedEffectResponse::getAuthorized() const
 
 void TrustlineFlagsUpdatedEffectResponse::setAuthorized(bool newAuthorized_flag)
 {
+    m_hasAuthorized = true;
     if (m_authorizedFlag == newAuthorized_flag)
         return;
     m_authorizedFlag = newAuthorized_flag;
@@ -101,6 +102,7 @@ bool TrustlineFlagsUpdatedEffectResponse::getAuthorizedToMaintainLiabilities() c
 
 void TrustlineFlagsUpdatedEffectResponse::setAuthorizedToMaintainLiabilities(bool newAuthorized_to_maintain_liabilities_flag)
 {
+    m_hasAuthorizedToMaintainLiabilities = true;
     if (m_authorizedToMaintainLiabilitiesFlag == newAuthorized_to_maintain_liabilities_flag)
         return;
     m_authorizedToMaintainLiabilitiesFlag = newAuthorized_to_maintain_liabilities_flag;
@@ -114,6 +116,7 @@ bool TrustlineFlagsUpdatedEffectResponse::getClawbackEnabled() const
 
 void TrustlineFlagsUpdatedEffectResponse::setClawbackEnabled(bool newClawback_enabled_flag)
 {
+    m_hasClawbackEnabled = true;
     if (m_clawbackEnabledFlag == newClawback_enabled_flag)
         return;
     m_clawbackEnabledFlag = newClawback_enabled_flag;

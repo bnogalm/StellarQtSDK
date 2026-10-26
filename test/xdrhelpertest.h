@@ -7,6 +7,9 @@
 #include "testcollector.h"
 
 #include "../xdr/xdrhelper.h"
+#include "../xdr/scval.h"
+#include "../xdr/sorobanops.h"
+#include "../xdr/sorobantxdata.h"
 #include "../src/memo.h"
 #include "../src/util.h"
 
@@ -25,6 +28,16 @@
 class XdrHelperTest: public QObject
 {
     Q_OBJECT
+
+    static QByteArray be32(quint32 v)
+    {
+        QByteArray out(4, '\0');
+        out[0] = char(v >> 24);
+        out[1] = char(v >> 16);
+        out[2] = char(v >> 8);
+        out[3] = char(v);
+        return out;
+    }
 
 private slots:
     void initTestCase() {}
@@ -71,6 +84,139 @@ private slots:
         QCOMPARE(arr.value[0], (quint32)0);
         QCOMPARE(arr.value[1], (quint32)10);
         QCOMPARE(arr.value[2], (quint32)20);
+    }
+
+    // ============ A count the input cannot hold ============
+
+    /**
+     * An array whose input ends before its last element is a short read. The
+     * reader stopped quietly at the end of the input, so an envelope declaring
+     * two signatures and carrying one decoded as complete, with one.
+     */
+    void testATruncatedArrayIsAShortRead()
+    {
+        auto status = [](const QByteArray& bytes, auto&& arr) {
+            QDataStream in(bytes);
+            in >> arr;
+            return in.status();
+        };
+        QCOMPARE(status(be32(2) + be32(7), xdr::Array<quint32, 8>()), QDataStream::ReadPastEnd);  // one of two
+        QCOMPARE(status(be32(2), xdr::Array<quint32, 8>()), QDataStream::ReadPastEnd);            // none of two
+        QCOMPARE(status(be32(2) + be32(7) + be32(8), xdr::Array<quint32, 8>()), QDataStream::Ok);
+        // 64 bytes declared, 32 present: a multiple of four, so no padding read to trip on either.
+        QCOMPARE(status(be32(64) + QByteArray(32, 'x'), xdr::Array<quint8, 64>()), QDataStream::ReadPastEnd);
+        QCOMPARE(status(be32(4) + QByteArray(4, 'x'), xdr::Array<quint8, 64>()), QDataStream::Ok);
+    }
+
+    /** Decoding replaces what the array held: it used to append to it. */
+    void testReadingAnArrayReplacesItsContent()
+    {
+        xdr::Array<quint32, 8> arr;
+        arr.value << 9 << 9 << 9;
+        QByteArray buf = be32(2) + be32(1) + be32(2);
+        QDataStream in(buf);
+        in >> arr;
+        QCOMPARE(in.status(), QDataStream::Ok);
+        QVERIFY(arr.value == QVector<quint32>({1, 2}));
+    }
+
+    /**
+     * readXdrList reads an unbounded XDR array into a QVector. The result
+     * arrays used QDataStream's own QVector reader instead, which reserved
+     * whatever count arrived and, from Qt 6.7, read 0xFFFFFFFE as "a 64-bit
+     * count follows".
+     */
+    void testReadXdrListRefusesACountTheInputCannotHold()
+    {
+        auto read = [](const QByteArray& bytes, QVector<quint32>& list) {
+            QDataStream in(bytes);
+            xdr::readXdrList(in, list);
+            return in.status();
+        };
+        QVector<quint32> list;
+        QCOMPARE(read(be32(2) + be32(5) + be32(6), list), QDataStream::Ok);
+        QVERIFY(list == QVector<quint32>({5, 6}));
+        QVERIFY(read(be32(3) + be32(5) + be32(6), list) != QDataStream::Ok);
+        QVERIFY(read(be32(0x7fffffff), list) != QDataStream::Ok);
+        QVERIFY(list.isEmpty() && list.capacity() < 16);    // refused before anything was reserved
+        QVERIFY(read(be32(0xfffffffe) + be32(0) + be32(1) + be32(5), list) != QDataStream::Ok);
+
+        QByteArray out;
+        QDataStream s(&out, QIODevice::WriteOnly);
+        xdr::writeXdrList(s, QVector<quint32>({5, 6}));
+        QCOMPARE(out, be32(2) + be32(5) + be32(6));
+    }
+
+    /**
+     * The padding of an SCVal's bytes, string, symbol and executable tag, a
+     * ContractExecutable's external-ref tag, an invocation's function name
+     * and an uploaded wasm is zeros. Each vector is refused by js-stellar-sdk
+     * 17.1.0 with "non-zero XDR padding" (and by core), and its zero-padded
+     * twin decodes; they used to be read and re-encoded with zeros (as
+     * py-stellar-sdk 14.1.0 still does).
+     */
+    void testSorobanOpaquePaddingMustBeZero()
+    {
+        auto refused = [](const QByteArray& hex, auto value) {
+            QDataStream in(QByteArray::fromHex(hex));
+            QString message;
+            try { in >> value; } catch (const std::runtime_error& e) { message = QString::fromLatin1(e.what()); }
+            return message.contains(QLatin1String("non-zero padding"))
+                    && in.status() == QDataStream::ReadCorruptData;
+        };
+        auto reads = [](const QByteArray& hex, auto value) {
+            QDataStream in(QByteArray::fromHex(hex));
+            try { in >> value; } catch (const std::runtime_error&) { return false; }
+            return in.status() == QDataStream::Ok && in.atEnd();
+        };
+        const QByteArray contract = "00000001" + QByteArray(64, '1');
+        const QList<QPair<QByteArray, QByteArray>> scVals = {
+            { "0000000d0000000141010000", "0000000d0000000141000000" },   // SCV_BYTES "A"
+            { "0000000e0000000141000001", "0000000e0000000141000000" },   // SCV_STRING "A"
+            { "0000000f0000000161010000", "0000000f0000000161000000" },   // SCV_SYMBOL "a"
+            { "000000160000000161000100", "000000160000000161000000" },   // SCV_EXECUTABLE_TAG "a"
+        };
+        for (const auto& v : scVals) {
+            QVERIFY2(refused(v.first, stellar::SCVal()), v.first.constData());
+            QVERIFY2(reads(v.second, stellar::SCVal()), v.second.constData());
+        }
+        QVERIFY(refused("00000002" + contract + "0000000161000001", stellar::ContractExecutable()));
+        QVERIFY(reads("00000002" + contract + "0000000161000000", stellar::ContractExecutable()));
+        QVERIFY(refused(contract + "0000000161010000" + "00000000", stellar::InvokeContractArgs()));
+        QVERIFY(reads(contract + "0000000161000000" + "00000000", stellar::InvokeContractArgs()));
+        QVERIFY(refused("0000000200000003006173" "01", stellar::HostFunction()));
+        QVERIFY(reads("0000000200000003006173" "00", stellar::HostFunction()));
+    }
+
+    /**
+     * A footprint count is checked against the input but nothing is reserved
+     * for it: 4 bytes per claimed key used to reserve a whole SorobanLedgerKey
+     * each (~240x the input with Qt 6) before the first key was refused. js and py
+     * build the lists key by key too.
+     */
+    void testAFootprintCountReservesNothing()
+    {
+        const int claimed = 1000;
+        const QByteArray keys(4 * claimed, char(0xff));   // no such LedgerEntryType
+        const QList<QByteArray> hostile = { be32(claimed) + keys,
+                                            be32(0) + be32(claimed) + keys };
+        for (const QByteArray& bytes : hostile) {
+            stellar::LedgerFootprint f;
+            QDataStream in(bytes);
+            bool threw = false;
+            try { in >> f; } catch (const std::runtime_error&) { threw = true; }
+            QVERIFY(threw);
+            QVERIFY(f.readOnly.isEmpty() && f.readWrite.isEmpty());
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+            // Qt 6's QList holds the keys themselves (Qt 5's has no capacity()).
+            QVERIFY(f.readOnly.capacity() < 16 && f.readWrite.capacity() < 16);
+#endif
+        }
+        stellar::LedgerFootprint f;
+        QDataStream in(be32(0) + be32(0));
+        in >> f;
+        QCOMPARE(in.status(), QDataStream::Ok);
+        QVERIFY(f.readOnly.isEmpty() && f.readWrite.isEmpty());
     }
 
     // ============ §3.6 — padding byte-by-byte check ============
@@ -241,6 +387,86 @@ private slots:
         QCOMPARE(dynamic_cast<MemoText*>(m2)->getText(), QStringLiteral("Euro Sign €"));
         delete m1;
         delete m2;
+    }
+
+    // ============ XDR bools and optional flags are 0 or 1 ============
+
+    /** An optional's present flag is 0 or 1. Any other value was read as
+     *  present, and written back as 1: bytes that decoded, and re-encoded as
+     *  different ones. A flag set to 2 in memory was written as 2. */
+    void testAnOptionalFlagIsZeroOrOne()
+    {
+        for (quint32 flag : { 2u, 0xFFFFFFFFu, 0x100u }) {
+            const QByteArray bytes = be32(flag) + be32(5);
+            xdr::Optional<quint32> opt;
+            QDataStream in(bytes);
+            in >> opt;
+            QCOMPARE(in.status(), QDataStream::ReadCorruptData);
+            QCOMPARE(opt.filled, 0);
+        }
+        xdr::Optional<quint32> present;
+        {
+            QDataStream in(be32(1) + be32(5));
+            in >> present;
+            QCOMPARE(in.status(), QDataStream::Ok);
+            QCOMPARE(present.filled, 1);
+            QCOMPARE(present.value, 5u);
+        }
+        present.filled = 2;
+        QByteArray out;
+        QDataStream s(&out, QIODevice::WriteOnly);
+        s << present;
+        QCOMPARE(s.status(), QDataStream::WriteFailed);
+        QVERIFY(out.isEmpty());
+    }
+
+    /** SCV_BOOL, and the present flags of SCV_VEC, SCV_MAP and a contract
+     *  instance's storage, are 0 or 1 too: 2 was read as true (or present)
+     *  and written back as 1. Like every other malformed SCVal they mark the
+     *  stream corrupt and throw. */
+    void testAnScValBoolOrPresentFlagIsZeroOrOne()
+    {
+        const QList<QByteArray> refused = {
+            be32(0) + be32(2),                          // SCV_BOOL
+            be32(16) + be32(2) + be32(0),               // SCV_VEC present flag
+            be32(17) + be32(2) + be32(0),               // SCV_MAP present flag
+            be32(19) + be32(1) + be32(2) + be32(0),     // SCV_CONTRACT_INSTANCE (stellar asset) storage flag
+        };
+        for (const QByteArray& bytes : refused) {
+            stellar::SCVal value;
+            QDataStream in(bytes);
+            bool threw = false;
+            try { in >> value; } catch (const std::runtime_error&) { threw = true; }
+            QVERIFY(threw);
+            QCOMPARE(in.status(), QDataStream::ReadCorruptData);
+        }
+        for (quint32 flag : { 0u, 1u }) {
+            stellar::SCVal value;
+            QDataStream in(be32(0) + be32(flag));
+            in >> value;
+            QCOMPARE(in.status(), QDataStream::Ok);
+            QCOMPARE(value.b, flag == 1u);
+        }
+    }
+
+    /** A reserved ext (`union switch (int v) { case 0: void; }`) is 0: any
+     *  other value was read and written back as it came. */
+    void testAReservedExtIsZero()
+    {
+        xdr::Reserved ext;
+        QDataStream in(be32(1));
+        in >> ext;
+        QCOMPARE(in.status(), QDataStream::ReadCorruptData);
+        ext.reserved = 1;
+        QByteArray out;
+        QDataStream s(&out, QIODevice::WriteOnly);
+        s << ext;
+        QCOMPARE(s.status(), QDataStream::WriteFailed);
+        QVERIFY(out.isEmpty());
+        ext.reserved = 0;
+        QDataStream s2(&out, QIODevice::WriteOnly);
+        s2 << ext;
+        QCOMPARE(out, be32(0));
     }
 };
 

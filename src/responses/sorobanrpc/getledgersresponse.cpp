@@ -1,37 +1,38 @@
 #include "getledgersresponse.h"
-#include "qtcompat.h"
+#include "gethealthresponse.h"
 
 #include <QJsonArray>
+#include <limits>
 
 QSTELLAR_BEGIN_NS
 
 
-namespace {
-quint32 readU32(const QJsonObject& o, const QString& k) {
-    QJsonValue v = o.value(k);
-    return v.isString() ? v.toString().toUInt()
-                        : static_cast<quint32>(jsonToInt64(v));
-}
-}
-
 GetLedgersResponse GetLedgersResponse::fromJson(const QJsonObject& r)
 {
+    // Each field as the RPC sends it, or the answer is refused. A ledger's
+    // close time comes as a decimal string, the latest and oldest ones as JSON
+    // integers: those two used to be read as strings, so every real answer
+    // gave them empty, and a missing or non-numeric sequence read as 0.
+    const sorobanrpcdetail::RpcFields fields(r, QStringLiteral("getLedgers"));
     GetLedgersResponse out;
-    for (const QJsonValue& v : r.value("ledgers").toArray()) {
-        QJsonObject e = v.toObject();
+    const QString ledgersKey = QStringLiteral("ledgers");
+    const QJsonArray ledgers = fields.array(ledgersKey);
+    for (int i = 0; i < ledgers.size(); ++i) {
+        const sorobanrpcdetail::RpcFields e = fields.element(ledgersKey, ledgers, i);
         LedgerInfo li;
-        li.hash             = e.value("hash").toString();
-        li.sequence         = readU32(e, "sequence");
-        li.ledgerCloseTime  = e.value("ledgerCloseTime").toString();
-        li.headerXdr        = e.value("headerXdr").toString();
-        li.metadataXdr      = e.value("metadataXdr").toString();
+        li.hash             = e.hash(QStringLiteral("hash"));
+        li.sequence         = e.uint32(QStringLiteral("sequence"));
+        li.ledgerCloseTime  = e.decimal(QStringLiteral("ledgerCloseTime"),
+                                        std::numeric_limits<qint64>::max());
+        li.headerXdr        = e.xdr(QStringLiteral("headerXdr"));
+        li.metadataXdr      = e.xdr(QStringLiteral("metadataXdr"));
         out.m_ledgers.append(li);
     }
-    out.m_latestLedger          = readU32(r, "latestLedger");
-    out.m_latestLedgerCloseTime = r.value("latestLedgerCloseTime").toString();
-    out.m_oldestLedger          = readU32(r, "oldestLedger");
-    out.m_oldestLedgerCloseTime = r.value("oldestLedgerCloseTime").toString();
-    out.m_cursor                = r.value("cursor").toString();
+    out.m_latestLedger          = fields.uint32(QStringLiteral("latestLedger"));
+    out.m_latestLedgerCloseTime = fields.int64Text(QStringLiteral("latestLedgerCloseTime"));
+    out.m_oldestLedger          = fields.uint32(QStringLiteral("oldestLedger"));
+    out.m_oldestLedgerCloseTime = fields.int64Text(QStringLiteral("oldestLedgerCloseTime"));
+    out.m_cursor                = fields.string(QStringLiteral("cursor"));
     return out;
 }
 QSTELLAR_END_NS

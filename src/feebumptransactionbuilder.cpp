@@ -41,19 +41,34 @@ FeeBumpTransactionBuilder& FeeBumpTransactionBuilder::setBaseFee(qint64 baseFee)
         throw std::runtime_error("baseFee cannot be smaller than the BASE_FEE");
     }
 
-    qint64 innerBaseFee = m_inner->getFee();
-    qint64 numOperations = m_inner->getOperations().length();
-    if (numOperations > 0) {
-        innerBaseFee = innerBaseFee / numOperations;
-    }
+    const qint64 numOperations = qMax<qint64>(1, m_inner->getOperations().length());
 
-    if (baseFee < innerBaseFee) {
-        throw std::runtime_error("base fee cannot be lower than provided inner transaction base fee");
+    // A Soroban inner transaction's fee includes its resource fee, which is
+    // not a per-operation rate. It used to be counted as one — refusing base
+    // fees the network accepts and roughly doubling the smallest bid that
+    // passed. As js-stellar-base does: compare against the inclusion fee
+    // alone, and add the resource fee back once.
+    qint64 resourceFee = 0;
+    if (auto data = m_inner->getSorobanData()) {
+        resourceFee = data->resourceFee;
+        if (resourceFee < 0)
+            throw std::runtime_error("the inner transaction carries a negative resource fee");
     }
-    if (baseFee > std::numeric_limits<qint64>::max() / (numOperations + 1)) {
+    const qint64 innerInclusionFee = qMax<qint64>(0, m_inner->getFee() - resourceFee);
+
+    // Compared exactly, the way core does (baseFee * ops >= inner inclusion
+    // fee). A truncating per-operation division let bids through that core
+    // then refused: a 301-stroop inner fee over three operations accepted 100.
+    if (baseFee > std::numeric_limits<qint64>::max() / numOperations) {
         throw std::runtime_error("fee overflows 64 bit int");
     }
-    qint64 maxFee = baseFee * (numOperations + 1);
+    if (baseFee * numOperations < innerInclusionFee) {
+        throw std::runtime_error("base fee cannot be lower than provided inner transaction base fee");
+    }
+    if (baseFee > (std::numeric_limits<qint64>::max() - resourceFee) / (numOperations + 1)) {
+        throw std::runtime_error("fee overflows 64 bit int");
+    }
+    qint64 maxFee = baseFee * (numOperations + 1) + resourceFee;
 
     m_baseFee = maxFee;
     return *this;

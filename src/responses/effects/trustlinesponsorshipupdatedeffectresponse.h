@@ -17,10 +17,15 @@ class TrustlineSponsorshipUpdatedEffectResponse : public EffectResponse
 {
     Q_OBJECT
     Q_PROPERTY(QString asset READ asset WRITE setAsset NOTIFY assetChanged)
+    // A pool-share trustline has no "asset": Horizon names it by these two.
+    Q_PROPERTY(QString asset_type MEMBER m_assetType)
+    Q_PROPERTY(QString liquidity_pool_id MEMBER m_liquidityPoolId)
     Q_PROPERTY(QString former_sponsor READ getFormerSponsor WRITE setFormerSponsor NOTIFY formerSponsorChanged)
     Q_PROPERTY(QString new_sponsor READ getNewSponsor WRITE setNewSponsor NOTIFY newSponsorChanged)
 
     QString m_assetString;
+    QString m_assetType;
+    QString m_liquidityPoolId;
     Asset* m_asset;
     QString m_formerSponsor;
     QString m_newSponsor;
@@ -29,6 +34,10 @@ public:
     TrustlineSponsorshipUpdatedEffectResponse(QNetworkReply *reply=nullptr);
     virtual ~TrustlineSponsorshipUpdatedEffectResponse();
     QString asset() const;
+    /** "liquidity_pool" for a pool-share trustline, empty for a credit one. */
+    QString getAssetType() const { return m_assetType; }
+    /** The pool (hex) of a pool-share trustline, empty for a credit one. */
+    QString getLiquidityPoolId() const { return m_liquidityPoolId; }
     Asset* getAsset();
     QString getFormerSponsor() const;
 

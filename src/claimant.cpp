@@ -1,5 +1,9 @@
 #include "claimant.h"
 #include <QCoreApplication>
+#include <QJsonArray>
+#include <QJsonObject>
+#include <QJsonValue>
+#include <stdexcept>
 #include "responses/response.h"
 #include "qtcompat.h"
 static void registerTypes()
@@ -36,10 +40,15 @@ Claimant &Claimant::operator=(const Claimant &other)
 {
     if (this == &other)
         return *this;
-    if (m_predicate)
-        delete m_predicate;
+    // Copied before what it holds is freed, as And/Or assignment does: a
+    // copy throws for a predicate Predicate::create does not know, also
+    // nested in and/or, and this deleted first, left m_predicate pointing at
+    // the freed one, and the destructor deleted it again. A throw now leaves
+    // the claimant as it was.
+    Predicate* copy = other.m_predicate ? Predicate::create(*(other.m_predicate)) : nullptr;
+    delete m_predicate;
     m_destination = other.m_destination;
-    m_predicate = other.m_predicate ? Predicate::create(*(other.m_predicate)) : nullptr;
+    m_predicate = copy;
     return *this;
 }
 
@@ -55,7 +64,12 @@ QString Claimant::getDestination() const
 
 const Predicate& Claimant::getPredicate() const
 {
-    return *m_predicate;
+    // A claimant made with no predicate (the default constructor) can claim
+    // unconditionally, as js and py read it. Both of these dereferenced null.
+    static const Predicate::Unconditional unconditional;
+    if (m_predicate)
+        return *m_predicate;
+    return unconditional;
 }
 
 stellar::Claimant Claimant::toXdr() const
@@ -63,7 +77,7 @@ stellar::Claimant Claimant::toXdr() const
     stellar::Claimant c;
     c.type = stellar::ClaimantType::CLAIMANT_TYPE_V0;
     c.v0.destination = StrKey::encodeToXDRAccountId(m_destination);
-    c.v0.predicate = m_predicate->toXdr();
+    c.v0.predicate = getPredicate().toXdr();
     return c;
 }
 
@@ -93,23 +107,100 @@ void Claimant::setDestination(QString destination)
 
 void Claimant::setPredicate(Predicate &predicate)
 {
+    // Only for a predicate with the same XDR: equals() compares and/or
+    // operands in order. It used to ignore their order, and this kept (and
+    // toXdr() signed) and(a, b) when the caller set and(b, a).
     if (m_predicate && m_predicate->equals(&predicate))
         return;
 
-    m_predicate = Predicate::create(predicate);
+    // The predicate it replaced was never freed.
+    Predicate* copy = Predicate::create(predicate);
+    delete m_predicate;
+    m_predicate = copy;
 }
+
+namespace {
+
+[[noreturn]] void refuse(const QString& field, const QString& why)
+{
+    throw std::runtime_error((field.isEmpty() ? why : field + QStringLiteral(": ") + why).toStdString());
+}
+
+QString member(const QString& path, const QString& key)
+{
+    return path.isEmpty() ? key : path + QLatin1Char('.') + key;
+}
+
+/** A JSON value as an error message shows it (as the Horizon readers do). */
+QString describe(const QJsonValue& value)
+{
+    switch (value.type()) {
+    case QJsonValue::Null: return QStringLiteral("null");
+    case QJsonValue::Bool: return value.toBool() ? QStringLiteral("true") : QStringLiteral("false");
+    case QJsonValue::Double:
+        return QStringLiteral("the number ") + QString::number(value.toDouble(), 'g', 17);
+    case QJsonValue::String: {
+        QString text = value.toString();
+        if (text.size() > 40)
+            text = text.left(40) + QStringLiteral("...");
+        return QStringLiteral("the text \"") + text + QLatin1Char('"');
+    }
+    case QJsonValue::Array: return QStringLiteral("an array");
+    case QJsonValue::Object: return QStringLiteral("an object");
+    default: return QStringLiteral("nothing");
+    }
+}
+
+/** A G... account id, in its one canonical spelling. */
+bool isAccountId(const QString& id)
+{
+    try {
+        return id.size() == 56 && StrKey::decodeVersionByte(id) == StrKey::VersionByte::ACCOUNT_ID
+               && StrKey::encodeStellarAccountId(StrKey::decodeStellarAccountId(id)) == id;
+    } catch (const std::exception&) {
+        return false;
+    }
+}
+
+} // namespace
 
 QList<Claimant> ClaimantConverter::convertData(const QVariantList &source)
 {
-    QList<Claimant> res;
-    for(int n = 0;n<source.count();n++){
+    // Each item used to be read with toMap() and toString(): an item that
+    // was no object, a destination that was no account id and any other key
+    // all went through, and the predicate was read leniently.
+    return fromJson(QJsonArray::fromVariantList(source));
+}
 
-        QVariantMap m = source[n].toMap();
-        Claimant r(m.value("destination").toString(), Predicate::create(m.value("predicate")));
-        res.append(r);
-
+QList<Claimant> ClaimantConverter::fromJson(const QJsonValue &json, const QString &field)
+{
+    if (!json.isArray())
+        refuse(field, QStringLiteral("expected an array, found ") + describe(json));
+    QList<Claimant> claimants;
+    const QJsonArray array = json.toArray();
+    for (int i = 0; i < array.size(); ++i) {
+        const QString item = field + QLatin1Char('[') + QString::number(i) + QLatin1Char(']');
+        if (!array.at(i).isObject())
+            refuse(item, QStringLiteral("expected an object, found ") + describe(array.at(i)));
+        const QJsonObject claimant = array.at(i).toObject();
+        const QStringList keys = claimant.keys();
+        for (const QString& key : keys) {
+            if (key != QLatin1String("destination") && key != QLatin1String("predicate"))
+                refuse(member(item, key), QStringLiteral("not part of a claimant"));
+        }
+        const QJsonValue destination = claimant.value(QStringLiteral("destination"));
+        const QString destinationField = member(item, QStringLiteral("destination"));
+        if (!destination.isString() || destination.toString().isEmpty())
+            refuse(destinationField, destination.isUndefined()
+                                         ? QStringLiteral("missing")
+                                         : QStringLiteral("expected text, found ") + describe(destination));
+        if (!isAccountId(destination.toString()))
+            refuse(destinationField, QStringLiteral("\"%1\" is not an account id").arg(destination.toString()));
+        claimants.append(Claimant(destination.toString(),
+                                  Predicate::fromJson(claimant.value(QStringLiteral("predicate")),
+                                                      member(item, QStringLiteral("predicate")))));
     }
-    return res;
+    return claimants;
 }
 
 QList<Claimant> checkNotNull(QList<Claimant> claimants, const char *error)

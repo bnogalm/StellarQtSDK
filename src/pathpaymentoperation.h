@@ -12,13 +12,16 @@
  */
 QSTELLAR_BEGIN_NS
 
-class PathPaymentOperation : public Operation
+/**
+ * The pre-protocol-12 name of PathPaymentStrictReceiveOperation, kept for
+ * 1.0.x callers. It is one now: Operation::fromXdr still returns this class
+ * for a PATH_PAYMENT_STRICT_RECEIVE (so a 1.0.x dynamic_cast to it keeps
+ * working), and dynamic_cast<PathPaymentStrictReceiveOperation*> works on it
+ * too — it gave nullptr for every decoded strict-receive payment, the class
+ * being a separate copy of the same code.
+ */
+class PathPaymentOperation : public PathPaymentStrictReceiveOperation
 {
-    Asset* m_sendAsset;    
-    Asset* m_destAsset;
-    QList<Asset*> m_path;
-
-    stellar::PathPaymentStrictReceiveOp m_op;
 public:
     PathPaymentOperation();
     PathPaymentOperation(stellar::PathPaymentStrictReceiveOp &op);
@@ -27,37 +30,6 @@ public:
 
     PathPaymentOperation(Asset* sendAsset, QString sendMax, QString destination,
                          Asset* destAsset, QString destAmount, QList<Asset*> path = QList<Asset*>());
-
-    /**
-     * The asset deducted from the sender's account.
-     */
-    Asset* getSendAsset();
-
-    /**
-     * The maximum amount of send asset to deduct (excluding fees)
-     */
-    QString getSendMax();
-
-    /**
-     * Account that receives the payment.
-     */
-    QString getDestination() const;
-
-    /**
-     * The asset the destination account receives.
-     */
-    Asset* getDestAsset();
-
-    /**
-     * The amount of destination asset the destination account receives.
-     */
-    QString getDestAmount();
-
-    /**
-     * The assets (other than send asset and destination asset) involved in the offers the path takes. For example, if you can only find a path from USD to EUR through XLM and BTC, the path would be USD -&raquo; XLM -&raquo; BTC -&raquo; EUR and the path would contain XLM and BTC.
-     */
-    QList<Asset*> getPath();
-    void fillOperationBody(AccountConverter& accountConverter, stellar::Operation &op);
 
     static PathPaymentOperation * build(AccountConverter& accountConverter, stellar::PathPaymentStrictReceiveOp &op);
     static PathPaymentOperation * create(Asset* sendAsset, QString sendMax, KeyPair* destination,

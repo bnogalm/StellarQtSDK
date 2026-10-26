@@ -47,27 +47,30 @@ namespace stellar
     }
 
     inline QDataStream &operator<<(QDataStream &out, const  MuxedAccount &obj) {
-        out << obj.type;
-        if(isMuxed(obj.type))
-        {
-            out << obj.med25519;
-        }
-        else
-        {
-            out << obj.ed25519;
+        switch(obj.type){
+        case CryptoKeyType::KEY_TYPE_ED25519:
+            out << obj.type << obj.ed25519; break;
+        case CryptoKeyType::KEY_TYPE_MUXED_ED25519:
+            out << obj.type << obj.med25519; break;
+        // Two arms only, as in the reader. Any other key type used to be
+        // written as one of them (the muxed bit picked which), under its own
+        // discriminant: bytes that no one can decode, hashed and signed.
+        default: out.setStatus(QDataStream::WriteFailed); break;
         }
        return out;
     }
 
     inline QDataStream &operator>>(QDataStream &in,  MuxedAccount &obj) {
-        in >> obj.type;        
-        if(isMuxed(obj.type))
-        {
-            in >> obj.med25519;
-        }
-        else
-        {
-            in >> obj.ed25519;
+        in >> obj.type;
+        // Two arms only. Any other key type (a pre-auth or hash-x type, or
+        // one of those with the muxed bit) used to be read as one of them,
+        // though js and py refuse it and Core cannot decode it.
+        switch(obj.type){
+        case CryptoKeyType::KEY_TYPE_ED25519:
+            in >> obj.ed25519; break;
+        case CryptoKeyType::KEY_TYPE_MUXED_ED25519:
+            in >> obj.med25519; break;
+        default: in.setStatus(QDataStream::ReadCorruptData); break;
         }
        return in;
     }
@@ -383,15 +386,15 @@ namespace stellar
     // ASSET_TYPE_NATIVE is not allowed
     inline QDataStream &operator<<(QDataStream &out, const  AllowTrustOp &obj) {
         //allow trust op skips issuer field
-        out << obj.trustor << obj.asset.type;
         switch(obj.asset.type)
         {
             case stellar::AssetType::ASSET_TYPE_CREDIT_ALPHANUM4:
-                out << obj.asset.alphaNum4.assetCode;break;
+                out << obj.trustor << obj.asset.type << obj.asset.alphaNum4.assetCode;break;
             case stellar::AssetType::ASSET_TYPE_CREDIT_ALPHANUM12:
-                out << obj.asset.alphaNum12.assetCode;break;
-            default:
-            break;
+                out << obj.trustor << obj.asset.type << obj.asset.alphaNum12.assetCode;break;
+            default:            // AssetCode has only the two credit arms: nothing to write
+                out.setStatus(QDataStream::WriteFailed);
+                return out;
         }
         out << obj.authorize;
        return out;
@@ -405,8 +408,8 @@ namespace stellar
                in >> obj.asset.alphaNum4.assetCode;break;
            case stellar::AssetType::ASSET_TYPE_CREDIT_ALPHANUM12:
                in >> obj.asset.alphaNum12.assetCode;break;
-           default:
-           break;
+           default:     // AssetCode has only the two credit arms
+               in.setStatus(QDataStream::ReadCorruptData); break;
        }
        in >> obj.authorize;
 
@@ -635,6 +638,8 @@ namespace stellar
         }
         const RevokeSponsorshipOp& operator = (const RevokeSponsorshipOp& obj)
         {
+            if (this == &obj)
+                return *this;   // clear() would destroy what it copies from
             clear();
             type= obj.type;
             switch(obj.type)
@@ -654,15 +659,15 @@ namespace stellar
     };
 
     inline QDataStream &operator<<(QDataStream &out, const  RevokeSponsorshipOp &obj) {
-        out << obj.type;
         switch(obj.type)
         {
         case RevokeSponsorshipType::REVOKE_SPONSORSHIP_LEDGER_ENTRY:
-            out << obj.ledgerKey;
+            out << obj.type << obj.ledgerKey;
             break;
         case RevokeSponsorshipType::REVOKE_SPONSORSHIP_SIGNER:
-            out << obj.signer.accountID << obj.signer.signerKey;
+            out << obj.type << obj.signer.accountID << obj.signer.signerKey;
             break;
+        default: out.setStatus(QDataStream::WriteFailed); break;   // no arm: nothing to write
         }
 
        return out;
@@ -681,6 +686,7 @@ namespace stellar
            new (&obj.signer) RevokeSponsorshipOp::RevokeSponsorshipSigner();
            in >> obj.signer.accountID >> obj.signer.signerKey;;
            break;
+       default: in.setStatus(QDataStream::ReadCorruptData); break;
        }
        return in;
     }
@@ -813,7 +819,14 @@ namespace stellar
         ChangeTrustOp operationChangeTrust;
         AllowTrustOp operationAllowTrust;
         MuxedAccount operationAccountMerge;
-        MuxedAccount operationInflation;
+        // No member for INFLATION: the canonical union writes `case INFLATION:
+        // void;` and carries nothing at all. There used to be a MuxedAccount
+        // here and the writer wrote it, so every inflation operation put an
+        // extra account on the wire where the format expects nothing — and
+        // read it out of a union member that fillOperationBody never
+        // constructs. Horizon answered "Transaction Malformed"; a symmetric
+        // round trip through this file never noticed, because the reader
+        // consumed exactly the same bytes the writer invented.
         BumpSequenceOp operationBumpSequence;
         ManageBuyOfferOp operationManageBuyOffer;        
         ClawbackOp operationClawback;
@@ -864,6 +877,13 @@ namespace stellar
 
     };
     inline QDataStream &operator<<(QDataStream &out, const  Operation &obj) {
+        // A type with no arm is refused before anything is written; it used
+        // to go out as a source account and a bare discriminant.
+        if (static_cast<qint32>(obj.type) < static_cast<qint32>(OperationType::CREATE_ACCOUNT)
+            || static_cast<qint32>(obj.type) > static_cast<qint32>(OperationType::RESTORE_FOOTPRINT)) {
+            out.setStatus(QDataStream::WriteFailed);
+            return out;
+        }
         out << obj.sourceAccount << obj.type;
         switch(obj.type){
         case OperationType::CREATE_ACCOUNT:
@@ -885,7 +905,7 @@ namespace stellar
         case OperationType::ACCOUNT_MERGE:
             out << obj.operationAccountMerge; break;
         case OperationType::INFLATION:
-            out << obj.operationInflation; break;
+            break;                       // void: the arm carries nothing
         case OperationType::MANAGE_DATA:
             out << obj.operationManageData; break;
         case OperationType::BUMP_SEQUENCE:
@@ -953,7 +973,7 @@ namespace stellar
         case OperationType::ACCOUNT_MERGE:
             in >> obj.operationAccountMerge; break;
         case OperationType::INFLATION:
-            in >> obj.operationInflation; break;
+            break;                       // void: there is nothing to read
         case OperationType::MANAGE_DATA:
             new (&obj.operationManageData) ManageDataOp();
             in >> obj.operationManageData; break;
@@ -994,7 +1014,7 @@ namespace stellar
             in >> obj.operationExtendFootprintTtl; break;
         case OperationType::RESTORE_FOOTPRINT:
             in >> obj.operationRestoreFootprint; break;
-        //default: break;
+        default: in.setStatus(QDataStream::ReadCorruptData); break;
         }
        return in;
     }
@@ -1012,21 +1032,22 @@ namespace stellar
     };
 
     inline QDataStream &operator<<(QDataStream &out, const  OperationID &obj) {
-        out << obj.type;;
         switch(obj.type){
         case EnvelopeType::ENVELOPE_TYPE_OP_ID:
-            out << obj.id.sourceAccount << obj.id.seqNum<< obj.id.opNum;
-        default: break;
+            out << obj.type << obj.id.sourceAccount << obj.id.seqNum<< obj.id.opNum; break;
+        // A claimable balance id is the hash of this: a bare discriminant
+        // was hashed into a balance id that names nothing.
+        default: out.setStatus(QDataStream::WriteFailed); break;
         }
        return out;
     }
 
     inline QDataStream &operator>>(QDataStream &in,  OperationID &obj) {
-        in << obj.type;;
+        in >> obj.type;
         switch(obj.type){
         case EnvelopeType::ENVELOPE_TYPE_OP_ID:
-            in >> obj.id.sourceAccount >> obj.id.seqNum>> obj.id.opNum;
-        default: break;
+            in >> obj.id.sourceAccount >> obj.id.seqNum>> obj.id.opNum; break;
+        default: in.setStatus(QDataStream::ReadCorruptData); break;
         }
 
        return in;
@@ -1051,19 +1072,18 @@ namespace stellar
         };
     };
     inline QDataStream &operator<<(QDataStream &out, const  Memo &obj) {
-        out << obj.type;;
         switch(obj.type){
         case MemoType::MEMO_NONE:
-            break;
+            out << obj.type; break;
         case MemoType::MEMO_TEXT:
-            out << obj.text; break;
+            out << obj.type << obj.text; break;
         case MemoType::MEMO_ID:
-            out << obj.id; break;
+            out << obj.type << obj.id; break;
         case MemoType::MEMO_HASH:
-            out << obj.hash; break;
+            out << obj.type << obj.hash; break;
         case MemoType::MEMO_RETURN:
-            out << obj.retHash; break;
-        //default: break;
+            out << obj.type << obj.retHash; break;
+        default: out.setStatus(QDataStream::WriteFailed); break;   // no arm: nothing to write
         }
        return out;
     }
@@ -1081,7 +1101,7 @@ namespace stellar
             in >> obj.hash; break;
         case MemoType::MEMO_RETURN:
             in >> obj.retHash; break;
-        //default: break;
+        default: in.setStatus(QDataStream::ReadCorruptData); break;
         }
        return in;
     }
@@ -1229,11 +1249,11 @@ namespace stellar
         friend inline QDataStream &operator>>(QDataStream &in, Preconditions &obj);
     };
     inline QDataStream &operator<<(QDataStream &out, const Preconditions &obj) {
-        out << obj.type;
         switch (obj.type) {
-        case PreconditionType::PRECOND_NONE: break;
-        case PreconditionType::PRECOND_TIME: out << obj.timeBounds; break;
-        case PreconditionType::PRECOND_V2:   out << obj.v2; break;
+        case PreconditionType::PRECOND_NONE: out << obj.type; break;
+        case PreconditionType::PRECOND_TIME: out << obj.type << obj.timeBounds; break;
+        case PreconditionType::PRECOND_V2:   out << obj.type << obj.v2; break;
+        default: out.setStatus(QDataStream::WriteFailed); break;   // no arm: nothing to write
         }
         return out;
     }
@@ -1249,6 +1269,7 @@ namespace stellar
         case PreconditionType::PRECOND_V2:
             new (&obj.v2) PreconditionsV2();
             in >> obj.v2; break;
+        default: in.setStatus(QDataStream::ReadCorruptData); break;
         }
         return in;
     }
@@ -1300,6 +1321,7 @@ namespace stellar
 
     inline QDataStream &operator>>(QDataStream &in,  TransactionV0 &obj) {
        in >> obj.sourceAccountEd25519 >> obj.fee >> obj.seqNum >> obj.timeBounds >> obj.memo>> obj.operations >> obj.ext;
+       if (obj.ext.reserved != 0) in.setStatus(QDataStream::ReadCorruptData);   // ext is void: 0 only
        return in;
     }
 
@@ -1330,6 +1352,10 @@ namespace stellar
         SorobanTransactionData sorobanData;
     };
     inline QDataStream &operator<<(QDataStream &out, const TransactionExt &obj) {
+        if (obj.v != 0 && obj.v != 1) {             // no arm: nothing to write
+            out.setStatus(QDataStream::WriteFailed);
+            return out;
+        }
         out << obj.v;
         if (obj.v == 1) out << obj.sorobanData;
         return out;
@@ -1337,6 +1363,7 @@ namespace stellar
     inline QDataStream &operator>>(QDataStream &in, TransactionExt &obj) {
         in >> obj.v;
         if (obj.v == 1) in >> obj.sorobanData;
+        else if (obj.v != 0) in.setStatus(QDataStream::ReadCorruptData);   // an arm it does not know
         return in;
     }
 
@@ -1387,7 +1414,7 @@ namespace stellar
     }
 
     inline QDataStream &operator>>(QDataStream &in,  TransactionV1Envelope &obj) {
-        new (&obj.tx) Transaction;       
+       obj.tx = Transaction();      // tx is always live: reset it, never build a second one over it
        in >> obj.tx >> obj.signatures;
        return in;
     }
@@ -1416,18 +1443,13 @@ namespace stellar
     };
 
     inline QDataStream &operator<<(QDataStream &out, const  FeeBumpTransaction &obj) {
-
-        out << obj.feeSource << obj.fee <<obj.type;
-        switch(obj.type)
-        {
-         case EnvelopeType::ENVELOPE_TYPE_TX:
-        {
-            out << obj.v1;
-            break;
+        // A fee bump wraps a v1 transaction only: any other inner type is
+        // refused before the fee source and fee are written.
+        if (obj.type != EnvelopeType::ENVELOPE_TYPE_TX) {
+            out.setStatus(QDataStream::WriteFailed);
+            return out;
         }
-        default:break;
-        }
-        out << obj.ext;
+        out << obj.feeSource << obj.fee << obj.type << obj.v1 << obj.ext;
        return out;
     }
 
@@ -1437,13 +1459,13 @@ namespace stellar
        {
         case EnvelopeType::ENVELOPE_TYPE_TX:
        {
-           new (&obj.v1) TransactionV1Envelope();
-           in >> obj.v1;
+           in >> obj.v1;        // v1 is always live (see the constructor)
            break;
        }
-       default:break;
+       default: in.setStatus(QDataStream::ReadCorruptData); break;     // a fee bump wraps a v1 transaction only
        }
        in >> obj.ext;
+       if (obj.ext.reserved != 0) in.setStatus(QDataStream::ReadCorruptData);   // ext is void: 0 only
 
        return in;
     }
@@ -1500,24 +1522,29 @@ namespace stellar
         TransactionEnvelope(const stellar::TransactionEnvelope& te);
         ~TransactionEnvelope();
         const TransactionEnvelope& operator = (const TransactionEnvelope& te);
+    private:
+        friend inline QDataStream &operator>>(QDataStream &in,  TransactionEnvelope &obj);
+        // Destroys the live arm, whichever of the three it is. The caller
+        // constructs the next one.
+        void clear();
     };
 
     inline QDataStream &operator<<(QDataStream &out, const  TransactionEnvelope &obj) {
-        out << obj.type;
         switch(obj.type)
         {
         case EnvelopeType::ENVELOPE_TYPE_TX_V0:
-            out << obj.v0; break;
+            out << obj.type << obj.v0; break;
         case EnvelopeType::ENVELOPE_TYPE_TX:
-            out << obj.v1; break;
+            out << obj.type << obj.v1; break;
         case EnvelopeType::ENVELOPE_TYPE_TX_FEE_BUMP:
-            out << obj.feeBump; break;
-        default:break;
+            out << obj.type << obj.feeBump; break;
+        default: out.setStatus(QDataStream::WriteFailed); break;   // no arm: nothing to write
         }
        return out;
     }
 
     inline QDataStream &operator>>(QDataStream &in,  TransactionEnvelope &obj) {
+        obj.clear();            // an envelope read into twice must not keep (or leak) the first arm
         in >> obj.type;
         switch(obj.type)
         {
@@ -1536,7 +1563,7 @@ namespace stellar
             new (&obj.feeBump) FeeBumpTransactionEnvelope();
             in >> obj.feeBump; break;
         }
-        default:break;
+        default: in.setStatus(QDataStream::ReadCorruptData); break;
         }
        return in;
     }
@@ -1583,6 +1610,13 @@ namespace stellar
         }
         ~TransactionSignaturePayload()
         {
+            clear();
+        }
+    private:
+        friend inline QDataStream &operator>>(QDataStream &in,  TransactionSignaturePayload &obj);
+        // Destroys the live arm, if any; the caller builds the next one.
+        void clear()
+        {
             switch(type)
             {
                 case EnvelopeType::ENVELOPE_TYPE_TX:
@@ -1602,26 +1636,31 @@ namespace stellar
     };
 
     inline QDataStream &operator<<(QDataStream &out, const  TransactionSignaturePayload &obj) {
-        out << obj.networkId << obj.type;
         switch(obj.type)
         {
             case EnvelopeType::ENVELOPE_TYPE_TX:
             {
-                out <<obj.tx;
+                out << obj.networkId << obj.type << obj.tx;
                 break;
             }
             case EnvelopeType::ENVELOPE_TYPE_TX_FEE_BUMP:
             {
-                out <<obj.feeBump;
+                out << obj.networkId << obj.type << obj.feeBump;
                 break;
             }
-            default:break;
+            // What is signed is the hash of this: a network id and a bare
+            // discriminant, hashed and signed as if it were a transaction.
+            default: out.setStatus(QDataStream::WriteFailed); break;
         }
 
        return out;
     }
 
    inline  QDataStream &operator>>(QDataStream &in,  TransactionSignaturePayload &obj) {
+       // The arm is built fresh below, never over the live one (which leaked
+       // it), and a type with no arm is refused: it was read as nothing.
+       obj.clear();
+       obj.type = EnvelopeType::ENVELOPE_TYPE_TX_V0;     // no arm is live now
        in >> obj.networkId >> obj.type;
        switch(obj.type)
        {
@@ -1637,7 +1676,9 @@ namespace stellar
                in >>obj.feeBump;
                break;
            }
-           default:break;
+           default:     // no arm was built, and clear() destroys none for this type
+               in.setStatus(QDataStream::ReadCorruptData);
+               break;
        }
        return in;
     }
@@ -1670,6 +1711,96 @@ namespace stellar
        return in;
     }
 
+    enum class ClaimAtomType : qint32
+    {
+        CLAIM_ATOM_TYPE_V0 = 0,
+        CLAIM_ATOM_TYPE_ORDER_BOOK = 1,
+        CLAIM_ATOM_TYPE_LIQUIDITY_POOL = 2
+    };
+    XDR_ENUM_SERIALIZER(ClaimAtomType)
+
+    /* The pre-protocol-18 form of ClaimOfferAtom: the seller as a raw key. */
+    struct ClaimOfferAtomV0
+    {
+        uint256 sellerEd25519 = {};
+        qint64 offerID = 0;
+        Asset assetSold;
+        qint64 amountSold = 0;
+        Asset assetBought;
+        qint64 amountBought = 0;
+    };
+    inline QDataStream &operator<<(QDataStream &out, const ClaimOfferAtomV0 &obj) {
+        out << obj.sellerEd25519 << obj.offerID << obj.assetSold << obj.amountSold
+            << obj.assetBought << obj.amountBought;
+        return out;
+    }
+    inline QDataStream &operator>>(QDataStream &in, ClaimOfferAtomV0 &obj) {
+        in >> obj.sellerEd25519 >> obj.offerID >> obj.assetSold >> obj.amountSold
+           >> obj.assetBought >> obj.amountBought;
+        return in;
+    }
+
+    /* A trade against a liquidity pool rather than an offer. */
+    struct ClaimLiquidityAtom
+    {
+        PoolID liquidityPoolID = {};
+        Asset assetSold;
+        qint64 amountSold = 0;
+        Asset assetBought;
+        qint64 amountBought = 0;
+    };
+    inline QDataStream &operator<<(QDataStream &out, const ClaimLiquidityAtom &obj) {
+        out << obj.liquidityPoolID << obj.assetSold << obj.amountSold
+            << obj.assetBought << obj.amountBought;
+        return out;
+    }
+    inline QDataStream &operator>>(QDataStream &in, ClaimLiquidityAtom &obj) {
+        in >> obj.liquidityPoolID >> obj.assetSold >> obj.amountSold
+           >> obj.assetBought >> obj.amountBought;
+        return in;
+    }
+
+    /**
+     * One offer or pool an offer or a path payment traded against:
+     *
+     *   union ClaimAtom switch (ClaimAtomType type) {
+     *   case CLAIM_ATOM_TYPE_V0:             ClaimOfferAtomV0 v0;
+     *   case CLAIM_ATOM_TYPE_ORDER_BOOK:     ClaimOfferAtom orderBook;
+     *   case CLAIM_ATOM_TYPE_LIQUIDITY_POOL: ClaimLiquidityAtom liquidityPool;
+     *   };
+     *
+     * The results used to hold bare ClaimOfferAtoms, with no discriminant: an
+     * offer that crossed anything was misread from there on — the offer id
+     * of the caller's own offer came back as 0, or as another seller's.
+     * Only the member `type` names is read or written.
+     */
+    struct ClaimAtom
+    {
+        ClaimAtomType type = ClaimAtomType::CLAIM_ATOM_TYPE_ORDER_BOOK;
+        ClaimOfferAtomV0 v0;
+        ClaimOfferAtom orderBook;
+        ClaimLiquidityAtom liquidityPool;
+    };
+    inline QDataStream &operator<<(QDataStream &out, const ClaimAtom &obj) {
+        switch (obj.type) {
+        case ClaimAtomType::CLAIM_ATOM_TYPE_V0:             out << obj.type << obj.v0; break;
+        case ClaimAtomType::CLAIM_ATOM_TYPE_ORDER_BOOK:     out << obj.type << obj.orderBook; break;
+        case ClaimAtomType::CLAIM_ATOM_TYPE_LIQUIDITY_POOL: out << obj.type << obj.liquidityPool; break;
+        default: out.setStatus(QDataStream::WriteFailed); break;   // no arm: nothing to write
+        }
+        return out;
+    }
+    inline QDataStream &operator>>(QDataStream &in, ClaimAtom &obj) {
+        in >> obj.type;
+        switch (obj.type) {
+        case ClaimAtomType::CLAIM_ATOM_TYPE_V0:             in >> obj.v0; break;
+        case ClaimAtomType::CLAIM_ATOM_TYPE_ORDER_BOOK:     in >> obj.orderBook; break;
+        case ClaimAtomType::CLAIM_ATOM_TYPE_LIQUIDITY_POOL: in >> obj.liquidityPool; break;
+        default: in.setStatus(QDataStream::ReadCorruptData); break;
+        }
+        return in;
+    }
+
     /******* CreateAccount Result ********/
 
     enum class CreateAccountResultCode : qint32
@@ -1684,11 +1815,12 @@ namespace stellar
             -3, // would create an account below the min reserve
         CREATE_ACCOUNT_ALREADY_EXIST = -4 // account already exists
     };
+    XDR_RESULT_CODE_SERIALIZER(CreateAccountResultCode, CREATE_ACCOUNT_ALREADY_EXIST, CREATE_ACCOUNT_SUCCESS)
     struct alignas(4) CreateAccountResult
     {
         CreateAccountResultCode code;
     };
-    XDR_SERIALIZER(CreateAccountResult)
+    XDR_CODE_STRUCT_SERIALIZER(CreateAccountResult)
 
     /******* Payment Result ********/
 
@@ -1708,7 +1840,7 @@ namespace stellar
         PAYMENT_LINE_FULL = -8,      // destination would go above their limit
         PAYMENT_NO_ISSUER = -9       // missing issuer on asset
     };
-    XDR_SERIALIZER(PaymentResultCode)
+    XDR_RESULT_CODE_SERIALIZER(PaymentResultCode, PAYMENT_NO_ISSUER, PAYMENT_SUCCESS)
 
     struct PaymentResult {
         PaymentResultCode code;
@@ -1716,7 +1848,7 @@ namespace stellar
 
         }
     };
-    XDR_SERIALIZER(PaymentResult)
+    XDR_CODE_STRUCT_SERIALIZER(PaymentResult)
 
     /******* PathPaymentStrictReceive Result ********/
 
@@ -1739,7 +1871,8 @@ namespace stellar
         PATH_PAYMENT_STRICT_RECEIVE_OFFER_CROSS_SELF = -11,  // would cross one of its own offers
         PATH_PAYMENT_STRICT_RECEIVE_OVER_SENDMAX = -12       // could not satisfy sendmax
     };
-    XDR_SERIALIZER(PathPaymentStrictReceiveResultCode)
+    XDR_RESULT_CODE_SERIALIZER(PathPaymentStrictReceiveResultCode,
+                               PATH_PAYMENT_STRICT_RECEIVE_OVER_SENDMAX, PATH_PAYMENT_STRICT_RECEIVE_SUCCESS)
 
     /******* PathPaymentStrictSend Result ********/
 
@@ -1760,9 +1893,11 @@ namespace stellar
         PATH_PAYMENT_STRICT_SEND_NO_ISSUER = -9,          // missing issuer on one asset
         PATH_PAYMENT_STRICT_SEND_TOO_FEW_OFFERS = -10,    // not enough offers to satisfy path
         PATH_PAYMENT_STRICT_SEND_OFFER_CROSS_SELF = -11,  // would cross one of its own offers
-        PATH_PAYMENT_STRICT_SEND_OVER_SENDMAX = -12       // could not satisfy destMin
+        PATH_PAYMENT_STRICT_SEND_OVER_SENDMAX = -12,      // could not satisfy destMin (the name this SDK used)
+        PATH_PAYMENT_STRICT_SEND_UNDER_DESTMIN = -12      // stellar-xdr's name for the same code
     };
-    XDR_SERIALIZER(PathPaymentStrictSendResultCode)
+    XDR_RESULT_CODE_SERIALIZER(PathPaymentStrictSendResultCode,
+                               PATH_PAYMENT_STRICT_SEND_UNDER_DESTMIN, PATH_PAYMENT_STRICT_SEND_SUCCESS)
 
     struct SimplePaymentResult
     {
@@ -1782,17 +1917,23 @@ namespace stellar
 
     struct PathPaymentStrictReceiveResult {
         PathPaymentStrictReceiveResultCode code;
-        QVector<ClaimOfferAtom> offers; //<>;
+        QVector<ClaimAtom> offers; //<>;
         union{
             SimplePaymentResult last;
             Asset noIssuer; // the asset that caused the error
         };
+        // Asset has a constructor, so the union needs one spelled out.
+        PathPaymentStrictReceiveResult()
+            : code(PathPaymentStrictReceiveResultCode::PATH_PAYMENT_STRICT_RECEIVE_SUCCESS)
+        {
+            new (&last) SimplePaymentResult();
+        }
     };
     inline QDataStream &operator<<(QDataStream &out, const  PathPaymentStrictReceiveResult &obj) {
         out << obj.code;
         switch(obj.code){
         case PathPaymentStrictReceiveResultCode::PATH_PAYMENT_STRICT_RECEIVE_SUCCESS:
-            out << obj.offers << obj.last; break;
+            writeXdrList(out, obj.offers) << obj.last; break;
         case PathPaymentStrictReceiveResultCode::PATH_PAYMENT_STRICT_RECEIVE_NO_ISSUER:
             out << obj.noIssuer; break;
         default: break;
@@ -1804,7 +1945,7 @@ namespace stellar
         in >> obj.code;
         switch(obj.code){
         case PathPaymentStrictReceiveResultCode::PATH_PAYMENT_STRICT_RECEIVE_SUCCESS:
-            in >> obj.offers >> obj.last; break;
+            readXdrList(in, obj.offers) >> obj.last; break;
         case PathPaymentStrictReceiveResultCode::PATH_PAYMENT_STRICT_RECEIVE_NO_ISSUER:
             in >> obj.noIssuer; break;
         default: break;
@@ -1814,17 +1955,22 @@ namespace stellar
 
     struct PathPaymentStrictSendResult {
         PathPaymentStrictSendResultCode code;
-        QVector<ClaimOfferAtom> offers; //<>;
+        QVector<ClaimAtom> offers; //<>;
         union{
             SimplePaymentResult last;
             Asset noIssuer; // the asset that caused the error
         };
+        PathPaymentStrictSendResult()
+            : code(PathPaymentStrictSendResultCode::PATH_PAYMENT_STRICT_SEND_SUCCESS)
+        {
+            new (&last) SimplePaymentResult();
+        }
     };
     inline QDataStream &operator<<(QDataStream &out, const  PathPaymentStrictSendResult &obj) {
         out << obj.code;
         switch(obj.code){
         case PathPaymentStrictSendResultCode::PATH_PAYMENT_STRICT_SEND_SUCCESS:
-            out << obj.offers << obj.last; break;
+            writeXdrList(out, obj.offers) << obj.last; break;
         case PathPaymentStrictSendResultCode::PATH_PAYMENT_STRICT_SEND_NO_ISSUER:
             out << obj.noIssuer; break;
         default: break;
@@ -1836,7 +1982,7 @@ namespace stellar
         in >> obj.code;
         switch(obj.code){
         case PathPaymentStrictSendResultCode::PATH_PAYMENT_STRICT_SEND_SUCCESS:
-            in >> obj.offers >> obj.last; break;
+            readXdrList(in, obj.offers) >> obj.last; break;
         case PathPaymentStrictSendResultCode::PATH_PAYMENT_STRICT_SEND_NO_ISSUER:
             in >> obj.noIssuer; break;
         default: break;
@@ -1868,7 +2014,7 @@ namespace stellar
 
         MANAGE_SELL_OFFER_LOW_RESERVE = -12 // not enough funds to create a new Offer
     };
-    XDR_SERIALIZER(ManageSellOfferResultCode)
+    XDR_RESULT_CODE_SERIALIZER(ManageSellOfferResultCode, MANAGE_SELL_OFFER_LOW_RESERVE, MANAGE_SELL_OFFER_SUCCESS)
 
 
     enum class ManageOfferEffect : qint32
@@ -1877,34 +2023,36 @@ namespace stellar
         MANAGE_OFFER_UPDATED = 1,
         MANAGE_OFFER_DELETED = 2
     };
-    XDR_SERIALIZER(ManageOfferEffect)
+    XDR_ENUM_SERIALIZER(ManageOfferEffect)
 
 
     struct ManageOfferSuccessResult
     {
         // offers that got claimed while creating this offer
-        QVector<ClaimOfferAtom> offersClaimed;
+        QVector<ClaimAtom> offersClaimed;
         ManageOfferEffect effect;
         OfferEntry offer;
     };
     inline QDataStream &operator<<(QDataStream &out, const  ManageOfferSuccessResult &obj) {
-        out << obj.offersClaimed << obj.effect;
         switch(obj.effect){
         case ManageOfferEffect::MANAGE_OFFER_CREATED:
         case ManageOfferEffect::MANAGE_OFFER_UPDATED:
-            out << obj.offer; break;
-        default: break;
+            writeXdrList(out, obj.offersClaimed) << obj.effect << obj.offer; break;
+        case ManageOfferEffect::MANAGE_OFFER_DELETED:
+            writeXdrList(out, obj.offersClaimed) << obj.effect; break;
+        default: out.setStatus(QDataStream::WriteFailed); break;   // no arm: nothing to write
         }
        return out;
     }
 
     inline QDataStream &operator>>(QDataStream &in,  ManageOfferSuccessResult &obj) {
-        in >> obj.offersClaimed >> obj.effect;
+        readXdrList(in, obj.offersClaimed) >> obj.effect;
         switch(obj.effect){
         case ManageOfferEffect::MANAGE_OFFER_CREATED:
         case ManageOfferEffect::MANAGE_OFFER_UPDATED:
             in >> obj.offer; break;
-        default: break;
+        case ManageOfferEffect::MANAGE_OFFER_DELETED: break;
+        default: in.setStatus(QDataStream::ReadCorruptData); break;
         }
        return in;
     }
@@ -1961,6 +2109,7 @@ namespace stellar
 
         MANAGE_BUY_OFFER_LOW_RESERVE = -12 // not enough funds to create a new Offer
     };
+    XDR_RESULT_CODE_SERIALIZER(ManageBuyOfferResultCode, MANAGE_BUY_OFFER_LOW_RESERVE, MANAGE_BUY_OFFER_SUCCESS)
 
     struct ManageBuyOfferResult
     {
@@ -2007,13 +2156,13 @@ namespace stellar
         SET_OPTIONS_INVALID_HOME_DOMAIN = -9,     // malformed home domain
         SET_OPTIONS_AUTH_REVOCABLE_REQUIRED = -10 // auth revocable is required for clawback
     };
-    XDR_SERIALIZER(SetOptionsResultCode)
+    XDR_RESULT_CODE_SERIALIZER(SetOptionsResultCode, SET_OPTIONS_AUTH_REVOCABLE_REQUIRED, SET_OPTIONS_SUCCESS)
 
     struct alignas(4) SetOptionsResult
     {
         SetOptionsResultCode code;
     };
-    XDR_SERIALIZER(SetOptionsResult)
+    XDR_CODE_STRUCT_SERIALIZER(SetOptionsResult)
 
     /******* ChangeTrust Result ********/
 
@@ -2027,15 +2176,19 @@ namespace stellar
         CHANGE_TRUST_INVALID_LIMIT = -3, // cannot drop limit below balance
                                          // cannot create with a limit of 0
         CHANGE_TRUST_LOW_RESERVE = -4, // not enough funds to create a new trust line,
-        CHANGE_TRUST_SELF_NOT_ALLOWED = -5 // trusting self is not allowed
+        CHANGE_TRUST_SELF_NOT_ALLOWED = -5, // trusting self is not allowed
+        CHANGE_TRUST_TRUST_LINE_MISSING = -6, // Asset trustline is missing for pool
+        CHANGE_TRUST_CANNOT_DELETE = -7, // Asset trustline is still referenced in a pool
+        CHANGE_TRUST_NOT_AUTH_MAINTAIN_LIABILITIES = -8 // Asset trustline is deauthorized
     };
-    XDR_SERIALIZER(ChangeTrustResultCode)
+    XDR_RESULT_CODE_SERIALIZER(ChangeTrustResultCode,
+                               CHANGE_TRUST_NOT_AUTH_MAINTAIN_LIABILITIES, CHANGE_TRUST_SUCCESS)
 
     struct alignas(4) ChangeTrustResult
     {
         ChangeTrustResultCode code;
     };
-    XDR_SERIALIZER(ChangeTrustResult)
+    XDR_CODE_STRUCT_SERIALIZER(ChangeTrustResult)
 
     /******* AllowTrust Result ********/
 
@@ -2049,15 +2202,17 @@ namespace stellar
                                         // source account does not require trust
         ALLOW_TRUST_TRUST_NOT_REQUIRED = -3,
         ALLOW_TRUST_CANT_REVOKE = -4, // source account can't revoke trust,
-        ALLOW_TRUST_SELF_NOT_ALLOWED = -5 // trusting self is not allowed
+        ALLOW_TRUST_SELF_NOT_ALLOWED = -5, // trusting self is not allowed
+        ALLOW_TRUST_LOW_RESERVE = -6 // claimable balances can't be created
+                                     // on revoke due to low reserves
     };
-    XDR_SERIALIZER(AllowTrustResultCode)
+    XDR_RESULT_CODE_SERIALIZER(AllowTrustResultCode, ALLOW_TRUST_LOW_RESERVE, ALLOW_TRUST_SUCCESS)
 
     struct alignas(4) AllowTrustResult
     {
         AllowTrustResultCode code;
     };
-    XDR_SERIALIZER(AllowTrustResult)
+    XDR_CODE_STRUCT_SERIALIZER(AllowTrustResult)
 
     /******* AccountMerge Result ********/
 
@@ -2074,7 +2229,7 @@ namespace stellar
         ACCOUNT_MERGE_DEST_FULL = -6, // can't add source balance to destination balance
         ACCOUNT_MERGE_IS_SPONSOR = -7       // can't merge account that is a sponsor
     };
-    XDR_SERIALIZER(AccountMergeResultCode)
+    XDR_RESULT_CODE_SERIALIZER(AccountMergeResultCode, ACCOUNT_MERGE_IS_SPONSOR, ACCOUNT_MERGE_SUCCESS)
 
     struct AccountMergeResult
     {
@@ -2112,7 +2267,7 @@ namespace stellar
         // codes considered as "failure" for the operation
         INFLATION_NOT_TIME = -1
     };
-    XDR_SERIALIZER(InflationResultCode)
+    XDR_RESULT_CODE_SERIALIZER(InflationResultCode, INFLATION_NOT_TIME, INFLATION_SUCCESS)
 
     struct InflationPayout // or use PaymentResultAtom to limit types?
     {
@@ -2138,7 +2293,7 @@ namespace stellar
         out << obj.code;
         switch(obj.code){
         case InflationResultCode::INFLATION_SUCCESS:
-            out << obj.payouts; break;
+            writeXdrList(out, obj.payouts); break;
         default: break;
         }
 
@@ -2149,7 +2304,7 @@ namespace stellar
         in >> obj.code;
         switch(obj.code){
         case InflationResultCode::INFLATION_SUCCESS:
-            in >> obj.payouts; break;
+            readXdrList(in, obj.payouts); break;
         default: break;
         }
        return in;
@@ -2167,13 +2322,13 @@ namespace stellar
         MANAGE_DATA_LOW_RESERVE = -3,       // not enough funds to create a new Data Entry
         MANAGE_DATA_INVALID_NAME = -4       // Name not a valid string
     };
-    XDR_SERIALIZER(ManageDataResultCode)
+    XDR_RESULT_CODE_SERIALIZER(ManageDataResultCode, MANAGE_DATA_INVALID_NAME, MANAGE_DATA_SUCCESS)
 
     struct alignas(4) ManageDataResult
     {
         ManageDataResultCode code;
     };
-    XDR_SERIALIZER(ManageDataResult)
+    XDR_CODE_STRUCT_SERIALIZER(ManageDataResult)
 
 
     enum class BumpSequenceResultCode : qint32
@@ -2183,13 +2338,13 @@ namespace stellar
         // codes considerer as "failure" for the operation
         BUMP_SEQUENCE_BAD_SEQ = -1  //  'bumpTo' is not within bounds
     };
-    XDR_SERIALIZER(BumpSequenceResultCode)
+    XDR_RESULT_CODE_SERIALIZER(BumpSequenceResultCode, BUMP_SEQUENCE_BAD_SEQ, BUMP_SEQUENCE_SUCCESS)
 
     struct alignas(4) BumpSequenceResult
     {
          BumpSequenceResultCode code;
     };
-    XDR_SERIALIZER(BumpSequenceResult)
+    XDR_CODE_STRUCT_SERIALIZER(BumpSequenceResult)
 
     /******* CreateClaimableBalance Result ********/
 
@@ -2202,14 +2357,17 @@ namespace stellar
         CREATE_CLAIMABLE_BALANCE_NOT_AUTHORIZED = -4,
         CREATE_CLAIMABLE_BALANCE_UNDERFUNDED = -5
     };
+    XDR_RESULT_CODE_SERIALIZER(CreateClaimableBalanceResultCode,
+                               CREATE_CLAIMABLE_BALANCE_UNDERFUNDED, CREATE_CLAIMABLE_BALANCE_SUCCESS)
 
-    union CreateClaimableBalanceResult
+    // A struct: as a union, `code` and the balance id's type shared storage,
+    // so setting a balance id rewrote the code (both V0 and SUCCESS are 0,
+    // which is why decoding worked).
+    struct CreateClaimableBalanceResult
     {
-        CreateClaimableBalanceResultCode code;
-        union{
-            ClaimableBalanceID balanceID; // case CREATE_CLAIMABLE_BALANCE_SUCCESS:
+        CreateClaimableBalanceResultCode code = CreateClaimableBalanceResultCode::CREATE_CLAIMABLE_BALANCE_SUCCESS;
+        ClaimableBalanceID balanceID; // case CREATE_CLAIMABLE_BALANCE_SUCCESS:
                 //default void
-        };
     };
 
     inline QDataStream &operator<<(QDataStream &out, const  CreateClaimableBalanceResult &obj) {
@@ -2242,9 +2400,11 @@ namespace stellar
         CLAIM_CLAIMABLE_BALANCE_CANNOT_CLAIM = -2,
         CLAIM_CLAIMABLE_BALANCE_LINE_FULL = -3,
         CLAIM_CLAIMABLE_BALANCE_NO_TRUST = -4,
-        CLAIM_CLAIMABLE_BALANCE_NOT_AUTHORIZED = -5
-
+        CLAIM_CLAIMABLE_BALANCE_NOT_AUTHORIZED = -5,
+        CLAIM_CLAIMABLE_BALANCE_TRUSTLINE_FROZEN = -6
     };
+    XDR_RESULT_CODE_SERIALIZER(ClaimClaimableBalanceResultCode,
+                               CLAIM_CLAIMABLE_BALANCE_TRUSTLINE_FROZEN, CLAIM_CLAIMABLE_BALANCE_SUCCESS)
 
     union ClaimClaimableBalanceResult
     {
@@ -2276,6 +2436,8 @@ namespace stellar
         BEGIN_SPONSORING_FUTURE_RESERVES_ALREADY_SPONSORED = -2,
         BEGIN_SPONSORING_FUTURE_RESERVES_RECURSIVE = -3
     };
+    XDR_RESULT_CODE_SERIALIZER(BeginSponsoringFutureReservesResultCode,
+                               BEGIN_SPONSORING_FUTURE_RESERVES_RECURSIVE, BEGIN_SPONSORING_FUTURE_RESERVES_SUCCESS)
 
     union BeginSponsoringFutureReservesResult
     {
@@ -2305,6 +2467,8 @@ namespace stellar
         // codes considered as "failure" for the operation
         END_SPONSORING_FUTURE_RESERVES_NOT_SPONSORED = -1
     };
+    XDR_RESULT_CODE_SERIALIZER(EndSponsoringFutureReservesResultCode,
+                               END_SPONSORING_FUTURE_RESERVES_NOT_SPONSORED, END_SPONSORING_FUTURE_RESERVES_SUCCESS)
 
     union EndSponsoringFutureReservesResult
     {
@@ -2335,8 +2499,11 @@ namespace stellar
         REVOKE_SPONSORSHIP_DOES_NOT_EXIST = -1,
         REVOKE_SPONSORSHIP_NOT_SPONSOR = -2,
         REVOKE_SPONSORSHIP_LOW_RESERVE = -3,
-        REVOKE_SPONSORSHIP_ONLY_TRANSFERABLE = -4
+        REVOKE_SPONSORSHIP_ONLY_TRANSFERABLE = -4,
+        REVOKE_SPONSORSHIP_MALFORMED = -5
     };
+    XDR_RESULT_CODE_SERIALIZER(RevokeSponsorshipResultCode,
+                               REVOKE_SPONSORSHIP_MALFORMED, REVOKE_SPONSORSHIP_SUCCESS)
 
     union RevokeSponsorshipResult
     {
@@ -2370,7 +2537,7 @@ namespace stellar
         CLAWBACK_NO_TRUST = -3,
         CLAWBACK_UNDERFUNDED = -4
     };
-    XDR_SERIALIZER(ClawbackResultCode)
+    XDR_RESULT_CODE_SERIALIZER(ClawbackResultCode, CLAWBACK_UNDERFUNDED, CLAWBACK_SUCCESS)
 
     struct ClawbackResult
     {
@@ -2402,7 +2569,8 @@ namespace stellar
         CLAWBACK_CLAIMABLE_BALANCE_NOT_ISSUER = -2,
         CLAWBACK_CLAIMABLE_BALANCE_NOT_CLAWBACK_ENABLED = -3
     };
-    XDR_SERIALIZER(ClawbackClaimableBalanceResultCode)
+    XDR_RESULT_CODE_SERIALIZER(ClawbackClaimableBalanceResultCode,
+                               CLAWBACK_CLAIMABLE_BALANCE_NOT_CLAWBACK_ENABLED, CLAWBACK_CLAIMABLE_BALANCE_SUCCESS)
 
     struct ClawbackClaimableBalanceResult
     {
@@ -2436,9 +2604,12 @@ namespace stellar
         SET_TRUST_LINE_FLAGS_MALFORMED = -1,
         SET_TRUST_LINE_FLAGS_NO_TRUST_LINE = -2,
         SET_TRUST_LINE_FLAGS_CANT_REVOKE = -3,
-        SET_TRUST_LINE_FLAGS_INVALID_STATE = -4
+        SET_TRUST_LINE_FLAGS_INVALID_STATE = -4,
+        SET_TRUST_LINE_FLAGS_LOW_RESERVE = -5 // claimable balances can't be created
+                                              // on revoke due to low reserves
     };
-    XDR_SERIALIZER(SetTrustLineFlagsResultCode)
+    XDR_RESULT_CODE_SERIALIZER(SetTrustLineFlagsResultCode,
+                               SET_TRUST_LINE_FLAGS_LOW_RESERVE, SET_TRUST_LINE_FLAGS_SUCCESS)
 
     union SetTrustLineFlagsResult
     {
@@ -2472,15 +2643,17 @@ namespace stellar
         LIQUIDITY_POOL_DEPOSIT_UNDERFUNDED = -4,
         LIQUIDITY_POOL_DEPOSIT_LINE_FULL = -5,
         LIQUIDITY_POOL_DEPOSIT_BAD_PRICE = -6,
-        LIQUIDITY_POOL_DEPOSIT_POOL_FULL = -7
+        LIQUIDITY_POOL_DEPOSIT_POOL_FULL = -7,
+        LIQUIDITY_POOL_DEPOSIT_TRUSTLINE_FROZEN = -8
     };
-    XDR_SERIALIZER(LiquidityPoolDepositResultCode)
+    XDR_RESULT_CODE_SERIALIZER(LiquidityPoolDepositResultCode,
+                               LIQUIDITY_POOL_DEPOSIT_TRUSTLINE_FROZEN, LIQUIDITY_POOL_DEPOSIT_SUCCESS)
 
     struct alignas(4) LiquidityPoolDepositResult
     {
         LiquidityPoolDepositResultCode code;
     };
-    XDR_SERIALIZER(LiquidityPoolDepositResult)
+    XDR_CODE_STRUCT_SERIALIZER(LiquidityPoolDepositResult)
 
     enum class LiquidityPoolWithdrawResultCode : qint32
     {
@@ -2489,15 +2662,17 @@ namespace stellar
         LIQUIDITY_POOL_WITHDRAW_NO_TRUST = -2,
         LIQUIDITY_POOL_WITHDRAW_UNDERFUNDED = -3,
         LIQUIDITY_POOL_WITHDRAW_LINE_FULL = -4,
-        LIQUIDITY_POOL_WITHDRAW_UNDER_MINIMUM = -5
+        LIQUIDITY_POOL_WITHDRAW_UNDER_MINIMUM = -5,
+        LIQUIDITY_POOL_WITHDRAW_TRUSTLINE_FROZEN = -6
     };
-    XDR_SERIALIZER(LiquidityPoolWithdrawResultCode)
+    XDR_RESULT_CODE_SERIALIZER(LiquidityPoolWithdrawResultCode,
+                               LIQUIDITY_POOL_WITHDRAW_TRUSTLINE_FROZEN, LIQUIDITY_POOL_WITHDRAW_SUCCESS)
 
     struct alignas(4) LiquidityPoolWithdrawResult
     {
         LiquidityPoolWithdrawResultCode code;
     };
-    XDR_SERIALIZER(LiquidityPoolWithdrawResult)
+    XDR_CODE_STRUCT_SERIALIZER(LiquidityPoolWithdrawResult)
 
 
     /* High level Operation Result */
@@ -2509,10 +2684,74 @@ namespace stellar
          opNO_ACCOUNT = -2, // source account was not found
          opNOT_SUPPORTED = -3, // operation not supported at this time
          opTOO_MANY_SUBENTRIES = -4, // max number of subentries already reached
-         opEXCEEDED_WORK_LIMIT = -5  // operation did too much work
+         opEXCEEDED_WORK_LIMIT = -5, // operation did too much work
+         opTOO_MANY_SPONSORING = -6  // account is sponsoring too many entries
     };
-    XDR_SERIALIZER(OperationResultCode)
+    XDR_RESULT_CODE_SERIALIZER(OperationResultCode, opTOO_MANY_SPONSORING, opINNER)
 
+
+    /******* Soroban operation results ********/
+
+    enum class InvokeHostFunctionResultCode : qint32
+    {
+        INVOKE_HOST_FUNCTION_SUCCESS = 0,
+        INVOKE_HOST_FUNCTION_MALFORMED = -1,
+        INVOKE_HOST_FUNCTION_TRAPPED = -2,
+        INVOKE_HOST_FUNCTION_RESOURCE_LIMIT_EXCEEDED = -3,
+        INVOKE_HOST_FUNCTION_ENTRY_ARCHIVED = -4,
+        INVOKE_HOST_FUNCTION_INSUFFICIENT_REFUNDABLE_FEE = -5
+    };
+    XDR_RESULT_CODE_SERIALIZER(InvokeHostFunctionResultCode,
+                               INVOKE_HOST_FUNCTION_INSUFFICIENT_REFUNDABLE_FEE, INVOKE_HOST_FUNCTION_SUCCESS)
+
+    /* success: the hash of the InvokeHostFunctionSuccessPreImage; void otherwise. */
+    struct InvokeHostFunctionResult
+    {
+        InvokeHostFunctionResultCode code;
+        Hash success;
+    };
+    inline QDataStream &operator<<(QDataStream &out, const InvokeHostFunctionResult &obj) {
+        out << obj.code;
+        if (obj.code == InvokeHostFunctionResultCode::INVOKE_HOST_FUNCTION_SUCCESS)
+            out << obj.success;
+        return out;
+    }
+    inline QDataStream &operator>>(QDataStream &in, InvokeHostFunctionResult &obj) {
+        in >> obj.code;
+        if (obj.code == InvokeHostFunctionResultCode::INVOKE_HOST_FUNCTION_SUCCESS)
+            in >> obj.success;
+        return in;
+    }
+
+    enum class ExtendFootprintTTLResultCode : qint32
+    {
+        EXTEND_FOOTPRINT_TTL_SUCCESS = 0,
+        EXTEND_FOOTPRINT_TTL_MALFORMED = -1,
+        EXTEND_FOOTPRINT_TTL_RESOURCE_LIMIT_EXCEEDED = -2,
+        EXTEND_FOOTPRINT_TTL_INSUFFICIENT_REFUNDABLE_FEE = -3
+    };
+    XDR_RESULT_CODE_SERIALIZER(ExtendFootprintTTLResultCode,
+                               EXTEND_FOOTPRINT_TTL_INSUFFICIENT_REFUNDABLE_FEE, EXTEND_FOOTPRINT_TTL_SUCCESS)
+    struct alignas(4) ExtendFootprintTTLResult
+    {
+        ExtendFootprintTTLResultCode code;
+    };
+    XDR_CODE_STRUCT_SERIALIZER(ExtendFootprintTTLResult)
+
+    enum class RestoreFootprintResultCode : qint32
+    {
+        RESTORE_FOOTPRINT_SUCCESS = 0,
+        RESTORE_FOOTPRINT_MALFORMED = -1,
+        RESTORE_FOOTPRINT_RESOURCE_LIMIT_EXCEEDED = -2,
+        RESTORE_FOOTPRINT_INSUFFICIENT_REFUNDABLE_FEE = -3
+    };
+    XDR_RESULT_CODE_SERIALIZER(RestoreFootprintResultCode,
+                               RESTORE_FOOTPRINT_INSUFFICIENT_REFUNDABLE_FEE, RESTORE_FOOTPRINT_SUCCESS)
+    struct alignas(4) RestoreFootprintResult
+    {
+        RestoreFootprintResultCode code;
+    };
+    XDR_CODE_STRUCT_SERIALIZER(RestoreFootprintResult)
 
     struct OperationResult
     {
@@ -2536,6 +2775,9 @@ namespace stellar
         RevokeSponsorshipResult revokeSponsorshipResult;
         LiquidityPoolDepositResult liquidityPoolDepositResult;
         LiquidityPoolWithdrawResult liquidityPoolWithdrawResult;
+        InvokeHostFunctionResult invokeHostFunctionResult;
+        ExtendFootprintTTLResult extendFootprintTTLResult;
+        RestoreFootprintResult restoreFootprintResult;
 
 
         //no trivial
@@ -2559,10 +2801,23 @@ namespace stellar
         OperationResult(const stellar::OperationResult& op);
         ~OperationResult();
         const OperationResult& operator = (const OperationResult& op);
-
+    private:
+        friend inline QDataStream &operator>>(QDataStream &in,  OperationResult &obj);
+        // Destroys the live arm and falls back to the trivial CREATE_ACCOUNT.
+        void clear();
     };
 
     inline QDataStream &operator<<(QDataStream &out, const  OperationResult &obj) {
+        // Refused before anything is written, as Operation's writer does: with
+        // opINNER and a type that has no arm, the code and the type went out
+        // first and only then was the write marked failed.
+        if (!isKnownResultCode(obj.code)
+            || (obj.code == OperationResultCode::opINNER
+                && (static_cast<qint32>(obj.type) < static_cast<qint32>(OperationType::CREATE_ACCOUNT)
+                    || static_cast<qint32>(obj.type) > static_cast<qint32>(OperationType::RESTORE_FOOTPRINT)))) {
+            out.setStatus(QDataStream::WriteFailed);
+            return out;
+        }
         out << obj.code;
         switch(obj.code){
         case OperationResultCode::opINNER:
@@ -2618,7 +2873,14 @@ namespace stellar
                 out << obj.liquidityPoolDepositResult; break;
             case OperationType::LIQUIDITY_POOL_WITHDRAW:
                 out << obj.liquidityPoolWithdrawResult; break;
-            //default:break;
+            case OperationType::INVOKE_HOST_FUNCTION:
+                out << obj.invokeHostFunctionResult; break;
+            case OperationType::EXTEND_FOOTPRINT_TTL:
+                out << obj.extendFootprintTTLResult; break;
+            case OperationType::RESTORE_FOOTPRINT:
+                out << obj.restoreFootprintResult; break;
+            default:
+                out.setStatus(QDataStream::WriteFailed); break;
             }
             break;
         }
@@ -2629,6 +2891,7 @@ namespace stellar
     }
 
     inline QDataStream &operator>>(QDataStream &in,  OperationResult &obj) {
+        obj.clear();            // the arms below are built fresh: never over a live one
         in >> obj.code;
         switch(obj.code){
         case OperationResultCode::opINNER:
@@ -2691,7 +2954,16 @@ namespace stellar
                 in >> obj.liquidityPoolDepositResult; break;
             case OperationType::LIQUIDITY_POOL_WITHDRAW:
                 in >> obj.liquidityPoolWithdrawResult; break;
-            //default: break;
+            // The three Soroban results were missing: their payload stayed in
+            // the stream and was read as whatever came next.
+            case OperationType::INVOKE_HOST_FUNCTION:
+                in >> obj.invokeHostFunctionResult; break;
+            case OperationType::EXTEND_FOOTPRINT_TTL:
+                in >> obj.extendFootprintTTLResult; break;
+            case OperationType::RESTORE_FOOTPRINT:
+                in >> obj.restoreFootprintResult; break;
+            default:
+                in.setStatus(QDataStream::ReadCorruptData); break;
             }
             break;
         }
@@ -2720,9 +2992,22 @@ namespace stellar
         txINTERNAL_ERROR = -11,       // an unknown error occured
         txNOT_SUPPORTED = -12,        // transaction type not supported
         txFEE_BUMP_INNER_FAILED = -13, // fee bump inner transaction failed
-        txBAD_SPONSORSHIP = -14        // sponsorship not confirmed
+        txBAD_SPONSORSHIP = -14,       // sponsorship not confirmed
+        txBAD_MIN_SEQ_AGE_OR_GAP = -15, // minSeqAge or minSeqLedgerGap conditions not met
+        txMALFORMED = -16,             // precondition is invalid
+        txSOROBAN_INVALID = -17,       // soroban-specific preconditions were not met
+        txFROZEN_KEY_ACCESSED = -18    // a frozen ledger key was accessed
     };
-    XDR_SERIALIZER(TransactionResultCode)
+    XDR_RESULT_CODE_SERIALIZER(TransactionResultCode, txFROZEN_KEY_ACCESSED, txFEE_BUMP_INNER_SUCCESS)
+
+    /** InnerTransactionResult's union declares every code but the two fee-bump
+     *  ones: an inner transaction is never itself a fee bump. */
+    inline bool isInnerTransactionResultCode(TransactionResultCode code)
+    {
+        return isKnownResultCode(code)
+            && code != TransactionResultCode::txFEE_BUMP_INNER_SUCCESS
+            && code != TransactionResultCode::txFEE_BUMP_INNER_FAILED;
+    }
 
     // InnerTransactionResult must be binary compatible with TransactionResult
     // because it is be used to represent the result of a Transaction.
@@ -2733,30 +3018,60 @@ namespace stellar
         TransactionResultCode code;
 
         QVector<OperationResult> results;
-        // reserved for future use
-        qint32 v;
+        // reserved for future use: the ext union's discriminant, and 0 is its
+        // only arm. Initialised because the writer puts it on the wire — left
+        // alone it was four bytes of whatever the stack held.
+        qint32 v = 0;
     };
 
+    /*
+     * Two things were wrong here and both were invisible.
+     *
+     * The reader said `in << obj.results` — an OUTPUT operator inside an input
+     * one. It compiles, because writing to a QDataStream is a perfectly good
+     * thing to do; it just writes to a read-only buffer, sets the stream status
+     * to WriteFailed, leaves the operation results empty and kills everything
+     * after it in the stream. A fee-bump result therefore decoded as a
+     * transaction whose inner transaction did nothing.
+     *
+     * And neither side touched `ext`, which the XDR declares as a four-byte
+     * union discriminant. Leaving it out made every inner result four bytes
+     * short of canonical — symmetric again, so nothing local noticed, and
+     * wrong against Core.
+     */
     inline QDataStream &operator<<(QDataStream &out, const  InnerTransactionResult &obj) {
+        if (!isInnerTransactionResultCode(obj.code) || obj.v != 0) {   // no arm: nothing to write
+            out.setStatus(QDataStream::WriteFailed);
+            return out;
+        }
         out << obj.feeCharged << obj.code;
         switch(obj.code){
         case TransactionResultCode::txSUCCESS:
         case TransactionResultCode::txFAILED:
-            out << obj.results; break;
+            writeXdrList(out, obj.results); break;
         default: break;
         }
-
+        out << obj.v;
        return out;
     }
 
     inline QDataStream &operator>>(QDataStream &in,  InnerTransactionResult &obj) {
         in >> obj.feeCharged >> obj.code;
+        obj.results.clear();          // decoding must replace, never merge
+        if (!isInnerTransactionResultCode(obj.code)) {
+            in.setStatus(QDataStream::ReadCorruptData);
+            return in;
+        }
         switch(obj.code){
         case TransactionResultCode::txSUCCESS:
         case TransactionResultCode::txFAILED:
-            in << obj.results; break;
+            readXdrList(in, obj.results); break;
         default: break;
         }
+        in >> obj.v;
+        // Only v = 0 exists; anything else is not a result this can read.
+        if (obj.v != 0)
+            in.setStatus(QDataStream::ReadCorruptData);
        return in;
     }
 
@@ -2797,7 +3112,7 @@ namespace stellar
                out << obj.innerResultPair;break;
         case TransactionResultCode::txSUCCESS:
         case TransactionResultCode::txFAILED:
-            out << obj.results; break;
+            writeXdrList(out, obj.results); break;
         default: break;
         }
         out << obj.ext;
@@ -2805,19 +3120,22 @@ namespace stellar
     }
 
     inline QDataStream &operator>>(QDataStream &in,  TransactionResult &obj) {
+        // Decoding must replace, never merge: a txBAD_SEQ read into an object
+        // that held 48 operation results used to keep all 48.
+        obj.results.clear();
+        obj.innerResultPair = InnerTransactionResultPair();
         in >> obj.feeCharged>> obj.code;
         switch(obj.code){
         case TransactionResultCode::txFEE_BUMP_INNER_SUCCESS:
         case TransactionResultCode::txFEE_BUMP_INNER_FAILED:
-               //new  (&obj.innerResultPair) InnerTransactionResultPair;
                in >> obj.innerResultPair;break;
         case TransactionResultCode::txSUCCESS:
         case TransactionResultCode::txFAILED:
-            //new  (&obj.results) QVector<OperationResult>();
-            in >> obj.results; break;
+            readXdrList(in, obj.results); break;
         default: break;
         }
         in >> obj.ext;
+        if (obj.ext.reserved != 0) in.setStatus(QDataStream::ReadCorruptData);   // ext is void: 0 only
        return in;
     }
 

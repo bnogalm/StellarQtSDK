@@ -2,6 +2,7 @@
 
 #include <stdexcept>
 #include <cstring>
+#include <memory>
 
 #include "asset.h"
 #include "liquiditypool.h"
@@ -36,11 +37,21 @@ ChangeTrustAsset* ChangeTrustAsset::fromXdr(const stellar::ChangeTrustAsset& xdr
         return new ChangeTrustAssetWrapper(Asset::fromXdr(asXdr));
     }
     case stellar::AssetType::ASSET_TYPE_POOL_SHARE: {
+        // Constant product is the only pool type: anything else has no
+        // parameters to read, and was read as a constant-product pool.
+        if (xdr.liquidityPool().type != stellar::LiquidityPoolType::LIQUIDITY_POOL_CONSTANT_PRODUCT)
+            throw std::runtime_error("unknown liquidity pool type");
         const auto& cp = xdr.liquidityPool().constantProduct;
-        return new LiquidityPoolShareChangeTrustAsset(
-            Asset::fromXdr(cp.assetA),
-            Asset::fromXdr(cp.assetB),
-            cp.fee);
+        // Held until the pool share has taken them: a constructor that
+        // refuses them (assets out of order, a fee other than 30) leaves them
+        // with the caller, and here they leaked, both, on every such decode.
+        // So did the first when the second failed to decode.
+        std::unique_ptr<Asset> assetA(Asset::fromXdr(cp.assetA));
+        std::unique_ptr<Asset> assetB(Asset::fromXdr(cp.assetB));
+        ChangeTrustAsset* line = new LiquidityPoolShareChangeTrustAsset(assetA.get(), assetB.get(), cp.fee);
+        assetA.release();
+        assetB.release();
+        return line;
     }
     }
     throw std::runtime_error("unknown ChangeTrustAsset type");
@@ -74,6 +85,10 @@ stellar::ChangeTrustAsset ChangeTrustAssetWrapper::toXdr() const
         out.alphaNum12.issuer = assetXdr.alphaNum12.issuer; break;
     case stellar::AssetType::ASSET_TYPE_POOL_SHARE:
         throw std::runtime_error("plain Asset cannot carry POOL_SHARE");
+    default:
+        // Nor any other type: it was passed on with no arm, and written as a
+        // bare discriminant.
+        throw std::runtime_error("unknown asset type");
     }
     return out;
 }
@@ -97,6 +112,11 @@ LiquidityPoolShareChangeTrustAsset::LiquidityPoolShareChangeTrustAsset(
     if (LiquidityPool::compareAssets(assetA, assetB) >= 0) {
         throw std::runtime_error("AssetA must be < AssetB in canonical XDR order");
     }
+    // 30 basis points is the only fee a pool has (LIQUIDITY_POOL_FEE_V18):
+    // core refuses a changeTrust with any other, js and py refuse to build it.
+    if (fee != LiquidityPool::FEE)
+        throw std::runtime_error(QStringLiteral("a liquidity pool's fee is %1 basis points, not %2")
+                                     .arg(LiquidityPool::FEE).arg(fee).toStdString());
 }
 
 LiquidityPoolShareChangeTrustAsset::~LiquidityPoolShareChangeTrustAsset()

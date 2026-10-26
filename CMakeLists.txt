@@ -1,615 +1,391 @@
 cmake_minimum_required(VERSION 3.16)
-project(StellarQtSDK VERSION 1.0.3 LANGUAGES C CXX)
+
+# ─── One list of files, not two ──────────────────────────────────────
+#
+# qmake is what this repository builds with and what the CI runs, and
+# StellarQtSDK.pri is where every source is listed. This file used to keep its
+# own copy of that list, and the copy had drifted: it was missing src/qml/
+# entirely, along with contractspec, wasmsections and about half the test
+# suite. A CMake build that quietly compiles thirty files fewer than the qmake
+# one is worse than none, because it goes green.
+#
+# So the lists are read from the .pri at configure time. Add a file there and
+# both builds pick it up; there is nothing here to forget. The version too: it
+# is the one the .pri hands the SDK as STELLAR_QT_SDK_CLIENT_VERSION, so the
+# installed package cannot report a different number from the library inside.
+# Editing either file, or the parser, makes the next build reconfigure.
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+include(ReadQmakeLists)
+read_qmake_version("${CMAKE_CURRENT_SOURCE_DIR}/StellarQtSDK.pri" _stellar_version)
+
+project(StellarQtSDK VERSION ${_stellar_version} LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
-
-# Set up AUTOMOC and some sensible defaults for runtime execution
-# When using Qt 6.3, you can replace the code block below with
-# qt_standard_project_setup()
 set(CMAKE_AUTOMOC ON)
 include(GNUInstallDirs)
 
-find_package(QT NAMES Qt6 REQUIRED COMPONENTS Core)
-find_package(Qt${QT_VERSION_MAJOR}
-    REQUIRED
-    COMPONENTS Core5Compat Gui Network Test
+# The QML layer is optional, and OFF by default here as it is in the .pri: it
+# links QtQml, which a plain C++ consumer has no business pulling in. The lab
+# turns it on with -DSTELLAR_QT_QML=ON; a library user need not. (It defaulted
+# to ON here while the .pri defaulted to OFF, so the same SDK dragged QtQml into
+# a CMake consumer and not into a qmake one.)
+option(STELLAR_QT_QML "Build the optional QML facade layer (links QtQml)" OFF)
+
+find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Core)
+set(_stellar_qt_components Core Network Test)
+if(STELLAR_QT_QML)
+    list(APPEND _stellar_qt_components Qml)
+endif()
+find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS ${_stellar_qt_components})
+
+if(STELLAR_QT_QML)
+    read_qmake_lists("${CMAKE_CURRENT_SOURCE_DIR}/StellarQtSDK.pri" STELLAR WITH_QML)
+else()
+    read_qmake_lists("${CMAKE_CURRENT_SOURCE_DIR}/StellarQtSDK.pri" STELLAR)
+endif()
+
+list(LENGTH STELLAR_SOURCES _stellar_source_count)
+message(STATUS "StellarQtSDK ${PROJECT_VERSION}: ${_stellar_source_count} "
+               "sources from StellarQtSDK.pri")
+if(STELLAR_QT_QML)
+    message(STATUS "StellarQtSDK: QML layer ON (src/qml/ is built and "
+                   "Qt${QT_VERSION_MAJOR}::Qml is linked)")
+else()
+    message(STATUS "StellarQtSDK: QML layer OFF, the default (no QtQml "
+                   "dependency; -DSTELLAR_QT_QML=ON builds src/qml/)")
+endif()
+
+add_library(StellarQtSDK STATIC ${STELLAR_SOURCES} ${STELLAR_HEADERS})
+
+# Debug and Release side by side under one prefix. Both archives used to be
+# installed as the same file (StellarQtSDK.lib, libStellarQtSDK.a), so the
+# second install overwrote the first while the exported targets of both
+# configurations still named it: a Debug consumer linked the Release archive,
+# or the other way round, and with MSVC the two runtimes (/MDd, /MD) do not
+# mix. With the postfix each configuration's export names its own file, and
+# find_package() hands a consumer the one that matches its configuration; a
+# RelWithDebInfo or MinSizeRel consumer gets the release archive when its own
+# configuration is not installed (StellarQtSDKConfig.cmake.in maps them).
+set_target_properties(StellarQtSDK PROPERTIES DEBUG_POSTFIX "d")
+
+# ─── Link this library WHOLE, or lose the type registrations ─────────
+#
+# READ THIS BEFORE LINKING StellarQtSDK FROM ANYWHERE.
+#
+# About twenty response .cpp files register their nested gadgets with
+# Q_COREAPP_STARTUP_FUNCTION, and that startup function is the only thing
+# referring to those objects. A linker drops an object file from a static
+# archive when nothing refers to it, so the registration never runs — and then
+# QMetaProperty::read cannot fill a QList<AssetAmount> and hands back an empty
+# list. No error, no warning, just a liquidity pool with no reserves.
+#
+# That is not hypothetical: it cost eight test failures the first time this
+# library was built as an archive, every one of them "expected 2, actual 0".
+# qmake never had the problem because both consumers compile the SDK sources
+# straight into their own executable, so every translation unit is there by
+# construction.
+#
+# So link the target that carries the whole-archive request, and not a bare
+# `StellarQtSDK`. It has the same name in this tree (add_subdirectory) as in an
+# installed package (find_package):
+#
+#     target_link_libraries(yourapp PRIVATE StellarQtSDK::StellarQtSDK)
+#
+# In an installed package the archive itself is StellarQtSDK::StellarQtSDKStatic.
+# Nothing should link that one directly, for the reason above.
+add_library(StellarQtSDKWholeArchive INTERFACE)
+add_library(StellarQtSDK::StellarQtSDK ALIAS StellarQtSDKWholeArchive)
+set_target_properties(StellarQtSDKWholeArchive PROPERTIES EXPORT_NAME StellarQtSDK)
+set_target_properties(StellarQtSDK PROPERTIES EXPORT_NAME StellarQtSDKStatic)
+
+if(CMAKE_VERSION VERSION_LESS 3.24)
+    message(WARNING
+        "CMake ${CMAKE_VERSION} cannot request whole-archive linking. The "
+        "response type registrations will be dropped and deserialised lists "
+        "will come back empty. Use CMake 3.24 or newer, or build with qmake. "
+        "No CMake package is installed from this configuration.")
+    target_link_libraries(StellarQtSDKWholeArchive INTERFACE StellarQtSDK)
+else()
+    # install(EXPORT) rewrites a target name to its namespaced export name in a
+    # plain link item, but NOT inside $<LINK_LIBRARY:…> (checked with CMake
+    # 3.30): with one spelling, the installed package would ask the consumer's
+    # linker for a library called just "StellarQtSDK". Hence the two.
+    target_link_libraries(StellarQtSDKWholeArchive INTERFACE
+        "$<BUILD_INTERFACE:$<LINK_LIBRARY:WHOLE_ARCHIVE,StellarQtSDK>>"
+        "$<INSTALL_INTERFACE:$<LINK_LIBRARY:WHOLE_ARCHIVE,StellarQtSDK::StellarQtSDKStatic>>"
+    )
+endif()
+
+# The variable this file used to hand a parent project; kept, so a parent that
+# links ${STELLAR_QT_SDK_LINK} still links the archive whole.
+set(STELLAR_QT_SDK_LINK StellarQtSDK::StellarQtSDK)
+# (PROJECT_IS_TOP_LEVEL needs CMake 3.21; this works on the 3.16 declared above.)
+if(NOT CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
+    set(STELLAR_QT_SDK_LINK "${STELLAR_QT_SDK_LINK}" PARENT_SCOPE)
+endif()
+
+# ─── Everything the .pri sets, set the same way here ─────────────────
+#
+# PUBLIC rather than PRIVATE: a consumer compiling against these headers needs
+# the same QIODeviceEnums spelling and the same include paths, and getting that
+# wrong produces errors deep inside the SDK's headers rather than at the call
+# site. BUILD_INTERFACE keeps these source-tree paths out of anything an
+# install or export might ever write; the installed headers have one root
+# (see "Installing" below).
+set(_stellar_include_dest "${CMAKE_INSTALL_INCLUDEDIR}/StellarQtSDK")
+target_include_directories(StellarQtSDK PUBLIC
+    "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>"
+    "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>"
+    "$<INSTALL_INTERFACE:${_stellar_include_dest}>"
 )
 
-qt_add_library(StellarQtSDK STATIC
-    ${HEADERS}
-    external/cyoencode/src/CyoDecode.cpp external/cyoencode/src/CyoDecode.h
-    external/cyoencode/src/CyoEncode.cpp external/cyoencode/src/CyoEncode.h
-    external/ed25519/src/add_scalar.c
-    external/ed25519/src/ed25519.h
-    external/ed25519/src/ed25519_keypair.c
-    external/ed25519/src/fe.c external/ed25519/src/fe.h
-    external/ed25519/src/fixedint.h
-    external/ed25519/src/ge.c external/ed25519/src/ge.h
-    external/ed25519/src/key_exchange.c
-    external/ed25519/src/precomp_data.h
-    external/ed25519/src/sc.c external/ed25519/src/sc.h
-    external/ed25519/src/seed.c
-    external/ed25519/src/sha512.c external/ed25519/src/sha512.h
-    external/ed25519/src/sign.c
-    external/ed25519/src/verify.c
-    src/abstracttransaction.cpp
-    src/abstracttransaction.h
-    src/account.cpp
-    src/account.h
-    src/accountconverter.cpp
-    src/accountconverter.h
-    src/accountmergeoperation.cpp
-    src/accountmergeoperation.h
-    src/allowtrustoperation.cpp
-    src/allowtrustoperation.h
-    src/asset.cpp
-    src/asset.h
-    src/assettypecreditalphanum.cpp
-    src/assettypecreditalphanum.h
-    src/assettypecreditalphanum12.cpp
-    src/assettypecreditalphanum12.h
-    src/assettypecreditalphanum4.cpp
-    src/assettypecreditalphanum4.h
-    src/assettypenative.cpp
-    src/assettypenative.h
-    src/beginsponsoringfuturereservesoperation.cpp
-    src/beginsponsoringfuturereservesoperation.h
-    src/bumpsequenceoperation.cpp
-    src/bumpsequenceoperation.h
-    src/changetrustoperation.cpp
-    src/changetrustoperation.h
-    src/checkaccountrequiresmemo.cpp
-    src/checkaccountrequiresmemo.h
-    src/claimant.cpp
-    src/claimant.h
-    src/claimclaimablebalanceoperation.cpp
-    src/claimclaimablebalanceoperation.h
-    src/clawbackclaimablebalanceoperation.cpp
-    src/clawbackclaimablebalanceoperation.h
-    src/clawbackoperation.cpp
-    src/clawbackoperation.h
-    src/createaccountoperation.cpp
-    src/createaccountoperation.h
-    src/createclaimablebalanceoperation.cpp
-    src/createclaimablebalanceoperation.h
-    src/createpassivesellofferoperation.cpp
-    src/createpassivesellofferoperation.h
-    src/endsponsoringfuturereservesoperation.cpp
-    src/endsponsoringfuturereservesoperation.h
-    src/federation/federation.cpp
-    src/federation/federation.h
-    src/federation/federationresponse.cpp
-    src/federation/federationresponse.h
-    src/federation/federationserver.cpp
-    src/federation/federationserver.h
-    src/feebumptransaction.cpp
-    src/feebumptransaction.h
-    src/inflationoperation.cpp
-    src/inflationoperation.h
-    src/keypair.cpp
-    src/keypair.h
-    src/liquiditypool.cpp
-    src/liquiditypool.h
-    src/changetrustasset.cpp
-    src/changetrustasset.h
-    src/trustlineasset.cpp
-    src/trustlineasset.h
-    src/liquiditypooldepositoperation.cpp
-    src/liquiditypooldepositoperation.h
-    src/liquiditypoolwithdrawoperation.cpp
-    src/liquiditypoolwithdrawoperation.h
-    src/signerkey.cpp
-    src/signerkey.h
-    src/ledgerbounds.h
-    src/transactionpreconditions.cpp
-    src/transactionpreconditions.h
-    src/muxedaccount.cpp
-    src/muxedaccount.h
-    src/stellaraddress.cpp
-    src/stellaraddress.h
-    src/toid.cpp
-    src/toid.h
-    src/messageauth.cpp
-    src/messageauth.h
-    src/txrep.cpp
-    src/txrep.h
-    src/scval/scv.cpp
-    src/scval/scv.h
-    src/sorobandatabuilder.cpp
-    src/sorobandatabuilder.h
-    src/invokehostfunctionoperation.cpp
-    src/invokehostfunctionoperation.h
-    src/extendfootprintttloperation.cpp
-    src/extendfootprintttloperation.h
-    src/restorefootprintoperation.cpp
-    src/restorefootprintoperation.h
-    src/responses/operations/invokehostfunctionoperationresponse.cpp
-    src/responses/operations/invokehostfunctionoperationresponse.h
-    src/responses/operations/extendfootprintttloperationresponse.cpp
-    src/responses/operations/extendfootprintttloperationresponse.h
-    src/responses/operations/restorefootprintoperationresponse.cpp
-    src/responses/operations/restorefootprintoperationresponse.h
-    src/sorobanserver.cpp
-    src/sorobanserver.h
-    src/exception/sorobanrpcexception.h
-    src/responses/sorobanrpc/gethealthresponse.cpp
-    src/responses/sorobanrpc/gethealthresponse.h
-    src/responses/sorobanrpc/getnetworkresponse.cpp
-    src/responses/sorobanrpc/getnetworkresponse.h
-    src/responses/sorobanrpc/getversioninforesponse.cpp
-    src/responses/sorobanrpc/getversioninforesponse.h
-    src/responses/sorobanrpc/getlatestledgerresponse.cpp
-    src/responses/sorobanrpc/getlatestledgerresponse.h
-    src/responses/sorobanrpc/getfeestatsresponse.cpp
-    src/responses/sorobanrpc/getfeestatsresponse.h
-    src/responses/sorobanrpc/gettransactionresponse.cpp
-    src/responses/sorobanrpc/gettransactionresponse.h
-    src/responses/sorobanrpc/gettransactionsresponse.cpp
-    src/responses/sorobanrpc/gettransactionsresponse.h
-    src/responses/sorobanrpc/getledgerentriesresponse.cpp
-    src/responses/sorobanrpc/getledgerentriesresponse.h
-    src/responses/sorobanrpc/getledgersresponse.cpp
-    src/responses/sorobanrpc/getledgersresponse.h
-    src/responses/sorobanrpc/geteventsresponse.cpp
-    src/responses/sorobanrpc/geteventsresponse.h
-    src/responses/sorobanrpc/sendtransactionresponse.cpp
-    src/responses/sorobanrpc/sendtransactionresponse.h
-    src/responses/sorobanrpc/simulatetransactionresponse.cpp
-    src/responses/sorobanrpc/simulatetransactionresponse.h
-    src/contract/sorobancredentialssigner.cpp
-    src/contract/sorobancredentialssigner.h
-    src/contract/assembledtransaction.cpp
-    src/contract/assembledtransaction.h
-    src/contract/contractclient.cpp
-    src/contract/contractclient.h
-    src/sep45challenge.cpp
-    src/sep45challenge.h
-    src/exception/invalidsep45challengeexception.h
-    src/exception/assembledtransactionexception.h
-    src/exception/simulationfailedexception.h
-    src/exception/notyetsimulatedexception.h
-    src/exception/sendfailedexception.h
-    src/sep7.cpp
-    src/sep7.h
-    src/stellartoml.cpp
-    src/stellartoml.h
-    xdr/scval.h
-    xdr/sorobantxdata.h
-    xdr/sorobanops.h
-    src/managebuyofferoperation.cpp
-    src/managebuyofferoperation.h
-    src/managedataoperation.cpp
-    src/managedataoperation.h
-    src/managesellofferoperation.cpp
-    src/managesellofferoperation.h
-    src/memo.cpp
-    src/memo.h
-    src/network.cpp
-    src/network.h
-    src/operation.cpp
-    src/operation.h
-    src/pathpaymentoperation.cpp
-    src/pathpaymentoperation.h
-    src/pathpaymentstrictreceiveoperation.cpp
-    src/pathpaymentstrictreceiveoperation.h
-    src/pathpaymentstrictsendoperation.cpp
-    src/pathpaymentstrictsendoperation.h
-    src/paymentoperation.cpp
-    src/paymentoperation.h
-    src/predicate.cpp
-    src/predicate.h
-    src/price.cpp
-    src/price.h
-    src/requests/accountsrequestbuilder.cpp
-    src/requests/accountsrequestbuilder.h
-    src/requests/assetsrequestbuilder.cpp
-    src/requests/assetsrequestbuilder.h
-    src/requests/claimablebalancesrequestbuilder.cpp
-    src/requests/claimablebalancesrequestbuilder.h
-    src/requests/effectsrequestbuilder.cpp
-    src/requests/effectsrequestbuilder.h
-    src/requests/eventlistener.cpp
-    src/requests/eventlistener.h
-    src/requests/feestatsrequestbuilder.cpp
-    src/requests/feestatsrequestbuilder.h
-    src/requests/ledgersrequestbuilder.cpp
-    src/requests/ledgersrequestbuilder.h
-    src/requests/offersrequestbuilder.cpp
-    src/requests/offersrequestbuilder.h
-    src/requests/operationsrequestbuilder.cpp
-    src/requests/operationsrequestbuilder.h
-    src/requests/orderbookrequestbuilder.cpp
-    src/requests/orderbookrequestbuilder.h
-    src/requests/paymentsrequestbuilder.cpp
-    src/requests/paymentsrequestbuilder.h
-    src/requests/requestbuilder.cpp
-    src/requests/requestbuilder.h
-    src/requests/rootrequestbuilder.cpp
-    src/requests/rootrequestbuilder.h
-    src/requests/strictreceivepathsrequestbuilder.cpp
-    src/requests/strictreceivepathsrequestbuilder.h
-    src/requests/strictsendpathsrequestbuilder.cpp
-    src/requests/strictsendpathsrequestbuilder.h
-    src/requests/tradeaggregationsrequestbuilder.cpp
-    src/requests/tradeaggregationsrequestbuilder.h
-    src/requests/tradesrequestbuilder.cpp
-    src/requests/tradesrequestbuilder.h
-    src/requests/transactionsrequestbuilder.cpp
-    src/requests/transactionsrequestbuilder.h
-    src/stellardeprecated.h
-    src/qstellar_namespace.h
-    src/transactionbuilder.cpp
-    src/transactionbuilder.h
-    src/feebumptransactionbuilder.cpp
-    src/feebumptransactionbuilder.h
-    src/exception/sdkexception.h
-    src/exception/networkexception.h
-    src/exception/toomanyrequestsexception.h
-    src/exception/badrequestexception.h
-    src/exception/badresponseexception.h
-    src/exception/requesttimeoutexception.h
-    src/exception/connectionerrorexception.h
-    src/exception/accountnotfoundexception.h
-    src/exception/accountrequiresmemoexception.h
-    src/exception/invalidsep10challengeexception.h
-    src/exception/unexpectedexception.h
-    src/exception/unknownresponseexception.h
-    src/exception/formatexception.h
-    src/responses/problem.cpp
-    src/responses/problem.h
-    src/responses/assetamount.h
-    src/responses/liquiditypool.h
-    src/responses/liquiditypoolclaimableassetamount.h
-    src/responses/effects/liquiditypoolcreatedeffectresponse.h
-    src/responses/effects/liquiditypooldepositedeffectresponse.h
-    src/responses/effects/liquiditypoolwithdreweffectresponse.h
-    src/responses/effects/liquiditypooltradeeffectresponse.h
-    src/responses/effects/liquiditypoolremovedeffectresponse.h
-    src/responses/effects/liquiditypoolrevokedeffectresponse.h
-    src/responses/effects/liquiditypooleffectsresponses.cpp
-    src/responses/liquiditypoolresponse.h
-    src/responses/liquiditypoolresponse.cpp
-    src/requests/liquiditypoolsrequestbuilder.h
-    src/requests/liquiditypoolsrequestbuilder.cpp
-    src/responses/accountresponse.cpp
-    src/responses/accountresponse.h
-    src/responses/assetresponse.cpp
-    src/responses/assetresponse.h
-    src/responses/claimablebalanceresponse.cpp
-    src/responses/claimablebalanceresponse.h
-    src/responses/common.h
-    src/responses/effects/accountcreatedeffectresponse.cpp
-    src/responses/effects/accountcreatedeffectresponse.h
-    src/responses/effects/accountcreditedeffectresponse.cpp
-    src/responses/effects/accountcreditedeffectresponse.h
-    src/responses/effects/accountdebitedeffectresponse.cpp
-    src/responses/effects/accountdebitedeffectresponse.h
-    src/responses/effects/accountflagsupdatedeffectresponse.cpp
-    src/responses/effects/accountflagsupdatedeffectresponse.h
-    src/responses/effects/accounthomedomainupdatedeffectresponse.cpp
-    src/responses/effects/accounthomedomainupdatedeffectresponse.h
-    src/responses/effects/accountinflationdestinationupdatedeffectresponse.cpp
-    src/responses/effects/accountinflationdestinationupdatedeffectresponse.h
-    src/responses/effects/accountremovedeffectresponse.cpp
-    src/responses/effects/accountremovedeffectresponse.h
-    src/responses/effects/accountsponsorshipcreatedeffectresponse.cpp
-    src/responses/effects/accountsponsorshipcreatedeffectresponse.h
-    src/responses/effects/accountsponsorshipremovedeffectresponse.cpp
-    src/responses/effects/accountsponsorshipremovedeffectresponse.h
-    src/responses/effects/accountsponsorshipupdatedeffectresponse.cpp
-    src/responses/effects/accountsponsorshipupdatedeffectresponse.h
-    src/responses/effects/accountthresholdsupdatedeffectresponse.cpp
-    src/responses/effects/accountthresholdsupdatedeffectresponse.h
-    src/responses/effects/claimablebalanceclaimantcreatedeffectresponse.cpp
-    src/responses/effects/claimablebalanceclaimantcreatedeffectresponse.h
-    src/responses/effects/claimablebalanceclaimedeffectresponse.cpp
-    src/responses/effects/claimablebalanceclaimedeffectresponse.h
-    src/responses/effects/claimablebalanceclawedbackeffectresponse.cpp
-    src/responses/effects/claimablebalanceclawedbackeffectresponse.h
-    src/responses/effects/claimablebalancecreatedeffectresponse.cpp
-    src/responses/effects/claimablebalancecreatedeffectresponse.h
-    src/responses/effects/claimablebalancesponsorshipcreatedeffectresponse.cpp
-    src/responses/effects/claimablebalancesponsorshipcreatedeffectresponse.h
-    src/responses/effects/claimablebalancesponsorshipremovedeffectresponse.cpp
-    src/responses/effects/claimablebalancesponsorshipremovedeffectresponse.h
-    src/responses/effects/claimablebalancesponsorshipupdatedeffectresponse.cpp
-    src/responses/effects/claimablebalancesponsorshipupdatedeffectresponse.h
-    src/responses/effects/datacreatedeffectresponse.cpp
-    src/responses/effects/datacreatedeffectresponse.h
-    src/responses/effects/dataremovedeffectresponse.cpp
-    src/responses/effects/dataremovedeffectresponse.h
-    src/responses/effects/datasponsorshipcreatedeffectresponse.cpp
-    src/responses/effects/datasponsorshipcreatedeffectresponse.h
-    src/responses/effects/datasponsorshipremovedeffectresponse.cpp
-    src/responses/effects/datasponsorshipremovedeffectresponse.h
-    src/responses/effects/datasponsorshipupdatedeffectresponse.cpp
-    src/responses/effects/datasponsorshipupdatedeffectresponse.h
-    src/responses/effects/dataupdatedeffectresponse.cpp
-    src/responses/effects/dataupdatedeffectresponse.h
-    src/responses/effects/effectresponse.cpp
-    src/responses/effects/effectresponse.h
-    src/responses/effects/offercreatedeffectresponse.cpp
-    src/responses/effects/offercreatedeffectresponse.h
-    src/responses/effects/offerremovedeffectresponse.cpp
-    src/responses/effects/offerremovedeffectresponse.h
-    src/responses/effects/offerupdatedeffectresponse.cpp
-    src/responses/effects/offerupdatedeffectresponse.h
-    src/responses/effects/sequencebumpedeffectresponse.cpp
-    src/responses/effects/sequencebumpedeffectresponse.h
-    src/responses/effects/signercreatedeffectresponse.cpp
-    src/responses/effects/signercreatedeffectresponse.h
-    src/responses/effects/signereffectresponse.cpp
-    src/responses/effects/signereffectresponse.h
-    src/responses/effects/signerremovedeffectresponse.cpp
-    src/responses/effects/signerremovedeffectresponse.h
-    src/responses/effects/signersponsorshipcreatedeffectresponse.cpp
-    src/responses/effects/signersponsorshipcreatedeffectresponse.h
-    src/responses/effects/signersponsorshipremovedeffectresponse.cpp
-    src/responses/effects/signersponsorshipremovedeffectresponse.h
-    src/responses/effects/signersponsorshipupdatedeffectresponse.cpp
-    src/responses/effects/signersponsorshipupdatedeffectresponse.h
-    src/responses/effects/signerupdatedeffectresponse.cpp
-    src/responses/effects/signerupdatedeffectresponse.h
-    src/responses/effects/tradeeffectresponse.cpp
-    src/responses/effects/tradeeffectresponse.h
-    src/responses/effects/trustlineauthorizationresponse.cpp
-    src/responses/effects/trustlineauthorizationresponse.h
-    src/responses/effects/trustlineauthorizedeffectresponse.cpp
-    src/responses/effects/trustlineauthorizedeffectresponse.h
-    src/responses/effects/trustlineauthorizedtomaintainliabilitieseffectresponse.cpp
-    src/responses/effects/trustlineauthorizedtomaintainliabilitieseffectresponse.h
-    src/responses/effects/trustlinecreatedeffectresponse.cpp
-    src/responses/effects/trustlinecreatedeffectresponse.h
-    src/responses/effects/trustlinecudresponse.cpp
-    src/responses/effects/trustlinecudresponse.h
-    src/responses/effects/trustlinedeauthorizedeffectresponse.cpp
-    src/responses/effects/trustlinedeauthorizedeffectresponse.h
-    src/responses/effects/trustlineflagsupdatedeffectresponse.cpp
-    src/responses/effects/trustlineflagsupdatedeffectresponse.h
-    src/responses/effects/trustlineremovedeffectresponse.cpp
-    src/responses/effects/trustlineremovedeffectresponse.h
-    src/responses/effects/trustlinesponsorshipcreatedeffectresponse.cpp
-    src/responses/effects/trustlinesponsorshipcreatedeffectresponse.h
-    src/responses/effects/trustlinesponsorshipremovedeffectresponse.cpp
-    src/responses/effects/trustlinesponsorshipremovedeffectresponse.h
-    src/responses/effects/trustlinesponsorshipupdatedeffectresponse.cpp
-    src/responses/effects/trustlinesponsorshipupdatedeffectresponse.h
-    src/responses/effects/trustlineupdatedeffectresponse.cpp
-    src/responses/effects/trustlineupdatedeffectresponse.h
-    src/responses/effectspage.cpp
-    src/responses/effectspage.h
-    src/responses/feestatsresponse.cpp
-    src/responses/feestatsresponse.h
-    src/responses/genericoperation.cpp
-    src/responses/genericoperation.h
-    src/responses/ledgerresponse.cpp
-    src/responses/ledgerresponse.h
-    src/responses/link.cpp
-    src/responses/link.h
-    src/responses/offerresponse.cpp
-    src/responses/offerresponse.h
-    src/responses/operationpage.cpp
-    src/responses/operationpage.h
-    src/responses/operations/accountmergeoperationresponse.cpp
-    src/responses/operations/accountmergeoperationresponse.h
-    src/responses/operations/allowtrustoperationresponse.cpp
-    src/responses/operations/allowtrustoperationresponse.h
-    src/responses/operations/beginsponsoringfuturereservesoperationresponse.cpp
-    src/responses/operations/beginsponsoringfuturereservesoperationresponse.h
-    src/responses/operations/bumpsequenceoperationresponse.cpp
-    src/responses/operations/bumpsequenceoperationresponse.h
-    src/responses/operations/changetrustoperationresponse.cpp
-    src/responses/operations/changetrustoperationresponse.h
-    src/responses/operations/liquiditypooldepositoperationresponse.cpp
-    src/responses/operations/liquiditypooldepositoperationresponse.h
-    src/responses/operations/liquiditypoolwithdrawoperationresponse.cpp
-    src/responses/operations/liquiditypoolwithdrawoperationresponse.h
-    src/responses/operations/claimclaimablebalanceoperationresponse.cpp
-    src/responses/operations/claimclaimablebalanceoperationresponse.h
-    src/responses/operations/clawbackclaimablebalanceoperationresponse.cpp
-    src/responses/operations/clawbackclaimablebalanceoperationresponse.h
-    src/responses/operations/clawbackoperationresponse.cpp
-    src/responses/operations/clawbackoperationresponse.h
-    src/responses/operations/createaccountoperationresponse.cpp
-    src/responses/operations/createaccountoperationresponse.h
-    src/responses/operations/createclaimablebalanceoperationresponse.cpp
-    src/responses/operations/createclaimablebalanceoperationresponse.h
-    src/responses/operations/createpassiveofferoperationresponse.cpp
-    src/responses/operations/createpassiveofferoperationresponse.h
-    src/responses/operations/endsponsoringfuturereservesoperationresponse.cpp
-    src/responses/operations/endsponsoringfuturereservesoperationresponse.h
-    src/responses/operations/inflationoperationresponse.cpp
-    src/responses/operations/inflationoperationresponse.h
-    src/responses/operations/managebuyofferoperationresponse.cpp
-    src/responses/operations/managebuyofferoperationresponse.h
-    src/responses/operations/managedataoperationresponse.cpp
-    src/responses/operations/managedataoperationresponse.h
-    src/responses/operations/managesellofferoperationresponse.cpp
-    src/responses/operations/managesellofferoperationresponse.h
-    src/responses/operations/operationresponse.cpp
-    src/responses/operations/operationresponse.h
-    src/responses/operations/pathpaymentbaseoperationresponse.cpp
-    src/responses/operations/pathpaymentbaseoperationresponse.h
-    src/responses/operations/pathpaymentoperationresponse.cpp
-    src/responses/operations/pathpaymentoperationresponse.h
-    src/responses/operations/pathpaymentstrictreceiveoperationresponse.cpp
-    src/responses/operations/pathpaymentstrictreceiveoperationresponse.h
-    src/responses/operations/pathpaymentstrictsendoperationresponse.cpp
-    src/responses/operations/pathpaymentstrictsendoperationresponse.h
-    src/responses/operations/paymentoperationresponse.cpp
-    src/responses/operations/paymentoperationresponse.h
-    src/responses/operations/revokesponsorshipoperationresponse.cpp
-    src/responses/operations/revokesponsorshipoperationresponse.h
-    src/responses/operations/setoptionsoperationresponse.cpp
-    src/responses/operations/setoptionsoperationresponse.h
-    src/responses/operations/settrustlineflagsoperationresponse.cpp
-    src/responses/operations/settrustlineflagsoperationresponse.h
-    src/responses/orderbookresponse.cpp
-    src/responses/orderbookresponse.h
-    src/responses/page.cpp
-    src/responses/page.h
-    src/responses/pathresponse.cpp
-    src/responses/pathresponse.h
-    src/responses/response.cpp
-    src/responses/response.h
-    src/responses/rootresponse.cpp
-    src/responses/rootresponse.h
-    src/responses/submittransactionresponse.cpp
-    src/responses/submittransactionresponse.h
-    src/responses/tradeaggregationresponse.cpp
-    src/responses/tradeaggregationresponse.h
-    src/responses/traderesponse.cpp
-    src/responses/traderesponse.h
-    src/responses/transactionresponse.cpp
-    src/responses/transactionresponse.h
-    src/revokeaccountsponsorshipoperation.cpp
-    src/revokeaccountsponsorshipoperation.h
-    src/revokeclaimablebalancesponsorshipoperation.cpp
-    src/revokeclaimablebalancesponsorshipoperation.h
-    src/revokeliquiditypoolsponsorshipoperation.cpp
-    src/revokeliquiditypoolsponsorshipoperation.h
-    src/revokedatasponsorshipoperation.cpp
-    src/revokedatasponsorshipoperation.h
-    src/revokeoffersponsorshipoperation.cpp
-    src/revokeoffersponsorshipoperation.h
-    src/revokesignersponsorshipoperation.cpp
-    src/revokesignersponsorshipoperation.h
-    src/revoketrustlinesponsorshipoperation.cpp
-    src/revoketrustlinesponsorshipoperation.h
-    src/sep10challenge.cpp
-    src/sep10challenge.h
-    src/server.cpp
-    src/server.h
-    src/setoptionsoperation.cpp
-    src/setoptionsoperation.h
-    src/settrustlineflagsoperation.cpp
-    src/settrustlineflagsoperation.h
-    src/signer.cpp
-    src/signer.h
-    src/slip10.cpp
-    src/slip10.h
-    src/strkey.cpp
-    src/strkey.h
-    src/timebounds.cpp
-    src/timebounds.h
-    src/transaction.cpp
-    src/transaction.h
-    src/transactionbuilderaccount.h
-    src/util.cpp
-    src/util.h
-    xdr/stellarledger.h
-    xdr/stellarledgerentries.h
-    xdr/stellartransaction.cpp xdr/stellartransaction.h
-    xdr/stellartypes.h
-    xdr/xdrhelper.cpp xdr/xdrhelper.h
-)
-target_include_directories(StellarQtSDK PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} src)
-
-add_compile_definitions(
-    STELLAR_QT_SDK_CLIENT_NAME=\"\\\"qtcpp-stellar-sdk\\\"\"
-    STELLAR_QT_SDK_CLIENT_VERSION=\"\\\"1.0.3\\\"\"
-)
-
-target_compile_definitions(StellarQtSDK PRIVATE
+target_compile_definitions(StellarQtSDK PUBLIC
+    STELLAR_QT_REPLY_TIMEOUT=30000
     ED25519_NO_SEED
     QT_DEPRECATED_WARNINGS
-    STELLAR_QT_REPLY_TIMEOUT=30000
+    STELLAR_QT_SDK_CLIENT_NAME="qtcpp-stellar-sdk"
+    STELLAR_QT_SDK_CLIENT_VERSION="${PROJECT_VERSION}"
 )
 
-target_link_libraries(StellarQtSDK PRIVATE Qt::Core Qt::Gui Qt::Network)
+# QIODevice's enums moved into QIODeviceBase in Qt 6. The .pri picks the
+# spelling by major version and so does this.
+if(QT_VERSION_MAJOR GREATER 5)
+    target_compile_definitions(StellarQtSDK PUBLIC QIODeviceEnums=QIODeviceBase)
+else()
+    target_compile_definitions(StellarQtSDK PUBLIC QIODeviceEnums=QIODevice)
+endif()
 
-install(DIRECTORY src/ DESTINATION include     FILES_MATCHING PATTERN "*.h")
-install(DIRECTORY xdr/ DESTINATION include/xdr FILES_MATCHING PATTERN "*.h")
-install(TARGETS StellarQtSDK
-    BUNDLE DESTINATION .
-    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+if(STELLAR_QT_QML)
+    target_compile_definitions(StellarQtSDK PUBLIC STELLAR_QT_QML)
+endif()
+
+# Qt 5.15.2 ships QtCore headers (qfloat16.h, qendian.h) that specialize
+# std::numeric_limits WITHOUT first including <limits> (QTBUG-90395, fixed in
+# 5.15.3+ and Qt 6). On GCC 11+ the compiler binds std::numeric_limits to Qt's
+# partial declaration first, and later <chrono>/<random>/qrandom.h fail with
+# "std::numeric_limits is not a template". Force-include <limits> as the very
+# first thing in every translation unit: the problem is TU-wide ordering, so no
+# per-header include can fix it. Scoped to Qt 5 with GCC or Clang — Qt 6 has the
+# fixed header and MSVC was never affected.
+if(QT_VERSION_MAJOR LESS 6
+   AND (CMAKE_CXX_COMPILER_ID STREQUAL "GNU"
+        OR CMAKE_CXX_COMPILER_ID MATCHES "Clang"))
+    # C++ only: <limits> is no C header, and the library (and a consumer)
+    # has C sources too (ed25519).
+    target_compile_options(StellarQtSDK PUBLIC "$<$<COMPILE_LANGUAGE:CXX>:SHELL:-include limits>")
+endif()
+
+target_link_libraries(StellarQtSDK PUBLIC
+    Qt${QT_VERSION_MAJOR}::Core
+    Qt${QT_VERSION_MAJOR}::Network
 )
+if(STELLAR_QT_QML)
+    target_link_libraries(StellarQtSDK PUBLIC Qt${QT_VERSION_MAJOR}::Qml)
+endif()
 
+# ─── The test suite ──────────────────────────────────────────────────
+#
+# Its class list comes out of StellarQtSDKTest.pro for the same reason as the
+# sources: the suite gains a file most weeks and a list that has to be updated
+# twice is a list that will be updated once. A test that is not compiled is not
+# a test that passes — it is one nobody notices is gone.
 enable_testing()
-qt_add_executable(StellarQtSDKTest EXCLUDE_FROM_ALL
-    test/fakeserver.h
-    test/feebumptransactiontest.h
-    test/keypairtest.h
-    test/requests/claimablebalancesrequestbuildertest.h
-    test/responses/claimablebalancepagedeserializertest.h
-    test/responses/feestatsdeserializertest.h
-    test/sep10challengetest.h
-    test/strkeytest.h
-    test/testcollector.h
-    test/operationtest.h
-    test/transactiontest.h
-    test/requests/accountsrequestbuildertest.h
-    test/servertest.h
-    test/responses/submittransactionresponsetest.h
-    test/networktest.h
-    test/accounttest.h
-    test/responses/accountdeserializertest.h
-    test/responses/transactionpagedeserializertest.h
-    test/responses/operationspagetest.h
-    test/requests/transactionsrequestbuildertest.h
-    test/requests/paymentsrequestbuildertest.h
-    test/federation/federationtest.h
-    test/memotest.h
-    test/responses/operationdeserializertest.h
-    test/pricetest.h
-    test/requests/tradesrequestbuildertest.h
-    test/responses/tradespagedeserializertest.h
-    test/responses/pathspagedeserializertest.h
-    test/requests/pathsrequestbuildertest.h
-    test/responses/orderbookdeserializertest.h
-    test/requests/orderbookrequestbuildertest.h
-    test/responses/offerpagedeserializertest.h
-    test/requests/offersrequestbuildertest.h
-    test/responses/ledgerdeserializertest.h
-    test/responses/ledgerpagedeserializertest.h
-    test/requests/ledgersrequestbuildertest.h
-    test/responses/accountspagedeserializertest.h
-    test/requests/operationsrequestbuildertest.h
-    test/requests/effectsrequestbuildertest.h
-    test/responses/effectdeserializertest.h
-    test/responses/effectspagedeserializertest.h
-    test/assettest.h
-    test/accountflagtest.h
-    test/responses/assetdeserializertest.h
-    test/responses/transactiondeserializertest.h
-    test/requests/assetsrequestbuildertest.h
-    test/responses/assetspagedeserializertest.h
-    test/requests/tradeaggregationsrequestbuildertest.h
-    test/responses/tradeaggregationspagedeserializertest.h
-    test/responses/rootdeserializertest.h
-    test/requests/rootrequestbuildtest.h
-    test/requests/operationfeerequestbuildertest.h
-    test/sep0005keypairforaccountfrombip39seedtest.h
-    test/slip0010ed25519privatekeytest.h
-    test/utiltest.h
-    test/main.cpp
+
+# read_qmake_version on a few one-line .pri files: whole x.y.z versions are
+# read as written, anything else is refused (see cmake/ReadQmakeLists.cmake).
+add_test(NAME ReadQmakeVersion
+    COMMAND "${CMAKE_COMMAND}"
+            "-DREAD_QMAKE_VERSION_SELFTEST=${CMAKE_CURRENT_BINARY_DIR}/ReadQmakeVersionTest"
+            -P "${CMAKE_CURRENT_SOURCE_DIR}/cmake/ReadQmakeLists.cmake"
 )
-target_compile_definitions(StellarQtSDKTest PRIVATE
+
+# The Debug archive has its own name (DEBUG_POSTFIX above), so both
+# configurations can be installed under one prefix.
+add_test(NAME DebugPostfix
+    COMMAND "${CMAKE_COMMAND}" -E echo "$<CONFIG>:$<TARGET_FILE_NAME:StellarQtSDK>"
+)
+set_tests_properties(DebugPostfix PROPERTIES PASS_REGULAR_EXPRESSION
+    "^(Debug:(lib)?StellarQtSDKd|(Release|RelWithDebInfo|MinSizeRel)?:(lib)?StellarQtSDK)\\.(lib|a)")
+
+read_qmake_headers("${CMAKE_CURRENT_SOURCE_DIR}/StellarQtSDKTest.pro"
+                   "${CMAKE_CURRENT_SOURCE_DIR}" STELLAR_TEST)
+
+# Without the QML layer its tests go too: they include src/qml/, which was not
+# compiled, and QtQml, which was not found, so with them in the list the suite
+# did not build at all with STELLAR_QT_QML=OFF. The qmake suite always builds
+# the layer (its .pro defines STELLAR_QT_QML before including the .pri), so it
+# has no such switch to read; what marks a QML test is the directory the .pro
+# lists it from, test/qml/. Tests elsewhere that touch the layer (pricetest.h)
+# guard it with #ifdef STELLAR_QT_QML themselves, and are compiled either way.
+set(_stellar_skipped_tests "")
+if(NOT STELLAR_QT_QML)
+    set(_stellar_kept_tests "")
+    foreach(_test IN LISTS STELLAR_TEST_HEADERS)
+        file(RELATIVE_PATH _test_rel "${CMAKE_CURRENT_SOURCE_DIR}" "${_test}")
+        if(_test_rel MATCHES "^test/qml/")
+            list(APPEND _stellar_skipped_tests "${_test_rel}")
+        else()
+            list(APPEND _stellar_kept_tests "${_test}")
+        endif()
+    endforeach()
+    # If the QML tests move, this filter keeps them all and the build fails at
+    # the link with symbols from src/qml/. Say so here instead.
+    if(_stellar_skipped_tests STREQUAL "")
+        message(FATAL_ERROR
+            "StellarQtSDKTest.pro lists no test under test/qml/, so the QML "
+            "tests cannot be left out of a STELLAR_QT_QML=OFF build. They "
+            "moved: update the filter above.")
+    endif()
+    set(STELLAR_TEST_HEADERS "${_stellar_kept_tests}")
+endif()
+
+list(LENGTH STELLAR_TEST_HEADERS _stellar_test_count)
+list(LENGTH _stellar_skipped_tests _stellar_skipped_count)
+if(_stellar_skipped_count GREATER 0)
+    message(STATUS "StellarQtSDK: ${_stellar_test_count} test headers from "
+                   "StellarQtSDKTest.pro; ${_stellar_skipped_count} under "
+                   "test/qml/ left out because STELLAR_QT_QML is OFF")
+else()
+    message(STATUS "StellarQtSDK: ${_stellar_test_count} test headers from "
+                   "StellarQtSDKTest.pro")
+endif()
+
+# One moc file per header, the way qmake does it — NOT AUTOMOC.
+#
+# AUTOMOC concatenates every generated moc into a single mocs_compilation.cpp,
+# which drags all hundred-odd test headers into one translation unit. Two things
+# break there that are perfectly fine apart, and neither is the build system's
+# fault to fix:
+#
+#   - this SDK has two classes called qstellar::LiquidityPool, one in
+#     src/liquiditypool.h and one in src/responses/liquiditypool.h, and in a
+#     shared TU whichever was included first wins;
+#   - the test suite is written against the unqualified 0.x API, so it is
+#     already living with a namespace flattened on purpose.
+#
+# qmake gives each header its own TU and the question never arises. Doing the
+# same here keeps the two builds compiling the same code rather than making the
+# CMake build a reason to rename a public class.
+
+# The defines are stated once and handed to both the compiler and moc.
+#
+# moc reads the same #if as the compiler does, and several test classes guard
+# their slots — ServerTest's live submissions sit behind STELLAR_SKIP_LIVE_TESTS.
+# Give moc a different set from the compiler and it emits a meta-object for
+# methods that were never compiled, which fails at the link with a message that
+# points at generated code and not at the cause.
+set(_stellar_test_defines
     STELLAR_ALLOW_UNSECURE_RANDOM
-    STELLAR_ENABLE_TEST_METHODS
     STELLAR_SKIP_LIVE_TESTS
+    STELLAR_ENABLE_TEST_METHODS
+    # The suite is written against the unqualified 0.x API (KeyPair, Server, …).
+    # A new consumer must NOT define this; it picks up the strict qstellar::
+    # names instead.
+    STELLAR_QT_LEGACY_GLOBAL_NS
 )
-
-if((QT_VERSION_MAJOR GREATER 5))
-    target_compile_definitions(StellarQtSDK PRIVATE
-        QIODeviceEnums=QIODeviceBase
-    )
+if(STELLAR_QT_QML)
+    list(APPEND _stellar_test_defines STELLAR_QT_QML)
 endif()
 
-if((QT_VERSION_MAJOR LESS 6))
-    target_compile_definitions(StellarQtSDK PRIVATE
-        QIODeviceEnums=QIODevice
-    )
-endif()
-
-target_include_directories(StellarQtSDKTest PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}
-    src
+set(_stellar_moc_options
+    "-I${CMAKE_CURRENT_SOURCE_DIR}"
+    "-I${CMAKE_CURRENT_SOURCE_DIR}/src"
 )
+foreach(_define IN LISTS _stellar_test_defines)
+    list(APPEND _stellar_moc_options "-D${_define}")
+endforeach()
+
+set_source_files_properties(${STELLAR_TEST_HEADERS} PROPERTIES SKIP_AUTOMOC ON)
+qt_wrap_cpp(STELLAR_TEST_MOC ${STELLAR_TEST_HEADERS}
+    OPTIONS ${_stellar_moc_options}
+)
+
+add_executable(StellarQtSDKTest EXCLUDE_FROM_ALL
+    ${STELLAR_TEST_SOURCES}
+    ${STELLAR_TEST_HEADERS}
+    ${STELLAR_TEST_MOC}
+)
+set_target_properties(StellarQtSDKTest PROPERTIES AUTOMOC OFF)
+
+target_compile_definitions(StellarQtSDKTest PRIVATE ${_stellar_test_defines})
+
 target_link_libraries(StellarQtSDKTest PRIVATE
-    Qt::Network Qt::Test StellarQtSDK
+    StellarQtSDK::StellarQtSDK
+    Qt${QT_VERSION_MAJOR}::Test
 )
+
 add_test(NAME StellarQtSDKTest COMMAND StellarQtSDKTest)
-add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND} DEPENDS StellarQtSDKTest)
+add_custom_target(check
+    COMMAND "${CMAKE_CTEST_COMMAND}" --output-on-failure
+    DEPENDS StellarQtSDKTest
+)
+
+# ─── Installing ──────────────────────────────────────────────────────
+#
+#     cmake --install <build> --prefix <prefix>
+#
+# and then, in the consuming project (CMake 3.24 or newer):
+#
+#     find_package(StellarQtSDK 1.0 REQUIRED)
+#     target_link_libraries(yourapp PRIVATE StellarQtSDK::StellarQtSDK)
+#
+# Headers keep the layout the .pri gives a qmake consumer, whose INCLUDEPATH is
+# the repository root and src/: they go under one root, include/StellarQtSDK/,
+# with src/ flattened into it and xdr/ beside it. So "keypair.h",
+# "responses/accountresponse.h" and "xdr/stellartransaction.h" resolve as they
+# do in the tree, and the "../" includes between headers still land. The root
+# is its own directory because names such as util.h, network.h or server.h
+# would collide with anything else installed under the same prefix.
+#
+# Only the headers the .pri lists for this configuration are installed: not
+# src/qml/ in a build without the QML layer, and not external/, which no public
+# header includes.
+foreach(_header IN LISTS STELLAR_HEADERS)
+    file(RELATIVE_PATH _header_rel "${CMAKE_CURRENT_SOURCE_DIR}" "${_header}")
+    if(_header_rel MATCHES "^src/(.+)$")
+        set(_header_rel "${CMAKE_MATCH_1}")
+    elseif(NOT _header_rel MATCHES "^xdr/")
+        continue()
+    endif()
+    get_filename_component(_header_dir "${_header_rel}" DIRECTORY)
+    install(FILES "${_header}"
+            DESTINATION "${_stellar_include_dest}/${_header_dir}")
+endforeach()
+
+if(CMAKE_VERSION VERSION_LESS 3.24)
+    # The library and its headers, but no package: a StellarQtSDK::StellarQtSDK
+    # that cannot link whole would hand the consumer empty lists (see above).
+    install(TARGETS StellarQtSDK
+        ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+    )
+else()
+    set(_stellar_config_dest "${CMAKE_INSTALL_LIBDIR}/cmake/StellarQtSDK")
+
+    install(TARGETS StellarQtSDK StellarQtSDKWholeArchive
+        EXPORT StellarQtSDKTargets
+        ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+    )
+    install(EXPORT StellarQtSDKTargets
+        NAMESPACE StellarQtSDK::
+        DESTINATION "${_stellar_config_dest}"
+    )
+
+    include(CMakePackageConfigHelpers)
+    configure_package_config_file(
+        "${CMAKE_CURRENT_SOURCE_DIR}/cmake/StellarQtSDKConfig.cmake.in"
+        "${CMAKE_CURRENT_BINARY_DIR}/StellarQtSDKConfig.cmake"
+        INSTALL_DESTINATION "${_stellar_config_dest}"
+    )
+    # Same major version: the public API is frozen at 1.0.0 and only grows.
+    write_basic_package_version_file(
+        "${CMAKE_CURRENT_BINARY_DIR}/StellarQtSDKConfigVersion.cmake"
+        COMPATIBILITY SameMajorVersion
+    )
+    install(FILES
+        "${CMAKE_CURRENT_BINARY_DIR}/StellarQtSDKConfig.cmake"
+        "${CMAKE_CURRENT_BINARY_DIR}/StellarQtSDKConfigVersion.cmake"
+        DESTINATION "${_stellar_config_dest}"
+    )
+endif()
